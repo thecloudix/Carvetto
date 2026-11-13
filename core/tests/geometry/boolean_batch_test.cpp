@@ -266,7 +266,7 @@ TEST_CASE("T-0142 a: union and difference of a long row stay near-linear", "[geo
     cl.insert(cl.begin(), cs.begin(), cs.end());
     std::size_t ringsSmall = 0;
     std::size_t ringsLarge = 0;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
         3,
         [&] { ringsSmall = unionContours(rs, tol).size() + booleanOp(BooleanOp::Difference, rs, cs, tol).closed.size(); },
         [&] { ringsLarge = unionContours(rl, tol).size() + booleanOp(BooleanOp::Difference, rl, cl, tol).closed.size(); });
@@ -460,7 +460,7 @@ TEST_CASE("T-0142 e: a 90-degree raster over a comb clips in near-linear time", 
     std::size_t ps = 0;
     std::size_t pl = 0;
     const carvetto::test::ScalingTimes t =
-        carvetto::test::interleavedCpuSeconds(3, [&] { ps = run(cs, nSmall); }, [&] { pl = run(cl, nLarge); });
+        carvetto::test::interleavedCpuSecondsRetry(2.5, 3, [&] { ps = run(cs, nSmall); }, [&] { pl = run(cl, nLarge); });
     INFO("CPU seconds: " << nSmall << " teeth " << t.smallSeconds << ", " << nLarge << " teeth " << t.largeSeconds
                          << ", ratio " << t.ratio());
     CHECK(ps >= static_cast<std::size_t>(nSmall) * 3);

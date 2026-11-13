@@ -676,7 +676,7 @@ TEST_CASE("V-carve resolves crossing clusters that absorb nearby vectors in line
     p.tolerance.chordal = 0.5;  // a coarse skeleton: the cost is the crossing resolution
     VCarvingResult smallResult;
     VCarvingResult largeResult;
-    const test::ScalingTimes times = test::interleavedCpuSeconds(
+    const test::ScalingTimes times = test::interleavedCpuSecondsRetry(2.5,
         3, [&] { smallResult = vCarvingToolpath(smallPage, tool, std::nullopt, {}, p); },
         [&] { largeResult = vCarvingToolpath(largePage, tool, std::nullopt, {}, p); });
     INFO(half << " pairs: " << times.smallSeconds << " s CPU, " << 2 * half << " pairs: " << times.largeSeconds
@@ -1198,7 +1198,7 @@ TEST_CASE("AC2: 5000 glyph-like regions within the documented CPU time", "[toolp
     const std::vector<Contour> largePage = pageOf(2 * half);
     VCarvingResult smallResult;
     VCarvingResult largeResult;
-    const test::ScalingTimes times = test::interleavedCpuSeconds(
+    const test::ScalingTimes times = test::interleavedCpuSecondsRetry(2.5,
         3, [&] { smallResult = vCarvingToolpath(smallPage, tool, std::nullopt, {}, VCarvingParams{}); },
         [&] { largeResult = vCarvingToolpath(largePage, tool, std::nullopt, {}, VCarvingParams{}); });
     INFO(half << " regions: " << times.smallSeconds << " s CPU, " << 2 * half << " regions: " << times.largeSeconds

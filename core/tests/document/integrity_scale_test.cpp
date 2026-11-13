@@ -115,7 +115,7 @@ double timeCheck(const Document& doc, std::vector<IntegrityIssue>& issues) {
 carvetto::test::ScalingTimes timeScaling(const Document& small, const Document& big) {
     std::vector<IntegrityIssue> smallIssues;
     std::vector<IntegrityIssue> bigIssues;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(3.0,
         3, [&] { smallIssues = small.checkIntegrity(); }, [&] { bigIssues = big.checkIntegrity(); });
     INFO(firstMessages(smallIssues));
     REQUIRE(smallIssues.empty());

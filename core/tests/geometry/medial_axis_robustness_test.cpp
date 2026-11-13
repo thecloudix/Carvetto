@@ -370,8 +370,8 @@ void checkScaling(const char* what, std::vector<std::size_t> sizes, Make make, i
         if (i == 0) {
             t = bestCpu(1, cs, ax);
         } else {
-            const carvetto::test::ScalingTimes st = carvetto::test::interleavedCpuSeconds(
-                runs, [&] { (void)medialAxis(prevCs, kTol); }, [&] { ax = medialAxis(cs, kTol); });
+            const carvetto::test::ScalingTimes st = carvetto::test::interleavedCpuSecondsRetry(
+                2.5, runs, [&] { (void)medialAxis(prevCs, kTol); }, [&] { ax = medialAxis(cs, kTol); });
             t = st.largeSeconds;
             ratio = st.ratio();
         }

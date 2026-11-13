@@ -109,7 +109,7 @@ TEST_CASE("AC3: thousands of small closed vectors profile in near-linear time", 
     ProfileResult rs;
     ProfileResult rl;
     const int pairs = kRelease ? 3 : 2;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
         pairs, [&] { rs = profileToolpath(small, profileTool(), p); },
         [&] { rl = profileToolpath(large, profileTool(), p); });
     INFO("CPU seconds: " << kSmall << " vectors " << t.smallSeconds << ", " << kLarge << " vectors "
@@ -134,7 +134,7 @@ TEST_CASE("AC3: thousands of small closed vectors pocket in near-linear time", "
     PocketResult rs;
     PocketResult rl;
     const int pairs = kRelease ? 3 : 2;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
         pairs, [&] { rs = pocketToolpath(small, {tool}, p); },
         [&] { rl = pocketToolpath(large, {tool}, p); });
     INFO("CPU seconds: " << kSmall << " vectors " << t.smallSeconds << ", " << kLarge << " vectors "

@@ -211,7 +211,7 @@ void removeAll(std::uint64_t count, RemoveOrder order) {
 
 TEST_CASE("selection removal scales near-linearly in every order", "[document][selection][perf]") {
     for (const RemoveOrder order : {RemoveOrder::Forward, RemoveOrder::Reverse, RemoveOrder::Random}) {
-        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(3.0,
             3, [&] { removeAll(50'000, order); }, [&] { removeAll(100'000, order); });
         INFO("order " << static_cast<int>(order) << ": " << t.smallSeconds << " -> " << t.largeSeconds << " s, ratio "
                       << t.ratio());

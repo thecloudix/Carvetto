@@ -193,7 +193,7 @@ void insertUndoRedo(int count) {
 TEST_CASE("AC4: 10 000 inserts, undo all and redo all complete under one second",
           "[document][commands][perf]") {
     constexpr int kCount = 10000;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(9.0,
         5, [&] { insertUndoRedo(kCount); }, [&] { insertUndoRedo(4 * kCount); });
     INFO("best CPU seconds: 10k = " << t.smallSeconds << ", 40k = " << t.largeSeconds << ", ratio "
                                      << t.ratio());

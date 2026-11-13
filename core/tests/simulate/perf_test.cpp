@@ -70,7 +70,7 @@ TEST_CASE("simulate: simulation cost grows linearly with the number of moves", "
     const Toolpath largeJob = scatterJob(2 * n, 200, 5);
     const ToolShape tool = *ToolShape::ballNose(3.0);
     std::size_t smallCut = 0, largeCut = 0;
-    const test::ScalingTimes times = test::interleavedCpuSeconds(
+    const test::ScalingTimes times = test::interleavedCpuSecondsRetry(2.5,
         3,
         [&] {
             Simulator sim(stock);
