@@ -1281,7 +1281,7 @@ Goal: (1) NaN/inf coordinates leak through to tile output as non-finite moves: r
 Acceptance criteria:
   1. Hostile jobs finish or refuse within a documented bound; non-finite input never reaches output; byte-identical tile output for inputs that finished before; tests.
 
-### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: verifying]
+### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: done — merged #149 (female limit ~2000-2500 smooth vertices; cap-40000 mutant test gap → T-0277)]
 Phase: 1   Module: core/toolpath/inlay   Depends on: T-0238
 Goal: the 4000 derived-span cap refuses polygonal inputs above ~1000-1500 vertices that the old code handled in <0.3 s (real cost cliff is ~15,000-20,000 derived spans): raise the cap (~15,000) or key it to estimated work, keep the 20,000-span zigzag repro bounded; refusal message should name the input span count and suggest simplifying; replace the string-compare of kAllowanceConsumes with a flag on InlayShapes; mention the cap in ADR-0040.
 Acceptance criteria:
@@ -1332,6 +1332,6 @@ Acceptance criteria:
 
 ### T-0277 Tiling: test pinning the 10000-tile cap (T-0268 verifier nit)   [status: ready — LOW]
 Phase: 1   Module: core/toolpath   Depends on: T-0268
-Goal: A mutant restoring the total-tile limit to 100000 passes all tests. Add a test with between 10,001 and 100,000 tiles expecting a refusal; also confirm the kMinPiece 1e-6 -> 1e-8 mutant is killed (verifier left it unchecked).
+Goal: (also from T-0269: a test asserting a case just above 15000 derived spans, e.g. a 3000-vertex female, is refused, so the cap-40000 mutant is killed.) A mutant restoring the tiling total-tile limit to 100000 passes all tests. Add a test with between 10,001 and 100,000 tiles expecting a refusal; also confirm the kMinPiece 1e-6 -> 1e-8 mutant is killed (verifier left it unchecked).
 Acceptance criteria:
   1. Both mutants fail a test; one changelog fragment; CI green.
