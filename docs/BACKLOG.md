@@ -1236,7 +1236,7 @@ Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view 
 Acceptance criteria:
   1. A two-sided job can be set up, drawn, copied across and saved with per-side posts whose Z zero matches the side; self-test drives it.
 
-### T-0262 Thread milling: thread-mill tool type and Create Circles command (T-0237 follow-up)   [status: ready — LOW]
+### T-0262 Thread milling: thread-mill tool type and Create Circles command (T-0237 follow-up)   [status: in-progress]
 Phase: 1   Module: core/tooling + core/document + app/viewmodel   Depends on: T-0237, T-0235
 Goal: model single/multi-point thread-mill tools in the tool database (S, H, D, A, O, threaded length; versioned tool file migration), use them in the Thread Mill form; 'Create circles for internal threads' inserts the bore circles into the document as one undo step on calculation.
 Acceptance criteria:
@@ -1275,13 +1275,13 @@ Goal: with many coincident or heavily overlapping vectors the shared cut orderin
 Acceptance criteria:
   1. 20000 coincident vectors order in well under a second CPU; existing orders unchanged (golden tests); hostile bounds; tests.
 
-### T-0268 Tiling hardening (T-0242 verifier nits)   [status: ready — LOW]
+### T-0268 Tiling hardening (T-0242 verifier nits)   [status: in-progress]
 Phase: 1   Module: core/toolpath/tiling   Depends on: T-0242
 Goal: (1) NaN/inf coordinates leak through to tile output as non-finite moves: reject or skip them (and consider a finite check in save_toolpaths); (2) cost is O(tiles x moves) with no bounding-box prefilter: 200k moves x 10000 tiles ran past 60 s; add a per-move bounds reject / spatial bucketing, lower the 100000-tile cap, add a work bound and cancel; (3) originalPosition=true does not check the tile lies inside the machine bed: decide/document; (4) huge or degenerate arcs (1e300 centre gives 0 tiles; zero-radius arc yields many moves); tests for the clip-boundary tolerances (kEps 1e-9, kMinPiece 1e-6) so mutants die; (5) document tile numbering ("tile N" counts non-empty tiles after ordering).
 Acceptance criteria:
   1. Hostile jobs finish or refuse within a documented bound; non-finite input never reaches output; byte-identical tile output for inputs that finished before; tests.
 
-### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: ready — LOW]
+### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: in-progress]
 Phase: 1   Module: core/toolpath/inlay   Depends on: T-0238
 Goal: the 4000 derived-span cap refuses polygonal inputs above ~1000-1500 vertices that the old code handled in <0.3 s (real cost cliff is ~15,000-20,000 derived spans): raise the cap (~15,000) or key it to estimated work, keep the 20,000-span zigzag repro bounded; refusal message should name the input span count and suggest simplifying; replace the string-compare of kAllowanceConsumes with a flag on InlayShapes; mention the cap in ADR-0040.
 Acceptance criteria:
