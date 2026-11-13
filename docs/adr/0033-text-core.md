@@ -31,7 +31,7 @@ and radians, and bounded work on hostile fonts and strings.
   upstream CMake. Shaping uses HarfBuzz's built-in Unicode data and OpenType code only, so it does
   not depend on the operating system. It is compiled with `HB_NO_GETENV` (no `HB_SHAPER_LIST`,
   `HB_FACE_LOADER` or `HB_FONT_FUNCS`) and shaping calls `hb_shape_full` with the explicit shaper list
-  `{"ot"}`. A test sets these variables (and `FREETYPE_PROPERTIES`) in-process and requires identical hashes.
+  `{"ot"}`. The environment test executable is registered several times in ctest, each process launched with these variables (and `FREETYPE_PROPERTIES`) already set, and every run must reproduce the same hashes.
 - Both are PRIVATE dependencies of `carvetto_core` and SYSTEM includes; no FreeType or HarfBuzz header
   is included from a public Carvetto header. Neither is vendored in the repository: CI and the cloud
   workspace can reach github.com (as for Clipper2, Catch2 and miniz).

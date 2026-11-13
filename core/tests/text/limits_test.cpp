@@ -85,6 +85,13 @@ TEST_CASE("Size limits refuse with a status", "[text][limits][hostile]") {
         requireRefused(layoutText(f, "IIII", s, lim), TextStatus::TextTooLong);
         CHECK(layoutText(f, "III", s, lim).ok());
     }
+    SECTION("the byte limit is the same on the path entry point (equal passes, one more is refused)") {
+        lim.maxTextBytes = 3;
+        geometry::Contour path;
+        path.spans.emplace_back(geometry::LineSpan{{0, 0}, {100, 0}});
+        CHECK(layoutTextOnPath(f, "III", s, path, {}, lim).ok());
+        requireRefused(layoutTextOnPath(f, "IIII", s, path, {}, lim), TextStatus::TextTooLong);
+    }
     SECTION("the byte ceiling cannot be lifted") {
         lim.maxTextBytes = static_cast<std::size_t>(-1);
         const std::string huge(kAbsoluteMaxTextBytes + 1, 'I');
