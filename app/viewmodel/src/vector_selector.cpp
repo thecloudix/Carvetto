@@ -185,6 +185,36 @@ ResolvedVectors resolveVectors(const Document& doc, const VectorSelector& select
     return out;
 }
 
+ResolvedBitmap resolveBitmap(const Document& doc, const VectorSelector& selector) {
+    ResolvedBitmap out;
+    const Object* found = nullptr;
+    for (const ObjectId id : selector.base.objects) {
+        const Object* obj = doc.findObject(id);
+        if (obj != nullptr && obj->asBitmap() != nullptr) {
+            found = obj;
+            out.object = id;
+            break;
+        }
+    }
+    if (found == nullptr) {
+        out.problem = "select a bitmap (import one with File > Import Bitmap and select it)";
+        return out;
+    }
+    if (found->sheet != doc.activeSheet()) {
+        out.problem = "the bitmap is on another sheet";
+    } else if (const Usable usable = chainUsable(doc, *found); usable == Usable::Hidden) {
+        out.problem = "the bitmap is on a hidden layer";
+    } else if (usable == Usable::Locked) {
+        out.problem = "the bitmap is on a locked layer";
+    } else if (!document::isFontKey(found->asBitmap()->sourceRef) || doc.findBitmap(found->asBitmap()->sourceRef) == nullptr) {
+        out.problem = "the bitmap has no embedded image data";
+    }
+    if (out.problem.empty()) {
+        out.bitmap = found->asBitmap();
+    }
+    return out;
+}
+
 std::string validateSelector(const Document& doc, const VectorSelector& selector) {
     const document::VectorSelection& sel = selector.base;
     if (sel.all && (!sel.layers.empty() || !sel.objects.empty())) {
@@ -292,6 +322,23 @@ void Fingerprint::add(const Contour& contour) {
             },
             s);
     }
+}
+
+std::uint64_t fingerprint(const ResolvedBitmap& resolved) {
+    Fingerprint fp;
+    fp.add(resolved.object.value);
+    fp.add(std::string_view(resolved.problem));
+    if (resolved.bitmap != nullptr) {
+        const document::BitmapObject& b = *resolved.bitmap;
+        fp.add(std::string_view(b.sourceRef));
+        fp.add(static_cast<std::uint64_t>(b.widthPx));
+        fp.add(static_cast<std::uint64_t>(b.heightPx));
+        fp.add(b.placementMm.min.x);
+        fp.add(b.placementMm.min.y);
+        fp.add(b.placementMm.max.x);
+        fp.add(b.placementMm.max.y);
+    }
+    return fp.value();
 }
 
 std::uint64_t fingerprint(const ResolvedVectors& resolved) {

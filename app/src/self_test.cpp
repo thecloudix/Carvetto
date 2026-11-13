@@ -757,12 +757,17 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9b. Photo V-carve: import a bitmap, form, calculation, stale, save and reload (T-0275).
+    if (const std::string why = photoSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9c. Double-sided jobs: setup, swap sides, copy across, per-side posts (T-0261).
     if (const std::string why = doubleSidedSelfTest(window); !why.empty()) {
         return fail(why);
     }
 
-    // 9b. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
+    // 9d. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
     if (const std::string why = variablesSelfTest(window); !why.empty()) {
         return fail(why);
     }

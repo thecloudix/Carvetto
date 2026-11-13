@@ -46,6 +46,7 @@
 #include "carvetto/viewmodel/starter_font.hpp"
 #include "carvetto/viewmodel/text_tool.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
+#include "bitmap_decoder.hpp"
 #include "new_job_dialog.hpp"
 #include "node_edit_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
@@ -270,6 +271,9 @@ void MainWindow::buildMenus() {
     QAction* importAction = file->addAction(QStringLiteral("&Import DXF..."));
     importAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+I")));
     connect(importAction, &QAction::triggered, this, [this]() { importDxfDialog(); });
+    QAction* importBitmapAction = file->addAction(QStringLiteral("Import &Bitmap..."));
+    importBitmapAction->setObjectName(QStringLiteral("importBitmapAction"));
+    connect(importBitmapAction, &QAction::triggered, this, [this]() { importBitmapDialog(); });
     QAction* exportSheet = file->addAction(QStringLiteral("&Export Sheet as DXF..."));
     connect(exportSheet, &QAction::triggered, this, [this]() { exportDxfDialog(false); });
     QAction* exportSelection = file->addAction(QStringLiteral("Export &Selection as DXF..."));
@@ -819,6 +823,25 @@ bool MainWindow::saveAsDialog() {
         return false;
     }
     return saveFileAs(viewmodel::withCarvExtension(viewmodel::pathFromUtf8(name.toStdString())));
+}
+
+bool MainWindow::importBitmapFile(const std::filesystem::path& path) {
+    if (!session_.importBitmap(path, qtBitmapDecoder())) {
+        showError(QStringLiteral("Import failed"));
+        return false;
+    }
+    documentChanged();
+    return true;
+}
+
+void MainWindow::importBitmapDialog() {
+    const QString name = QFileDialog::getOpenFileName(
+        this, QStringLiteral("Import Bitmap"), QString(),
+        QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif *.tif *.tiff *.pgm *.ppm *.pbm);;All files (*)"));
+    if (name.isEmpty()) {
+        return;
+    }
+    importBitmapFile(viewmodel::pathFromUtf8(name.toStdString()));
 }
 
 void MainWindow::importDxfDialog() {

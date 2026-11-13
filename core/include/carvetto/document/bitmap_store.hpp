@@ -56,6 +56,12 @@ std::string bitmapImportProblem(const Document& doc, const BitmapImport& in);
 /// and adds the bitmap object referring to it. Null when `bitmapImportProblem` is non-empty.
 std::unique_ptr<Command> makeImportBitmapCommand(const Document& doc, BitmapImport in);
 
+/// Decodes encoded image bytes: Netpbm directly, anything else through `decoder` (an error when
+/// none is supplied or the result is not a valid image). The bytes-level part of
+/// `decodeBitmapObject`, usable on a copy of the bytes away from the document (T-0275).
+geometry::ShapeResult<io::RasterImage> decodeBitmapBytes(std::span<const std::uint8_t> bytes,
+                                                         const BitmapDecoder& decoder = {});
+
 /// Decodes the pixels of `obj`: Netpbm directly, anything else through `decoder`. Errors (never
 /// a crash) when the object holds no embedded image, the bytes do not decode, or no decoder is
 /// supplied for a non-Netpbm image.

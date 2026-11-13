@@ -12,6 +12,7 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/photo_vcarve.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
@@ -499,6 +500,30 @@ Table<toolpath::InlayParams> makeInlayTable() {
     return t;
 }
 
+Table<toolpath::PhotoVCarveParams> makePhotoVCarveTable() {
+    using P = toolpath::PhotoVCarveParams;
+    Table<P> t;
+    t.num("maxDepth", "Max carving depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.maxDepth; });
+    bound(t, "maxDepth", 1e-3, 100000.0);
+    t.num("stepoverRetract", "Stepover retract", "Depth", Kind::Length, false, true,
+          [](P& p) -> double& { return p.stepoverRetract; });
+    bound(t, "stepoverRetract", 0.0, 100000.0);
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    t.num("lineSpacing", "Line spacing (% of tool diameter)", "Lines", Kind::Factor, false, false,
+          [](P& p) -> double& { return p.lineSpacingPercent; });
+    bound(t, "lineSpacing", 1e-2, 1000.0);
+    t.num("lineAngle", "Line angle", "Lines", Kind::Angle, true, true, [](P& p) -> double& { return p.lineAngle; },
+          [](const P& p) { return p.strategy != toolpath::PhotoStrategy::SelectedVectors; });
+    t.num("chordal", "Chordal tolerance", "Tolerance", Kind::Length, false, false,
+          [](P& p) -> double& { return p.tolerance.chordal; },
+          [](const P& p) { return p.strategy == toolpath::PhotoStrategy::SelectedVectors; });
+    bound(t, "chordal", 1e-4, 1.0);
+    t.option<toolpath::PhotoStrategy>("strategy", "Strategy", "Lines", {"Raster", "Hatch", "Selected vectors"},
+                                      [](P& p) -> toolpath::PhotoStrategy& { return p.strategy; });
+    t.flag("invert", "Invert (light pixels cut deep)", "Depth", [](P& p) -> bool& { return p.invert; });
+    return t;
+}
+
 Table<toolpath::FlutingParams> makeFlutingTable() {
     using P = toolpath::FlutingParams;
     Table<P> t;
@@ -597,6 +622,12 @@ const Table<toolpath::PrismParams>& tableOf() {
 template <>
 const Table<toolpath::InlayParams>& tableOf() {
     static const Table<toolpath::InlayParams> t = makeInlayTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::PhotoVCarveParams>& tableOf() {
+    static const Table<toolpath::PhotoVCarveParams> t = makePhotoVCarveTable();
     return t;
 }
 

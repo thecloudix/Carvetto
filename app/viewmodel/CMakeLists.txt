@@ -43,6 +43,7 @@ add_library(carvetto_viewmodel STATIC
   src/pixel_probe.cpp
   src/new_job_form.cpp
   src/dxf_exchange.cpp
+  src/bitmap_import.cpp
   src/file_session.cpp
   src/node_edit.cpp
   src/node_ops.cpp
