@@ -50,6 +50,9 @@
 #include "properties_panel.hpp"
 #include "dimension_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
+#include "tiling_manager_panel.hpp"
+#include "carvetto/viewmodel/tiling_form.hpp"
+#include "carvetto/tooling/machine.hpp"
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
@@ -895,6 +898,80 @@ int runSelfTest() {
         }
         if (named != 2) {
             return fail("the per-toolpath files are not named after the toolpaths");
+        }
+        // Tile Toolpaths (T-0266): tick the box, tile the job, one file per tile.
+        {
+            TilingManagerPanel* tiles = dialog.tilingPanel();
+            if (tiles == nullptr || tiles->tilingOn() || tiles->settingsShown()) {
+                return fail("the Tiling Manager is missing or starts switched on");
+            }
+            const std::size_t untiled = dialog.output().files.size();
+            tiles->setTilingOn(true);
+            if (!tiles->settingsShown()) {
+                return fail("ticking Tile Toolpaths did not show the tiling settings");
+            }
+            viewmodel::TilingForm tf = tiles->form();
+            tf.width = 12.0;
+            tf.height = 12.0;
+            tf.overlap = 1.0;
+            tiles->setForm(tf);
+            if (!dialog.waitIdle() || !dialog.output().ok || dialog.output().files.size() <= untiled ||
+                !tiles->shownPreview().ok() || tiles->shownPreview().saved < 2 ||
+                tiles->tileRows() != static_cast<int>(tiles->shownPreview().tiles.size()) ||
+                tiles->shownPreview().oversize != 0) {
+                return fail("tiling the job in the Save Toolpaths dialog gave no per-tile files: " +
+                            dialog.output().error + tiles->statusShown());
+            }
+            for (const viewmodel::OutputFile& f : dialog.output().files) {
+                if (viewmodel::pathToUtf8(f.path.filename()).find("tile") == std::string::npos) {
+                    return fail("a tiled file is not named after its tile");
+                }
+            }
+            if (!dialog.saveNow() || dialog.written().size() != dialog.output().files.size()) {
+                return fail("saving the tiled files failed");
+            }
+            for (const std::filesystem::path& w : dialog.written()) {
+                if (!QFileInfo::exists(QString::fromStdString(viewmodel::pathToUtf8(w)))) {
+                    return fail("a tile file is missing");
+                }
+            }
+            // A machine smaller than the tiles: the tile size starts at its work area; larger tiles are refused.
+            tooling::Machine small;
+            small.id = "tiny";
+            small.name = "Tiny";
+            small.workAreaX = 10.0;
+            small.workAreaY = 10.0;
+            viewmodel::SaveSource bigSource = viewmodel::makeSaveSource(tpSession);
+            SaveToolpathsDialog big(std::move(bigSource), "job", {small}, outPath);
+            big.setAcceptStale(true);
+            big.setOverwrite(true);
+            big.setOutputMode(viewmodel::OutputMode::FilePerToolpath);
+            big.setNameTemplate("{n}-{toolpath}");
+            big.setMachineIndex(1);
+            big.selectPost("grbl_mm.pp");
+            big.setMachineIndex(1);
+            big.tilingPanel()->setTilingOn(true);
+            viewmodel::TilingForm bf = big.tilingPanel()->form();
+            if (bf.width != 10.0 || bf.height != 10.0) {
+                return fail("the tile size did not start at the machine work area");
+            }
+            bf.width = 12.0;
+            big.tilingPanel()->setForm(bf);
+            if (!big.waitIdle() || big.canSave() || big.output().error.find("work area") == std::string::npos ||
+                big.tilingPanel()->shownPreview().oversize == 0 ||
+                big.tilingPanel()->statusShown().find("larger") == std::string::npos) {
+                return fail("tiles larger than the machine work area were not refused");
+            }
+            bf.width = 10.0;
+            big.tilingPanel()->setForm(bf);
+            if (!big.waitIdle() || !big.canSave() || big.tilingPanel()->shownPreview().oversize != 0) {
+                return fail("tiles that fit the machine work area were refused");
+            }
+            big.reject();
+            tiles->setTilingOn(false);
+            if (!dialog.waitIdle() || dialog.output().files.size() != untiled) {
+                return fail("clearing Tile Toolpaths did not restore the untiled output");
+            }
         }
         // A bad template is reported, not saved.
         dialog.setNameTemplate("{nope}");

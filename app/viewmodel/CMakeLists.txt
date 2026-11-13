@@ -54,6 +54,7 @@ add_library(carvetto_viewmodel STATIC
   src/calculation.cpp
   src/variables_model.cpp
   src/texture_form.cpp
+  src/tiling_form.cpp
 )
 find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)
