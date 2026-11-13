@@ -130,7 +130,7 @@ class ToolpathForm {
     /// Calculation edit boxes (T-0257): a numeric entry starting with `=` is evaluated by
     /// `calculate` (units of the form) and its text is kept, field id -> text; the field's value in
     /// the definition is the result. `fields()` shows the kept text for such a field.
-    const std::map<std::string, std::string>& expressions() const { return expressions_; }
+    const std::map<std::string, std::string>& expressions() const { return definition_.expressions; }
     /// The expression of field `id`, or empty.
     std::string expression(const std::string& id) const;
     /// Document variables the kept expressions name (sorted, unique).
@@ -161,6 +161,9 @@ class ToolpathForm {
     // --- Result ------------------------------------------------------------------------------
     /// The definition the form holds (always the core's params; may still be incomplete, see
     /// `problems`).
+    /// Chamfer only: re-evaluates a kept cut depth calculation so the width follows a changed angle
+    /// (the angle comes from the tool or its own box). Called by the form itself; public for tests.
+    void rederiveChamfer();
     const ToolpathDefinition& definition() const { return definition_; }
     /// What must be fixed before a toolpath can be calculated (no tool, no depth, ...); the core
     /// operation reports further problems with the vectors at calculation time.
@@ -180,7 +183,6 @@ class ToolpathForm {
     ToolpathDefinition definition_;
     document::Units units_;
     ToolSummary toolSummary_;
-    std::map<std::string, std::string> expressions_;
 };
 
 }  // namespace carvetto::viewmodel

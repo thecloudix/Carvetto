@@ -108,6 +108,10 @@ class ToolpathsPanel : public QWidget {
     void openAddForm(document::ToolpathOperation operation);
     void openEditForm(document::ToolpathId id);
 
+    /// Recalculates, in the background, the toolpaths whose calculation boxes name document variables
+    /// (after a variable edit; T-0271). One undo step, separate from the variable edit.
+    void recalculateBound();
+
    private:
     enum class Kind { Add, Edit, Recalculate, RecalculateAll };
     struct Pending {

@@ -77,6 +77,7 @@ Calculation calculate(std::string_view text, document::Units units) {
         ctx.width /= 25.4;
         ctx.height /= 25.4;
         ctx.thickness /= 25.4;
+        ctx.feet = 12.0;  // a foot in inch display units
     }
     const document::ExpressionResult res = document::evaluateExpression(trimView(text), *env.variables, ctx);
     out.usedVariables = res.usedVariables;

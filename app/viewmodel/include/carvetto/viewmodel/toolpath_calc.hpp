@@ -43,6 +43,8 @@ struct ToolpathDefinition {
     std::vector<document::ToolSource> clearanceTools;
     /// The vectors it machines.
     VectorSelector selector;
+    /// Calculation edit boxes (T-0257, T-0271): field id -> the `=...` text; stored in the records.
+    std::map<std::string, std::string> expressions;
 
     document::ToolpathOperation operation() const { return static_cast<document::ToolpathOperation>(params.index()); }
     /// The toolpath name of the parameters.

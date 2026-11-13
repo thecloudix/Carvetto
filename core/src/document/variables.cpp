@@ -311,7 +311,7 @@ class Parser {
         double v = primary();
         while (!failed_ && peek('\'')) {
             ++pos_;
-            v *= 304.8;
+            v *= ctx_.feet;
         }
         return v;
     }

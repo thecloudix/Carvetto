@@ -1,4 +1,5 @@
 #include "node_edit_menu.hpp"
+#include "variable_menu.hpp"
 
 #include <QAction>
 #include <QCheckBox>
@@ -37,6 +38,8 @@ NodePropertiesDialog::NodePropertiesDialog(document::Units units, std::optional<
     const QString suffix = QString::fromUtf8(document::unitSuffix(units).data());
     x_ = new QLineEdit(this);
     y_ = new QLineEdit(this);
+    attachVariableMenu(x_);
+    attachVariableMenu(y_);
     if (current.has_value()) {
         x_->setText(QString::fromStdString(viewmodel::formatLength(current->x, units)));
         y_->setText(QString::fromStdString(viewmodel::formatLength(current->y, units)));

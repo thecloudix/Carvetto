@@ -141,6 +141,9 @@ void VariablesDialog::report(const viewmodel::VariableEdit& result) {
     if (result.ok && onEdited) {
         onEdited();
     }
+    if (result.ok && result.recalculationPending && onRecalculate) {
+        onRecalculate();
+    }
 }
 
 QString VariablesDialog::message() const {
@@ -162,7 +165,9 @@ QString VariablesDialog::selectedName() const {
 void VariablesDialog::deleteSelected() {
     const QString name = selectedName();
     if (name.isEmpty()) {
-        report(viewmodel::VariableEdit{false, "select a variable first", 0, 0, 0, {}});
+        viewmodel::VariableEdit none;
+        none.message = "select a variable first";
+        report(none);
         return;
     }
     report(model_.remove(name.toStdString()));
@@ -171,7 +176,9 @@ void VariablesDialog::deleteSelected() {
 void VariablesDialog::renameSelected() {
     const QString name = selectedName();
     if (name.isEmpty()) {
-        report(viewmodel::VariableEdit{false, "select a variable first", 0, 0, 0, {}});
+        viewmodel::VariableEdit none;
+        none.message = "select a variable first";
+        report(none);
         return;
     }
     bool ok = false;

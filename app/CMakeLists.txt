@@ -79,6 +79,8 @@ qt_add_executable(carvetto
   src/keepout_panel.hpp
   src/vector_ops_menu.cpp
   src/vector_ops_menu.hpp
+  src/variable_menu.cpp
+  src/variable_menu.hpp
   src/variables_dialog.cpp
   src/variables_dialog.hpp
   src/variables_self_test.cpp

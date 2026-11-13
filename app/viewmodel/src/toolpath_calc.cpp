@@ -635,6 +635,7 @@ document::ToolpathRecord makeRecord(const ToolpathJob& job, toolpath::Toolpath t
     }
     record.selection = job.selection;
     record.sheet = job.sheet;
+    record.expressions = job.definition.expressions;
     record.tool = tp.tool;
     record.toolSource = source;
     record.moves = document::shareMoves(std::move(tp.moves));

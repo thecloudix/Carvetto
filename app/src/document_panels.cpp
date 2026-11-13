@@ -1,4 +1,5 @@
 #include "document_panels.hpp"
+#include "variable_menu.hpp"
 
 #include <QBrush>
 #include <QColor>
@@ -288,6 +289,9 @@ SheetsPanel::SheetsPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
     width_ = new QLineEdit(this);
     height_ = new QLineEdit(this);
     thickness_ = new QLineEdit(this);
+    for (QLineEdit* e : {width_, height_, thickness_}) {
+        attachVariableMenu(e);
+    }
     zZero_ = new QComboBox(this);
     zZero_->addItems({QStringLiteral("Material surface"), QStringLiteral("Machine bed"), QStringLiteral("Cylinder axis")});
     datum_ = new QComboBox(this);

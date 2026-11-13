@@ -1,4 +1,5 @@
 #include "properties_panel.hpp"
+#include "variable_menu.hpp"
 
 #include <QComboBox>
 #include <QFormLayout>
@@ -123,6 +124,9 @@ void PropertiesPanel::rebuild(const viewmodel::PropertyView& view) {
         } else {
             auto* edit = new QLineEdit(qs(f.text), this);
             edit->setEnabled(f.editable);
+            if (f.kind != viewmodel::PropertyKind::Text) {
+                attachVariableMenu(edit);
+            }
             connect(edit, &QLineEdit::editingFinished, this, [this, id]() { commitRow(id); });
             row.editor = row.input = edit;
         }

@@ -103,7 +103,9 @@ VariableEdit VariablesModel::edit(const char* text, Body&& body) {
     undo.beginMacro(text);
     VariableEdit result = body();
     BatchOutcome batch;
-    if (result.ok && session_ != nullptr) {
+    if (result.ok && session_ != nullptr && defer_) {
+        result.recalculationPending = session_->hasBoundToolpaths();
+    } else if (result.ok && session_ != nullptr) {
         batch = session_->recalculateBound();
         result.recalculated = batch.recalculated;
         result.failed = batch.failed;
@@ -120,6 +122,9 @@ VariableEdit VariablesModel::edit(const char* text, Body&& body) {
 }
 
 VariableEdit VariablesModel::set(const std::string& name, const std::string& valueText) {
+    if (busy_ && busy_()) {
+        return refused("wait for the toolpath recalculation to finish");
+    }
     if (doc_ == nullptr) {
         return refused("there is no document");
     }
@@ -142,6 +147,9 @@ VariableEdit VariablesModel::set(const std::string& name, const std::string& val
 }
 
 VariableEdit VariablesModel::remove(const std::string& name) {
+    if (busy_ && busy_()) {
+        return refused("wait for the toolpath recalculation to finish");
+    }
     if (doc_ == nullptr) {
         return refused("there is no document");
     }
@@ -175,6 +183,9 @@ VariableEdit VariablesModel::remove(const std::string& name) {
 }
 
 VariableEdit VariablesModel::rename(const std::string& name, const std::string& newName) {
+    if (busy_ && busy_()) {
+        return refused("wait for the toolpath recalculation to finish");
+    }
     if (doc_ == nullptr) {
         return refused("there is no document");
     }
@@ -209,6 +220,9 @@ VariableEdit VariablesModel::rename(const std::string& name, const std::string& 
 }
 
 VariableEdit VariablesModel::importText(const std::string& text) {
+    if (busy_ && busy_()) {
+        return refused("wait for the toolpath recalculation to finish");
+    }
     if (doc_ == nullptr) {
         return refused("there is no document");
     }

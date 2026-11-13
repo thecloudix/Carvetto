@@ -240,9 +240,9 @@ class ToolpathSession {
     /// Remembers the calculation-edit-box expressions (field id -> text, e.g. "=H/2 - {Margin}") a
     /// toolpath was made with, for `ids` (all toolpaths of one calculation); an empty map forgets
     /// them. Every variable an expression names is held with `DocumentVariables::addReference`, so
-    /// it cannot be deleted while the toolpath exists. Session state, like the vector selector:
-    /// not in the .carv file and not undoable; bindings of toolpaths that no longer exist
-    /// (deleted, or their add undone) are dropped on the next `refreshReferences`.
+    /// it cannot be deleted while the toolpath exists. Stored in the toolpath
+    /// records (T-0271), so they are saved in the .carv file and follow undo/redo; a calculation made
+    /// from a form carries them already, this is for setting them on existing toolpaths (one undo step).
     void bindExpressions(const std::vector<document::ToolpathId>& ids, const std::map<std::string, std::string>& expressions);
     /// The expressions of toolpath `id` (empty when none).
     std::map<std::string, std::string> expressionsOf(document::ToolpathId id) const;
@@ -256,6 +256,13 @@ class ToolpathSession {
     /// variable edit and this call in one `UndoStack` macro). A toolpath whose new values are refused
     /// by its form, or whose calculation fails, keeps its record and is reported.
     BatchOutcome recalculateBound();
+    /// True when some toolpath holds a calculation expression.
+    bool hasBoundToolpaths() const;
+    /// The background form of `recalculateBound` (T-0271): evaluates the expressions of every bound
+    /// toolpath against the current variables and returns one job per toolpath whose values changed
+    /// (run them off the UI thread, then `applyAll`). A toolpath whose expressions are refused is
+    /// reported in `refused` (when given) and skipped.
+    std::vector<ToolpathJob> prepareRecalculateBound(std::vector<ToolpathOutcome>* refused = nullptr);
 
     // --- Job summary -------------------------------------------------------------------------
     JobSummary summary();
@@ -328,7 +335,6 @@ class ToolpathSession {
     std::uint64_t nextGroup_{1};
     std::set<document::ToolpathId> disabled_;
     std::map<document::ToolpathId, std::vector<ToolpathMessage>> messages_;
-    std::map<document::ToolpathId, std::map<std::string, std::string>> expressions_;
     std::vector<std::string> openFormVariables_;
     /// The references this session added to the document's variables (removed again on refresh).
     std::vector<std::string> registeredRefs_;

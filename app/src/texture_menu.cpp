@@ -1,4 +1,5 @@
 #include "texture_menu.hpp"
+#include "variable_menu.hpp"
 
 #include <QAction>
 #include <QApplication>
@@ -72,6 +73,7 @@ TextureDialog::TextureDialog(viewmodel::TextureForm& form, const document::Docum
     for (const viewmodel::NumericField& f : form.fields()) {
         auto* edit = new QLineEdit(qs(f.text), this);
         edit->setObjectName(qs("texture_" + f.id));
+        attachVariableMenu(edit);
         QString label = qs(f.label);
         if (f.kind == viewmodel::FieldKind::Length) label += QStringLiteral(" (") + suffix + QStringLiteral(")");
         if (f.kind == viewmodel::FieldKind::Angle) label += QStringLiteral(" (deg)");

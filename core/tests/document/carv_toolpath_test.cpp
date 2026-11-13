@@ -846,6 +846,51 @@ TEST_CASE("AC1: toolpath records save and load exactly; save -> load -> save is 
     CHECK_FALSE(std::get<toolpath::ProfileParams>(noData.document.toolpaths()[0].params).cuttingData);
 }
 
+TEST_CASE("T-0271: toolpath calculation expressions save, load and are byte-stable (minor 1.8)",
+          "[document][toolpath][carv][expressions]") {
+    Sample s = makeSample();
+    const Bytes plain = save(s.doc);
+    CHECK(contains(memberText(plain, "manifest.json"), "\"minor\": 1"));
+    CHECK_FALSE(contains(memberText(plain, "job.json"), "expressions"));  // other files unchanged
+
+    ToolpathRecord edited = s.doc.toolpaths()[1];
+    edited.expressions = {{"cutDepth", "={Depth}*2"}, {"safeZ", "=T + 5"}};
+    REQUIRE(s.doc.execute(std::make_unique<SetToolpathCommand>(edited)));
+    const Bytes once = save(s.doc);
+    CHECK(contains(memberText(once, "manifest.json"), "\"minor\": 8"));
+    CHECK(contains(memberText(once, "job.json"), "\"expressions\": {\"cutDepth\": \"={Depth}*2\", \"safeZ\": \"=T + 5\"}"));
+    LoadedCarv back = load(once);
+    CHECK(back.formatMinor == 8);
+    requireSameToolpaths(s.doc, back.document);
+    CHECK(back.document.toolpaths()[1].expressions == edited.expressions);
+    CHECK(back.document.toolpaths()[0].expressions.empty());
+    CHECK(save(back.document, back.extras) == once);
+
+    // Expressions take part in record equality and follow undo.
+    CHECK_FALSE(s.doc.toolpaths()[1] == makeSample().doc.toolpaths()[1]);
+    s.doc.undo();
+    CHECK(s.doc.toolpaths()[1].expressions.empty());
+}
+
+TEST_CASE("T-0271: damaged toolpath expressions are reported, never crash",
+          "[document][toolpath][carv][expressions][errors]") {
+    Sample s = makeSample();
+    ToolpathRecord edited = s.doc.toolpaths()[1];
+    edited.expressions = {{"cutDepth", "=1"}};
+    REQUIRE(s.doc.execute(std::make_unique<SetToolpathCommand>(edited)));
+    const Bytes good = save(s.doc);
+    const std::string job = memberText(good, "job.json");
+    const std::string entry = "\"expressions\": {\"cutDepth\": \"=1\"}";
+    REQUIRE(contains(job, entry));
+    for (const std::string& bad : {std::string("\"expressions\": [1]"), std::string("\"expressions\": {\"a\": 5}"),
+                                   std::string("\"expressions\": {\"a\": \"=1\", \"a\": \"=2\"}"),
+                                   "\"expressions\": {\"a\": \"" + std::string(5000, 'x') + "\"}"}) {
+        const CarvError err = loadError(withText(good, "job.json", replaced(job, entry, bad)));
+        CHECK(err.code == Code::InvalidContent);
+        CHECK(contains(err.message, "expressions"));
+    }
+}
+
 TEST_CASE("unknown keys of a toolpath record are preserved; nested ones are dropped",
           "[document][toolpath][carv]") {
     const Sample s = makeSample();

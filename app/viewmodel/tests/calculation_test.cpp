@@ -67,6 +67,46 @@ TEST_CASE("calculation: parseNumber evaluates = expressions and keeps plain pars
     CHECK_FALSE(parseNumber("=(((((", FieldKind::Length, Units::Millimetres).ok);
 }
 
+TEST_CASE("calculation: feet follow the display units (T-0271)", "[calculation]") {
+    Provider p;
+    const Calculation mm = calculate("=2'", Units::Millimetres);
+    REQUIRE(mm.ok);
+    CHECK(mm.value == Approx(609.6));
+    const Calculation in = calculate("=2'", Units::Inches);
+    REQUIRE(in.ok);
+    CHECK(in.value == Approx(24.0));
+    // In inch mode a length entry of 1' is 12 in = 304.8 mm.
+    const ParsedNumber n = parseNumber("=1'", FieldKind::Length, Units::Inches);
+    REQUIRE(n.ok);
+    CHECK(n.value == Approx(304.8));
+}
+
+TEST_CASE("toolpath form: chamfer width and cut depth calculations replace each other (T-0271)",
+          "[calculation][toolpath]") {
+    Provider p;  // Margin = 5
+    ToolpathForm f(document::ToolpathOperation::Chamfer, Units::Millimetres);
+    const auto chamfer = [&]() { return std::get<toolpath::ChamferParams>(f.definition().params); };
+    REQUIRE(f.setField("angle", "45").ok);  // C = W / 2 at 45 degrees
+    REQUIRE(f.setField("width", "={Margin}").ok);
+    CHECK(f.expression("width") == "={Margin}");
+    REQUIRE(f.setField("cutDepth", "={Margin}/2").ok);  // W follows C; the width calculation goes
+    CHECK(f.expression("width").empty());
+    CHECK(f.expression("cutDepth") == "={Margin}/2");
+    CHECK(chamfer().width == Approx(5.0));
+    // A new angle re-derives the width from the kept cut depth calculation.
+    REQUIRE(f.setField("angle", "30").ok);
+    CHECK(f.expression("cutDepth") == "={Margin}/2");
+    CHECK(toolpath::chamferCutDepth(chamfer().angle, chamfer().width) == Approx(2.5));
+    CHECK(chamfer().width != Approx(5.0));
+    // A plain or calculated width replaces the cut depth calculation.
+    REQUIRE(f.setField("width", "3").ok);
+    CHECK(f.expression("cutDepth").empty());
+    REQUIRE(f.setField("cutDepth", "=1").ok);
+    REQUIRE(f.setField("width", "=2*{Margin}").ok);
+    CHECK(f.expression("cutDepth").empty());
+    CHECK(chamfer().width == Approx(10.0));
+}
+
 TEST_CASE("calculation: the newest provider answers and the older one returns when it is cleared", "[calculation]") {
     Provider outer;
     outer.doc.variables().set("Margin", 1.0);

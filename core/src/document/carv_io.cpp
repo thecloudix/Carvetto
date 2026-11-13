@@ -1100,6 +1100,13 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
     if (tp.sheet.value != 0) {
         j["sheet"] = tp.sheet.value;  // T-0261: only double-sided records, so other files are unchanged
     }
+    if (!tp.expressions.empty()) {
+        json expressions = json::object();  // T-0271: only records with calculation entries
+        for (const auto& [field, text] : tp.expressions) {
+            expressions[field] = text;
+        }
+        j["expressions"] = std::move(expressions);
+    }
     if (cacheMember) {
         json moves = json::object();
         moves["count"] = static_cast<std::uint64_t>(tp.moveCount());
@@ -2936,8 +2943,8 @@ struct DecodedToolpath {
     std::uint64_t moveCount{0};
 };
 
-constexpr std::array<std::string_view, 8> kToolpathKeys{"id",        "name", "operation", "params",
-                                                        "selection", "tool", "moves",     "sheet"};
+constexpr std::array<std::string_view, 9> kToolpathKeys{"id",        "name", "operation", "params",
+                                                        "selection", "tool", "moves",     "sheet", "expressions"};
 constexpr std::array<std::string_view, 3> kSelectionKeys{"all", "layers", "objects"};
 constexpr std::array<std::string_view, 11> kToolKeys{"id",          "machine",       "material",   "name",
                                                      "tool_number", "diameter",      "feed_rate",  "plunge_rate",
@@ -3024,6 +3031,27 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
             }
         } else if (k == "sheet") {
             tp.sheet = SheetId{readEntityId(r, f)};  // T-0261
+        } else if (k == "expressions") {
+            // T-0271: field id -> calculation text, at most 64 entries of at most 4096 bytes
+            if (r.peek() != JKind::Object) {
+                fail(f, "must be an object of calculation texts");
+            }
+            r.beginObject();
+            std::string field;
+            while (r.nextKey(field)) {
+                const Path ef = f.field(field);
+                if (tp.expressions.size() >= 64) {
+                    fail(ef, "has too many calculation entries");
+                }
+                std::string text = readStoredString(r, ef);
+                if (text.size() > 4096) {
+                    fail(ef, "is too long");
+                }
+                r.budget().chargeDocument(kCostRecord + field.size() + text.size());
+                if (!tp.expressions.emplace(field, std::move(text)).second) {
+                    fail(f, "duplicate entry '" + field + "'");
+                }
+            }
         } else if (k == "moves") {
             Record moves(r, f, kMovesKeys);
             while (moves.next()) {
@@ -4208,7 +4236,7 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             usesBitmaps = true;
             fontMembers.emplace(bitmapMemberName(b->sourceRef), image->bytes);
         }
-        // The minor is the highest one any used feature requires: toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
+        // The minor is the highest one any used feature requires: toolpath calculation expressions (1.8, T-0271), toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
         // dimension objects (1.3, T-0246), text/fonts (1.2); otherwise the base minor.
         const bool usesKeepOut =
             !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible();
@@ -4220,7 +4248,10 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         });
         const bool hasDimensions = std::any_of(doc.objects().begin(), doc.objects().end(),
                                                [](const auto& kv) { return kv.second.isDimension(); });
-        version["minor"] = usesToolpathSheet ? kCarvFormatMinorToolpathSheet
+        const bool usesExpressions = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(),
+                                                 [](const ToolpathRecord& tp) { return !tp.expressions.empty(); });
+        version["minor"] = usesExpressions      ? kCarvFormatMinorExpressions
+                           : usesToolpathSheet ? kCarvFormatMinorToolpathSheet
                            : usesBitmaps      ? kCarvFormatMinorBitmap
                            : usesDoubleSided  ? kCarvFormatMinorDoubleSided
                            : usesKeepOut    ? kCarvFormatMinorKeepOut

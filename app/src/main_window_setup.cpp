@@ -86,8 +86,11 @@ void MainWindow::variablesDialog() {
         return;
     }
     viewmodel::VariablesModel model(&session_.document(), &toolpaths_->session());
+    model.setDeferRecalculation(true);  // toolpaths recalculate in the background (T-0271)
+    model.setBusyCheck([this]() { return toolpaths_->busy(); });
     VariablesDialog dialog(model, this);
     dialog.onEdited = [this]() { documentChanged(); };
+    dialog.onRecalculate = [this]() { toolpaths_->recalculateBound(); };
     dialog.exec();
 }
 

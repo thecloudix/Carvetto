@@ -56,6 +56,8 @@
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
+#include "variable_menu.hpp"
+#include "carvetto/viewmodel/variables_model.hpp"
 #include "transform_menu.hpp"
 #include "trace_dialog.hpp"
 #include "texture_menu.hpp"
@@ -93,6 +95,21 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     viewmodel::setCalculationProvider(this, [this]() {
         return std::optional<viewmodel::CalculationEnv>(viewmodel::environmentOf(session_.document()));
     });
+    setVariableCreator(this, [this](const std::string& name, const std::string& value) {
+        viewmodel::VariablesModel model(&session_.document(), &toolpaths_->session());
+        model.setDeferRecalculation(true);
+        if (toolpaths_->busy()) {
+            return std::string("wait for the toolpath calculation to finish");
+        }
+        const viewmodel::VariableEdit r = model.set(name, value);
+        if (r.ok) {
+            documentChanged();
+            if (r.recalculationPending) {
+                toolpaths_->recalculateBound();
+            }
+        }
+        return r.ok ? std::string() : r.message;
+    });
     buildCentralArea();
     buildDocks();
     buildMenus();
@@ -112,6 +129,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
 MainWindow::~MainWindow() {
     viewmodel::clearCalculationProvider(this);
+    clearVariableCreator(this);
 }
 
 void MainWindow::buildCentralArea() {
