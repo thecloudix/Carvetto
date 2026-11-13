@@ -457,6 +457,55 @@ TEST_CASE("preview: point budget turns the rest of a frame into one stroke per c
     CHECK(same.stats.pointsOut == full.stats.pointsOut);
 }
 
+TEST_CASE("preview: point budget switches exactly when the running total reaches it", "[preview][lod]") {
+    // Ten separate 2-point strokes (a rapid lifts between them, so no two share a chunk).
+    std::vector<Move> moves;
+    for (int i = 0; i < 10; ++i) {
+        moves.push_back(Move::rapid({i * 10.0, 0, 0}));
+        moves.push_back(Move::feed({i * 10.0 + 2.5, 0, 0}));
+        moves.push_back(Move::feed({i * 10.0 + 5.0, 0, 0}));
+    }
+    document::Document doc;
+    ToolpathSession session(&doc);
+    document::ToolpathRecord rec;
+    rec.name = "strokes";
+    rec.tool.diameter = 3;
+    rec.moves = document::shareMoves(std::move(moves));
+    REQUIRE(doc.execute(std::make_unique<document::AddToolpathCommand>(rec)));
+    PreviewModel model;
+    model.setEnabled(true);
+    model.sync(session);
+    const ViewTransform view = viewOf(1200, 900, 8.0, {50, 0});
+
+    PreviewDrawOptions opt;
+    opt.classVisible.fill(false);
+    opt.classVisible[static_cast<std::size_t>(MoveClass::Feed)] = true;
+    const PreviewDrawList full = model.draw(view, opt);
+    const std::size_t n = full.stats.chunksDrawn;
+    REQUIRE(n >= 3);
+    REQUIRE(full.stats.pointsOut == 3 * n);  // every chunk is a plain three-point polyline
+    // Budget 3k: the first k chunks are drawn normally (the running total first reaches 3k after
+    // them), the rest are coarse two-point strokes.
+    for (std::size_t k = 1; k < n; ++k) {
+        opt.maxPointsOut = 3 * k;
+        const PreviewDrawList l = model.draw(view, opt);
+        CHECK(l.stats.chunksCoarse == n - k);
+        CHECK(l.stats.pointsOut == 3 * k + 2 * (n - k));
+        // One below: the running total 3k - 1 is not reached after k - 1 chunks (3k - 3), but is after k.
+        opt.maxPointsOut = 3 * k - 1;
+        CHECK(model.draw(view, opt).stats.chunksCoarse == n - k);
+        // One above: k chunks leave the total at 3k < 3k + 1, so one more is drawn normally.
+        opt.maxPointsOut = 3 * k + 1;
+        const PreviewDrawList up = model.draw(view, opt);
+        CHECK(up.stats.chunksCoarse == n - k - 1);
+        CHECK(up.stats.pointsOut == 3 * (k + 1) + 2 * (n - k - 1));
+    }
+    opt.maxPointsOut = 3 * n;  // reached only after the last chunk: nothing is coarse
+    CHECK(model.draw(view, opt).stats.chunksCoarse == 0);
+    opt.maxPointsOut = 1;  // the first chunk is drawn (total 0 < 1), the rest are coarse
+    CHECK(model.draw(view, opt).stats.chunksCoarse == n - 1);
+}
+
 // --- time readout -------------------------------------------------------------------------------
 
 TEST_CASE("time readout: durations", "[readout]") {
