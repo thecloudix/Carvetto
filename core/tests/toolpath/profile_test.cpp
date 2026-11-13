@@ -3996,7 +3996,7 @@ struct FloodScene {
     int vbitDeg{0};
 };
 
-FloodScene loadFloodScene(const std::string& text) {
+FloodScene loadFloodScene(const std::string& text, bool leadsOff = true) {
     FloodScene f;
     f.d = readScene(text, f.cs, f.p, f.vbitDeg);
     f.tool = test::endMill(f.d);
@@ -4004,10 +4004,12 @@ FloodScene loadFloodScene(const std::string& text) {
         f.tool.type = tooling::ToolType::VBit;
         f.tool.includedAngle = f.vbitDeg * geometry::kPi / 180.0;
     }
-    f.p.leads.type = LeadType::None;
-    f.p.leads.overcut = 0.0;
-    f.p.leads.leadOut = false;
-    f.p.ramp.onLeadIn = false;
+    if (leadsOff) {
+        f.p.leads.type = LeadType::None;
+        f.p.leads.overcut = 0.0;
+        f.p.leads.leadOut = false;
+        f.p.ramp.onLeadIn = false;
+    }
     return f;
 }
 
@@ -4173,6 +4175,174 @@ TEST_CASE("Loose pieces (T-0177 a): the same, a part held by 3D tabs of a 90 deg
     REQUIRE(r.ok());
     CHECK(floodOf(f, r).empty());
     CHECK(reportedAreas(r).empty());
+}
+
+TEST_CASE("Loose pieces (T-0252): the tapers of a V-bit's 3D-tab ramps are the cone's real discs, at both ends of a raised stretch", "[toolpath][profile][tabs][vbit]") {
+    // Hand-built (Inside, V-bit 60 deg D10, 3D tabs, a square in a round vector, leads off): the
+    // piece between the two cuts is held by no kept tab, and it touches the ramps of a raised
+    // stretch. Its area is the flood's only if each ramp's disc is banded at its true radius,
+    // which grows from 0 at the raised stretch (the ramp that closes towards the stretch, and the
+    // one that opens from it): a radius of 0 everywhere (570.15, one piece too big), without the
+    // closing ramp (558.94) or without the opening one (557.14) all miss the flood's 567.49.
+    FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0.0p+0 0x0.0p+0 0x1.4000000000000p+4 0x0.0p+0\n"
+         "L 0x1.4000000000000p+4 0x0.0p+0 0x1.4000000000000p+4 0x1.4000000000000p+4\n"
+         "L 0x1.4000000000000p+4 0x1.4000000000000p+4 0x0.0p+0 0x1.4000000000000p+4\n"
+         "L 0x0.0p+0 0x1.4000000000000p+4 0x0.0p+0 0x0.0p+0\n"
+         "C 1\n"
+         "A 0x1.4000000000000p+3 0x1.4000000000000p+3 0x1.581b6de7927c7p+4 0x0.0p+0 0x1.921fb54442d18p+2 0\n"
+         "P 0x1.4000000000000p+3 60 0x0.0p+0 1 1 0x0.0p+0 0x1.4b2503fac4878p+2 0x1.4b2503fac4878p+2 0x0.0p+0 0x1.4000000000000p+2 0 0x0.0p+0 0 1 0x1.6ae6d4243932cp+2 0x1.964a07f5890f0p+1 1 3 0x1.4000000000000p+4 0x0.0p+0 0 1 0x0.0p+0 0 0x1.4000000000000p+2 0 0 0x1.3333333333333p-2 0x1.4000000000000p+2 0x1.0000000000000p-1 0x1.8000000000000p+1 0 0x1.0000000000000p-1 1 0 0x0.0p+0 0x0.0p+0 0x0.0p+0 0 0 0 0 0 0 0 2\n"
+         "K 1 1\n"
+        );
+    REQUIRE(f.p.tabs.threeD);
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    const std::vector<double> flood = floodOf(f, r);
+    const std::vector<double> got = reportedAreas(r);
+    REQUIRE(flood.size() == 3);
+    REQUIRE(got.size() == flood.size());
+    for (std::size_t i = 0; i < got.size(); ++i) {
+        CHECK(std::fabs(got[i] - flood[i]) <= 1.0);
+    }
+}
+
+TEST_CASE("Loose pieces (T-0252): zero-radius ramp tapers would close a channel the tool leaves", "[toolpath][profile][tabs][vbit]") {
+    // Hand-built (Inside, V-bit 60 deg D8, 3D tabs, leads off): nothing is free in the flood, and with
+    // the ramps banded as nothing (radius 0 along them) a 0.26 mm2 piece was reported.
+    FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0.0p+0 0x0.0p+0 0x1.8000000000000p+4 0x0.0p+0\n"
+         "L 0x1.8000000000000p+4 0x0.0p+0 0x1.8000000000000p+4 0x1.8000000000000p+4\n"
+         "L 0x1.8000000000000p+4 0x1.8000000000000p+4 0x0.0p+0 0x1.8000000000000p+4\n"
+         "L 0x0.0p+0 0x1.8000000000000p+4 0x0.0p+0 0x0.0p+0\n"
+         "C 1\n"
+         "A 0x1.8000000000000p+3 0x1.8000000000000p+3 0x1.200acbd3f65fbp+4 0x0.0p+0 0x1.921fb54442d18p+2 0\n"
+         "P 0x1.0000000000000p+3 60 0x0.0p+0 2 1 0x0.0p+0 0x1.1c2c598a5e36ap+2 0x1.1c2c598a5e36ap+2 0x0.0p+0 0x1.4000000000000p+2 0 0x0.0p+0 0 1 0x1.6c3399b3d34b4p+2 0x1.3858b314bc6d3p+1 1 3 0x1.4000000000000p+4 0x0.0p+0 0 1 0x0.0p+0 0 0x1.4000000000000p+2 0 0 0x1.3333333333333p-2 0x1.4000000000000p+2 0x1.0000000000000p-1 0x1.8000000000000p+1 0 0x1.0000000000000p-1 1 0 0x0.0p+0 0x0.0p+0 0x0.0p+0 0 0 0 0 0 0 0 2\n"
+         "K 0 0\n"
+        );
+    REQUIRE(f.p.tabs.threeD);
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    CHECK(floodOf(f, r).empty());
+    CHECK(reportedAreas(r).empty());
+}
+
+TEST_CASE("Loose pieces (T-0252, T-0177 g): a lead-out that cuts the tab layer seals a piece off, end mill", "[toolpath][profile][tabs]") {
+    // m0_291002_11 (On, end mill 3.175 mm, tabs, leads on): the lead-out arc cuts the tab layer and
+    // encloses 4.75 mm2 of material with the cuts round it. Nothing was reported (the search had no
+    // lead moves); with the lead-out off, or leads off, nothing is free.
+    const std::string text =
+         "C 1\n"
+         "L -0x1.89de0b37cc2d3p+3 -0x1.4325a9bffb01bp+2 0x1.58cc7b7a6ad4ap+2 -0x1.4325a9bffb01bp+2\n"
+         "L 0x1.58cc7b7a6ad4ap+2 -0x1.4325a9bffb01bp+2 0x1.58cc7b7a6ad4ap+2 0x1.89de0b37cc2d3p+3\n"
+         "L 0x1.58cc7b7a6ad4ap+2 0x1.89de0b37cc2d3p+3 -0x1.89de0b37cc2d3p+3 0x1.89de0b37cc2d3p+3\n"
+         "L -0x1.89de0b37cc2d3p+3 0x1.89de0b37cc2d3p+3 -0x1.89de0b37cc2d3p+3 -0x1.4325a9bffb01bp+2\n"
+         "C 1\n"
+         "A 0x1.44b2f08719ad6p+4 -0x1.96210579aa246p+1 0x1.1fbe76e57ca26p+3 -0x1.3762a9fdb67acp-1 -0x1.44470ac4d532dp+1 0\n"
+         "L 0x1.9d3fa8705d87dp+3 -0x1.09f0cd785f8f7p+3 0x1.bac60cd60496ep+4 -0x1.09f0cd785f8f8p+3\n"
+         "P 0x1.9666666666666p+1 0 0x1.ccc9bc7d0988p-3 2 1 0x0p+0 0x1.4433879fcf312p+2 0x1.06e5203571ddfp+1 0x0p+0 0x1.4p+2 0 0x1.5d5d34f3f14cbp-1 1 1 0x1.91c4e18a7dba3p+1 0x1.de573b7feeec6p+1 1 6 0x1.7ac1db0aca799p+5 0x0p+0 1 0 0x0p+0 1 0x1.1e67a041fed64p+5 0 0 0x1.cd07aec39af04p-4 0x1.ae7a77ff4e3f7p+0 0x1.f3c6ff239cbf4p-3 0x1.05cc78b3db73p+3 2 0x1.18eefa7d6b257p+0 1 0 0x1.5b806630e3988p+1 0x0p+0 1 1 0 0 0 0 -0x1.e6efdbed68c08p+2 0x1.efea39210c0bp+3 0x1p+1\n"
+         "K 0 0\n"
+        ;
+    FloodScene f = loadFloodScene(text, false);
+    REQUIRE(f.p.leads.type != LeadType::None);
+    REQUIRE(f.p.leads.leadOut);
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    const std::vector<double> flood = floodOf(f, r);
+    const std::vector<double> got = reportedAreas(r);
+    REQUIRE(flood.size() == 1);
+    REQUIRE(got.size() == 1);
+    CHECK(std::fabs(got[0] - flood[0]) <= 0.1);
+    f.p.leads.leadOut = false;
+    const ProfileResult noOut = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(noOut.ok());
+    CHECK(floodOf(f, noOut).empty());
+    CHECK(reportedAreas(noOut).empty());
+    FloodScene off = loadFloodScene(text);  // leads off
+    const ProfileResult none = profileToolpath(off.cs, off.tool, off.p);
+    REQUIRE(none.ok());
+    CHECK(floodOf(off, none).empty());
+    CHECK(reportedAreas(none).empty());
+}
+
+TEST_CASE("Loose pieces (T-0252, T-0177 g): a lead-out of a V-bit seals a piece off", "[toolpath][profile][tabs][vbit]") {
+    // m1_12_60 (On, V-bit 60 deg D6, leads on): a 45.4 mm2 piece sealed by the lead-out was missed
+    // (the 23.6 mm2 one beside it was found); the cone's disc along the lead is what bands it.
+    FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L -0x1.20d3133926849p+3 -0x1.20d3133926849p+3 0x1.945ab48335ecdp+3 -0x1.20d3133926849p+3\n"
+         "L 0x1.945ab48335ecdp+3 -0x1.20d3133926849p+3 0x1.945ab48335ecdp+3 0x1.945ab48335ecdp+3\n"
+         "L 0x1.945ab48335ecdp+3 0x1.945ab48335ecdp+3 0x1.459943c3b64fbp+2 0x1.945ab48335ecdp+3\n"
+         "L 0x1.459943c3b64fbp+2 0x1.945ab48335ecdp+3 0x1.459943c3b64fbp+2 -0x1.7a2804be5dfccp+0\n"
+         "L 0x1.459943c3b64fbp+2 -0x1.7a2804be5dfccp+0 -0x1.7a2804be5dfccp+0 -0x1.7a2804be5dfccp+0\n"
+         "L -0x1.7a2804be5dfccp+0 -0x1.7a2804be5dfccp+0 -0x1.7a2804be5dfccp+0 0x1.945ab48335ecdp+3\n"
+         "L -0x1.7a2804be5dfccp+0 0x1.945ab48335ecdp+3 -0x1.20d3133926849p+3 0x1.945ab48335ecdp+3\n"
+         "L -0x1.20d3133926849p+3 0x1.945ab48335ecdp+3 -0x1.20d3133926849p+3 -0x1.20d3133926849p+3\n"
+         "C 1\n"
+         "L 0x1.d4a12cddbf07cp+5 -0x1.8b8c623096d7ep+1 0x1.fff99c960b7bp+5 0x1.151b11369e3p-5\n"
+         "L 0x1.fff99c960b7bp+5 0x1.151b11369e3p-5 0x1.f7c9a9164ae52p+5 0x1.27302efbf34c8p+2\n"
+         "L 0x1.f7c9a9164ae52p+5 0x1.27302efbf34c8p+2 0x1.c5ed25b43e159p+5 0x1.48742751e140fp+2\n"
+         "L 0x1.c5ed25b43e159p+5 0x1.48742751e140fp+2 0x1.b71fec0809c1ap+5 0x1.0856ff3912752p+3\n"
+         "L 0x1.b71fec0809c1ap+5 0x1.0856ff3912752p+3 0x1.cb8072ad3784p+5 0x1.bf20cf47b9532p+3\n"
+         "L 0x1.cb8072ad3784p+5 0x1.bf20cf47b9532p+3 0x1.af5946478768p+5 0x1.11345c6c3ee9cp+4\n"
+         "L 0x1.af5946478768p+5 0x1.11345c6c3ee9cp+4 0x1.8490df07bcea2p+5 0x1.baa25575728e6p+3\n"
+         "L 0x1.8490df07bcea2p+5 0x1.baa25575728e6p+3 0x1.69e13f8c52b19p+5 0x1.e8d390158d51ap+3\n"
+         "L 0x1.69e13f8c52b19p+5 0x1.e8d390158d51ap+3 0x1.5f8154007742ap+5 0x1.564eab9ab608p+4\n"
+         "L 0x1.5f8154007742ap+5 0x1.564eab9ab608p+4 0x1.3a23d3e650e7ap+5 0x1.5d5f151471524p+4\n"
+         "L 0x1.3a23d3e650e7ap+5 0x1.5d5f151471524p+4 0x1.26c6fae94ca59p+5 0x1.01196e26371bfp+4\n"
+         "L 0x1.26c6fae94ca59p+5 0x1.01196e26371bfp+4 0x1.0a6668404f1dbp+5 0x1.e8d390158d51ap+3\n"
+         "L 0x1.0a6668404f1dbp+5 0x1.e8d390158d51ap+3 0x1.ca790648fd45ap+4 0x1.376a3ebf3ae6bp+4\n"
+         "L 0x1.ca790648fd45ap+4 0x1.376a3ebf3ae6bp+4 0x1.89dcc30a34ceap+4 0x1.11345c6c3ee9cp+4\n"
+         "L 0x1.89dcc30a34ceap+4 0x1.11345c6c3ee9cp+4 0x1.a0c4df685eba8p+4 0x1.5f95d6a3ba388p+3\n"
+         "L 0x1.a0c4df685eba8p+4 0x1.5f95d6a3ba388p+3 0x1.7a4f7789301b4p+4 0x1.0856ff3912752p+3\n"
+         "L 0x1.7a4f7789301b4p+4 0x1.0856ff3912752p+3 0x1.16cbb24308a1ap+4 0x1.1d5fc1f366bc6p+3\n"
+         "L 0x1.16cbb24308a1ap+4 0x1.1d5fc1f366bc6p+3 0x1.f1f7fad95ba8ap+3 0x1.27302efbf34cbp+2\n"
+         "L 0x1.f1f7fad95ba8ap+3 0x1.27302efbf34cbp+2 0x1.44c6040964e7cp+4 0x1.0e82397a838a8p-1\n"
+         "L 0x1.44c6040964e7cp+4 0x1.0e82397a838a8p-1 0x1.3f4cf5ddc58fp+4 -0x1.8b8c623096d79p+1\n"
+         "L 0x1.3f4cf5ddc58fp+4 -0x1.8b8c623096d79p+1 0x1.d1382cda5950ep+3 -0x1.8db6985304144p+2\n"
+         "L 0x1.d1382cda5950ep+3 -0x1.8db6985304144p+2 0x1.f1f7fad95ba88p+3 -0x1.595e489645122p+3\n"
+         "L 0x1.f1f7fad95ba88p+3 -0x1.595e489645122p+3 0x1.5cb50430c7736p+4 -0x1.6a0044c13c0c8p+3\n"
+         "L 0x1.5cb50430c7736p+4 -0x1.6a0044c13c0c8p+3 0x1.7a4f7789301b4p+4 -0x1.ce1d30515de1p+3\n"
+         "L 0x1.7a4f7789301b4p+4 -0x1.ce1d30515de1p+3 0x1.518e6a3ed4969p+4 -0x1.42738030025f9p+4\n"
+         "L 0x1.518e6a3ed4969p+4 -0x1.42738030025f9p+4 0x1.89dcc30a34ce8p+4 -0x1.741774f8649fbp+4\n"
+         "L 0x1.89dcc30a34ce8p+4 -0x1.741774f8649fbp+4 0x1.df6d9189c9ca4p+4 -0x1.40344346defd3p+4\n"
+         "L 0x1.df6d9189c9ca4p+4 -0x1.40344346defd3p+4 0x1.0a6668404f1dbp+5 -0x1.574ce096ec5edp+4\n"
+         "L 0x1.0a6668404f1dbp+5 -0x1.574ce096ec5edp+4 0x1.14c653cc2a8cap+5 -0x1.b931c426dbbe1p+4\n"
+         "L 0x1.14c653cc2a8cap+5 -0x1.b931c426dbbe1p+4 0x1.3a23d3e650e79p+5 -0x1.c0422da097084p+4\n"
+         "L 0x1.3a23d3e650e79p+5 -0x1.c0422da097084p+4 0x1.4d80ace35529bp+5 -0x1.63fc86b25cd1fp+4\n"
+         "L 0x1.4d80ace35529bp+5 -0x1.63fc86b25cd1fp+4 0x1.69e13f8c52b18p+5 -0x1.574ce096ec5edp+4\n"
+         "L 0x1.69e13f8c52b18p+5 -0x1.574ce096ec5edp+4 0x1.8f0b24a8232c6p+5 -0x1.9a4d574b609cbp+4\n"
+         "L 0x1.8f0b24a8232c6p+5 -0x1.9a4d574b609cbp+4 0x1.af5946478767fp+5 -0x1.741774f8649fdp+4\n"
+         "L 0x1.af5946478767fp+5 -0x1.741774f8649fdp+4 0x1.a3e538187272p+5 -0x1.12ae03de02d25p+4\n"
+         "L 0x1.a3e538187272p+5 -0x1.12ae03de02d25p+4 0x1.b71fec0809c1ap+5 -0x1.ce1d30515de14p+3\n"
+         "L 0x1.b71fec0809c1ap+5 -0x1.ce1d30515de14p+3 0x1.e8e1ceab1d7e7p+5 -0x1.e325f30bb2286p+3\n"
+         "L 0x1.e8e1ceab1d7e7p+5 -0x1.e325f30bb2286p+3 0x1.f7c9a9164ae52p+5 -0x1.595e489645126p+3\n"
+         "L 0x1.f7c9a9164ae52p+5 -0x1.595e489645126p+3 0x1.d1e4a5c7ef5b6p+5 -0x1.ad5ca95fe7495p+2\n"
+         "L 0x1.d1e4a5c7ef5b6p+5 -0x1.ad5ca95fe7495p+2 0x1.d4a12cddbf07cp+5 -0x1.8b8c623096d7ep+1\n"
+         "P 0x1.8p+2 60 -0x1.87c9293ed9acap-8 0 1 0x0p+0 0x1.6be9e96916b7cp+0 0x1.5e970b8577baap+2 0x1.159c3d0199b4fp-2 0x1.4p+2 1 0x1.8934912a8c99p-4 0 1 0x1.57db35f71e6bdp-2 0x1.0df2af5cb5dddp+0 0 1 0x1.f865ea0cd0f5fp+4 0x0p+0 1 0 0x0p+0 0 0x1.3b9f62757357p+4 1 0 0x1.b84f043ada0e2p-2 0x1.d87babc8f5744p+3 0x1.4ee71316ace79p-1 0x1.2abb538ca21bep+2 1 0x1.cd5eddfa4a164p-3 1 0 0x0p+0 0x0p+0 2 7 0 1 0 1 0x1.932d486eca138p+4 -0x1.7d2494fe8a846p+4 0x1p+1\n"
+         "K 0 0\n"
+        , false);
+    REQUIRE(f.p.leads.leadOut);
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    const std::vector<double> flood = floodOf(f, r);
+    const std::vector<double> got = reportedAreas(r);
+    REQUIRE(flood.size() == 2);
+    REQUIRE(got.size() == 2);
+    // The areas are pinned (the flood's, by the harness's exact oracle: 23.615 and 45.427; the
+    // test's own flood is a few tenths away): a lead-out banded at the bit's full radius gives 44.56,
+    // at half the cone's disc 46.62.
+    CHECK(std::fabs(got[0] - 23.58) <= 0.15);
+    CHECK(std::fabs(got[1] - 45.37) <= 0.15);
+    for (std::size_t i = 0; i < 2; ++i) {
+        CHECK(std::fabs(got[i] - flood[i]) <= 0.5);
+    }
+    f.p.leads.leadOut = false;
+    const ProfileResult noOut = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(noOut.ok());
+    CHECK(floodOf(f, noOut).size() == 1);
+    CHECK(reportedAreas(noOut).size() == 1);
 }
 
 TEST_CASE("Loose pieces (T-0156): sweep scenes, sided tabs, whole scene", "[toolpath][profile][tabs]") {

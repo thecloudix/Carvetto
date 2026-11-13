@@ -46,6 +46,7 @@
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
 #include "main_window.hpp"
+#include "job_sheet_self_test.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
 #include "dimension_menu.hpp"
@@ -739,6 +740,36 @@ int runSelfTest() {
             textDoc.findObject(textId)->asVector()->contours.size() != contours) {
             return fail("converting text to curves failed");
         }
+        // Caret and selection (T-0230): Left moves the caret, typing inserts there, Shift+Left selects
+        // and typing replaces, Delete removes forward, and a tool switch keeps the typed text.
+        clickOnCanvas(canvas, {150.0, 150.0});
+        sendText(canvas, QStringLiteral("TOI"));
+        sendKey(canvas, Qt::Key_Left);
+        sendText(canvas, QStringLiteral("T"));
+        if (canvas->tools().textEditor().draftParams()->text != "TOTI" || canvas->tools().textEditor().caretOffset() != 3) {
+            return fail("Left then typing did not insert at the caret");
+        }
+        sendKey(canvas, Qt::Key_Left, Qt::ShiftModifier);
+        if (!canvas->tools().textEditor().selectionRange().has_value() ||
+            canvas->tools().preview().textSelectionMm.empty() || !canvas->tools().preview().textCaretMm.has_value() ||
+            !canvas->tools().preview().textFrameMm.has_value()) {
+            return fail("Shift+Left did not select, or the text frame / caret / selection are not previewed");
+        }
+        sendText(canvas, QStringLiteral("I"));
+        sendKey(canvas, Qt::Key_Home, Qt::ControlModifier);
+        sendKey(canvas, Qt::Key_Delete);
+        if (canvas->tools().textEditor().draftParams()->text != "OII") {
+            return fail("selection replace or Delete did not edit the text");
+        }
+        window.selectTool(viewmodel::ToolKind::Rectangle);
+        if (!canvas->tools().textEditor().hasDraft()) {
+            return fail("switching tools discarded the typed text");
+        }
+        window.selectTool(viewmodel::ToolKind::Text);
+        if (!canvas->tools().textEditor().hasDraft() || canvas->tools().textEditor().draftParams()->text != "OII") {
+            return fail("returning to the Text tool did not resume the typed text");
+        }
+        sendKey(canvas, Qt::Key_Escape);
         // Replace the document while a draft is open: nothing of the old one may be touched.
         clickOnCanvas(canvas, {100.0, 100.0});
         sendText(canvas, QStringLiteral("I"));
@@ -1008,6 +1039,11 @@ int runSelfTest() {
 
     // 13. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
     if (const std::string why = keepOutSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 14. Create Job Sheet (T-0259): HTML, text and PDF files, hostile paths refused.
+    if (const std::string why = jobSheetSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

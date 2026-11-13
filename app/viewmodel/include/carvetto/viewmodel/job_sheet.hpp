@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <vector>
@@ -27,7 +28,9 @@
 // tool table `kJobSheetMaxToolRows` rows, each tool lists at most `kJobSheetMaxToolpathsPerTool`
 // toolpath names and at most `kJobSheetMaxWarnings` warnings are shown; what is left out is
 // replaced by an "N more" notice. The layout thumbnail draws at most `kJobSheetMaxToolpathRows`
-// rectangles. The output is thus bounded independently of the job size (well below 1 MB).
+// rectangles and says so when toolpaths are left out. `makeJobSheet` itself stores only the capped
+// rows (with the real counts), so the sheet and the output are bounded independently of the job
+// size: the measured worst case is about 740 KB of HTML (every string at its limit).
 
 namespace carvetto::viewmodel {
 
@@ -60,6 +63,8 @@ struct JobSheetTool {
     double diameterMm{0.0};
     /// Names of the included toolpaths using the tool, in job order.
     std::vector<std::string> toolpaths;
+    /// How many included toolpaths use the tool (`toolpaths` is capped; 0 = as stored).
+    std::size_t toolpathsTotal{0};
 };
 
 struct JobSheet {
@@ -78,6 +83,12 @@ struct JobSheet {
     JobSummary summary;
     std::vector<JobSheetTool> tools;
     std::vector<JobSheetToolpath> toolpaths;
+    // `makeJobSheet` stores at most the capped number of rows; these give the real counts
+    // (0 = as stored) so the "N more" notices stay right.
+    std::size_t toolsTotal{0};
+    std::size_t toolpathsTotal{0};
+    /// Included toolpaths with bounds that were dropped from `toolpaths` and so are not in the thumbnail.
+    std::size_t thumbnailOmitted{0};
 };
 
 /// The sheet of `doc` with `summary` (from `ToolpathSession::summary()` on the same document).
@@ -95,5 +106,32 @@ std::string escapeHtml(const std::string& text);
 std::string renderJobSheetHtml(const JobSheet& sheet);
 /// Plain text, UTF-8, LF line ends.
 std::string renderJobSheetText(const JobSheet& sheet);
+
+/// Pdf is only a name for the app layer (`checkJobSheetPath`, extension); `writeJobSheet` refuses it.
+enum class JobSheetFormat { Html, Text, Pdf };
+
+/// ".html", ".txt" or ".pdf".
+const char* jobSheetExtension(JobSheetFormat format);
+
+/// A safe default file name for `title`: sanitised stem (or "job-sheet") plus the extension.
+std::string defaultJobSheetFileName(const std::string& title, JobSheetFormat format);
+
+/// Empty when `path` is acceptable as a job sheet target, else why not: empty path, a ".."
+/// component, a file name that is not its own sanitised form (control characters, separators,
+/// reserved device names, trailing dots), an extension other than the format's (".htm" also
+/// for HTML), or a path that is an existing directory.
+std::string checkJobSheetPath(const std::filesystem::path& path, JobSheetFormat format);
+
+struct JobSheetWriteResult {
+    bool ok{false};
+    std::string error;
+    std::filesystem::path written;
+};
+
+/// Renders `sheet` in `format` and writes it to `path` through `writeOutput` (staged under a
+/// random name, moved into place atomically, never through a link). Refuses hostile paths
+/// (`checkJobSheetPath`) and, without `overwrite`, an existing file.
+JobSheetWriteResult writeJobSheet(const JobSheet& sheet, JobSheetFormat format, const std::filesystem::path& path,
+                                  bool overwrite);
 
 }  // namespace carvetto::viewmodel

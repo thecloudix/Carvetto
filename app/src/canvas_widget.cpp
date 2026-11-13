@@ -501,6 +501,37 @@ void CanvasWidget::paintEvent(QPaintEvent* event) {
     paintOverlay(painter);
 }
 
+// In-canvas text frame, selection highlight and caret of the open text draft (T-0230).
+void CanvasWidget::paintTextFrame(QPainter& painter, const viewmodel::ToolPreview& preview) const {
+    if (preview.textFrameMm.has_value()) {
+        QPen pen(QColor(120, 120, 120));
+        pen.setStyle(Qt::DotLine);
+        pen.setCosmetic(true);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        const QPointF a = toQt(view_.worldToScreen(preview.textFrameMm->min));
+        const QPointF b = toQt(view_.worldToScreen(preview.textFrameMm->max));
+        painter.drawRect(QRectF(a, b).normalized());
+    }
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QBrush(QColor(30, 110, 230, 70)));
+    for (const auto& quad : preview.textSelectionMm) {
+        QPolygonF poly;
+        for (const Vec2& corner : quad) {
+            poly << toQt(view_.worldToScreen(corner));
+        }
+        painter.drawPolygon(poly);
+    }
+    if (preview.textCaretMm.has_value()) {
+        QPen pen(QColor(20, 20, 20));
+        pen.setWidthF(1.5);
+        pen.setCosmetic(true);
+        painter.setPen(pen);
+        painter.drawLine(toQt(view_.worldToScreen(preview.textCaretMm->first)),
+                         toQt(view_.worldToScreen(preview.textCaretMm->second)));
+    }
+}
+
 void CanvasWidget::paintOverlay(QPainter& painter) const {
     if (doc_ == nullptr) {
         return;
@@ -536,6 +567,8 @@ void CanvasWidget::paintOverlay(QPainter& painter) const {
         const QPointF p = toQt(view_.worldToScreen(a));
         painter.drawRect(QRectF(p.x() - 3.0, p.y() - 3.0, 6.0, 6.0));
     }
+
+    paintTextFrame(painter, preview);
 
     if (preview.marqueePx.has_value()) {
         QPen pen(QColor(30, 110, 230));
@@ -815,6 +848,23 @@ void CanvasWidget::keyPressEvent(QKeyEvent* event) {
             textResult = tools_.key(viewmodel::ToolKey::Escape);
         } else if (event->key() == Qt::Key_Backspace) {
             textResult = tools_.key(viewmodel::ToolKey::Backspace);
+        } else if (event->key() == Qt::Key_Delete) {
+            textResult = tools_.key(viewmodel::ToolKey::Delete);
+        } else if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right || event->key() == Qt::Key_Home ||
+                   event->key() == Qt::Key_End) {
+            const bool ctrl = event->modifiers() & Qt::ControlModifier;
+            const bool shift = event->modifiers() & Qt::ShiftModifier;
+            viewmodel::CaretMove move = viewmodel::CaretMove::Left;
+            if (event->key() == Qt::Key_Right) {
+                move = viewmodel::CaretMove::Right;
+            } else if (event->key() == Qt::Key_Home) {
+                move = ctrl ? viewmodel::CaretMove::TextStart : viewmodel::CaretMove::LineStart;
+            } else if (event->key() == Qt::Key_End) {
+                move = ctrl ? viewmodel::CaretMove::TextEnd : viewmodel::CaretMove::LineEnd;
+            }
+            textResult = tools_.moveTextCaret(move, shift);
+        } else if (event->key() == Qt::Key_A && (event->modifiers() & Qt::ControlModifier)) {
+            textResult = tools_.selectAllText();
         } else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
             // Enter is a new line; Ctrl+Enter places the text.
             textResult = (event->modifiers() & Qt::ControlModifier) ? tools_.key(viewmodel::ToolKey::Enter)

@@ -1,11 +1,14 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "carvetto/document/document.hpp"
@@ -51,6 +54,9 @@ struct TextSettings {
     bool kerning{true};
     document::TextMode mode{document::TextMode::Point};
 };
+
+/// Caret movements of the open draft (byte offsets always sit on UTF-8 code point boundaries).
+enum class CaretMove { Left, Right, LineStart, LineEnd, TextStart, TextEnd };
 
 struct TextEditResult {
     bool ok{true};
@@ -105,12 +111,35 @@ class TextEditor {
     bool pressed() const { return pressed_; }
 
     // --- Typing -----------------------------------------------------------------------------
-    /// Appends UTF-8 text to the draft ("\n" is a line/paragraph break, "\r" becomes "\n").
+    /// Inserts UTF-8 text at the caret, replacing the selection ("\n" is a line/paragraph break,
+    /// "\r" becomes "\n"). With the caret at the end this appends.
     TextEditResult insertText(std::string_view utf8);
-    /// Removes the last character (code point) of the draft.
+    /// Removes the selection, or the character (code point) before the caret.
     TextEditResult backspace();
-    /// Replaces the whole text of the draft (a properties text box).
+    /// Removes the selection, or the character (code point) after the caret.
+    TextEditResult deleteForward();
+    /// Replaces the whole text of the draft (a properties text box); the caret goes to the end.
     TextEditResult setText(std::string_view utf8);
+
+    // --- Caret and selection (T-0230) -----------------------------------------------------------
+    /// Byte offset of the caret in the draft text (0 when there is no draft).
+    std::size_t caretOffset() const { return draft_ ? draft_->caret : 0; }
+    /// Selected byte range [first, second), nullopt when nothing is selected.
+    std::optional<std::pair<std::size_t, std::size_t>> selectionRange() const;
+    /// Moves the caret; `extend` keeps the selection anchor (shift held), otherwise it collapses.
+    /// Line moves stop at "\n" boundaries of the text (paragraph lines, not wrapped box lines).
+    TextEditResult moveCaret(CaretMove move, bool extend = false);
+    /// Places the caret at a byte offset (clamped, snapped back to a code point boundary).
+    TextEditResult setCaret(std::size_t byteOffset, bool extend = false);
+    TextEditResult selectAll();
+    /// Caret segment (bottom, top) in millimetres for painting. Point-mode drafts only; nullopt for
+    /// box and curve text (their caret is not drawn yet).
+    const std::optional<std::pair<geometry::Vec2, geometry::Vec2>>& caretSegmentMm() const { return caretSeg_; }
+    /// Selection highlight quads (4 corners each, millimetres), Point-mode drafts only.
+    const std::vector<std::array<geometry::Vec2, 4>>& selectionQuadsMm() const { return selQuads_; }
+    /// The text frame of the draft in millimetres: the box in Box mode, else the bounds of the glyph
+    /// outlines grown by a quarter em; nullopt when there is no draft or nothing to frame.
+    std::optional<geometry::Box2> frameMm() const;
 
     // --- Draft ------------------------------------------------------------------------------
     bool hasDraft() const { return draft_.has_value(); }
@@ -141,6 +170,11 @@ class TextEditor {
     TextEditResult commit();
     /// Drops the draft; the document is untouched.
     void cancel();
+    /// Forgets a pointer gesture in progress (a box being dragged) but keeps the draft.
+    void abandonGesture() {
+        pressed_ = false;
+        dragging_ = false;
+    }
 
     /// One undo step: converts the selected text objects to curves (the glyph contours stay).
     TextEditResult convertSelectionToCurves();
@@ -149,6 +183,8 @@ class TextEditor {
     struct Draft {
         document::TextParams params;
         document::ObjectId editing{};
+        std::size_t caret{0};   ///< Byte offset of the caret.
+        std::size_t anchor{0};  ///< Selection anchor; equals `caret` when nothing is selected.
     };
     struct Pending;
 
@@ -158,6 +194,8 @@ class TextEditor {
     TextEditResult begin(document::TextParams params, document::ObjectId editing);
     TextEditResult startFor(geometry::Vec2 anchorMm);
     void clearDraft();
+    void refreshCaretGeometry();
+    TextEditResult replaceRange(std::size_t from, std::size_t to, std::string_view with);
     bool loadFont(const std::string& key, const std::vector<std::uint8_t>& bytes, std::string* message);
 
     document::Document* doc_{nullptr};
@@ -171,6 +209,8 @@ class TextEditor {
     std::vector<geometry::Contour> preview_;
     std::string previewMessage_;
     bool overflow_{false};
+    std::optional<std::pair<geometry::Vec2, geometry::Vec2>> caretSeg_;
+    std::vector<std::array<geometry::Vec2, 4>> selQuads_;
 
     bool pressed_{false};
     geometry::Vec2 pressPx_{};

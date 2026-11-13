@@ -532,3 +532,36 @@ TEST_CASE("tileToolpaths: tile numbering counts only tiles with cuts", "[tiling]
     CHECK(r.tiles[0].column == 0);
     CHECK(r.tiles[1].column == 4);  // the second tile with cuts is "tile 2", at grid column 4
 }
+
+TEST_CASE("tileToolpaths: more than 10000 tiles is refused (the cap is 10000, not 100000)", "[tiling]") {
+    TileSpec s;
+    s.width = 1;
+    s.height = 1;
+    // 101 x 101 = 10201 tiles: just over the cap.
+    const TilingResult over = tileToolpaths({line(0, 0, 101, 101)}, s);
+    CHECK_FALSE(over.ok());
+    CHECK(over.tiles.empty());
+    // 100 x 100 = 10000 tiles: exactly at the cap is accepted.
+    const TilingResult at = tileToolpaths({line(0, 0, 100, 100)}, s);
+    CHECK(at.ok());
+    // A 30000 x 1 strip grid (more than the cap in one direction) is refused as well.
+    CHECK_FALSE(tileToolpaths({line(0, 0, 30000, 0.5)}, s).ok());
+}
+
+TEST_CASE("clipToolpath: arc pieces shorter than 1e-6 are dropped, longer kept", "[tiling]") {
+    const Box2 r{{0, 0}, {10, 10}};
+    // Circle of radius 5 about the origin, counter-clockwise from just below the rectangle (y < 0) up
+    // to angle `end`: the clipped piece (angle 0 .. end) is 5 * end long.
+    const auto arcCut = [&](double end) {
+        const double rad = 5.0;
+        const double a0 = -0.1;
+        Toolpath tp;
+        tp.append(Move::rapid({rad * std::cos(a0), rad * std::sin(a0), 5.0}));
+        tp.append(Move::plunge({rad * std::cos(a0), rad * std::sin(a0), -1.0}));
+        tp.append(Move::arcCCW({rad * std::cos(end), rad * std::sin(end), -1.0}, {0.0, 0.0}));
+        return clipToolpath(tp, r, 5.0);
+    };
+    CHECK(arcCut(1e-7).isEmpty());   // piece 5e-7 long
+    CHECK_FALSE(arcCut(1e-6).isEmpty());  // piece 5e-6 long
+    CHECK_FALSE(arcCut(0.5).isEmpty());
+}

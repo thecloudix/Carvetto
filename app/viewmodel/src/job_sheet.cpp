@@ -1,12 +1,17 @@
 #include "carvetto/viewmodel/job_sheet.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <system_error>
 #include <locale>
 #include <map>
 #include <sstream>
+#include <tuple>
 
 #include "carvetto/document/units.hpp"
+#include "carvetto/viewmodel/save_toolpaths.hpp"
+#include "carvetto/viewmodel/file_session.hpp"
 
 namespace carvetto::viewmodel {
 
@@ -79,6 +84,24 @@ struct Fmt {
     }
     std::string rpm(double r) const { return r > 0.0 ? fixed(r, 0) + " rpm" : std::string("not set"); }
 };
+
+/// Included toolpaths the layout thumbnail leaves out (more than `kJobSheetMaxToolpathRows`, or
+/// dropped from the stored sheet).
+std::size_t thumbnailOmitted(const JobSheet& s) {
+    std::size_t drawable = 0;
+    for (const JobSheetToolpath& t : s.toolpaths) {
+        if (t.included && !t.bounds.isEmpty()) {
+            ++drawable;
+        }
+    }
+    return s.thumbnailOmitted + (drawable > kJobSheetMaxToolpathRows ? drawable - kJobSheetMaxToolpathRows : 0);
+}
+
+/// Count of rows the sheet really has (the stored vector can be shorter than the job's).
+std::size_t total(std::size_t stored, std::size_t declared) { return std::max(stored, declared); }
+
+std::size_t shownTools(const JobSheet& s) { return std::min(s.tools.size(), kJobSheetMaxToolRows); }
+std::size_t shownToolpaths(const JobSheet& s) { return std::min(s.toolpaths.size(), kJobSheetMaxToolpathRows); }
 
 std::string layoutSvg(const JobSheet& s) {
     geometry::Box2 view = s.material;
@@ -172,10 +195,16 @@ JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, 
     for (const document::ToolpathRecord& r : doc.toolpaths()) {
         records[r.id] = &r;
     }
+    // Tool table keyed on (number, name, diameter): a logarithmic lookup however many tools there are.
+    // The value is the index in s.tools, or npos for a tool beyond the stored rows (still counted).
+    constexpr std::size_t npos = static_cast<std::size_t>(-1);
+    using ToolIdent = std::tuple<int, std::string, bool, double>;
+    std::map<ToolIdent, std::size_t> toolIndex;
+    s.toolpathsTotal = summary.entries.size();
     for (const ToolpathSummaryEntry& e : summary.entries) {
         JobSheetToolpath t;
-        t.name = e.name;
-        t.toolName = e.toolName;
+        t.name = clipJobSheetText(e.name);
+        t.toolName = clipJobSheetText(e.toolName);
         t.toolNumber = e.toolNumber;
         t.included = e.included;
         t.moves = e.moves;
@@ -184,23 +213,38 @@ JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, 
         const auto it = records.find(e.id);
         if (it != records.end()) {
             const document::ToolpathRecord& r = *it->second;
-            t.operation = operationName(r.operation());
+            t.operation = clipJobSheetText(operationName(r.operation()));
             t.toolDiameterMm = r.tool.diameter;
             t.feedRateMmPerMin = r.tool.feedRate;
             t.plungeRateMmPerMin = r.tool.plungeRate;
             t.spindleRpm = r.tool.spindleSpeed;
         }
         if (e.included) {
-            auto tool = std::find_if(s.tools.begin(), s.tools.end(), [&](const JobSheetTool& x) {
-                return x.name == t.toolName && x.number == t.toolNumber && x.diameterMm == t.toolDiameterMm;
-            });
-            if (tool == s.tools.end()) {
-                s.tools.push_back({t.toolName, t.toolNumber, t.toolDiameterMm, {}});
-                tool = s.tools.end() - 1;
+            const double d = t.toolDiameterMm;
+            const ToolIdent key{t.toolNumber, t.toolName, std::isnan(d), std::isnan(d) ? 0.0 : d};
+            auto found = toolIndex.find(key);
+            if (found == toolIndex.end()) {
+                std::size_t idx = npos;
+                if (s.tools.size() < kJobSheetMaxToolRows) {
+                    idx = s.tools.size();
+                    s.tools.push_back({t.toolName, t.toolNumber, t.toolDiameterMm, {}, 0});
+                }
+                found = toolIndex.emplace(key, idx).first;
+                ++s.toolsTotal;
             }
-            tool->toolpaths.push_back(t.name);
+            if (found->second != npos) {
+                JobSheetTool& tool = s.tools[found->second];
+                if (tool.toolpaths.size() < kJobSheetMaxToolpathsPerTool) {
+                    tool.toolpaths.push_back(t.name);
+                }
+                ++tool.toolpathsTotal;
+            }
         }
-        s.toolpaths.push_back(std::move(t));
+        if (s.toolpaths.size() < kJobSheetMaxToolpathRows) {
+            s.toolpaths.push_back(std::move(t));
+        } else if (e.included && !e.bounds.isEmpty()) {
+            ++s.thumbnailOmitted;
+        }
     }
     return s;
 }
@@ -239,13 +283,15 @@ std::string renderJobSheetText(const JobSheet& s) {
         for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
             o += (i ? ", " : "") + textSafe(t.toolpaths[i]);
         }
-        if (t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
-            o += ", ... and " + std::to_string(t.toolpaths.size() - kJobSheetMaxToolpathsPerTool) + " more";
+        if (total(t.toolpaths.size(), t.toolpathsTotal) > t.toolpaths.size() ||
+            t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
+            o += ", ... and " + std::to_string(total(t.toolpaths.size(), t.toolpathsTotal) -
+                                               std::min(t.toolpaths.size(), kJobSheetMaxToolpathsPerTool)) + " more";
         }
         o += "\n";
     }
-    if (s.tools.size() > kJobSheetMaxToolRows) {
-        o += "  ... and " + std::to_string(s.tools.size() - kJobSheetMaxToolRows) + " more tools\n";
+    if (shownTools(s) < total(s.tools.size(), s.toolsTotal)) {
+        o += "  ... and " + std::to_string(total(s.tools.size(), s.toolsTotal) - shownTools(s)) + " more tools\n";
     }
     o += "\nToolpaths list\n";
     if (s.toolpaths.empty()) {
@@ -265,8 +311,9 @@ std::string renderJobSheetText(const JobSheet& s) {
         o += "     Time: " + (t.included ? formatDuration(t.time.total()) : std::string("-")) + ", moves: " +
              std::to_string(t.moves) + "\n";
     }
-    if (s.toolpaths.size() > kJobSheetMaxToolpathRows) {
-        o += "... and " + std::to_string(s.toolpaths.size() - kJobSheetMaxToolpathRows) + " more toolpaths\n";
+    if (shownToolpaths(s) < total(s.toolpaths.size(), s.toolpathsTotal)) {
+        o += "... and " + std::to_string(total(s.toolpaths.size(), s.toolpathsTotal) - shownToolpaths(s)) +
+             " more toolpaths\n";
     }
     return o;
 }
@@ -283,6 +330,10 @@ std::string renderJobSheetHtml(const JobSheet& s) {
     const std::string svg = layoutSvg(s);
     if (!svg.empty()) {
         o += "<h2>Job layout</h2>\n" + svg;
+        if (const std::size_t omitted = thumbnailOmitted(s); omitted > 0) {
+            o += "<p>The layout shows the first " + std::to_string(kJobSheetMaxToolpathRows) + " toolpaths; " +
+                 std::to_string(omitted) + " more are not drawn.</p>\n";
+        }
     }
     o += "<h2>Material setup</h2>\n<table>\n";
     o += "<tr><th>Type</th>" + td(s.jobType) + "</tr>\n";
@@ -315,14 +366,16 @@ std::string renderJobSheetHtml(const JobSheet& s) {
         for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
             names += (i ? ", " : "") + e(t.toolpaths[i]);
         }
-        if (t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
-            names += ", ... and " + std::to_string(t.toolpaths.size() - kJobSheetMaxToolpathsPerTool) + " more";
+        if (total(t.toolpaths.size(), t.toolpathsTotal) > t.toolpaths.size() ||
+            t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
+            names += ", ... and " + std::to_string(total(t.toolpaths.size(), t.toolpathsTotal) -
+                                                   std::min(t.toolpaths.size(), kJobSheetMaxToolpathsPerTool)) + " more";
         }
         o += "<tr>" + td("T" + std::to_string(t.number)) + td(t.name) + td(f.len(t.diameterMm)) + "<td>" + names +
              "</td></tr>\n";
     }
-    if (s.tools.size() > kJobSheetMaxToolRows) {
-        o += "<tr><td colspan=\"4\">... and " + std::to_string(s.tools.size() - kJobSheetMaxToolRows) +
+    if (shownTools(s) < total(s.tools.size(), s.toolsTotal)) {
+        o += "<tr><td colspan=\"4\">... and " + std::to_string(total(s.tools.size(), s.toolsTotal) - shownTools(s)) +
              " more tools</td></tr>\n";
     }
     o += "</table>\n<h2>Toolpaths list</h2>\n<table>\n<tr><th>#</th><th>Name</th><th>Operation</th><th>Tool</th>"
@@ -339,11 +392,83 @@ std::string renderJobSheetHtml(const JobSheet& s) {
              "</tr>\n";
     }
     o += "</table>\n";
-    if (s.toolpaths.size() > kJobSheetMaxToolpathRows) {
-        o += "<p>... and " + std::to_string(s.toolpaths.size() - kJobSheetMaxToolpathRows) + " more toolpaths</p>\n";
+    if (shownToolpaths(s) < total(s.toolpaths.size(), s.toolpathsTotal)) {
+        o += "<p>... and " + std::to_string(total(s.toolpaths.size(), s.toolpathsTotal) - shownToolpaths(s)) +
+             " more toolpaths</p>\n";
     }
     o += "</body>\n</html>\n";
     return o;
+}
+
+const char* jobSheetExtension(JobSheetFormat format) {
+    switch (format) {
+        case JobSheetFormat::Html: return ".html";
+        case JobSheetFormat::Text: return ".txt";
+        case JobSheetFormat::Pdf: return ".pdf";
+    }
+    return ".txt";
+}
+
+std::string defaultJobSheetFileName(const std::string& title, JobSheetFormat format) {
+    std::string stem = sanitizeFileStem(title);
+    if (stem.empty()) {
+        stem = "job-sheet";
+    }
+    return stem + jobSheetExtension(format);
+}
+
+std::string checkJobSheetPath(const std::filesystem::path& path, JobSheetFormat format) {
+    if (path.empty() || !path.has_filename()) {
+        return "no file name given";
+    }
+    for (const std::filesystem::path& part : path) {
+        if (part == "..") {
+            return "the path contains '..'";
+        }
+    }
+    const std::string stem = pathToUtf8(path.stem());
+    std::string ext = pathToUtf8(path.extension());
+    for (char& c : ext) {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    const bool extOk = format == JobSheetFormat::Html ? (ext == ".html" || ext == ".htm") : ext == jobSheetExtension(format);
+    if (!extOk) {
+        return std::string("the file name must end in ") + jobSheetExtension(format);
+    }
+    if (stem.empty() || sanitizeFileStem(stem) != stem) {
+        return "the file name has characters that are not allowed";
+    }
+    std::error_code ec;
+    if (std::filesystem::is_directory(path, ec)) {
+        return "the path is a folder";
+    }
+    return {};
+}
+
+JobSheetWriteResult writeJobSheet(const JobSheet& sheet, JobSheetFormat format, const std::filesystem::path& path,
+                                  bool overwrite) {
+    JobSheetWriteResult res;
+    if (format == JobSheetFormat::Pdf) {
+        res.error = "PDF is written by the app (Qt printing), not here";
+        return res;
+    }
+    res.error = checkJobSheetPath(path, format);
+    if (!res.error.empty()) {
+        return res;
+    }
+    SaveOutput out;
+    out.ok = true;
+    OutputFile f;
+    f.path = path;
+    f.text = format == JobSheetFormat::Html ? renderJobSheetHtml(sheet) : renderJobSheetText(sheet);
+    out.files.push_back(std::move(f));
+    const WriteResult w = writeOutput(out, overwrite);
+    res.ok = w.ok;
+    res.error = w.error;
+    if (w.ok && !w.written.empty()) {
+        res.written = w.written.front();
+    }
+    return res;
 }
 
 }  // namespace carvetto::viewmodel

@@ -11,6 +11,7 @@
 #include "carvetto/document/text_commands.hpp"
 #include "carvetto/document/text_object.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
+#include "carvetto/text/layout.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 
 namespace carvetto::viewmodel {
@@ -26,6 +27,33 @@ TextEditResult refused(std::string message) {
     r.ok = false;
     r.message = std::move(message);
     return r;
+}
+
+// Largest code point boundary <= i.
+std::size_t floorBoundary(const std::string& t, std::size_t i) {
+    i = std::min(i, t.size());
+    while (i > 0 && i < t.size() && (static_cast<unsigned char>(t[i]) & 0xC0U) == 0x80U) {
+        --i;
+    }
+    return i;
+}
+
+std::size_t prevBoundary(const std::string& t, std::size_t i) {
+    if (i == 0) {
+        return 0;
+    }
+    return floorBoundary(t, i - 1);
+}
+
+std::size_t nextBoundary(const std::string& t, std::size_t i) {
+    if (i >= t.size()) {
+        return t.size();
+    }
+    ++i;
+    while (i < t.size() && (static_cast<unsigned char>(t[i]) & 0xC0U) == 0x80U) {
+        ++i;
+    }
+    return i;
 }
 
 TextEditResult changed() {
@@ -76,6 +104,8 @@ void TextEditor::clearDraft() {
     previewMessage_.clear();
     overflow_ = false;
     dragging_ = false;
+    caretSeg_.reset();
+    selQuads_.clear();
 }
 
 void TextEditor::cancel() {
@@ -217,6 +247,8 @@ TextEditResult TextEditor::relayout() {
     preview_.clear();
     previewMessage_.clear();
     overflow_ = false;
+    caretSeg_.reset();
+    selQuads_.clear();
     if (!draft_) {
         return changed();
     }
@@ -236,11 +268,106 @@ TextEditResult TextEditor::relayout() {
     }
     preview_ = std::move(b.contours);
     overflow_ = b.overflow;
+    refreshCaretGeometry();
     TextEditResult r = changed();
     if (b.missingGlyphs) {
         r.message = "the font has no glyph for some characters";
     }
     return r;
+}
+
+void TextEditor::refreshCaretGeometry() {
+    caretSeg_.reset();
+    selQuads_.clear();
+    const text::Font* f = font();
+    if (!draft_ || f == nullptr || draft_->params.mode != TextMode::Point) {
+        return;
+    }
+    const TextParams& p = draft_->params;
+    text::TextStyle style;
+    style.sizeMm = p.sizeMm;
+    style.alignment = p.align == document::TextAlign::Centre  ? text::Alignment::Centre
+                      : p.align == document::TextAlign::Right ? text::Alignment::Right
+                                                               : text::Alignment::Left;
+    style.letterSpacingMm = p.letterSpacingMm;
+    style.lineSpacing = p.lineSpacing;
+    style.kerning = p.kerning;
+    const text::TextLayout l = text::layoutText(*f, p.text, style);
+    if (!l.ok()) {
+        return;
+    }
+    const double upm = std::max(1, f->metrics().unitsPerEm);
+    const double up = f->metrics().ascender / upm * p.sizeMm;
+    const double down = -f->metrics().descender / upm * p.sizeMm;
+    const auto lineOf = [&](std::size_t offset) {
+        std::size_t line = 0;
+        for (std::size_t i = 0; i < offset && i < p.text.size(); ++i) {
+            line += p.text[i] == '\n' ? 1U : 0U;
+        }
+        return line;
+    };
+    // x of the caret position `offset` on its line (left edge of the first glyph at or after it).
+    const auto xAt = [&](std::size_t offset, std::size_t line) -> std::optional<Vec2> {
+        if (l.lines.empty()) {
+            return Vec2{0.0, 0.0};
+        }
+        const text::TextLine& tl = l.lines[std::min(line, l.lines.size() - 1)];
+        for (std::size_t i = 0; i < tl.glyphCount; ++i) {
+            const text::PlacedGlyph& g = l.glyphs[tl.firstGlyph + i];
+            if (g.cluster >= offset) {
+                return Vec2{g.origin.x, tl.baselineStart.y};
+            }
+        }
+        return Vec2{tl.baselineStart.x + tl.widthMm, tl.baselineStart.y};
+    };
+    const std::size_t caretLine = lineOf(draft_->caret);
+    if (const auto c = xAt(draft_->caret, caretLine)) {
+        caretSeg_ = std::make_pair(p.placement.apply({c->x, c->y - down}), p.placement.apply({c->x, c->y + up}));
+    }
+    if (draft_->caret != draft_->anchor) {
+        const std::size_t a = std::min(draft_->caret, draft_->anchor);
+        const std::size_t b = std::max(draft_->caret, draft_->anchor);
+        const std::size_t la = lineOf(a);
+        const std::size_t lb = lineOf(b);
+        for (std::size_t line = la; line <= lb; ++line) {
+            // Line start and end offsets in the text.
+            std::size_t lineBegin = 0;
+            for (std::size_t n = 0; n < line; ++n) {
+                lineBegin = p.text.find('\n', lineBegin) + 1;
+            }
+            std::size_t lineEnd = p.text.find('\n', lineBegin);
+            if (lineEnd == std::string::npos) {
+                lineEnd = p.text.size();
+            }
+            const auto from = xAt(line == la ? a : lineBegin, line);
+            const auto to = line == lb ? xAt(b, line) : xAt(lineEnd, line);
+            if (!from || !to || to->x < from->x) {
+                continue;
+            }
+            const double y0 = from->y - down;
+            const double y1 = from->y + up;
+            selQuads_.push_back({p.placement.apply({from->x, y0}), p.placement.apply({to->x, y0}),
+                                 p.placement.apply({to->x, y1}), p.placement.apply({from->x, y1})});
+        }
+    }
+}
+
+std::optional<geometry::Box2> TextEditor::frameMm() const {
+    if (!draft_) {
+        return std::nullopt;
+    }
+    if (draft_->params.mode == TextMode::Box) {
+        return boxMm();
+    }
+    geometry::Box2 b;
+    for (const geometry::Contour& c : preview_) {
+        b.expand(c.bounds());
+    }
+    if (b.isEmpty()) {
+        return std::nullopt;
+    }
+    const double g = draft_->params.sizeMm * 0.25;
+    return geometry::Box2({b.min.x - g, b.min.y - g}, {b.max.x + g, b.max.y + g});
 }
 
 std::optional<geometry::Box2> TextEditor::boxMm() const {
@@ -259,7 +386,8 @@ std::optional<geometry::Box2> TextEditor::dragBoxMm() const {
 }
 
 TextEditResult TextEditor::begin(TextParams params, document::ObjectId editing) {
-    draft_ = Draft{std::move(params), editing};
+    draft_ = Draft{std::move(params), editing, 0, 0};
+    draft_->caret = draft_->anchor = draft_->params.text.size();
     return relayout();
 }
 
@@ -408,31 +536,55 @@ TextEditResult TextEditor::release(Vec2 px, Vec2 snappedMm) {
 
 // --- Typing ---------------------------------------------------------------------------------
 
+std::optional<std::pair<std::size_t, std::size_t>> TextEditor::selectionRange() const {
+    if (!draft_ || draft_->caret == draft_->anchor) {
+        return std::nullopt;
+    }
+    return std::make_pair(std::min(draft_->caret, draft_->anchor), std::max(draft_->caret, draft_->anchor));
+}
+
+// Replaces [from, to) of the draft text with `with` and puts the caret after it.
+TextEditResult TextEditor::replaceRange(std::size_t from, std::size_t to, std::string_view with) {
+    std::string& t = draft_->params.text;
+    if (t.size() - (to - from) + with.size() > document::kMaxTextObjectBytes) {
+        return refused("the text is too long");
+    }
+    t.replace(from, to - from, with);
+    draft_->caret = draft_->anchor = from + with.size();
+    return relayout();
+}
+
 TextEditResult TextEditor::insertText(std::string_view utf8) {
     if (!draft_) {
         return refused("click on the canvas to place text first");
     }
     const std::string add = sanitize(utf8);
-    if (draft_->params.text.size() + add.size() > document::kMaxTextObjectBytes) {
-        return refused("the text is too long");
-    }
-    draft_->params.text += add;
-    return relayout();
+    const auto sel = selectionRange();
+    const std::size_t from = sel ? sel->first : draft_->caret;
+    const std::size_t to = sel ? sel->second : draft_->caret;
+    return replaceRange(from, to, add);
 }
 
 TextEditResult TextEditor::backspace() {
     if (!draft_) {
         return refused("there is no text being edited");
     }
-    std::string& t = draft_->params.text;
-    if (!t.empty()) {
-        std::size_t i = t.size() - 1;
-        while (i > 0 && (static_cast<unsigned char>(t[i]) & 0xC0U) == 0x80U) {
-            --i;
-        }
-        t.erase(i);
+    if (const auto sel = selectionRange()) {
+        return replaceRange(sel->first, sel->second, {});
     }
-    return relayout();
+    const std::size_t from = prevBoundary(draft_->params.text, draft_->caret);
+    return replaceRange(from, draft_->caret, {});
+}
+
+TextEditResult TextEditor::deleteForward() {
+    if (!draft_) {
+        return refused("there is no text being edited");
+    }
+    if (const auto sel = selectionRange()) {
+        return replaceRange(sel->first, sel->second, {});
+    }
+    const std::size_t to = nextBoundary(draft_->params.text, draft_->caret);
+    return replaceRange(draft_->caret, to, {});
 }
 
 TextEditResult TextEditor::setText(std::string_view utf8) {
@@ -444,7 +596,65 @@ TextEditResult TextEditor::setText(std::string_view utf8) {
         return refused("the text is too long");
     }
     draft_->params.text = t;
+    draft_->caret = draft_->anchor = t.size();
     return relayout();
+}
+
+TextEditResult TextEditor::setCaret(std::size_t byteOffset, bool extend) {
+    if (!draft_) {
+        return refused("there is no text being edited");
+    }
+    draft_->caret = floorBoundary(draft_->params.text, byteOffset);
+    if (!extend) {
+        draft_->anchor = draft_->caret;
+    }
+    refreshCaretGeometry();
+    return changed();
+}
+
+TextEditResult TextEditor::moveCaret(CaretMove move, bool extend) {
+    if (!draft_) {
+        return refused("there is no text being edited");
+    }
+    const std::string& t = draft_->params.text;
+    const std::size_t c = draft_->caret;
+    std::size_t to = c;
+    switch (move) {
+        case CaretMove::Left:
+            // Without shift a selection collapses to its near edge instead of moving on.
+            to = (!extend && draft_->anchor != c) ? std::min(c, draft_->anchor) : prevBoundary(t, c);
+            break;
+        case CaretMove::Right:
+            to = (!extend && draft_->anchor != c) ? std::max(c, draft_->anchor) : nextBoundary(t, c);
+            break;
+        case CaretMove::LineStart: {
+            const std::size_t nl = c == 0 ? std::string::npos : t.rfind('\n', c - 1);
+            to = nl == std::string::npos ? 0 : nl + 1;
+            break;
+        }
+        case CaretMove::LineEnd: {
+            const std::size_t nl = t.find('\n', c);
+            to = nl == std::string::npos ? t.size() : nl;
+            break;
+        }
+        case CaretMove::TextStart:
+            to = 0;
+            break;
+        case CaretMove::TextEnd:
+            to = t.size();
+            break;
+    }
+    return setCaret(to, extend);
+}
+
+TextEditResult TextEditor::selectAll() {
+    if (!draft_) {
+        return refused("there is no text being edited");
+    }
+    draft_->anchor = 0;
+    draft_->caret = draft_->params.text.size();
+    refreshCaretGeometry();
+    return changed();
 }
 
 // --- Editing existing text --------------------------------------------------------------------

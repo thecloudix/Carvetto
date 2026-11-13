@@ -98,7 +98,7 @@ struct Modifiers {
     bool alt{false};
 };
 
-enum class ToolKey { Escape, Enter, Backspace, Close };
+enum class ToolKey { Escape, Enter, Backspace, Close, Delete };
 
 /// Persistent tool settings (changing them while a shape is in progress re-computes the preview).
 struct ToolOptions {
@@ -172,6 +172,11 @@ struct ToolPreview {
     std::string message;
     /// Marquee rectangle in screen pixels while the Select tool drags one.
     std::optional<geometry::Box2> marqueePx;
+    /// Text tool (T-0230): the frame of the open draft (millimetres), the caret segment (bottom, top)
+    /// and the selection highlight quads, all in millimetres.
+    std::optional<geometry::Box2> textFrameMm;
+    std::optional<std::pair<geometry::Vec2, geometry::Vec2>> textCaretMm;
+    std::vector<std::array<geometry::Vec2, 4>> textSelectionMm;
 };
 
 class ToolController {
@@ -186,7 +191,9 @@ class ToolController {
     /// The canvas view used to convert pixels (copied; update it on every zoom / pan / resize).
     void setView(const ViewTransform& view);
 
-    /// Switches tool; cancels any shape in progress.
+    /// Switches tool; cancels any shape in progress. An open text draft is kept (T-0230): the typed
+    /// text is neither committed nor lost, and reappears when the Text tool is chosen again.
+    /// Escape in the Text tool, or a document replacement, drops it.
     void setTool(ToolKind tool);
     ToolKind tool() const { return tool_; }
     /// Display units of the document (millimetres without one); numeric entry is in these.
@@ -211,6 +218,9 @@ class ToolController {
     ToolResult key(ToolKey k);
     /// Text tool: types characters (UTF-8) into the open text draft; refused when there is none.
     ToolResult typeText(std::string_view utf8);
+    /// Text tool: moves the caret / extends the selection (shift), or selects all.
+    ToolResult moveTextCaret(CaretMove move, bool extend);
+    ToolResult selectAllText();
 
     // --- State for the overlay --------------------------------------------------------------
     /// True when the tool would act on Escape / Enter / Backspace / Close now (a shape is in
@@ -295,6 +305,7 @@ class ToolController {
     void updatePointer(geometry::Vec2 px, Modifiers mods);
     const SnapIndex& snapIndex();
     ToolResult afterNodeEdit(const NodeEditResult& r);
+    void cancelShapes();  // cancel() without the text draft
     static ToolResult fromText(const TextEditResult& r);
     static ToolResult fromDimension(const DimensionToolResult& r);
     ToolResult dimensionPress(Modifiers mods);

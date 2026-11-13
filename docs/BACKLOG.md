@@ -1004,10 +1004,10 @@ Goal: a Text tool and a text object stored in the native format (font reference/
 ### T-0229 Wire Save Toolpaths dialog to the Toolpaths dock (after T-0221 and T-0224 merge)   [status: wiring done in PR #96; remaining: core/post PostProcessor cancel hook (LOW)]
 The Save Toolpaths dialog (T-0224) posts every calculated toolpath (ids empty) and its machine list is empty (`setMachines` never called). Pass `ToolpathSession::enabledToolpaths()` ids and the machine/tool database machines; test that a disabled toolpath is NOT in the output and stale toolpaths are warned about (offer recalculate). Also: Save Toolpaths cancel/close freeze (PostProcessor::run has no cancel hook; add one in core/post without changing output).
 
-### T-0230 Text follow-ups (from T-0211 verification)   [status: verifying (PR #153: caret/selection, in-canvas frame, keep draft on tool switch). REMAINING: click-to-place caret, Box/Curve caret drawing + Up/Down, live guide link for text on curve, DXF Aligned/Fit, system-font picker, cross-document font paste, font family names in UI, setActiveSheet undo. OWNER questions: IME, bidi, vertical text, CJK font cap]
+### T-0230 Text follow-ups (from T-0211 verification)   [status: partly done — merged #153; remaining: click-to-place caret, Box/Curve caret drawing + Up/Down, live guide link for text on curve, DXF Aligned/Fit, system-font picker, cross-document font paste, font family names in UI, setActiveSheet undo; OWNER: IME, bidi, vertical text, CJK font cap]
 Real starter font (OWNER picks an OFL font; placeholder has ~8 glyphs so DXF text imports as .notdef boxes), caret/selection and in-canvas text frame, live guide link for text on curve (refit when the guide moves), app-level system-font picker that embeds the chosen file, cross-document paste copies fonts, DXF Aligned/Fit modes, IME input, mixed-script (bidi) lines, vertical text, font family names in UI, 8 MiB font cap excludes most CJK fonts (revisit), tool switch mid-draft discards typed text (decide commit vs keep), pre-existing: setActiveSheet is not undoable.
 
-### T-0231 Preview/simulation nits (T-0223 verifier)   [status: in-progress]
+### T-0231 Preview/simulation nits (T-0223 verifier)   [status: verifying (PR for items 2-4 subset); REMAINING: cancellable simulation start (core/simulate cancel/progress hook), first-paint/zoom scan cost, summary cost]
 (1) Test gap: mutant removing the `targetPending` supersede break in the simulation controller survives (the "latest seek wins / abandoned run publishes no frame" test waits for `state == Working`, which `seek()` itself sets; wait for `progress().movesDone > 0` instead). (2) Pathological jobs (500k full-width 280 mm lines, 1M moves): first paint 1.4 s, 2.5-3.8 s per zoom step, simulation start 54 s UI-starved wait — add LOD/cancel for such jobs. (3) Relief raster samples one cell per stride: thin grooves can disappear on large sheets (use min-pooling). (4) Vertical Feed/Rapid moves counted but not drawn; arcs never split (4097 points for r=1e5). (5) ToolpathsPanel summary recompute cost at 1M moves (~160 ms once, cached by move-list identity). (6) Two stale t0221 driver expectations (not repo code).
 
 ### T-0232 CI resilience against GitHub release-download outages   [status: done — merged PR #99; nits T-0234]
@@ -1175,7 +1175,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0252 Profile loose pieces: remaining residuals of T-0177 (b, c, e-l)   [status: in-progress]
+### T-0252 Profile loose pieces: remaining residuals of T-0177 (b, c, e-l)   [status: done — partial, merged #154 (lead-outs modelled; lead-ins and exact capsule-union judge → T-0279)]
 Phase: 1   Module: core/toolpath   Depends on: T-0177   ADR: 0016 §14
 Goal: items left after T-0177 fixed (a) (V-bit 3D-tab ramp bands): (b) miss6_7104_351 knife-edge, six 0.0505 mm pieces below the band slack threshold (~0.055 mm): decide slack vs misses, documented limit acceptable; (e)/(g) lead-in/lead-out moves and plunges are not in the band model (add taper bands like T-0177); (f) 9302_2199 leaves 1 of 3 tabs out (corner-move tab check sweptNow/judgeSidedTab), 9301_2132 threshold knife-edge; (h)(i)(j)(l) see T-0177 coder notes and the T-0156 verifier harness; (l) exact capsule-union tab judge; (c) not reproducible, drop unless a scene reappears. Also add a hand-built scene for the ramp 'closing' direction (taper radius 0 mutant is currently not killed).
 Acceptance criteria:
@@ -1218,7 +1218,7 @@ Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left st
 Acceptance criteria:
   1. A 4000-vertex circle zone routes a blocked rapid within a few seconds CPU in Debug, with the no-rapid-enters-zone guarantee (independent oracle test); byte-identical routes for inputs routed before.
 
-### T-0259 Job sheet: menu action, save/print and PDF (T-0244 follow-up)   [status: in-progress]
+### T-0259 Job sheet: menu action, save/print and PDF (T-0244 follow-up)   [status: done — merged #151 (per-side split → T-0278)]
 Phase: 1   Module: app/src + app/viewmodel   Depends on: T-0244
 Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dialog (atomic write, safe name), open in browser, optional PDF through Qt printing, per-sheet/per-side split once T-0243 lands.
 Acceptance criteria:
@@ -1242,7 +1242,7 @@ Goal: model single/multi-point thread-mill tools in the tool database (S, H, D, 
 Acceptance criteria:
   1. A thread-mill tool saved in the tool DB round-trips (old files still load); the form lists only such tools (and end mills); circles are inserted undoably and removed on undo; tests incl. hostile tool files.
 
-### T-0263 Job sheet nits (T-0244 round-2 verifier)   [status: in-progress]
+### T-0263 Job sheet nits (T-0244 round-2 verifier)   [status: done — merged #151]
 Phase: 1   Module: app/viewmodel   Depends on: T-0244
 Goal: (1) makeJobSheet tool lookup is a linear find_if on full names, quadratic with many distinct tools (5000 distinct 100 KB tool names took 56 s): key a map on (number, name, diameter); (2) header says "well below 1 MB" but the measured worst case is ~740 KB: reword; (3) SVG thumbnail drops toolpaths beyond the 500th without a notice; (4) cap the stored sheet size for huge inputs.
 Acceptance criteria:
@@ -1330,14 +1330,26 @@ Acceptance criteria:
   2. Behaviour unchanged: full ctest, Qt app self-test, MSVC CI green; save/load round trip of the renamed record.
   3. One changelog fragment.
 
-### T-0277 Tiling: test pinning the 10000-tile cap (T-0268 verifier nit)   [status: verifying (PR #152)]
+### T-0277 Tiling: test pinning the 10000-tile cap (T-0268 verifier nit)   [status: done — merged #152]
 Phase: 1   Module: core/toolpath   Depends on: T-0268
 Goal: (also from T-0269: a test asserting a case just above 15000 derived spans, e.g. a 3000-vertex female, is refused, so the cap-40000 mutant is killed.) A mutant restoring the tiling total-tile limit to 100000 passes all tests. Add a test with between 10,001 and 100,000 tiles expecting a refusal; also confirm the kMinPiece 1e-6 -> 1e-8 mutant is killed (verifier left it unchecked).
 Acceptance criteria:
   1. Both mutants fail a test; one changelog fragment; CI green.
 
-### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: ready — LOW]
+### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: in-progress]
 Phase: 1   Module: app/viewmodel   Depends on: T-0259, T-0261
 Goal: The job sheet is a single document for the whole job. For double-sided jobs, produce per-sheet/per-side sections (setup, toolpaths, tools, thumbnail per side) as T-0243/T-0261 now allow; PDF output includes them. Optional: a direct print dialog if the PrintSupport module is acceptable (owner decision).
 Acceptance criteria:
   1. A double-sided job's sheet lists each side with its own toolpaths and zero reference; single-sided output unchanged byte-for-byte; self-test; changelog fragment; CI green.
+
+### T-0279 Profile: exact capsule-union tab judge (T-0252 residuals i, j, l; T-0167 retry)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath   Depends on: T-0252
+Goal: The remaining loose-piece/tab residuals (i, j, l) need an exact capsule-union judge for the tab layer; T-0167's cell-widening attempt failed the acceptance criteria on the U-part family. Design a bounded exact judge (ADR first), with the flood oracle as the reference and mutants killed. Optional: lead-in modelling if a witness scene is ever found; undiagnosed (f) 9302_2199 (1 of 3 tabs left out).
+Acceptance criteria:
+  1. Residuals i, j, l fixed against the flood oracle over >=10k scenes with no new false reports; mutants killed or soundly argued; CI green. Owner may defer this card indefinitely.
+
+### T-0280 Small test gaps from T-0230 / T-0252 verification   [status: in-progress]
+Phase: 1   Module: app/viewmodel + core/toolpath   Depends on: T-0230, T-0252
+Goal: (a) text draft byte-cap on replacement: a mutant ignoring the replaced range survives (add a test filling to the cap with multi-byte characters, select all, replace with same size: must succeed); (b) stale-object test: a draft editing an existing object, tool switch, then deleting that object; (c) T-0252 ramp-taper test tolerance 1.0 mm2 lets single-side radius-0 mutants survive: pin the third area more tightly; (d) ADR-0016 wording: diagnostics reorder rate is 2/10000 with leads off but ~18% with leads on (content identical); the ramp mutants are killed by full-radius banding, not "without the ramp"; (e) T-0231 leftover from verification: none.
+Acceptance criteria:
+  1. Mutants in (a) and (c) fail a test; ADR wording fixed; one changelog fragment; CI green.
