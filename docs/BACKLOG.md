@@ -1293,7 +1293,7 @@ Goal: the T-0226 verifier saw 'selection removal scales near-linearly in every o
 Acceptance criteria:
   1. 40x runs under sustained load pass; synthetic slowdowns still fail the tests; list of what was left and why.
 
-### T-0271 Document variables follow-ups (T-0257 coder)   [status: in-progress]
+### T-0271 Document variables follow-ups (T-0257 coder)   [status: done — merged #143 (item 6 text substitution awaits owner)]
 Phase: 1   Module: core/document + app   Depends on: T-0257
 Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressions' object per toolpath record in job.json, loader/writer, ToolpathRecord field/equality; format minor allocation per the highest-required-minor scheme, ADR) so the expression link and delete protection survive save/load; (2) 'Insert New Document Variable' context menu on all numeric boxes; (3) feet (') conversion respects display units (inch mode); (4) run variable-triggered recalculation off the UI thread; (5) re-derive chamfer linked fields when a sibling holds an expression; (6) {Variable} substitution in text/data-merge if the owner wants it.
 Acceptance criteria:
@@ -1316,7 +1316,7 @@ Acceptance criteria:
   1. Form exposes Max Carving Depth, Stepover Retract, Line Spacing %, Line Angle, strategy (Raster/Hatch/Selected Vectors), invert; generates and previews; recalculates on edit; one undo step.
   2. Record saves/loads; cancel and work cap honoured; changelog fragment; CI green.
 
-### T-0274 Trace Bitmap follow-ups: Pick from 2D View, Bitmap Fading (T-0260 follow-up)   [status: in-progress]
+### T-0274 Trace Bitmap follow-ups: Pick from 2D View, Bitmap Fading (T-0260 follow-up)   [status: done — merged #139]
 Phase: 1   Module: app   Depends on: T-0260
 Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferred (see ADR-0049): "Pick from 2D View" (choose the bitmap object on the canvas) and "Bitmap Fading" (dim the source bitmap while tracing).
 Acceptance criteria:
