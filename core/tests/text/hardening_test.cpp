@@ -1,4 +1,3 @@
-#include <chrono>
 #include <cmath>
 #include <numbers>
 #include <string>
@@ -7,6 +6,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include "../geometry/cpu_time.hpp"
 #include "text_test_util.hpp"
 
 // Verifier round 1 of T-0130: CPU-bound hostile input, environment independence, the OpenType/CFF
@@ -43,14 +43,14 @@ Vec2 anchorOf(const PlacedGlyph& g) {
     return g.origin + g.baselineDir * (g.advance / 2.0);
 }
 
-// Runs `fn`, requires that it finishes within `seconds` (a generous bound for a Debug build; the
-// quadratic implementations this guards against took 8 to 36 s on these inputs).
+// Runs `fn`, requires that it uses at most `seconds` of process CPU time (a generous bound for a
+// Debug build; the quadratic implementations this guards against took 8 to 36 s on these inputs).
+// CPU time, not wall clock, so a loaded CI machine does not fail it.
 template <class Fn>
 void requireFast(double seconds, Fn&& fn) {
-    const auto start = std::chrono::steady_clock::now();
+    const double start = carvetto::test::processCpuSeconds();
     fn();
-    const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - start;
-    CHECK(elapsed.count() < seconds);
+    CHECK(carvetto::test::processCpuSeconds() - start < seconds);
 }
 
 }  // namespace

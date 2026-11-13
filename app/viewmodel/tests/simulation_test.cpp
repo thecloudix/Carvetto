@@ -332,7 +332,8 @@ TEST_CASE("simulation controller: cancel and superseded requests", "[simulation]
     // The latest request wins: seek far, then back to a near one while it is working.
     const std::uint64_t serialBefore = c.frame()->serial;
     c.seek(setup.totalMoves);
-    REQUIRE(waitFor([&] { return c.progress().state == SimState::Working; }));
+    // seek() itself sets Working, so wait for the worker to have advanced past the stopped move.
+    REQUIRE(waitFor([&] { return c.progress().movesDone > p.movesDone; }));
     c.seek(p.movesDone + 3);
     c.setChunkDelayForTest(0);
     REQUIRE(waitReadyAt(c, p.movesDone + 3));

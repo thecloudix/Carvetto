@@ -1,4 +1,7 @@
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <vector>
 #include <variant>
 
 #include <catch2/catch_approx.hpp>
@@ -156,4 +159,38 @@ TEST_CASE("Outline requests are bounded", "[text][outline][hostile]") {
     // Glyph ids beyond the font.
     CHECK(f.outline(8).status == OutlineStatus::LoadFailed);
     CHECK(f.outline(0xFFFFFFFFu).status == OutlineStatus::LoadFailed);
+}
+
+TEST_CASE("Zero-length lines are dropped from outlines", "[text][outline]") {
+    // Patch the font's 'I' (points (100,0) (100,700) (300,700) (300,0)) so its second point sits on the
+    // first: y deltas 0,700,0,-700 become 0,0,700,-700, giving a zero-length edge.
+    std::vector<std::uint8_t> bytes = testutil::fontBytes();
+    const auto be16 = [](std::vector<std::uint8_t>& out, int v) {
+        out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFF));
+        out.push_back(static_cast<std::uint8_t>(v & 0xFF));
+    };
+    std::vector<std::uint8_t> before;
+    std::vector<std::uint8_t> after;
+    for (const int v : {100, 0, 200, 0, 0, 700, 0, -700}) {
+        be16(before, v);
+    }
+    for (const int v : {100, 0, 200, 0, 0, 0, 700, -700}) {
+        be16(after, v);
+    }
+    const auto it = std::search(bytes.begin(), bytes.end(), before.begin(), before.end());
+    REQUIRE(it != bytes.end());
+    std::copy(after.begin(), after.end(), it);
+
+    FontLoad load = Font::load(bytes);
+    REQUIRE(load.ok());
+    const GlyphOutline o = load.font.outline(kI);
+    REQUIRE(o.status == OutlineStatus::Ok);
+    REQUIRE(o.contours.size() == 1);
+    // 4 points make 4 edges; the degenerate one is dropped.
+    CHECK(o.contours[0].spans.size() == 3);
+    for (const geometry::Span& sp : o.contours[0].spans) {
+        const auto* l = std::get_if<LineSpan>(&sp);
+        REQUIRE(l != nullptr);
+        CHECK_FALSE(l->start == l->end);
+    }
 }

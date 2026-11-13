@@ -3325,8 +3325,7 @@ ManifestFile decodeManifest(JsonReader& r) {
     return m;
 }
 
-/// The parsed job.json, before it becomes a Document.
-/// The optional `keepout` record (format 1.3, T-0241).
+/// The optional `keepout` record (format 1.4, T-0241).
 struct KeepOutFile {
     bool present{false};
     double clearance{0.0};
@@ -3334,6 +3333,7 @@ struct KeepOutFile {
     std::vector<KeepOutZone> zones;
 };
 
+/// The parsed job.json, before it becomes a Document.
 struct JobFile {
     Job job;
     KeepOutFile keepOut;

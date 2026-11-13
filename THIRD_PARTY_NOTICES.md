@@ -15,6 +15,7 @@ GPL-compatible licence. Their full licence texts are fetched with the sources at
 | Catch2 | 3.7.1 | Boost Software License 1.0 | Unit tests only (not distributed) |
 | DejaVuSerif.ttf (DejaVu Serif Regular) | 2.37 (`dejavu-fonts-ttf-2.37.tar.bz2`, SHA-256 `fa9ca4d1…17d7`) | Bitstream Vera Fonts licence + DejaVu public-domain changes (`data/fonts/DEJAVU-LICENSE.txt`); redistribution allowed, GPL-compatible as a separate font data file | Starter font of the Text tool and DXF text, compiled into the app |
 | CarvettoTest-Regular.ttf | 1.0 | SIL Open Font License 1.1 (original Carvetto work, `core/tests/fixtures/text/OFL.txt`) | Text tests only (not distributed) |
+| CarvettoTestCFF-Regular.otf | 1.0 | SIL Open Font License 1.1 (original Carvetto work, `core/tests/fixtures/text/OFL.txt`) | Text tests only (not distributed) |
 
 **Required credit (FreeType License, clause 2):** "Portions of this software are copyright © The
 FreeType Project (www.freetype.org). All rights reserved." Binary distributions must include this line
