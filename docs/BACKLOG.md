@@ -1341,3 +1341,9 @@ Phase: 1   Module: app/viewmodel   Depends on: T-0259, T-0261
 Goal: The job sheet is a single document for the whole job. For double-sided jobs, produce per-sheet/per-side sections (setup, toolpaths, tools, thumbnail per side) as T-0243/T-0261 now allow; PDF output includes them. Optional: a direct print dialog if the PrintSupport module is acceptable (owner decision).
 Acceptance criteria:
   1. A double-sided job's sheet lists each side with its own toolpaths and zero reference; single-sided output unchanged byte-for-byte; self-test; changelog fragment; CI green.
+
+### T-0279 Profile: exact capsule-union tab judge (T-0252 residuals i, j, l; T-0167 retry)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath   Depends on: T-0252
+Goal: The remaining loose-piece/tab residuals (i, j, l) need an exact capsule-union judge for the tab layer; T-0167's cell-widening attempt failed the acceptance criteria on the U-part family. Design a bounded exact judge (ADR first), with the flood oracle as the reference and mutants killed. Optional: lead-in modelling if a witness scene is ever found; undiagnosed (f) 9302_2199 (1 of 3 tabs left out).
+Acceptance criteria:
+  1. Residuals i, j, l fixed against the flood oracle over >=10k scenes with no new false reports; mutants killed or soundly argued; CI green. Owner may defer this card indefinitely.
