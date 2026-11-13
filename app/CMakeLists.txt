@@ -58,6 +58,7 @@ qt_add_executable(carvetto
   src/toolpaths_panel.hpp
   src/toolpaths_self_test.cpp
   src/photo_self_test.cpp
+  src/vcarve_inlay_self_test.cpp
   src/self_test.cpp
   src/self_test.hpp
   src/starter_tools.hpp

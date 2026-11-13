@@ -128,7 +128,7 @@ void ToolpathSession::inferGroups(const std::vector<bool>& adopted) {
     std::vector<std::size_t> run;
     for (std::size_t i = 0; i < recs.size(); ++i) {
         const ToolpathRecord& rec = recs[i];
-        if (!adopted[i] || rec.operation() != ToolpathOperation::VCarving) {
+        if (!adopted[i] || !hasClearanceTools(rec.operation())) {
             run.clear();
             continue;
         }
@@ -168,7 +168,7 @@ void ToolpathSession::inferGroups(const std::vector<bool>& adopted) {
     }
     // Clearance toolpaths left without a carving toolpath cannot be recalculated alone.
     for (std::size_t i = 0; i < recs.size(); ++i) {
-        if (!adopted[i] || recs[i].operation() != ToolpathOperation::VCarving) {
+        if (!adopted[i] || !hasClearanceTools(recs[i].operation())) {
             continue;
         }
         Baseline* b = baselineOf(recs[i]);
@@ -491,6 +491,7 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
             }
         }
     }
+    attachPlugSheet(job, *doc_);  // a V-carve inlay plug: its sheet (may move the records' sheet link)
     return job;
 }
 
@@ -677,7 +678,7 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
             const ToolpathCalculation& c = calculations[plan.slot];
             ToolpathOutcome& o = out.items[plan.slot];
             const bool grouped = !c.definition.clearanceTools.empty() &&
-                                 c.definition.operation() == ToolpathOperation::VCarving;
+                                 hasClearanceTools(c.definition.operation());
             const std::uint64_t group = grouped ? (plan.group != 0 ? plan.group : nextGroup_++) : 0;
             std::set<ToolpathId> kept;
             std::optional<ToolpathId> prev;
@@ -993,7 +994,7 @@ void setParamsName(document::ToolpathParams& params, const std::string& name) {
 
 std::string ToolpathSession::recordName(const ToolpathRecord& record, const std::string& paramsName) {
     const Baseline* b = baselineOf(record);
-    const bool grouped = b != nullptr && record.operation() == ToolpathOperation::VCarving &&
+    const bool grouped = b != nullptr && hasClearanceTools(record.operation()) &&
                          !b->def.clearanceTools.empty();
     return grouped ? paramsName + " [" + record.tool.name + "]" : paramsName;
 }

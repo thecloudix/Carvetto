@@ -11,6 +11,7 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/tooling/cutting_data.hpp"
 #include "carvetto/tooling/tool.hpp"
@@ -169,6 +170,9 @@ struct ToolpathJob {
     std::uint64_t vectorsFingerprint{0};
     std::uint64_t toolsFingerprint{0};
     document::ToolpathId target;
+    /// V-carve inlay plug only: the bounds of the sheet the plug is cut on (the plug sheet's, else the
+    /// vectors' sheet's material rectangle); empty when unknown (`attachPlugSheet`).
+    geometry::Box2 plugSheetBounds;
     /// The sheet the records are linked to (T-0261): the active sheet of a double-sided job, else null.
     document::SheetId sheet;
     /// The records of the target (its V-carve) as they were when the job was prepared; `apply`
@@ -194,6 +198,11 @@ inline constexpr double kMaxToolpathLengthMm = 1.0e7;
 ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const ResolvedVectors& vectors,
                             const tooling::ToolDatabase& db, const document::VectorSelection& selection);
 
+/// Gives `job` the sheet a V-carve inlay plug is cut on (a no-op for other operations): its bounds
+/// for Sheet Limits and centring, and (for a plug on another sheet, in a double-sided job) the
+/// sheet the records are linked to. Refuses when the named sheet does not exist.
+void attachPlugSheet(ToolpathJob& job, const document::Document& doc);
+
 /// Gives `job` the bitmap of a photo V-carve (a no-op for other operations): copies the encoded
 /// image and placement of `bitmap`, or sets the job's refusal when there is none or it is unusable.
 void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
@@ -210,6 +219,9 @@ std::uint64_t toolsFingerprintOf(const ToolpathDefinition& definition, const too
 /// True when the operation accepts `type` as its tool (`clearance`: a V-carve clearance tool).
 /// Profile and Pocket accept any type (the core refuses unusable geometry).
 bool toolAllowedFor(document::ToolpathOperation operation, tooling::ToolType type, bool clearance = false);
+
+/// True for the operations whose toolpath takes clearance tools (V-carve, V-carve inlay).
+bool hasClearanceTools(document::ToolpathOperation operation);
 
 /// Name of an operation for messages: "profile", "pocket", "drill", "engrave", "v_carve", "photo_vcarve".
 const char* operationName(document::ToolpathOperation operation);

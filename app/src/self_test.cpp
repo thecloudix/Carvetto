@@ -762,6 +762,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9b2. V-carve inlay: pocket and plug through the form, undo, save and reload (T-0265).
+    if (const std::string why = vCarveInlaySelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9c. Double-sided jobs: setup, swap sides, copy across, per-side posts (T-0261).
     if (const std::string why = doubleSidedSelfTest(window); !why.empty()) {
         return fail(why);

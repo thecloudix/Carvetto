@@ -109,6 +109,11 @@ inline ToolpathDefinition inlayDefinition(const tooling::ToolDatabase& db) {
     REQUIRE(form.setTool(db, source("end-mill-3mm")).ok);
     return form.definition();
 }
+inline ToolpathDefinition vCarveInlayDefinition(const tooling::ToolDatabase& db) {
+    ToolpathForm form(document::ToolpathOperation::VCarveInlay, document::Units::Millimetres);
+    REQUIRE(form.setTool(db, source("v-bit-90")).ok);
+    return form.definition();
+}
 inline ToolpathDefinition flutingDefinition(const tooling::ToolDatabase& db) {
     ToolpathForm form(document::ToolpathOperation::Fluting, document::Units::Millimetres);
     REQUIRE(form.setTool(db, source("end-mill-3mm")).ok);

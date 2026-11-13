@@ -166,6 +166,18 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", n->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(n->tolerance) : key;
     }
+    if (const auto* w = std::get_if<toolpath::VCarveInlayParams>(&params)) {
+        std::string key = firstNonFinite({{"pocket_depth", w->pocketDepth},
+                                          {"glue_gap", w->glueGap},
+                                          {"surface_clearance", w->surfaceClearance},
+                                          {"boundary_offset", w->boundaryOffset},
+                                          {"safe_z", w->safeZ},
+                                          {"clearance_raster_angle_rad", w->clearanceRasterAngle},
+                                          {"ramp_distance", w->rampDistance},
+                                          {"start_position[0]", w->startPosition.x},
+                                          {"start_position[1]", w->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(w->tolerance) : key;
+    }
     if (const auto* v = std::get_if<toolpath::PhotoVCarveParams>(&params)) {
         std::string key = firstNonFinite({{"max_depth", v->maxDepth},
                                           {"stepover_retract", v->stepoverRetract},
