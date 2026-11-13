@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QByteArray>
 #include <QString>
 
 #include "carvetto/io/raster.hpp"
@@ -20,5 +21,8 @@ struct DecodedImage {
 /// file size against `kTraceMaxFileBytes` BEFORE any pixel is decoded or allocated; a refusal or a
 /// decode failure comes back as `error`. Transparency is flattened onto white; EXIF orientation applies.
 DecodedImage decodeImageFile(const QString& path);
+
+/// The same for encoded bytes already in memory (an image embedded in the document, T-0274).
+DecodedImage decodeImageBytes(const QByteArray& bytes);
 
 }  // namespace carvetto::app

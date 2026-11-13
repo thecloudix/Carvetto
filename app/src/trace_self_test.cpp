@@ -2,6 +2,7 @@
 // the dialog widgets (preview on a worker thread, cancel), and the undoable result.
 
 #include <QAction>
+#include <QApplication>
 #include <QColor>
 #include <QCoreApplication>
 #include <QDir>
@@ -10,10 +11,13 @@
 #include <QPainter>
 #include <QPushButton>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <cmath>
 #include <memory>
 #include <string>
 
+#include "canvas_widget.hpp"
+#include "carvetto/document/bitmap_store.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
 #include "main_window.hpp"
@@ -186,6 +190,127 @@ std::string traceSelfTest(MainWindow& window) {
     TR_REQUIRE(!stopping.isVisible(), "Cancel on an idle dialog did not close it");
     TR_REQUIRE(doc.objectCount() == objectsBefore, "cancelling changed the document");
     dialog.close();
+
+    // --- Pick from 2D View and Bitmap Fading (T-0274) ------------------------------------------
+    CanvasWidget* canvas = window.canvas();
+    TR_REQUIRE(canvas != nullptr, "the window has no canvas");
+    auto placeBitmap = [&](double x0, double y0) {
+        document::BitmapImport in;
+        in.bytes.assign(pngBytes.begin(), pngBytes.end());
+        in.widthPx = 120;
+        in.heightPx = 80;
+        in.placementMm = geometry::Box2{geometry::Vec2{x0, y0}, geometry::Vec2{x0 + 60.0, y0 + 40.0}};
+        in.layer = doc.layers().front().id;
+        in.sheet = doc.activeSheet();
+        in.name = "photo";
+        return doc.execute(document::makeImportBitmapCommand(doc, std::move(in)));
+    };
+    TR_REQUIRE(placeBitmap(50.0, 60.0) && placeBitmap(150.0, 160.0), "could not place the test bitmaps");
+    document::ObjectId bitmapA{}, bitmapB{};
+    for (const auto& [id, obj] : doc.objects()) {
+        if (!obj.isBitmap()) continue;
+        (obj.asBitmap()->placementMm.min.x < 100.0 ? bitmapA : bitmapB) = id;
+    }
+    window.documentChanged();
+    TR_REQUIRE(canvas->bitmapFade() == 1.0, "the canvas starts faded");
+    // The black block of the first bitmap is at (70, 80) mm.
+    const QSize shot(600, 600);
+    viewmodel::ViewTransform shotView;
+    auto blockGray = [&]() {
+        const QImage img = canvas->renderFitted(shot, &shotView);
+        const geometry::Vec2 px = shotView.worldToScreen(geometry::Vec2{70.0, 80.0});
+        return qGray(img.pixel(static_cast<int>(px.x), static_cast<int>(px.y)));
+    };
+    const int fullGray = blockGray();
+    TR_REQUIRE(fullGray < 40, "the placed bitmap is not drawn on the canvas");
+    canvas->setBitmapFade(0.4);
+    const int fadedGray = blockGray();
+    TR_REQUIRE(fadedGray > fullGray + 80 && fadedGray < 200, "Bitmap Fading did not dim the bitmap");
+    canvas->setBitmapFade(1.0);
+    TR_REQUIRE(blockGray() == fullGray, "restoring the fade did not restore the bitmap");
+
+    // The dialog fades only a picked bitmap, live, and puts the canvas back when it closes.
+    {
+        DecodedImage fromFile = decodeImageFile(png);
+        TraceBitmapDialog fading(std::move(fromFile.image), png, document::Units::Millimetres, &window);
+        TR_REQUIRE(!fading.fadeEnabled() && !fading.sourceFromView(), "fading is offered for a file source");
+        fading.setSourceFromView(geometry::Vec2{50.0, 60.0}, canvas);
+        TR_REQUIRE(fading.fadeEnabled() && std::abs(canvas->bitmapFade() - 0.4) < 1e-9, "opening the dialog did not fade the bitmap");
+        fading.setFadePercent(100);
+        TR_REQUIRE(canvas->bitmapFade() == 0.0, "the fading control does not drive the canvas");
+        TR_REQUIRE(fading.form().originMm.x == 50.0 && fading.form().originMm.y == 60.0, "the origin of the picked bitmap is lost");
+        fading.reject();
+        TR_REQUIRE(canvas->bitmapFade() == 1.0, "closing the dialog did not restore the fade");
+    }
+
+    // Picking: a click on a bitmap, a miss, and Esc.
+    const std::size_t stepsPick = doc.undoStack().count();
+    auto clickAt = [&](double x, double y) {
+        const geometry::Vec2 px = canvas->view().worldToScreen(geometry::Vec2{x, y});
+        QTimer::singleShot(0, canvas, [canvas, px]() { canvas->pickClick(QPointF(px.x, px.y)); });
+    };
+    clickAt(160.0, 170.0);
+    TR_REQUIRE(menu->pickBitmap(&message) == bitmapB, "picking the second bitmap failed");
+    clickAt(10.0, 10.0);
+    message.clear();
+    TR_REQUIRE(!menu->pickBitmap(&message).has_value() && !message.isEmpty(), "a click on empty canvas was not reported");
+    QTimer::singleShot(0, canvas, [canvas]() { canvas->cancelPick(); });
+    message.clear();
+    TR_REQUIRE(!menu->pickBitmap(&message).has_value() && message.isEmpty() && !canvas->picking(), "Esc did not end the pick");
+    TR_REQUIRE(doc.undoStack().count() == stepsPick, "picking changed the document");
+
+    // The whole command: dialog on bitmap A, "Pick from 2D View" to bitmap B, trace, one undo step.
+    struct Drive {
+        int state{0};
+        int ticks{0};
+        std::string problem;
+    } drive;
+    QTimer poll;
+    poll.setInterval(20);
+    const std::size_t objectsPre = doc.objectCount();
+    const std::size_t stepsPre = doc.undoStack().count();
+    QObject::connect(&poll, &QTimer::timeout, &poll, [&]() {
+        auto* modal = dynamic_cast<TraceBitmapDialog*>(QApplication::activeModalWidget());
+        if (++drive.ticks > 1000 && modal != nullptr) {
+            drive.problem = "the scripted command hung";
+            modal->reject();
+            return;
+        }
+        if (drive.state == 0 && modal != nullptr) {
+            if (std::abs(canvas->bitmapFade() - 0.4) > 1e-9) drive.problem = "the dialog on a picked bitmap did not fade it";
+            if (std::abs(modal->form().originMm.x - 50.0) > 1e-9 || std::abs(modal->form().sizeValue - 60.0) > 1e-9) drive.problem = "the dialog did not take the bitmap's position and width";
+            viewmodel::TraceForm f = modal->form();
+            f.threshold = 77;
+            modal->setForm(f);
+            drive.state = 1;
+            modal->requestPick();
+        } else if (drive.state == 1 && canvas->picking()) {
+            if (canvas->bitmapFade() != 1.0) drive.problem = "the canvas stayed faded while picking";
+            drive.state = 2;
+            const geometry::Vec2 px = canvas->view().worldToScreen(geometry::Vec2{160.0, 170.0});
+            canvas->pickClick(QPointF(px.x, px.y));
+        } else if (drive.state == 2 && modal != nullptr) {
+            if (std::abs(modal->form().originMm.x - 150.0) > 1e-9 || std::abs(modal->form().originMm.y - 160.0) > 1e-9) drive.problem = "the second dialog is not placed on the picked bitmap";
+            if (modal->form().threshold != 77) drive.problem = "the settings were lost when picking again";
+            drive.state = 3;
+            if (!modal->traceNow()) drive.problem = "the trace of the picked bitmap failed";
+        }
+    });
+    poll.start();
+    const bool added = menu->traceBitmapObject(bitmapA, &message, false);
+    poll.stop();
+    TR_REQUIRE(drive.problem.empty(), (std::string("pick and trace: ") + drive.problem).c_str());
+    TR_REQUIRE(added && drive.state == 3, "tracing a bitmap picked from the 2D view did not add the result");
+    TR_REQUIRE(canvas->bitmapFade() == 1.0, "the fade was not restored after the command");
+    TR_REQUIRE(doc.objectCount() == objectsPre + 1 && doc.undoStack().count() == stepsPre + 1, "the trace is not one object and one undo step");
+    const document::Object* traced = doc.findObject(doc.objects().rbegin()->first);
+    TR_REQUIRE(traced != nullptr && traced->asVector() != nullptr, "the traced object is not a vector");
+    const geometry::Box2 tb = traced->asVector()->bounds();
+    TR_REQUIRE(tb.min.x >= 150.0 - 1e-6 && tb.max.x <= 210.0 + 1e-6 && tb.min.y >= 160.0 - 1e-6 && tb.max.y <= 200.0 + 1e-6,
+               "the traced shapes do not lie on the picked bitmap");
+    window.undo();
+    TR_REQUIRE(doc.objectCount() == objectsPre, "undo did not remove the trace of the picked bitmap");
+    TR_REQUIRE(canvas->bitmapFade() == 1.0, "undo changed the fade");
     return {};
 }
 

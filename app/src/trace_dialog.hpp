@@ -3,9 +3,12 @@
 #include <QDialog>
 #include <QString>
 #include <memory>
+#include <optional>
 #include <string>
 
+#include "carvetto/document/ids.hpp"
 #include "carvetto/document/units.hpp"
+#include "carvetto/geometry/vec2.hpp"
 #include "carvetto/io/raster.hpp"
 #include "carvetto/viewmodel/bitmap_trace.hpp"
 
@@ -22,6 +25,7 @@ class QTimer;
 
 namespace carvetto::app {
 
+class CanvasWidget;
 class MainWindow;
 
 /// The Trace Bitmap dialog (T-0260, ADR-0038): mode, threshold/invert, colours, noise filter, corner
@@ -51,8 +55,24 @@ class TraceBitmapDialog : public QDialog {
     void startTrace();
     void cancelTrace();
 
+    /// Result code of `exec()` when the user pressed "Pick from 2D View...": the caller lets the
+    /// user click a bitmap on the canvas and opens a new dialog for it (T-0274).
+    static constexpr int kPickRequested = 2;
+    /// The image comes from a bitmap placed in the drawing: the result is positioned at
+    /// `originMm`, and Bitmap Fading (dimming that bitmap on `canvas` while the dialog is open)
+    /// is available.
+    void setSourceFromView(geometry::Vec2 originMm, CanvasWidget* canvas);
+    bool sourceFromView() const { return canvas_ != nullptr; }
+    /// Bitmap Fading in percent (0 = shown as is, 100 = invisible). Applies to the canvas at once.
+    int fadePercent() const;
+    void setFadePercent(int percent);
+    bool fadeEnabled() const;
+    /// Same as pressing "Pick from 2D View...": closes the dialog with `kPickRequested`.
+    void requestPick();
+
     void accept() override;
     void reject() override;
+    void done(int code) override;
 
    private:
     void settingsChanged();
@@ -60,6 +80,8 @@ class TraceBitmapDialog : public QDialog {
     void onWorkerDone();
     void showPreview(const viewmodel::TraceOutcome& outcome);
     void updateEnabling();
+    void applyFade();
+    void restoreFade();
 
     io::RasterImage fullStorage_;
     std::shared_ptr<const io::RasterImage> full_;
@@ -90,6 +112,12 @@ class TraceBitmapDialog : public QDialog {
     QPushButton* traceButton_{nullptr};
     QPushButton* cancelButton_{nullptr};
     QTimer* debounce_{nullptr};
+    QPushButton* pickButton_{nullptr};
+    QSpinBox* fade_{nullptr};
+    CanvasWidget* canvas_{nullptr};
+    double fadeBefore_{1.0};
+    bool fadeApplied_{false};
+    geometry::Vec2 origin_{0, 0};
     int imageWidth_{0};
     int imageHeight_{0};
 };
@@ -108,6 +136,15 @@ class TraceBitmapMenu {
     /// the result. Refusals are shown in a message box when `showErrors`; `error` (optional)
     /// receives the message either way. True when objects were added.
     bool run(const QString& path, QString* error = nullptr, bool showErrors = true);
+    /// Starts with Pick from 2D View instead of a file (Edit > Trace Bitmap from Drawing...).
+    bool runFromView(QString* error = nullptr, bool showErrors = true);
+    QAction* viewAction() const { return viewAction_; }
+    /// Lets the user click a bitmap on the canvas (Esc cancels); waits in a nested event loop.
+    /// The id of the bitmap, or none. `error` says why when a click found none.
+    std::optional<document::ObjectId> pickBitmap(QString* error = nullptr);
+    /// Opens the dialog for the bitmap object `id` (decoding its embedded image) and adds the
+    /// result like `run`. The loop of "pick again" requests is handled here.
+    bool traceBitmapObject(document::ObjectId id, QString* error = nullptr, bool showErrors = true);
     /// Adds an accepted dialog's result to the window's document (one undo step) and refreshes the
     /// window. False with `error` set when nothing was added.
     bool addResult(const TraceBitmapDialog& dialog, QString* error = nullptr, bool showErrors = true);
@@ -116,6 +153,7 @@ class TraceBitmapMenu {
     MainWindow& window_;
     QAction* fileAction_{nullptr};
     QAction* editAction_{nullptr};
+    QAction* viewAction_{nullptr};
     QString lastFolder_;
 };
 

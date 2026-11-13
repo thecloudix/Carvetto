@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QBuffer>
 #include <QFileInfo>
 #include <QImage>
 #include <QImageReader>
@@ -10,18 +11,10 @@
 
 namespace carvetto::app {
 
-DecodedImage decodeImageFile(const QString& path) {
+namespace {
+
+DecodedImage decodeFromReader(QImageReader& reader) {
     DecodedImage out;
-    const QFileInfo info(path);
-    if (!info.exists() || !info.isFile()) {
-        out.error = QStringLiteral("The file does not exist.");
-        return out;
-    }
-    if (info.size() > kTraceMaxFileBytes) {
-        out.error = QStringLiteral("The image file is too large (over 64 MB).");
-        return out;
-    }
-    QImageReader reader(path);
     reader.setAutoTransform(true);
     const QByteArray format = reader.format().toLower();
     if (format != "png" && format != "jpeg" && format != "jpg" && format != "bmp") {
@@ -78,6 +71,37 @@ DecodedImage decodeImageFile(const QString& path) {
     out.image = std::move(raster);
     out.ok = true;
     return out;
+}
+
+}  // namespace
+
+DecodedImage decodeImageFile(const QString& path) {
+    const QFileInfo info(path);
+    if (!info.exists() || !info.isFile()) {
+        DecodedImage out;
+        out.error = QStringLiteral("The file does not exist.");
+        return out;
+    }
+    if (info.size() > kTraceMaxFileBytes) {
+        DecodedImage out;
+        out.error = QStringLiteral("The image file is too large (over 64 MB).");
+        return out;
+    }
+    QImageReader reader(path);
+    return decodeFromReader(reader);
+}
+
+DecodedImage decodeImageBytes(const QByteArray& bytes) {
+    if (bytes.size() > kTraceMaxFileBytes) {
+        DecodedImage out;
+        out.error = QStringLiteral("The image is too large (over 64 MB).");
+        return out;
+    }
+    QByteArray copy = bytes;
+    QBuffer buffer(&copy);
+    buffer.open(QIODevice::ReadOnly);
+    QImageReader reader(&buffer);
+    return decodeFromReader(reader);
 }
 
 }  // namespace carvetto::app
