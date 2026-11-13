@@ -22,6 +22,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "carvetto/io/raster.hpp"
+#include "carvetto/viewmodel/bitmap_trace.hpp"
 #include "carvetto/viewmodel/canvas_scene.hpp"
 #include "carvetto/viewmodel/layers_sheets.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
@@ -159,6 +161,76 @@ void CanvasWidget::paintSides(QPainter& painter, const ViewTransform& view) cons
     painter.drawText(material.topLeft() + QPointF(6.0, 14.0), text);
 }
 
+void CanvasWidget::setBitmapFade(double fade) {
+    const double f = viewmodel::clampBitmapFade(fade);
+    if (f != bitmapFade_) {
+        bitmapFade_ = f;
+        update();
+    }
+}
+
+void CanvasWidget::beginPick(std::function<void(std::optional<geometry::Vec2>)> onPicked) {
+    onPicked_ = std::move(onPicked);
+    setCursor(Qt::CrossCursor);
+}
+
+void CanvasWidget::pickClick(QPointF widgetPos) {
+    if (!onPicked_) {
+        return;
+    }
+    auto done = std::move(onPicked_);
+    onPicked_ = nullptr;
+    unsetCursor();
+    done(view_.screenToWorld(Vec2{widgetPos.x(), widgetPos.y()}));
+}
+
+void CanvasWidget::cancelPick() {
+    if (!onPicked_) {
+        return;
+    }
+    auto done = std::move(onPicked_);
+    onPicked_ = nullptr;
+    unsetCursor();
+    done(std::nullopt);
+}
+
+void CanvasWidget::paintBitmaps(QPainter& painter, const ViewTransform& view) const {
+    // Drop cached images whose asset is gone (undo of an import).
+    for (auto it = bitmapCache_.begin(); it != bitmapCache_.end();) {
+        it = doc_->findBitmap(it->first) == nullptr ? bitmapCache_.erase(it) : std::next(it);
+    }
+    for (const auto& [id, obj] : doc_->objects()) {
+        const document::BitmapObject* bmp = obj.asBitmap();
+        if (bmp == nullptr || obj.sheet != doc_->activeSheet() || bmp->placementMm.isEmpty()) {
+            continue;
+        }
+        const document::Layer* layer = doc_->findLayer(obj.layer);
+        const document::BitmapAsset* asset = doc_->findBitmap(bmp->sourceRef);
+        if (layer == nullptr || !layer->visible || asset == nullptr) {
+            continue;
+        }
+        auto cached = bitmapCache_.find(bmp->sourceRef);
+        if (cached == bitmapCache_.end()) {
+            QImage img;
+            if (bmp->widthPx > 0 && bmp->heightPx > 0 &&
+                static_cast<std::size_t>(bmp->widthPx) * static_cast<std::size_t>(bmp->heightPx) <= io::kMaxImagePixels) {
+                img = QImage::fromData(asset->bytes.data(), static_cast<int>(asset->bytes.size()));
+            }
+            cached = bitmapCache_.emplace(bmp->sourceRef, std::move(img)).first;
+        }
+        if (cached->second.isNull()) {
+            continue;
+        }
+        const Vec2 topLeft = view.worldToScreen(Vec2{bmp->placementMm.min.x, bmp->placementMm.max.y});
+        const Vec2 bottomRight = view.worldToScreen(Vec2{bmp->placementMm.max.x, bmp->placementMm.min.y});
+        painter.save();
+        painter.setOpacity(bitmapFade_);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+        painter.drawImage(QRectF(toQt(topLeft), toQt(bottomRight)), cached->second);
+        painter.restore();
+    }
+}
+
 void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSize size) const {
     painter.fillRect(QRectF(QPointF(0.0, 0.0), QSizeF(size)), canvasBackground());
     if (doc_ == nullptr) {
@@ -179,6 +251,8 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(material);
     }
+
+    paintBitmaps(painter, view);
 
     for (const viewmodel::DrawPath& path : scene.paths) {
         if (path.pointsPx.size() < 2) {
@@ -699,6 +773,11 @@ bool CanvasWidget::focusNextPrevChild(bool next) {
 }
 
 void CanvasWidget::keyPressEvent(QKeyEvent* event) {
+    if (picking() && event->key() == Qt::Key_Escape) {
+        cancelPick();
+        event->accept();
+        return;
+    }
     if (tools_.tool() == viewmodel::ToolKind::NodeEdit && !tools_.wantsKeys() && event->key() >= Qt::Key_A &&
         event->key() <= Qt::Key_Z &&
         !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
@@ -830,6 +909,11 @@ void CanvasWidget::mousePressEvent(QMouseEvent* event) {
         rightPressPos_ = event->position();
         rightMoved_ = false;
         setCursor(Qt::ClosedHandCursor);
+        event->accept();
+        return;
+    }
+    if (event->button() == Qt::LeftButton && picking()) {
+        pickClick(event->position());
         event->accept();
         return;
     }

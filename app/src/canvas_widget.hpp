@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <optional>
 #include <string>
 
@@ -93,6 +94,21 @@ class CanvasWidget : public QWidget {
     viewmodel::ToolController& tools() { return tools_; }
     const viewmodel::ToolController& tools() const { return tools_; }
 
+    /// Bitmap Fading (T-0274): share (0..1) of the placed bitmaps' brightness drawn on the canvas.
+    /// 1 shows them as they are; Trace Bitmap lowers it while tracing so the traced outlines
+    /// stand out. A pure display setting: not saved, not undoable, never changes the document.
+    void setBitmapFade(double fade);
+    double bitmapFade() const { return bitmapFade_; }
+
+    /// Pick from 2D View (T-0274): while active, a left click does not reach the drawing tools;
+    /// `onPicked` gets the clicked document position (mm). Esc (or `cancelPick`) ends the pick and
+    /// calls `onPicked` with nothing. `pickClick` is what a left click does (public so the self-test
+    /// can drive it).
+    void beginPick(std::function<void(std::optional<geometry::Vec2>)> onPicked);
+    bool picking() const { return static_cast<bool>(onPicked_); }
+    void pickClick(QPointF widgetPos);
+    void cancelPick();
+
     /// Paints one frame into a new `size` image (RGB32) with a view fitted to the material, the
     /// same way `paintEvent` paints the widget. `usedView`, when given, receives that view.
     QImage renderFitted(QSize size, viewmodel::ViewTransform* usedView = nullptr) const;
@@ -158,7 +174,12 @@ class CanvasWidget : public QWidget {
         }
     };
 
+    void paintBitmaps(QPainter& painter, const viewmodel::ViewTransform& view) const;
+
     document::Document* doc_{nullptr};
+    double bitmapFade_{1.0};
+    std::function<void(std::optional<geometry::Vec2>)> onPicked_;
+    mutable std::map<std::string, QImage> bitmapCache_;  // by asset key; null image = not decodable
     const viewmodel::PreviewModel* preview_{nullptr};
     PreviewPaintState previewState_;
     mutable PreviewLayerKey layerKey_;

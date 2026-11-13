@@ -225,4 +225,37 @@ TraceApplyResult applyTrace(document::Document& doc, const std::vector<io::Trace
     return result;
 }
 
+std::optional<document::ObjectId> bitmapAtPoint(const document::Document& doc, geometry::Vec2 p) {
+    std::optional<document::ObjectId> best;
+    std::size_t bestLayer = 0;
+    for (const auto& [id, obj] : doc.objects()) {
+        const document::BitmapObject* bmp = obj.asBitmap();
+        if (bmp == nullptr || obj.sheet != doc.activeSheet()) continue;
+        const document::Layer* layer = doc.findLayer(obj.layer);
+        if (layer == nullptr || !layer->visible) continue;
+        const geometry::Box2& b = bmp->placementMm;
+        if (b.isEmpty() || p.x < b.min.x || p.x > b.max.x || p.y < b.min.y || p.y > b.max.y) continue;
+        const std::size_t li = doc.layerIndex(obj.layer).value_or(0);
+        if (!best || li >= bestLayer) {  // ids ascend, so on a tie the later (higher) id wins
+            best = id;
+            bestLayer = li;
+        }
+    }
+    return best;
+}
+
+TraceForm traceFormForBitmap(const document::BitmapObject& bitmap, document::Units units, const TraceForm& base) {
+    TraceForm f = base;
+    f.units = units;
+    f.sizeBasis = TraceSizeBasis::TargetWidth;
+    f.sizeValue = document::toDisplay(bitmap.placementMm.max.x - bitmap.placementMm.min.x, units);
+    f.originMm = bitmap.placementMm.min;
+    return f;
+}
+
+double clampBitmapFade(double fade) {
+    if (!std::isfinite(fade)) return 1.0;
+    return std::clamp(fade, 0.0, 1.0);
+}
+
 }  // namespace carvetto::viewmodel

@@ -138,4 +138,18 @@ TraceApplyResult applyTrace(document::Document& doc, const std::vector<io::Trace
 /// Layer name for a traced colour: "Trace" for black and white, else "Trace #RRGGBB".
 std::string traceLayerName(const io::TraceLayer& layer, io::TraceMode mode);
 
+/// Pick from 2D View (T-0274): the topmost bitmap object on the active sheet whose placement
+/// contains `worldMm` and whose layer is visible; none when there is none. Ties go to the later
+/// layer, then the higher id. Independent of vectors drawn over the bitmap.
+std::optional<document::ObjectId> bitmapAtPoint(const document::Document& doc, geometry::Vec2 worldMm);
+
+/// The trace form for tracing a placed bitmap: result width = the placement width (shown in
+/// `units`), origin = the placement's lower-left corner, so the traced shapes lie on the picture.
+/// Other settings are copied from `base`.
+TraceForm traceFormForBitmap(const document::BitmapObject& bitmap, document::Units units, const TraceForm& base = {});
+
+/// Bitmap Fading (T-0274): the share (0..1) of the source bitmap's brightness drawn while tracing;
+/// 1 is the picture as it is, 0 is invisible. Clamps; NaN gives 1.
+double clampBitmapFade(double fade);
+
 }  // namespace carvetto::viewmodel

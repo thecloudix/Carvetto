@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 
+#include "carvetto/document/bitmap_store.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
 
@@ -239,4 +240,54 @@ TEST_CASE("applyTrace: black and white, empty result untouched", "[trace][viewmo
     REQUIRE(r.layers.size() == 1);
     CHECK(doc.findLayer(r.layers[0])->name == "Trace");
     CHECK(doc.undoStack().count() == stepsBefore + 1);
+}
+
+namespace {
+document::ObjectId addBitmap(document::Document& doc, geometry::Box2 box, document::LayerId layer) {
+    document::BitmapImport in;
+    const std::string ppm = "P3\n1 1\n255\n0 0 0\n";
+    in.bytes.assign(ppm.begin(), ppm.end());
+    in.widthPx = 1;
+    in.heightPx = 1;
+    in.placementMm = box;
+    in.layer = layer;
+    in.sheet = doc.sheets().front().id;
+    in.name = "pic";
+    REQUIRE(doc.execute(document::makeImportBitmapCommand(doc, std::move(in))));
+    return doc.objects().rbegin()->first;
+}
+}  // namespace
+
+TEST_CASE("bitmapAtPoint: topmost visible bitmap under the point", "[trace][viewmodel]") {
+    document::Document doc;
+    const document::LayerId layer = doc.layers().front().id;
+    const document::ObjectId a = addBitmap(doc, geometry::Box2{{0, 0}, {20, 10}}, layer);
+    const document::ObjectId b = addBitmap(doc, geometry::Box2{{10, 0}, {30, 10}}, layer);
+    CHECK(bitmapAtPoint(doc, {5, 5}) == a);
+    CHECK(bitmapAtPoint(doc, {25, 5}) == b);
+    CHECK(bitmapAtPoint(doc, {15, 5}) == b);  // overlap: the later one
+    CHECK_FALSE(bitmapAtPoint(doc, {15, 50}).has_value());
+    CHECK_FALSE(bitmapAtPoint(doc, {-1, 5}).has_value());
+}
+
+TEST_CASE("traceFormForBitmap and clampBitmapFade", "[trace][viewmodel]") {
+    document::BitmapObject bmp;
+    bmp.placementMm = geometry::Box2{{10, 20}, {70, 50}};
+    TraceForm base;
+    base.threshold = 99;
+    const TraceForm mm = traceFormForBitmap(bmp, document::Units::Millimetres, base);
+    CHECK(mm.threshold == 99);
+    CHECK(mm.sizeBasis == TraceSizeBasis::TargetWidth);
+    CHECK(mm.sizeValue == Approx(60.0));
+    CHECK(mm.originMm.x == Approx(10.0));
+    CHECK(mm.originMm.y == Approx(20.0));
+    const TraceForm in = traceFormForBitmap(bmp, document::Units::Inches);
+    CHECK(in.sizeValue == Approx(60.0 / 25.4));
+    CHECK(validateTraceForm(mm, 120, 60).empty());
+    CHECK(traceMmPerPixel(mm, 120, 60).value() == Approx(0.5));
+
+    CHECK(clampBitmapFade(-1.0) == 0.0);
+    CHECK(clampBitmapFade(0.3) == 0.3);
+    CHECK(clampBitmapFade(7.0) == 1.0);
+    CHECK(clampBitmapFade(std::nan("")) == 1.0);
 }

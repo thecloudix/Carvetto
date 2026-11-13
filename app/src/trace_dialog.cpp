@@ -23,11 +23,16 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QStatusBar>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <span>
 
+#include "canvas_widget.hpp"
+#include "carvetto/document/bitmap_store.hpp"
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/tolerance.hpp"
 #include "main_window.hpp"
@@ -118,6 +123,14 @@ TraceBitmapDialog::TraceBitmapDialog(io::RasterImage image, const QString& fileN
     const std::string_view suffix = document::unitSuffix(units_);
     size_->setSuffix(QStringLiteral(" ") + QString::fromUtf8(suffix.data(), static_cast<int>(suffix.size())));
     sizeInfo_ = new QLabel(this);
+    pickButton_ = new QPushButton(QStringLiteral("Pick from 2D View..."), this);
+    pickButton_->setToolTip(QStringLiteral("Choose a bitmap placed in the drawing and trace that instead"));
+    fade_ = new QSpinBox(this);
+    fade_->setRange(0, 100);
+    fade_->setValue(60);
+    fade_->setSuffix(QStringLiteral(" %"));
+    fade_->setToolTip(QStringLiteral("Dims the picked bitmap on the 2D view while this dialog is open"));
+    fade_->setEnabled(false);
     preview_ = new QLabel(this);
     preview_->setFixedSize(kPreviewW, kPreviewH);
     preview_->setFrameShape(QFrame::Box);
@@ -139,11 +152,15 @@ TraceBitmapDialog::TraceBitmapDialog(io::RasterImage image, const QString& fileN
     form->addRow(QStringLiteral("Size by"), sizeBasis_);
     form->addRow(QStringLiteral("Size"), size_);
     form->addRow(sizeInfo_);
+    form->addRow(QStringLiteral("Bitmap fading"), fade_);
+    form->addRow(pickButton_);
     auto* buttons = new QDialogButtonBox(this);
     traceButton_ = buttons->addButton(QStringLiteral("Trace"), QDialogButtonBox::AcceptRole);
     cancelButton_ = buttons->addButton(QDialogButtonBox::Cancel);
     connect(traceButton_, &QPushButton::clicked, this, [this]() { accept(); });
     connect(cancelButton_, &QPushButton::clicked, this, [this]() { reject(); });
+    connect(pickButton_, &QPushButton::clicked, this, [this]() { requestPick(); });
+    connect(fade_, qOverload<int>(&QSpinBox::valueChanged), this, [this]() { applyFade(); });
     auto* left = new QVBoxLayout;
     left->addLayout(form);
     left->addStretch(1);
@@ -174,6 +191,7 @@ TraceBitmapDialog::TraceBitmapDialog(io::RasterImage image, const QString& fileN
 }
 
 TraceBitmapDialog::~TraceBitmapDialog() {
+    restoreFade();
     closing_ = true;
     runner_.cancel();  // the runner's destructor joins; the core stops within milliseconds
 }
@@ -189,6 +207,7 @@ viewmodel::TraceForm TraceBitmapDialog::form() const {
     f.sizeBasis = static_cast<viewmodel::TraceSizeBasis>(sizeBasis_->currentData().toInt());
     f.sizeValue = size_->value();
     f.units = units_;
+    f.originMm = origin_;
     return f;
 }
 
@@ -203,7 +222,49 @@ void TraceBitmapDialog::setForm(const viewmodel::TraceForm& f) {
     size_->setValue(f.sizeValue);
 }
 
+void TraceBitmapDialog::setSourceFromView(geometry::Vec2 originMm, CanvasWidget* canvas) {
+    origin_ = originMm;
+    canvas_ = canvas;
+    fade_->setEnabled(canvas_ != nullptr && !tracing_);
+    applyFade();
+    settingsChanged();  // the preview is placed by the origin
+}
+
+int TraceBitmapDialog::fadePercent() const { return fade_->value(); }
+void TraceBitmapDialog::setFadePercent(int percent) { fade_->setValue(percent); }
+bool TraceBitmapDialog::fadeEnabled() const { return fade_->isEnabled(); }
+
+void TraceBitmapDialog::applyFade() {
+    if (canvas_ == nullptr) return;
+    if (!fadeApplied_) {
+        fadeBefore_ = canvas_->bitmapFade();
+        fadeApplied_ = true;
+    }
+    canvas_->setBitmapFade(1.0 - fade_->value() / 100.0);
+}
+
+void TraceBitmapDialog::restoreFade() {
+    if (canvas_ != nullptr && fadeApplied_) {
+        canvas_->setBitmapFade(fadeBefore_);
+        fadeApplied_ = false;
+    }
+}
+
+void TraceBitmapDialog::requestPick() {
+    if (tracing_) return;
+    closing_ = true;
+    runner_.cancel();
+    done(kPickRequested);
+}
+
+void TraceBitmapDialog::done(int code) {
+    restoreFade();
+    QDialog::done(code);
+}
+
 void TraceBitmapDialog::updateEnabling() {
+    fade_->setEnabled(canvas_ != nullptr && !tracing_);
+    pickButton_->setEnabled(!tracing_);
     const bool colour = static_cast<io::TraceMode>(mode_->currentData().toInt()) == io::TraceMode::Colour;
     threshold_->setEnabled(!colour && !tracing_);
     invert_->setEnabled(!colour && !tracing_);
@@ -382,6 +443,107 @@ TraceBitmapMenu::TraceBitmapMenu(MainWindow& window, QMenu* fileMenu, QMenu* edi
     for (QAction* a : {fileAction_, editAction_}) {
         QObject::connect(a, &QAction::triggered, a, [this]() { run(QString()); });
     }
+    viewAction_ = editMenu->addAction(QStringLiteral("Trace Bitmap from &Drawing..."));
+    QObject::connect(viewAction_, &QAction::triggered, viewAction_, [this]() { runFromView(); });
+}
+
+namespace {
+
+/// What one pass of the dialog traces.
+struct TraceSource {
+    io::RasterImage image;
+    QString name;
+    std::optional<document::ObjectId> bitmap;
+    geometry::Vec2 originMm{0, 0};
+    viewmodel::TraceForm form;
+    bool haveForm{false};
+};
+
+}  // namespace
+
+std::optional<document::ObjectId> TraceBitmapMenu::pickBitmap(QString* error) {
+    CanvasWidget* canvas = window_.canvas();
+    if (canvas == nullptr) return std::nullopt;
+    std::optional<geometry::Vec2> where;
+    bool clicked = false;
+    QEventLoop loop;
+    canvas->beginPick([&](std::optional<geometry::Vec2> w) {
+        where = w;
+        clicked = w.has_value();
+        loop.quit();
+    });
+    window_.statusBar()->showMessage(QStringLiteral("Click the bitmap to trace (Esc cancels)."));
+    loop.exec();
+    window_.statusBar()->clearMessage();
+    if (!clicked) return std::nullopt;
+    const std::optional<document::ObjectId> id = viewmodel::bitmapAtPoint(window_.currentDocument(), *where);
+    if (!id && error != nullptr) *error = QStringLiteral("There is no bitmap at that point.");
+    return id;
+}
+
+bool TraceBitmapMenu::runFromView(QString* error, bool showErrors) {
+    QString message;
+    const std::optional<document::ObjectId> id = pickBitmap(&message);
+    if (!id) {
+        if (message.isEmpty()) return false;  // cancelled
+        if (error != nullptr) *error = message;
+        if (showErrors) QMessageBox::warning(&window_, QStringLiteral("Trace Bitmap"), message);
+        return false;
+    }
+    return traceBitmapObject(*id, error, showErrors);
+}
+
+bool TraceBitmapMenu::traceBitmapObject(document::ObjectId first, QString* error, bool showErrors) {
+    auto fail = [&](const QString& message) {
+        if (error != nullptr) *error = message;
+        if (showErrors) QMessageBox::warning(&window_, QStringLiteral("Trace Bitmap"), message);
+        return false;
+    };
+    const document::BitmapDecoder decoder = [](std::span<const std::uint8_t> bytes) -> geometry::ShapeResult<io::RasterImage> {
+        DecodedImage d = decodeImageBytes(QByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<qsizetype>(bytes.size())));
+        if (!d.ok) return d.error.toStdString();
+        return std::move(d.image);
+    };
+    const document::Units units = window_.currentDocument().job().displayUnits;
+    // Loads the picked object into `src`; an error text when it cannot be traced.
+    auto load = [&](document::ObjectId id, TraceSource& src) -> QString {
+        const document::Object* obj = window_.currentDocument().findObject(id);
+        const document::BitmapObject* bmp = obj != nullptr ? obj->asBitmap() : nullptr;
+        if (bmp == nullptr) return QStringLiteral("That object is not a bitmap.");
+        auto pixels = document::decodeBitmapObject(window_.currentDocument(), *bmp, decoder);
+        if (!pixels.ok()) return qs(pixels.error());
+        src.image = std::move(pixels.value());
+        src.name = obj->name.empty() ? QStringLiteral("bitmap in the drawing") : qs(obj->name);
+        src.bitmap = id;
+        src.originMm = bmp->placementMm.min;
+        src.form = viewmodel::traceFormForBitmap(*bmp, units, src.form);
+        src.haveForm = true;
+        return {};
+    };
+    TraceSource src;
+    if (const QString why = load(first, src); !why.isEmpty()) return fail(why);
+    for (;;) {
+        TraceBitmapDialog dialog(src.image, src.name, units, &window_);
+        dialog.setSourceFromView(src.originMm, window_.canvas());
+        if (src.haveForm) dialog.setForm(src.form);
+        const int rc = dialog.exec();
+        if (rc == QDialog::Accepted) return addResult(dialog, error, showErrors);
+        if (rc != TraceBitmapDialog::kPickRequested) return false;
+        src.form = dialog.form();
+        QString message;
+        const std::optional<document::ObjectId> id = pickBitmap(&message);
+        if (!id) {
+            if (!message.isEmpty()) fail(message);
+            continue;  // cancelled or missed: back to the dialog with the same bitmap
+        }
+        TraceSource next;
+        next.form = src.form;
+        if (const QString why = load(*id, next); !why.isEmpty()) {
+            fail(why);
+            continue;
+        }
+        src = std::move(next);
+    }
 }
 
 bool TraceBitmapMenu::run(const QString& pathIn, QString* error, bool showErrors) {
@@ -400,7 +562,9 @@ bool TraceBitmapMenu::run(const QString& pathIn, QString* error, bool showErrors
     DecodedImage decoded = decodeImageFile(path);
     if (!decoded.ok) return fail(decoded.error);
     TraceBitmapDialog dialog(std::move(decoded.image), path, window_.currentDocument().job().displayUnits, &window_);
-    if (dialog.exec() != QDialog::Accepted) return false;
+    const int rc = dialog.exec();
+    if (rc == TraceBitmapDialog::kPickRequested) return runFromView(error, showErrors);
+    if (rc != QDialog::Accepted) return false;
     return addResult(dialog, error, showErrors);
 }
 
