@@ -1004,10 +1004,10 @@ Goal: a Text tool and a text object stored in the native format (font reference/
 ### T-0229 Wire Save Toolpaths dialog to the Toolpaths dock (after T-0221 and T-0224 merge)   [status: wiring done in PR #96; remaining: core/post PostProcessor cancel hook (LOW)]
 The Save Toolpaths dialog (T-0224) posts every calculated toolpath (ids empty) and its machine list is empty (`setMachines` never called). Pass `ToolpathSession::enabledToolpaths()` ids and the machine/tool database machines; test that a disabled toolpath is NOT in the output and stale toolpaths are warned about (offer recalculate). Also: Save Toolpaths cancel/close freeze (PostProcessor::run has no cancel hook; add one in core/post without changing output).
 
-### T-0230 Text follow-ups (from T-0211 verification)   [status: in-progress]
+### T-0230 Text follow-ups (from T-0211 verification)   [status: verifying (PR #153: caret/selection, in-canvas frame, keep draft on tool switch). REMAINING: click-to-place caret, Box/Curve caret drawing + Up/Down, live guide link for text on curve, DXF Aligned/Fit, system-font picker, cross-document font paste, font family names in UI, setActiveSheet undo. OWNER questions: IME, bidi, vertical text, CJK font cap]
 Real starter font (OWNER picks an OFL font; placeholder has ~8 glyphs so DXF text imports as .notdef boxes), caret/selection and in-canvas text frame, live guide link for text on curve (refit when the guide moves), app-level system-font picker that embeds the chosen file, cross-document paste copies fonts, DXF Aligned/Fit modes, IME input, mixed-script (bidi) lines, vertical text, font family names in UI, 8 MiB font cap excludes most CJK fonts (revisit), tool switch mid-draft discards typed text (decide commit vs keep), pre-existing: setActiveSheet is not undoable.
 
-### T-0231 Preview/simulation nits (T-0223 verifier)   [status: ready — LOW; item 1 done in nits batch PR; items 2-5 (LOD/cancel for pathological jobs, min-pooling relief raster, vertical moves + arc splitting, summary cost) remain]
+### T-0231 Preview/simulation nits (T-0223 verifier)   [status: in-progress]
 (1) Test gap: mutant removing the `targetPending` supersede break in the simulation controller survives (the "latest seek wins / abandoned run publishes no frame" test waits for `state == Working`, which `seek()` itself sets; wait for `progress().movesDone > 0` instead). (2) Pathological jobs (500k full-width 280 mm lines, 1M moves): first paint 1.4 s, 2.5-3.8 s per zoom step, simulation start 54 s UI-starved wait — add LOD/cancel for such jobs. (3) Relief raster samples one cell per stride: thin grooves can disappear on large sheets (use min-pooling). (4) Vertical Feed/Rapid moves counted but not drawn; arcs never split (4097 points for r=1e5). (5) ToolpathsPanel summary recompute cost at 1M moves (~160 ms once, cached by move-list identity). (6) Two stale t0221 driver expectations (not repo code).
 
 ### T-0232 CI resilience against GitHub release-download outages   [status: done — merged PR #99; nits T-0234]
@@ -1330,7 +1330,7 @@ Acceptance criteria:
   2. Behaviour unchanged: full ctest, Qt app self-test, MSVC CI green; save/load round trip of the renamed record.
   3. One changelog fragment.
 
-### T-0277 Tiling: test pinning the 10000-tile cap (T-0268 verifier nit)   [status: in-progress]
+### T-0277 Tiling: test pinning the 10000-tile cap (T-0268 verifier nit)   [status: verifying (PR #152)]
 Phase: 1   Module: core/toolpath   Depends on: T-0268
 Goal: (also from T-0269: a test asserting a case just above 15000 derived spans, e.g. a 3000-vertex female, is refused, so the cap-40000 mutant is killed.) A mutant restoring the tiling total-tile limit to 100000 passes all tests. Add a test with between 10,001 and 100,000 tiles expecting a refusal; also confirm the kMinPiece 1e-6 -> 1e-8 mutant is killed (verifier left it unchecked).
 Acceptance criteria:
