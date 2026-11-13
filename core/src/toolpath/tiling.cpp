@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <functional>
 #include <limits>
 
 namespace carvetto::toolpath {
@@ -10,6 +12,9 @@ namespace {
 
 constexpr double kEps = 1e-9;
 constexpr double kMinPiece = 1e-6;  // shorter clipped pieces are dropped (an arc that short would read as a circle)
+constexpr double kMaxCoord = 1e7;  // mm; larger (or non-finite) coordinates are refused, see tiling.hpp
+constexpr std::size_t kMaxTiles = 10000;
+constexpr std::size_t kMaxPairs = 5'000'000;  // (move, tile) pairs that may need clipping in one run
 constexpr double kTwoPi = 2.0 * geometry::kPi;
 
 bool inside(const Box2& r, Vec2 p) {
@@ -95,8 +100,12 @@ void clipLine(Emitter& em, const Move& m, Vec3 from, const Box2& r) {
 void clipArc(Emitter& em, const Move& m, Vec3 from, const Box2& r) {
     const double rad = arcRadius(m, from.xy());
     const double sweep = arcSweep(m, from.xy());
-    const double a0 = std::atan2(from.y - m.centre.y, from.x - m.centre.x);
     const double absSweep = std::fabs(sweep);
+    // A degenerate arc (no radius or no sweep) is shorter than a piece in any case: nothing to cut.
+    if (!(rad * absSweep >= kMinPiece)) {
+        return;
+    }
+    const double a0 = std::atan2(from.y - m.centre.y, from.x - m.centre.x);
     const bool ccw = sweep > 0.0;
 
     std::vector<double> ts{0.0, 1.0};
@@ -183,35 +192,75 @@ void clipArc(Emitter& em, const Move& m, Vec3 from, const Box2& r) {
     flush();
 }
 
-}  // namespace
+bool finiteCoord(double v) { return std::isfinite(v) && std::fabs(v) <= kMaxCoord; }
+bool finitePoint(Vec3 p) { return finiteCoord(p.x) && finiteCoord(p.y) && finiteCoord(p.z); }
 
-Toolpath clipToolpath(const Toolpath& tp, const Box2& rect, double safeZ, std::optional<Vec3> from) {
+/// Whether a move can be clipped: its end, its start and (for an arc) its centre are finite.
+bool clippable(const Move& m, Vec3 from) {
+    if (!finitePoint(m.to) || !finitePoint(from)) {
+        return false;
+    }
+    return !isArc(m.kind) || (finiteCoord(m.centre.x) && finiteCoord(m.centre.y));
+}
+
+/// Conservative bounding box of a cut move (a circle's box for an arc), for rejecting early.
+Box2 moveBox(const Move& m, Vec3 from) {
+    Box2 b;
+    b.expand(from.xy());
+    b.expand(m.to.xy());
+    if (isArc(m.kind)) {
+        const double rad = arcRadius(m, from.xy());
+        b.expand(Vec2{m.centre.x - rad, m.centre.y - rad});
+        b.expand(Vec2{m.centre.x + rad, m.centre.y + rad});
+    }
+    return b;
+}
+
+/// True when the move's box may touch the rectangle (a margin above every clip tolerance).
+bool mayTouch(const Box2& b, const Box2& r) {
+    constexpr double kMargin = 1e-6;
+    return b.max.x >= r.min.x - kMargin && b.min.x <= r.max.x + kMargin && b.max.y >= r.min.y - kMargin &&
+           b.min.y <= r.max.y + kMargin;
+}
+
+/// Clips the moves of `tp` named by `subset` (all when null; ascending indices) to `rect`.
+Toolpath clipMoves(const Toolpath& tp, const std::vector<std::uint32_t>* subset, const Box2& rect, double safeZ,
+                   std::optional<Vec3> from) {
     Toolpath out;
     out.name = tp.name;
     out.tool = tp.tool;
     Emitter em(out, safeZ);
-    Vec3 pos = from ? *from : (tp.moves.empty() ? Vec3{} : tp.moves.front().to);
-    for (const Move& m : tp.moves) {
-        switch (m.kind) {
-            case MoveKind::Rapid:
-                break;
-            case MoveKind::Dwell:
-                if (inside(rect, m.to.xy())) {
-                    em.piece(m.to, m);
-                }
-                break;
-            case MoveKind::ArcCW:
-            case MoveKind::ArcCCW:
-                clipArc(em, m, pos, rect);
-                break;
-            default:
-                clipLine(em, m, pos, rect);
-                break;
+    const std::size_t n = subset ? subset->size() : tp.moves.size();
+    for (std::size_t s = 0; s < n; ++s) {
+        const std::size_t k = subset ? (*subset)[s] : s;
+        const Move& m = tp.moves[k];
+        const Vec3 pos = k == 0 ? (from ? *from : m.to) : tp.moves[k - 1].to;
+        if (m.kind == MoveKind::Rapid || !clippable(m, pos)) {
+            continue;
         }
-        pos = m.to;
+        if (m.kind == MoveKind::Dwell) {
+            if (inside(rect, m.to.xy())) {
+                em.piece(m.to, m);
+            }
+            continue;
+        }
+        if (!mayTouch(moveBox(m, pos), rect)) {
+            continue;
+        }
+        if (isArc(m.kind)) {
+            clipArc(em, m, pos, rect);
+        } else {
+            clipLine(em, m, pos, rect);
+        }
     }
     em.finish();
     return out;
+}
+
+}  // namespace
+
+Toolpath clipToolpath(const Toolpath& tp, const Box2& rect, double safeZ, std::optional<Vec3> from) {
+    return clipMoves(tp, nullptr, rect, safeZ, from);
 }
 
 std::vector<Box2> tileRects(const Box2& extent, const TileSpec& spec, std::string* error) {
@@ -247,7 +296,7 @@ std::vector<Box2> tileRects(const Box2& extent, const TileSpec& spec, std::strin
     };
     const std::size_t nx = useW ? count(extent.width(), w, spec.overlap) : 1;
     const std::size_t ny = useH ? count(extent.height(), h, spec.overlap) : 1;
-    if (nx > 10000 || ny > 10000 || nx * ny > 100000) {
+    if (nx > kMaxTiles || ny > kMaxTiles || nx * ny > kMaxTiles) {
         return fail("too many tiles");
     }
     std::vector<Box2> out;
@@ -265,8 +314,23 @@ std::vector<Box2> tileRects(const Box2& extent, const TileSpec& spec, std::strin
 }
 
 TilingResult tileToolpaths(const std::vector<Toolpath>& toolpaths, const TileSpec& spec,
-                           std::optional<Box2> extentIn) {
+                           std::optional<Box2> extentIn, const std::function<bool()>& cancel) {
     TilingResult res;
+    const auto cancelled = [&]() { return cancel && cancel(); };
+    // Non-finite or absurd coordinates never reach the output: refuse the whole job.
+    for (const Toolpath& tp : toolpaths) {
+        for (const Move& m : tp.moves) {
+            if (!finitePoint(m.to) || (isArc(m.kind) && !(finiteCoord(m.centre.x) && finiteCoord(m.centre.y)))) {
+                res.error = "a toolpath has coordinates that are not finite or beyond 10000 m";
+                return res;
+            }
+        }
+    }
+    if (extentIn && !(finiteCoord(extentIn->min.x) && finiteCoord(extentIn->min.y) &&
+                      finiteCoord(extentIn->max.x) && finiteCoord(extentIn->max.y))) {
+        res.error = "the tiling extent is not finite";
+        return res;
+    }
     Box2 extent;
     double maxZ = -std::numeric_limits<double>::infinity();
     for (const Toolpath& tp : toolpaths) {
@@ -279,17 +343,99 @@ TilingResult tileToolpaths(const std::vector<Toolpath>& toolpaths, const TileSpe
         extent = *extentIn;
     }
     const double safeZ = spec.safeZ ? *spec.safeZ : (std::isfinite(maxZ) ? maxZ : 0.0);
+    if (spec.safeZ && !std::isfinite(*spec.safeZ)) {
+        res.error = "safe Z is not finite";
+        return res;
+    }
     const std::vector<Box2> rects = tileRects(extent, spec, &res.error);
     if (!res.ok()) {
         return res;
     }
     const bool useW = spec.strategy != TileStrategy::FeedThroughY;
+    const bool useH = spec.strategy != TileStrategy::FeedThroughX;
+    const double stepX = spec.width - spec.overlap;
+    const double stepY = spec.height - spec.overlap;
+    const auto colOf = [&](const Box2& r) {
+        return useW && stepX > 0.0 ? static_cast<std::size_t>(std::llround((r.min.x - extent.min.x) / stepX)) : 0;
+    };
+    const auto rowOf = [&](const Box2& r) {
+        return useH && stepY > 0.0 ? static_cast<std::size_t>(std::llround((r.min.y - extent.min.y) / stepY)) : 0;
+    };
+
+    // Bucket the cut moves by tile: a move is only clipped against tiles its box may touch.
+    std::size_t nx = 1;
+    std::size_t ny = 1;
+    for (const Box2& r : rects) {
+        nx = std::max(nx, colOf(r) + 1);
+        ny = std::max(ny, rowOf(r) + 1);
+    }
+    std::vector<std::size_t> tileAt(nx * ny, rects.size());  // grid cell -> index into rects
     for (std::size_t k = 0; k < rects.size(); ++k) {
+        tileAt[rowOf(rects[k]) * nx + colOf(rects[k])] = k;
+    }
+    const std::size_t nTp = toolpaths.size();
+    std::vector<std::vector<std::uint32_t>> buckets(rects.size() * nTp);  // [tile * nTp + toolpath]
+    const double tw = rects.empty() ? 0.0 : (useW ? spec.width : extent.width());
+    const double th = rects.empty() ? 0.0 : (useH ? spec.height : extent.height());
+    const auto range = [](double lo, double hi, double origin, double step, double size, std::size_t count,
+                          std::size_t& first, std::size_t& last) {
+        if (count <= 1 || !(step > 0.0)) {
+            first = 0;
+            last = 0;
+            return;
+        }
+        const double f = std::floor((lo - origin - size) / step) - 1.0;
+        const double l = std::floor((hi - origin) / step) + 1.0;
+        first = f <= 0.0 ? 0 : static_cast<std::size_t>(std::min(f, static_cast<double>(count)));
+        last = l <= 0.0 ? 0 : static_cast<std::size_t>(std::min(l, static_cast<double>(count - 1)));
+    };
+    std::size_t pairs = 0;
+    for (std::size_t t = 0; t < nTp; ++t) {
+        const Toolpath& tp = toolpaths[t];
+        for (std::size_t k = 0; k < tp.moves.size(); ++k) {
+            if ((k & 0x3ff) == 0 && cancelled()) {
+                res.error = "cancelled";
+                return res;
+            }
+            const Move& m = tp.moves[k];
+            if (m.kind == MoveKind::Rapid) {
+                continue;
+            }
+            const Vec3 pos = k == 0 ? m.to : tp.moves[k - 1].to;
+            const Box2 box = m.kind == MoveKind::Dwell ? Box2{m.to.xy(), m.to.xy()} : moveBox(m, pos);
+            std::size_t i0 = 0;
+            std::size_t i1 = 0;
+            std::size_t j0 = 0;
+            std::size_t j1 = 0;
+            range(box.min.x, box.max.x, extent.min.x, stepX, tw, nx, i0, i1);
+            range(box.min.y, box.max.y, extent.min.y, stepY, th, ny, j0, j1);
+            for (std::size_t j = j0; j <= j1; ++j) {
+                for (std::size_t i = i0; i <= i1; ++i) {
+                    const std::size_t tile = tileAt[j * nx + i];
+                    if (tile >= rects.size() || !mayTouch(box, rects[tile])) {
+                        continue;
+                    }
+                    if (++pairs > kMaxPairs) {
+                        res.error = "the job is too large to tile (too many moves for this many tiles)";
+                        return res;
+                    }
+                    buckets[tile * nTp + t].push_back(static_cast<std::uint32_t>(k));
+                }
+            }
+        }
+    }
+
+    for (std::size_t k = 0; k < rects.size(); ++k) {
+        if (cancelled()) {
+            res.error = "cancelled";
+            res.tiles.clear();
+            return res;
+        }
         Tile tile;
         tile.rect = rects[k];
         bool any = false;
-        for (const Toolpath& tp : toolpaths) {
-            Toolpath c = clipToolpath(tp, rects[k], safeZ);
+        for (std::size_t t = 0; t < nTp; ++t) {
+            Toolpath c = clipMoves(toolpaths[t], &buckets[k * nTp + t], rects[k], safeZ, {});
             any = any || !c.isEmpty();
             if (!spec.originalPosition) {
                 for (Move& m : c.moves) {
@@ -301,12 +447,8 @@ TilingResult tileToolpaths(const std::vector<Toolpath>& toolpaths, const TileSpe
         }
         if (any) {
             // Grid position from the rectangle's origin (also right after smallest-first sorting).
-            const double stepX = spec.width - spec.overlap;
-            const double stepY = spec.height - spec.overlap;
-            tile.column = useW && stepX > 0.0 ? static_cast<std::size_t>(std::llround((rects[k].min.x - extent.min.x) / stepX)) : 0;
-            tile.row = spec.strategy != TileStrategy::FeedThroughX && stepY > 0.0
-                           ? static_cast<std::size_t>(std::llround((rects[k].min.y - extent.min.y) / stepY))
-                           : 0;
+            tile.column = colOf(rects[k]);
+            tile.row = rowOf(rects[k]);
             res.tiles.push_back(std::move(tile));
         }
     }

@@ -3,6 +3,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
+#include <limits>
 
 #include "carvetto/toolpath/tiling.hpp"
 
@@ -336,4 +337,198 @@ TEST_CASE("tileToolpaths: explicit safe Z is the link height", "[tiling]") {
     REQUIRE(r.tiles.size() == 1);
     CHECK(r.tiles[0].toolpaths[0].moves.front().to.z == 12.0);
     CHECK(r.tiles[0].toolpaths[0].moves.back().to.z == 12.0);
+}
+
+// ---- T-0268 hardening ----
+
+TEST_CASE("clipToolpath: clip-boundary tolerances (1e-9 edge, 1e-6 minimum piece)", "[tiling]") {
+    const Box2 r{{0, 0}, {10, 10}};
+    const auto cut = [&](Vec3 a, Vec3 b) {
+        Toolpath tp;
+        tp.append(Move::rapid({a.x, a.y, 5}));
+        tp.append(Move::plunge(a));
+        tp.append(Move::feed(b));
+        return clipToolpath(tp, r, 5.0);
+    };
+    // A line running along an edge is kept up to 1e-9 outside it, dropped beyond.
+    CHECK_FALSE(cut({10.0 + 5e-10, 1, -1}, {10.0 + 5e-10, 9, -1}).isEmpty());
+    CHECK(cut({10.0 + 2e-9, 1, -1}, {10.0 + 2e-9, 9, -1}).isEmpty());
+    CHECK_FALSE(cut({1, -5e-10, -1}, {9, -5e-10, -1}).isEmpty());
+    CHECK(cut({1, -2e-9, -1}, {9, -2e-9, -1}).isEmpty());
+    // A piece shorter than 1e-6 is dropped, a longer one kept.
+    CHECK(cut({-10, 5, -1}, {5e-7, 5, -1}).isEmpty());
+    CHECK_FALSE(cut({-10, 5, -1}, {2e-6, 5, -1}).isEmpty());
+    // A zero-length feed is kept (it is not a clipped remainder).
+    CHECK_FALSE(cut({5, 5, -1}, {5, 5, -2}).isEmpty());
+    // A dwell uses the same edge tolerance.
+    const auto dwellAt = [&](double x) {
+        Toolpath tp;
+        tp.append(Move::rapid({x, 5, 5}));
+        tp.append(Move::dwell({x, 5, -1}, 1.0));
+        return clipToolpath(tp, r, 5.0);
+    };
+    CHECK_FALSE(dwellAt(10.0 + 5e-10).isEmpty());
+    CHECK(dwellAt(10.0 + 2e-9).isEmpty());
+    // Re-link: a start within 1e-7 of the previous end needs no link, farther needs one.
+    const auto twoPieces = [&](double gap) {
+        Toolpath tp;
+        tp.append(Move::rapid({1, 1, 5}));
+        tp.append(Move::plunge({1, 1, -1}));
+        tp.append(Move::feed({2, 1, -1}));
+        tp.append(Move::feed({2 + gap, 1, -1}));
+        return clipToolpath(tp, r, 5.0).moves.size();
+    };
+    CHECK(twoPieces(1.0) == twoPieces(1.0));
+    CHECK(twoPieces(1e-8) == 5);  // rapid, plunge, feed, feed, retract: not split
+}
+
+TEST_CASE("clipToolpath: non-finite and absurd coordinates are skipped", "[tiling]") {
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double inf = std::numeric_limits<double>::infinity();
+    Toolpath tp;
+    tp.append(Move::rapid({1, 1, 5}));
+    tp.append(Move::plunge({1, 1, -1}));
+    tp.append(Move::feed({nan, 1, -1}));
+    tp.append(Move::feed({inf, 1, -1}));
+    tp.append(Move::feed({1e300, 1, -1}));
+    tp.append(Move::feed({3, 1, -1}));
+    const Toolpath c = clipToolpath(tp, Box2{{0, 0}, {10, 10}}, 5.0);
+    for (const Move& m : c.moves) {
+        CHECK(std::isfinite(m.to.x + m.to.y + m.to.z));
+    }
+    Toolpath arc;
+    arc.append(Move::rapid({1, 0, 5}));
+    arc.append(Move::arcCCW({-1, 0, 0}, {nan, 0}));
+    arc.append(Move::arcCCW({1, 0, 0}, {1e300, 0}));
+    CHECK(clipToolpath(arc, Box2{{-5, -5}, {5, 5}}, 5.0).isEmpty());
+}
+
+TEST_CASE("clipToolpath: degenerate arcs cut nothing", "[tiling]") {
+    Toolpath tp;
+    tp.append(Move::rapid({3, 3, 5}));
+    tp.append(Move::plunge({3, 3, -1}));
+    tp.append(Move::arcCCW({3, 3, -1}, {3, 3}));  // zero radius
+    CHECK(clipToolpath(tp, Box2{{0, 0}, {10, 10}}, 5.0).moves.size() <= 3);
+    Toolpath tiny;
+    tiny.append(Move::rapid({3, 3, 5}));
+    tiny.append(Move::plunge({3, 3, -1}));
+    tiny.append(Move::arcCCW({3 + 1e-9, 3, -1}, {3 + 5e-10, 3}));
+    CHECK(clipToolpath(tiny, Box2{{0, 0}, {10, 10}}, 5.0).moves.size() <= 3);
+}
+
+TEST_CASE("tileToolpaths: non-finite or absurd input is refused", "[tiling]") {
+    TileSpec s;
+    s.width = 10;
+    s.height = 10;
+    for (const double bad : {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::infinity(), 1e300}) {
+        Toolpath tp = line(0, 0, 30, 0);
+        tp.append(Move::feed({bad, 0, -1}));
+        const TilingResult r = tileToolpaths({tp}, s);
+        CHECK_FALSE(r.ok());
+        CHECK(r.tiles.empty());
+        Toolpath arc = line(0, 0, 30, 0);
+        arc.append(Move::arcCW({0, 0, -1}, {bad, 0}));
+        CHECK_FALSE(tileToolpaths({arc}, s).ok());
+    }
+    const TilingResult e = tileToolpaths({line(0, 0, 30, 0)}, s, Box2{{0, 0}, {std::numeric_limits<double>::infinity(), 5}});
+    CHECK_FALSE(e.ok());
+    TileSpec z = s;
+    z.safeZ = std::numeric_limits<double>::quiet_NaN();
+    CHECK_FALSE(tileToolpaths({line(0, 0, 30, 0)}, z).ok());
+}
+
+TEST_CASE("tileToolpaths: bucketing gives the same tiles as clipping every tile", "[tiling]") {
+    Toolpath tp;
+    tp.append(Move::rapid({0, 0, 5}));
+    tp.append(Move::plunge({0, 0, -1}));
+    for (int i = 0; i < 60; ++i) {
+        const double x = 7.0 * i;
+        tp.append(Move::feed({x, 3.0 * (i % 7) * 11.0, -1 - 0.01 * i}));
+        if (i % 5 == 0) {
+            tp.append(Move::arcCCW({x + 20, 40.0 + i, -2}, {x + 10, 30.0 + i}));
+        }
+        if (i % 9 == 0) {
+            tp.append(Move::dwell({x, 10, -2}, 1.0));
+        }
+    }
+    for (const auto strategy : {TileStrategy::Individual, TileStrategy::FeedThroughX, TileStrategy::FeedThroughY}) {
+        for (const bool smallest : {false, true}) {
+            TileSpec s;
+            s.strategy = strategy;
+            s.width = 53;
+            s.height = 41;
+            s.overlap = 5;
+            s.smallestFirst = smallest;
+            s.originalPosition = true;
+            const TilingResult r = tileToolpaths({tp}, s);
+            REQUIRE(r.ok());
+            Box2 extent = tp.bounds();
+            const auto rects = tileRects(extent, s);
+            std::size_t next = 0;
+            for (const Box2& rect : rects) {
+                const Toolpath expect = clipToolpath(tp, rect, *tp.maxZ());
+                if (expect.isEmpty()) {
+                    continue;
+                }
+                REQUIRE(next < r.tiles.size());
+                CHECK(r.tiles[next].rect.min == rect.min);
+                CHECK(r.tiles[next].toolpaths[0].moves == expect.moves);
+                ++next;
+            }
+            CHECK(next == r.tiles.size());
+        }
+    }
+}
+
+TEST_CASE("tileToolpaths: a hostile job finishes quickly or is refused", "[tiling]") {
+    // 200k short moves over 10000 tiles: bucketing makes this about the move count.
+    Toolpath tp;
+    tp.append(Move::rapid({0, 0, 5}));
+    tp.append(Move::plunge({0, 0, -1}));
+    for (int i = 0; i < 200000; ++i) {
+        tp.append(Move::feed({static_cast<double>(i % 1000) * 0.1, static_cast<double>((i / 1000) % 1000) * 0.1, -1}));
+    }
+    TileSpec s;
+    s.width = 1;
+    s.height = 1;
+    const TilingResult r = tileToolpaths({tp}, s);
+    CHECK(r.ok());
+
+    // Every move spans the whole job, over many tiles: refused by the work bound, not run.
+    Toolpath wide;
+    wide.append(Move::rapid({0, 0, 5}));
+    wide.append(Move::plunge({0, 0, -1}));
+    for (int i = 0; i < 200000; ++i) {
+        wide.append(Move::feed({(i % 2) ? 0.0 : 100.0, (i % 2) ? 0.0 : 100.0, -1}));
+    }
+    const TilingResult w = tileToolpaths({wide}, s);
+    CHECK_FALSE(w.ok());
+    CHECK(w.tiles.empty());
+}
+
+TEST_CASE("tileToolpaths: cancel stops the work", "[tiling]") {
+    TileSpec s;
+    s.width = 10;
+    s.height = 10;
+    const TilingResult r = tileToolpaths({line(0, 0, 100, 100)}, s, {}, [] { return true; });
+    CHECK_FALSE(r.ok());
+    CHECK(r.error == "cancelled");
+    CHECK(r.tiles.empty());
+    CHECK(tileToolpaths({line(0, 0, 100, 100)}, s, {}, [] { return false; }).ok());
+}
+
+TEST_CASE("tileToolpaths: tile numbering counts only tiles with cuts", "[tiling]") {
+    // Two cuts far apart: the grid has 5 tiles along X but only the first and last have cuts.
+    Toolpath tp = line(1, 1, 9, 1);
+    for (const Move& m : line(44, 1, 49, 1).moves) {
+        tp.append(m);
+    }
+    TileSpec s;
+    s.width = 10;
+    s.height = 10;
+    const TilingResult r = tileToolpaths({tp}, s);
+    REQUIRE(r.ok());
+    REQUIRE(r.tiles.size() == 2);
+    CHECK(r.tiles[0].column == 0);
+    CHECK(r.tiles[1].column == 4);  // the second tile with cuts is "tile 2", at grid column 4
 }
