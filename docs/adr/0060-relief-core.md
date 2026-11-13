@@ -11,7 +11,7 @@ Status: accepted (T-0281)
   onto a caller-given `Grid` (`unionGrid` proposes one at the finest cell size).
 - Combine (`below` = accumulated, `above` = new): above transparent -> below, all modes. Below
   transparent -> above for Add, Merge High, Merge Low; stays transparent for Subtract and Multiply
-  (nothing to subtract from or scale). Otherwise below+above, below-above, max, min, below*above.
+  (nothing to subtract from or scale). In particular a Subtract or Multiply component that is first in a level is combined against the all-transparent accumulator and so contributes nothing. Otherwise below+above, below-above, max, min, below*above.
 - Component value = raw * shapeHeight% , then fade, then tilt, then + baseHeight; transparent cells
   stay transparent. Fade factor = 1 - percent/100 * t, t = projection onto anchor->second clamped
   to [0,1]. Tilt adds tan(angle) * signed distance along pivot->raise (unit vector) from the

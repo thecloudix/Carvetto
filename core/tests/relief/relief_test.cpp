@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstring>
 #include <vector>
 
 #include <catch2/catch_approx.hpp>
@@ -141,6 +142,14 @@ TEST_CASE("fade and tilt: goldens, non-destructive, bake equals composed") {
     CHECK(b.at(0, 0) == 2.f);
 }
 
+TEST_CASE("fade is clamped before the anchor and beyond the second point") {
+    Component c = comp(mk(Grid{5, 1, 1.0, {0.0, 0.0}}, std::vector<float>(5, 10.f)));
+    c.fade = {true, {1, 0}, {3, 0}, 50.0};
+    HeightField b;
+    REQUIRE(bake(c, b) == Status::Ok);
+    expectData(b, {10, 10, 7.5f, 5, 5});
+}
+
 TEST_CASE("level base height applies after combining and is not in bake") {
     Component a = comp(mk(g3(), std::vector<float>(9, 2.f)));
     Component m = comp(mk(g3(), std::vector<float>(9, 3.f)), CombineMode::Multiply);
@@ -179,5 +188,6 @@ TEST_CASE("levels combine with their own mode; hidden items skipped; union grid"
     HeightField o1, o2;
     REQUIRE(compose({l1, l2}, u, o1) == Status::Ok);
     REQUIRE(compose({l1, l2}, u, o2) == Status::Ok);
-    CHECK(o1.data().size() == o2.data().size());
+    REQUIRE(o1.data().size() == o2.data().size());
+    CHECK(std::memcmp(o1.data().data(), o2.data().data(), o1.data().size() * sizeof(float)) == 0);
 }
