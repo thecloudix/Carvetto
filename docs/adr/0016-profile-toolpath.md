@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127, T-0129, T-0141 and T-0174)
+Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127, T-0129, T-0141, T-0166 and T-0174)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -244,8 +244,19 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     differential fuzz (4000 scenes, 24-64 N2 events, no event with count > 1) agrees: with N3 the
     fuzz output is identical to the rule's, so any scene with count > 1 would have to be built
     from an interleaved outline that no input produces.
-    Near spans in two or more separate places (a box-centre anchor on a symmetric shape) are not
-    broken by rule and still follow rounding (T-0166). The rules apply to all three start modes.
+    Near spans in two or more separate places (a box-centre anchor on a symmetric shape) are
+    broken last (T-0166, owner-delegated decision 2026-11-06): the start is the nearest point on
+    the lowest-index span whose distance is within the distance tolerance of the nearest distance,
+    so two spans that are equally near up to rounding give the same start on every compiler and
+    libm (before, the one that rounded smaller won). Where the projection lands on the same point it
+    is kept. Spans nearer than the tolerance but not equal now lose to a lower index: a deliberate
+    change in some cut starts, for identical output across platforms. Tab safety is untouched (tabs
+    keep clear of whatever start is chosen).
+    Mutants (T-0166): tolerance 0 (strict), unbounded and 100x tolerance are each killed by the
+    box-centre test (the ulp-scaled rectangles, the 0.2 µm and the 10 µm slants); dropping the rule
+    is killed by the ulp-scaled rectangles. "Keep the projection where it lands on the same point"
+    is equivalent to dropping it for the cut produced: the same point, so the rotated cut is the
+    same spans (only the arc length may differ by the walk's length at the wrap). The rules apply to all three start modes.
     They are stable under ulp and 1e-9 relative perturbations and translations, and they compare
     distances only against bounds well above rounding, so builds that round differently (FMA
     contraction, another compiler or libm) choose the same start, except as listed above. They

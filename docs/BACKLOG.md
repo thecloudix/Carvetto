@@ -650,7 +650,7 @@ Acceptance criteria:
   2. An ASan/UBSan build of the tests compiles with -Werror and passes.
   3. Output otherwise byte-identical to main (hash sweep).
 
-### T-0166 Profile: platform-stable start for near-equal spans (symmetric shapes)   [status: in-progress]
+### T-0166 Profile: platform-stable start for near-equal spans (symmetric shapes)   [status: done — merged #140]
 Director decision 2026-11-06 (owner delegated): approved the tolerance tie-break (lowest span within tol of the nearest distance) because identical output across compilers/platforms outweighs a small one-time change in cut starts; the coder must report the output change rate and keep tab safety unchanged.
 Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Found by the T-0158 coder. After T-0158, GCC 13 and GCC 15 still choose different cut starts in 9 of 2,183 stored harness scenes (31 on main) and different tab-left counts in 6 (main 8). These are not arc-centre ties: with the bounding-box Centre anchor on symmetric shapes (rectangles, point-symmetric m2_1330009_35), two spans are equally near up to rounding, and "ties go to the lowest span" only works when the distances are bit-equal. A tolerance tie-break (lowest span within tol of the nearest distance) would change more outputs, so it needs the owner's approval first.
@@ -1254,7 +1254,7 @@ Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older 
 Acceptance criteria:
   1. ADR and comments accurate; no behaviour change unless the owner decides otherwise.
 
-### T-0265 V-carve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: ready]
+### T-0265 V-carve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: in-progress]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0238, T-0153, T-0220
 Goal: V-carve inlay (inventory 'V-carve inlay Toolpath'): pocket depth, glue gap, surface clearance, V-bit and clearance tools, plug destination sheet (the plug is mirrored, and centred when on another sheet), plug outer boundary (Sheet Limits / Vector Offset / Boundary Offset). Builds on the straight inlay's record/form/viewmodel wiring (ADR-0040).
 Acceptance criteria:
@@ -1263,7 +1263,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; the straight inlay (T-0238); 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md 'V-carve inlay Toolpath' (the Pocket and Plug sub-pages' fields are not fetched: the owner may need to supply them); ADR-0040.
 
-### T-0266 Toolpath tiling: dialog checkbox and Tiling Manager panel (T-0242 follow-up)   [status: in-progress]
+### T-0266 Toolpath tiling: dialog checkbox and Tiling Manager panel (T-0242 follow-up)   [status: done — merged #138]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0242
 Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/feed-through X/Y), tile size, overlap, order, original-position option, machine work area default; Tiling Manager panel with a tile preview over the job; self-test drives it.
 Acceptance criteria:
@@ -1293,7 +1293,7 @@ Goal: the T-0226 verifier saw 'selection removal scales near-linearly in every o
 Acceptance criteria:
   1. 40x runs under sustained load pass; synthetic slowdowns still fail the tests; list of what was left and why.
 
-### T-0271 Document variables follow-ups (T-0257 coder)   [status: ready]
+### T-0271 Document variables follow-ups (T-0257 coder)   [status: in-progress]
 Phase: 1   Module: core/document + app   Depends on: T-0257
 Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressions' object per toolpath record in job.json, loader/writer, ToolpathRecord field/equality; format minor allocation per the highest-required-minor scheme, ADR) so the expression link and delete protection survive save/load; (2) 'Insert New Document Variable' context menu on all numeric boxes; (3) feet (') conversion respects display units (inch mode); (4) run variable-triggered recalculation off the UI thread; (5) re-derive chamfer linked fields when a sibling holds an expression; (6) {Variable} substitution in text/data-merge if the owner wants it.
 Acceptance criteria:
@@ -1309,7 +1309,7 @@ Acceptance criteria:
   4. One changelog fragment; full ctest and MSVC CI green.
 Out of scope: Photo V-carve wiring (T-0275).
 
-### T-0275 Photo V-carve app wiring (T-0250 follow-up)   [status: in-progress]
+### T-0275 Photo V-carve app wiring (T-0250 follow-up)   [status: done — merged #136]
 Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
 Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
 Acceptance criteria:
@@ -1322,7 +1322,7 @@ Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferre
 Acceptance criteria:
   1. Both features work in the real app, are undo-safe, and are driven by the app self-test; changelog fragment; CI green.
 
-### T-0276 Neutral naming: remove third-party product names from identifiers, UI and filenames   [status: ready]
+### T-0276 Neutral naming: remove third-party product names from identifiers, UI and filenames   [status: in-progress]
 Phase: 1   Module: core/toolpath + app + docs   Depends on: T-0275
 Goal: Owner directive 2026-11-12: no mention of any third-party CAM product (or its trademarks) anywhere in the project. Docs were scrubbed by the director; code still uses `photoVCarve`/`PhotoVCarve`/`photo_vcarve` (T-0250, T-0275, and the "Photo V-Carve" UI label), which matches a vendor's product name, and the 2026-11-03 decision already bans the single-word "vcarve" spelling. Rename to neutral names (e.g. `image_engrave`/`ImageEngrave`, UI "Image Engrave" / "Relief Engrave from Image"), including: file names (core/.../photo_vcarve.*, tests, app photo_self_test), job.json record key `photo_vcarve` (T-0275 shipped it unreleased: no compatibility shim needed unless a release tagged it — check), ADR-0052 and 0047 titles/text, changelog fragments, BACKLOG text.
 Acceptance criteria:

@@ -174,12 +174,10 @@ class CanvasWidget : public QWidget {
         }
     };
 
-    void paintBitmaps(QPainter& painter, const viewmodel::ViewTransform& view) const;
 
     document::Document* doc_{nullptr};
     double bitmapFade_{1.0};
     std::function<void(std::optional<geometry::Vec2>)> onPicked_;
-    mutable std::map<std::string, QImage> bitmapCache_;  // by asset key; null image = not decodable
     const viewmodel::PreviewModel* preview_{nullptr};
     PreviewPaintState previewState_;
     mutable PreviewLayerKey layerKey_;
@@ -191,6 +189,10 @@ class CanvasWidget : public QWidget {
     mutable std::size_t lastPreviewPoints_{0};
     viewmodel::ViewTransform view_;
     mutable viewmodel::KeepOutHaloCache haloCache_;
+    /// Decoded (and shrunk to at most 1024 pixels an edge) bitmaps by content key; a null image
+    /// marks an image that could not be decoded.
+    mutable std::map<std::string, QImage> bitmapCache_;
+    const QImage& bitmapImage(const std::string& key) const;
     viewmodel::ToolController tools_;
     bool fitPending_{true};
     bool multiSided_{false};

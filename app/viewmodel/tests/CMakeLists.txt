@@ -20,6 +20,7 @@ add_executable(carvetto_viewmodel_tests
   view_transform_test.cpp
   ruler_test.cpp
   save_toolpaths_test.cpp
+  tiling_form_test.cpp
   tools_test.cpp
   text_tool_test.cpp
   dimension_tool_test.cpp
@@ -46,6 +47,7 @@ add_executable(carvetto_viewmodel_tests
   toolpath_inlay_test.cpp
   toolpath_fluting_test.cpp
   toolpath_prism_test.cpp
+  toolpath_photo_test.cpp
   toolpath_preview_test.cpp
   simulation_test.cpp
   toolpath_robustness_test.cpp

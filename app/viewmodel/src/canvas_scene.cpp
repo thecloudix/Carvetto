@@ -72,6 +72,17 @@ CanvasScene buildCanvasScene(const Document& doc, const ViewTransform& view, con
                 continue;
             }
             std::vector<geometry::Contour> dimensionContours;
+            if (const document::BitmapObject* bmp = obj->asBitmap()) {
+                if (!bmp->placementMm.isEmpty() && bmp->placementMm.intersects(visible)) {
+                    DrawBitmap bitmap;
+                    bitmap.object = id;
+                    bitmap.key = bmp->sourceRef;
+                    bitmap.rectPx = view.worldToScreen(bmp->placementMm);
+                    bitmap.colour = layer.colour;
+                    scene.bitmaps.push_back(std::move(bitmap));
+                }
+                continue;
+            }
             const document::VectorObject* vec = obj->asVector();
             if (vec == nullptr) {
                 const document::DimensionObject* dim = obj->asDimension();

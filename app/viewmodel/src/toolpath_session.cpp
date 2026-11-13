@@ -118,7 +118,7 @@ void ToolpathSession::adopt(const ToolpathRecord& record) {
     b.def.params = record.params;
     b.def.tool = record.toolSource;
     b.def.selector.base = record.selection;
-    b.vectors = fingerprint(resolveVectors(*doc_, b.def.selector));
+    b.vectors = inputsFingerprint(*doc_, b.def.selector, b.def.params);
     b.tools = toolsFingerprintOf(b.def, db_);
     baselines_.emplace(MovesKey(record.moves), std::move(b));
 }
@@ -273,7 +273,11 @@ void ToolpathSession::computeStaleness() {
     }
     staleness_.clear();
     std::vector<std::pair<VectorSelector, std::uint64_t>> memo;
-    const auto vectorsOf = [&](const VectorSelector& selector) {
+    const auto vectorsOf = [&](const ToolpathDefinition& def) {
+        const VectorSelector& selector = def.selector;
+        if (def.operation() == ToolpathOperation::PhotoVCarve) {
+            return inputsFingerprint(*doc_, selector, def.params);
+        }
         for (const auto& [sel, fp] : memo) {
             if (sel == selector) {
                 return fp;
@@ -302,7 +306,7 @@ void ToolpathSession::computeStaleness() {
             s.note = "this clearance toolpath of a V-carve has lost its carving toolpath; recalculate the V-carve";
         }
         const ToolpathDefinition def = definitionOf(rec);
-        s.vectors = vectorsOf(def.selector) != b->vectors;
+        s.vectors = vectorsOf(def) != b->vectors;
         s.params = !sameParams(rec.params, b->def.params);
         const std::uint64_t now = toolsFingerprintOf(def, db_);
         if (now == 0) {
@@ -440,6 +444,13 @@ std::size_t ToolpathSession::countVectors(const VectorSelector& selector) const 
     return resolveVectors(*doc_, selector).contours.size();
 }
 
+std::string ToolpathSession::bitmapProblem(const VectorSelector& selector) const {
+    if (doc_ == nullptr) {
+        return "there is no document";
+    }
+    return resolveBitmap(*doc_, selector).problem;
+}
+
 // --- Calculation ---------------------------------------------------------------------------------
 
 ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::optional<ToolpathId> target) {
@@ -453,10 +464,16 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     const std::string bad = validateSelector(*doc_, definition.selector);
     const VectorSelector selector = bad.empty() ? normalisedSelector(definition.selector) : VectorSelector{};
     const ResolvedVectors resolved = resolveVectors(*doc_, selector);
-    const document::VectorSelection stored = storedSelection(selector, resolved);
+    const bool photo = std::holds_alternative<toolpath::PhotoVCarveParams>(definition.params);
+    // A photo V-carve stores its explicit selection as it is (it names the bitmap, which no vector filter keeps).
+    const document::VectorSelection stored = photo ? selector.base : storedSelection(selector, resolved);
     ToolpathJob job = makeToolpathJob(definition, resolved, db_, stored);
     if (!bad.empty()) {
         job.refusal = bad;
+    }
+    if (photo) {
+        job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);
+        attachPhotoInput(job, *doc_, resolveBitmap(*doc_, selector), bitmapDecoder_);
     }
     job.target = target.value_or(ToolpathId{});
     if (doc_->job().type == document::JobType::DoubleSided) {
@@ -588,7 +605,7 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
         // The inputs must still be the ones the calculation was made from.
         const VectorSelector selector = normalisedSelector(c.definition.selector);
         if (!validateSelector(*doc_, selector).empty() ||
-            fingerprint(resolveVectors(*doc_, selector)) != c.vectorsFingerprint) {
+            inputsFingerprint(*doc_, selector, c.definition.params) != c.vectorsFingerprint) {
             reject("the vectors changed since the toolpath was calculated; calculate it again");
             continue;
         }

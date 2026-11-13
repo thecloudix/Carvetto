@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/document/bitmap_store.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 
@@ -62,6 +63,10 @@ class FileSession {
     /// path is not remembered; the document becomes dirty. `forcedMmPerUnit` overrides the units.
     bool importDxf(const std::filesystem::path& path, std::optional<double> forcedMmPerUnit = std::nullopt,
                    std::span<const std::uint8_t> textFontBytes = {});
+    /// Imports an image file as a bitmap object (`importBitmapIntoDocument`, T-0275): one undo
+    /// step, the new object is selected, the document becomes dirty. `decoder` reads non-Netpbm
+    /// formats.
+    bool importBitmap(const std::filesystem::path& path, const document::BitmapDecoder& decoder);
     /// Result of the last successful `importDxf` (warnings for the dialog).
     const DxfImportOutcome& lastImport() const { return lastImport_; }
     /// Writes the active sheet (or the selection) as DXF to `path` (atomically). Does not change

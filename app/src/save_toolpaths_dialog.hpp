@@ -22,6 +22,8 @@ class QTimer;
 
 namespace carvetto::app {
 
+class TilingManagerPanel;
+
 /// Where the shipped posts live: next to the executable (`posts`), in `../share/carvetto/posts`,
 /// or the source tree's `posts` (development builds). Empty when none is found.
 std::filesystem::path shippedPostsDir();
@@ -67,6 +69,10 @@ class SaveToolpathsDialog : public QDialog {
     /// Writes the files as the Save button does and waits for the result. True on success.
     bool saveNow();
     const std::vector<std::filesystem::path>& written() const { return written_; }
+    /// Picks machine `index` (0 = none, 1.. = the machines in order); the tile size follows its work area.
+    void setMachineIndex(int index);
+    /// The Tiling Manager (T-0266): the self-test ticks "Tile Toolpaths" and sets the tiling through it.
+    TilingManagerPanel* tilingPanel() const { return tiling_; }
 
     void accept() override;
     void reject() override;
@@ -83,6 +89,8 @@ class SaveToolpathsDialog : public QDialog {
     void showState();
     void setBusy(bool busy);
     viewmodel::SaveOptions currentOptions() const;
+    const tooling::Machine* currentMachine() const;
+    void updateTilePreview();
     void finishThread();
 
     viewmodel::SaveSource source_;
@@ -97,6 +105,7 @@ class SaveToolpathsDialog : public QDialog {
     QComboBox* mode_{nullptr};
     QLineEdit* folder_{nullptr};
     QLineEdit* template_{nullptr};
+    TilingManagerPanel* tiling_{nullptr};
     QCheckBox* overwrite_{nullptr};
     QCheckBox* acceptStale_{nullptr};
     QLabel* summary_{nullptr};

@@ -1,6 +1,7 @@
 #include "canvas_widget.hpp"
 
 #include <QBrush>
+#include <QByteArray>
 #include <QElapsedTimer>
 #include <QEvent>
 #include <QFont>
@@ -22,7 +23,6 @@
 #include <cstddef>
 #include <vector>
 
-#include "carvetto/io/raster.hpp"
 #include "carvetto/viewmodel/bitmap_trace.hpp"
 #include "carvetto/viewmodel/canvas_scene.hpp"
 #include "carvetto/viewmodel/layers_sheets.hpp"
@@ -54,6 +54,7 @@ CanvasWidget::CanvasWidget(QWidget* parent) : QWidget(parent) {
 
 void CanvasWidget::setDocument(document::Document* doc) {
     doc_ = doc;
+    bitmapCache_.clear();
     tools_.setDocument(doc);
     fitPending_ = true;
     if (width() > 0 && height() > 0) {
@@ -130,6 +131,29 @@ QImage CanvasWidget::renderFitted(QSize size, ViewTransform* usedView) const {
     return image;
 }
 
+const QImage& CanvasWidget::bitmapImage(const std::string& key) const {
+    static const QImage none;
+    if (doc_ == nullptr) {
+        return none;
+    }
+    const auto found = bitmapCache_.find(key);
+    if (found != bitmapCache_.end()) {
+        return found->second;
+    }
+    QImage image;
+    if (const document::BitmapAsset* asset = doc_->findBitmap(key)) {
+        image = QImage::fromData(QByteArray::fromRawData(reinterpret_cast<const char*>(asset->bytes.data()),
+                                                         static_cast<qsizetype>(asset->bytes.size())));
+        if (!image.isNull() && (image.width() > 1024 || image.height() > 1024)) {
+            image = image.scaled(1024, 1024, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        }
+    }
+    if (bitmapCache_.size() >= 32) {
+        bitmapCache_.clear();
+    }
+    return bitmapCache_.emplace(key, std::move(image)).first->second;
+}
+
 void CanvasWidget::paintSides(QPainter& painter, const ViewTransform& view) const {
     if (doc_ == nullptr || doc_->job().type != document::JobType::DoubleSided) {
         return;
@@ -194,43 +218,6 @@ void CanvasWidget::cancelPick() {
     done(std::nullopt);
 }
 
-void CanvasWidget::paintBitmaps(QPainter& painter, const ViewTransform& view) const {
-    // Drop cached images whose asset is gone (undo of an import).
-    for (auto it = bitmapCache_.begin(); it != bitmapCache_.end();) {
-        it = doc_->findBitmap(it->first) == nullptr ? bitmapCache_.erase(it) : std::next(it);
-    }
-    for (const auto& [id, obj] : doc_->objects()) {
-        const document::BitmapObject* bmp = obj.asBitmap();
-        if (bmp == nullptr || obj.sheet != doc_->activeSheet() || bmp->placementMm.isEmpty()) {
-            continue;
-        }
-        const document::Layer* layer = doc_->findLayer(obj.layer);
-        const document::BitmapAsset* asset = doc_->findBitmap(bmp->sourceRef);
-        if (layer == nullptr || !layer->visible || asset == nullptr) {
-            continue;
-        }
-        auto cached = bitmapCache_.find(bmp->sourceRef);
-        if (cached == bitmapCache_.end()) {
-            QImage img;
-            if (bmp->widthPx > 0 && bmp->heightPx > 0 &&
-                static_cast<std::size_t>(bmp->widthPx) * static_cast<std::size_t>(bmp->heightPx) <= io::kMaxImagePixels) {
-                img = QImage::fromData(asset->bytes.data(), static_cast<int>(asset->bytes.size()));
-            }
-            cached = bitmapCache_.emplace(bmp->sourceRef, std::move(img)).first;
-        }
-        if (cached->second.isNull()) {
-            continue;
-        }
-        const Vec2 topLeft = view.worldToScreen(Vec2{bmp->placementMm.min.x, bmp->placementMm.max.y});
-        const Vec2 bottomRight = view.worldToScreen(Vec2{bmp->placementMm.max.x, bmp->placementMm.min.y});
-        painter.save();
-        painter.setOpacity(bitmapFade_);
-        painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-        painter.drawImage(QRectF(toQt(topLeft), toQt(bottomRight)), cached->second);
-        painter.restore();
-    }
-}
-
 void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSize size) const {
     painter.fillRect(QRectF(QPointF(0.0, 0.0), QSizeF(size)), canvasBackground());
     if (doc_ == nullptr) {
@@ -252,7 +239,24 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.drawRect(material);
     }
 
-    paintBitmaps(painter, view);
+    // Bitmaps lie under the vectors: the image, then a frame in the layer colour.
+    for (const viewmodel::DrawBitmap& bitmap : scene.bitmaps) {
+        const QRectF rect = toQt(bitmap.rectPx);
+        const QImage& image = bitmapImage(bitmap.key);
+        if (!image.isNull()) {
+            painter.save();
+            painter.setOpacity(bitmapFade_);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+            painter.drawImage(rect, image);
+            painter.restore();
+        }
+        QPen frame(QColor(bitmap.colour.r, bitmap.colour.g, bitmap.colour.b));
+        frame.setWidthF(1.0);
+        frame.setCosmetic(true);
+        painter.setPen(frame);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(rect);
+    }
 
     for (const viewmodel::DrawPath& path : scene.paths) {
         if (path.pointsPx.size() < 2) {

@@ -36,6 +36,17 @@ struct DrawLabel {
     double heightPx{0.0};
 };
 
+/// A placed bitmap (T-0275): the widget paints the embedded image `key` into `rectPx` (screen
+/// pixels, y down) under the vectors.
+struct DrawBitmap {
+    document::ObjectId object{};
+    /// Content key of the embedded image (`BitmapObject::sourceRef`); not an image key (legacy
+    /// reference without pixels) when it is not 16 hex digits: only the frame is drawn then.
+    std::string key;
+    geometry::Box2 rectPx;
+    document::Colour colour{};
+};
+
 /// Everything the 2D canvas paints for one frame, in screen pixels. The Qt widget only strokes
 /// and fills what is listed here.
 struct CanvasScene {
@@ -43,6 +54,9 @@ struct CanvasScene {
     geometry::Box2 materialPx;
     /// Screen position of the active sheet's XY datum.
     geometry::Vec2 datumPx;
+    /// Bitmaps on visible layers of the active sheet whose placement touches the visible area,
+    /// bottom layer first.
+    std::vector<DrawBitmap> bitmaps;
     /// Visible vector contours on the active sheet, bottom layer first, then creation order.
     std::vector<DrawPath> paths;
     /// Dimension texts on visible layers, in the order of `paths`.

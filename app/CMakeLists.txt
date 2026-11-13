@@ -15,6 +15,8 @@ configure_file(src/starter_tools_embedded.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/app
 
 qt_add_executable(carvetto
   src/main.cpp
+  src/bitmap_decoder.cpp
+  src/bitmap_decoder.hpp
   src/array_copy_menu.cpp
   src/double_sided_menu.cpp
   src/double_sided_self_test.cpp
@@ -46,6 +48,8 @@ qt_add_executable(carvetto
   src/tool_panel.hpp
   src/save_toolpaths_dialog.cpp
   src/save_toolpaths_dialog.hpp
+  src/tiling_manager_panel.cpp
+  src/tiling_manager_panel.hpp
   src/tool_setup_dialog.cpp
   src/tool_setup_dialog.hpp
   src/tool_setup_self_test.cpp
@@ -55,6 +59,7 @@ qt_add_executable(carvetto
   src/toolpaths_panel.cpp
   src/toolpaths_panel.hpp
   src/toolpaths_self_test.cpp
+  src/photo_self_test.cpp
   src/self_test.cpp
   src/self_test.hpp
   src/starter_tools.hpp

@@ -1592,3 +1592,44 @@ TEST_CASE("T-0174: an end-mill cut whose tip's offsets meet within rounding star
     const Vec2 s = startOf(r.toolpath).at;
     CHECK(geometry::distance(s, Vec2{-0x1.255dd3ca69171p+2, -0x1.32a5395b5aaa8p+1}) < 1e-6);
 }
+
+namespace {
+
+// A closed polygon (20 wide, 10 high; the bottom edge's left end lies `dip` lower and the top
+// edge's left end `rise` higher), cut Outside by a 2 mm end mill, starting nearest the
+// bounding-box centre. A slanted edge's middle is nearer the centre than a straight one.
+Vec2 boxCentreStart(double dip, double rise, double xScale) {
+    geometry::Polyline pl;
+    pl.closed = true;
+    pl.points = {{0.0, -dip}, {20.0 * xScale, 0.0}, {20.0 * xScale, 10.0}, {0.0, 10.0 + rise}};
+    ProfileParams p;
+    p.side = ProfileSide::Outside;
+    p.direction = CutDirection::Climb;
+    p.passes.cutDepth = 3.0;
+    p.passes.passDepth = 3.0;
+    p.safeZ = 5.0;
+    p.startAt = StartAt::ClosestOnBoundingBox;
+    p.startAnchor = BoxAnchor::Centre;
+    const ProfileResult r = profileToolpath({Contour::fromPolyline(pl)}, test::endMill(2.0), p);
+    REQUIRE(r.ok());
+    return startOf(r.toolpath).at;
+}
+
+}  // namespace
+
+TEST_CASE("T-0166: spans equally near the box centre up to rounding give the same start (lowest span)",
+          "[toolpath][profile][start]") {
+    // A rectangle: the top and bottom edges are equally far from the centre; ulp-sized changes of
+    // the coordinates must not swap them (rise 0 ... a few ulps).
+    const Vec2 base = boxCentreStart(0.0, 0.0, 1.0);
+    for (double k : perturbations()) {
+        INFO("scale " << k);
+        CHECK(geometry::distance(boxCentreStart(0.0, 0.0, k), base) < 1e-6);
+        CHECK(geometry::distance(boxCentreStart(0.0, 10.0 * (k - 1.0), 1.0), base) < 1e-6);
+        CHECK(geometry::distance(boxCentreStart(0.0, 10.0 * (1.0 - k), 1.0), base) < 1e-6);
+    }
+    // Within the tolerance (the bottom nearer by 0.2 µm) the lowest span still wins; beyond it
+    // (by 10 µm) the nearer one does, on the other side of the shape.
+    CHECK(geometry::distance(boxCentreStart(4e-4, 0.0, 1.0), base) < 1e-3);
+    CHECK(geometry::distance(boxCentreStart(2e-2, 0.0, 1.0), base) > 5.0);
+}

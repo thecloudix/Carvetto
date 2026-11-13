@@ -143,6 +143,8 @@ class MainWindow : public QMainWindow {
     bool saveFile();
     bool saveFileAs(const std::filesystem::path& path);
     bool importDxfFile(const std::filesystem::path& path, std::optional<double> forcedMmPerUnit = std::nullopt);
+    /// Imports an image as a bitmap object (T-0275): embedded in the document, one undo step, selected.
+    bool importBitmapFile(const std::filesystem::path& path);
     bool exportDxfFile(const std::filesystem::path& path, bool selectionOnly);
     /// True when it is fine to drop the open document: it is clean, or the user chose Save (and
     /// it saved) or Discard in the prompt. False on Cancel or a failed save. Always true when
@@ -166,6 +168,7 @@ class MainWindow : public QMainWindow {
     bool saveDialog();
     bool saveAsDialog();
     void importDxfDialog();
+    void importBitmapDialog();
     void exportDxfDialog(bool selectionOnly);
     void rebuildRecentMenu();
     void storeRecent();

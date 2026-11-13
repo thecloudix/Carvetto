@@ -43,6 +43,7 @@ add_library(carvetto_viewmodel STATIC
   src/pixel_probe.cpp
   src/new_job_form.cpp
   src/dxf_exchange.cpp
+  src/bitmap_import.cpp
   src/file_session.cpp
   src/node_edit.cpp
   src/node_ops.cpp
@@ -54,6 +55,7 @@ add_library(carvetto_viewmodel STATIC
   src/calculation.cpp
   src/variables_model.cpp
   src/texture_form.cpp
+  src/tiling_form.cpp
 )
 find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)

@@ -13,6 +13,7 @@
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/move.hpp"
+#include "carvetto/toolpath/photo_vcarve.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/prism.hpp"
@@ -62,14 +63,16 @@ struct ToolSource {
 /// hold only record content. A V-carve (T-0153) takes its tools (carving tool, clearance tools)
 /// as arguments too; each toolpath it makes is its own record with the same `VCarvingParams` and
 /// its own tool. A chamfer (T-0236) takes its tool and cutting data as arguments too, as do a thread mill
-/// (T-0237) and a straight inlay (T-0238).
+/// (T-0237) and a straight inlay (T-0238). A photo V-carve (T-0275) reads a bitmap object of the
+/// document: the record's selection lists it (the first bitmap object among `selection.objects`)
+/// and, for the Selected Vectors strategy, the vectors to follow.
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
                                     toolpath::EngraveParams, toolpath::VCarvingParams, toolpath::ChamferParams,
                                     toolpath::ThreadMillParams, toolpath::PrismParams, toolpath::FlutingParams,
-                                    toolpath::InlayParams>;
+                                    toolpath::InlayParams, toolpath::PhotoVCarveParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, PhotoVCarve };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;

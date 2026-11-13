@@ -64,6 +64,23 @@ std::unique_ptr<Command> makeImportBitmapCommand(const Document& doc, BitmapImpo
     return macro;
 }
 
+geometry::ShapeResult<io::RasterImage> decodeBitmapBytes(std::span<const std::uint8_t> bytes,
+                                                         const BitmapDecoder& decoder) {
+    using R = geometry::ShapeResult<io::RasterImage>;
+    const std::string_view head(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    if (head.size() >= 2 && head[0] == 'P' && head[1] >= '1' && head[1] <= '6') {
+        return io::decodePnm(head);
+    }
+    if (!decoder) {
+        return R(std::string("this image format needs the application's image decoder"));
+    }
+    R r = decoder(bytes);
+    if (r.ok() && !r.value().valid()) {
+        return R(std::string("the decoder returned an invalid image"));
+    }
+    return r;
+}
+
 geometry::ShapeResult<io::RasterImage> decodeBitmapObject(const Document& doc, const BitmapObject& obj,
                                                            const BitmapDecoder& decoder) {
     using R = geometry::ShapeResult<io::RasterImage>;
@@ -71,18 +88,7 @@ geometry::ShapeResult<io::RasterImage> decodeBitmapObject(const Document& doc, c
     if (asset == nullptr) {
         return R(std::string("the bitmap has no embedded image data"));
     }
-    const std::string_view head(reinterpret_cast<const char*>(asset->bytes.data()), asset->bytes.size());
-    if (head.size() >= 2 && head[0] == 'P' && head[1] >= '1' && head[1] <= '6') {
-        return io::decodePnm(head);
-    }
-    if (!decoder) {
-        return R(std::string("this image format needs the application's image decoder"));
-    }
-    R r = decoder(std::span<const std::uint8_t>(asset->bytes));
-    if (r.ok() && !r.value().valid()) {
-        return R(std::string("the decoder returned an invalid image"));
-    }
-    return r;
+    return decodeBitmapBytes(std::span<const std::uint8_t>(asset->bytes), decoder);
 }
 
 }  // namespace carvetto::document

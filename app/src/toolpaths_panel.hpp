@@ -187,4 +187,8 @@ class MainWindow;
 /// Returns an empty string on success, else the first failure. Replaces the window's document.
 std::string toolpathsSelfTest(MainWindow& window);
 
+/// Photo V-carve end to end (T-0275): import a PNG, see it on the canvas, add a Photo V-Carve through
+/// the form, edit it, stale after moving the bitmap, save and reload. Replaces the window's document.
+std::string photoSelfTest(MainWindow& window);
+
 }  // namespace carvetto::app
