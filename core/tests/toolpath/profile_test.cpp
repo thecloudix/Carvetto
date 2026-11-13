@@ -4182,8 +4182,9 @@ TEST_CASE("Loose pieces (T-0252): the tapers of a V-bit's 3D-tab ramps are the c
     // piece between the two cuts is held by no kept tab, and it touches the ramps of a raised
     // stretch. Its area is the flood's only if each ramp's disc is banded at its true radius,
     // which grows from 0 at the raised stretch (the ramp that closes towards the stretch, and the
-    // one that opens from it): a radius of 0 everywhere (570.15, one piece too big), without the
-    // closing ramp (558.94) or without the opening one (557.14) all miss the flood's 567.49.
+    // one that opens from it): with no ramp tapers (570.16, one piece too big), without the
+    // closing ramp or the opening one, or with the full radius on one ramp, the third area misses
+    // (T-0280: see the pin below).
     FloodScene f = loadFloodScene(
          "C 1\n"
          "L 0x0.0p+0 0x0.0p+0 0x1.4000000000000p+4 0x0.0p+0\n"
@@ -4205,6 +4206,9 @@ TEST_CASE("Loose pieces (T-0252): the tapers of a V-bit's 3D-tab ramps are the c
     for (std::size_t i = 0; i < got.size(); ++i) {
         CHECK(std::fabs(got[i] - flood[i]) <= 1.0);
     }
+    // The third piece, pinned tighter than the flood's 1 mm2: one ramp left out reports 568.6 or
+    // 568.8, and one banded at the full radius 543.7 or 549.5.
+    CHECK(std::fabs(got[2] - 567.25) <= 0.25);
 }
 
 TEST_CASE("Loose pieces (T-0252): zero-radius ramp tapers would close a channel the tool leaves", "[toolpath][profile][tabs][vbit]") {

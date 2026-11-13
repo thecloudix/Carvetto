@@ -551,8 +551,8 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     search ran before emit and had no lead moves, so a lead-out that cut the tab layer and sealed
     off a piece left it unreported (m0_291002_11: 4.75 mm², flood 4.746; with leads off, or with
     the lead-out off, nothing is free). It now runs after emit (the moves of every cut are made
-    first, so the diagnostics of the search follow those of emit: in 2 of 10,000 V-bit scenes the
-    order of the messages changed and nothing else) and takes each lead-out as made: its path and
+    first, so the diagnostics of the search follow those of emit: in 2 of 10,000 V-bit scenes with leads off, and in about 18% of scenes with leads on, the
+    order of the messages changed and nothing else: the content is identical) and takes each lead-out as made: its path and
     its one height `z` (the height the cut ended at, raised to the tab top where tab material is
     within reach: leadFloor). The tool cuts the tab layer along it when `z` is below the tab top,
     a disc of radius min(r, (tab top - z) tan(half angle)) for a V-bit and r for any other tool;
@@ -573,11 +573,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     less (0.27 to 0.25, 5.18 to 5.08; the same distance from the flood's), no false report; 10,000
     V-bit-forced scenes with leads off (seeds 31-35, 2,000 each): moves and reports identical to
     main. *Fixed: the ramp tapers' test gap.* Two hand-built scenes (tests) pin the taper radius at
-    both ends of a raised stretch: with a radius of 0 along every ramp, without the closing ramp
-    (the one that reaches the stretch) or without the opening one (the one that leaves it), the
-    first scene's pieces miss the flood's by 2.7 / 8.6 / 10.3 mm² (the true 567.49: reported
-    567.25, mutants 570.15, 558.94, 557.14), and the second has the radius-0 mutant report 0.26 mm²
-    that nothing in the flood is. *Accepted limits (each with its reason; none gets worse than at
+    both ends of a raised stretch. The first scene's third piece (the true flood area 567.90,
+    reported 567.25) is pinned to the reported value within 0.25 mm², besides the flood's 1 mm²:
+    ramps left out (no taper) report 570.16 for both, 568.80 for the opening ramp alone and 568.62
+    for the closing one alone, and ramps banded at the full radius report 543.71 and 549.47 for
+    one each (the mutants are killed by the full-radius banding, which closes the channel, and by
+    the tolerance on the third piece, not by leaving a ramp out, which the 1 mm² tolerance alone
+    let survive); the second scene has the radius-0 mutant report 0.26 mm² that nothing in the
+    flood is (a radius of 0 along a single ramp changes no area of the first scene). *Accepted limits (each with its reason; none gets worse than at
     the T-0156 head).* (b)/(k) pieces thinner than the slack: free pieces 0.0505 mm thick (six of
     0.216 mm² in miss6_7104_351; r101_1_0_42's 2 of 100) are within 2.5 µm of the 0.05 mm
     thickness threshold, which the bands' 2 µm growth and the polygons' 5 µm sagitta

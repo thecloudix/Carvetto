@@ -743,6 +743,65 @@ TEST_CASE("switching tools keeps the typed draft; Escape and document change dro
     f.tool.setDocument(&f.doc);
 }
 
+// --- T-0280: caps on replacement and a stale edited object ---------------------------------------
+
+TEST_CASE("the size cap counts a replacement by what it removes, multi-byte text included", "[text][tool][caps]") {
+    Fixture f;
+    f.click({10.0, 10.0});
+    auto& ed = f.tool.textEditor();
+    const std::string glyph = "\xF0\x9F\x98\x80";  // 4 bytes
+    REQUIRE(kMaxTextObjectBytes % glyph.size() == 0);
+    std::string full;
+    for (std::size_t i = 0; i < kMaxTextObjectBytes / glyph.size(); ++i) {
+        full += glyph;
+    }
+    REQUIRE(ed.insertText(full).ok);
+    REQUIRE(ed.draftParams()->text.size() == kMaxTextObjectBytes);
+    // One more byte is refused and the draft stays.
+    CHECK_FALSE(ed.insertText("I").ok);
+    CHECK(ed.draftParams()->text == full);
+    // Select all and replace with the same size: the replaced range is not counted twice.
+    f.tool.selectAllText();
+    std::string other;  // the same size, other characters
+    for (std::size_t i = 0; i < kMaxTextObjectBytes / glyph.size(); ++i) {
+        other += "\xF0\x9F\x98\x81";
+    }
+    CHECK(ed.insertText(other).ok);
+    CHECK(ed.draftParams()->text == other);
+    // A replacement one byte over the cap is still refused, and the selection survives it.
+    f.tool.selectAllText();
+    CHECK_FALSE(ed.insertText(other + "I").ok);
+    CHECK(ed.draftParams()->text == other);
+}
+
+TEST_CASE("a held draft of an object that is deleted meanwhile is refused and dropped", "[text][tool][switch]") {
+    Fixture f;
+    f.click({100.0, 100.0});
+    f.tool.typeText("TOI");
+    REQUIRE(f.tool.key(ToolKey::Enter).committed);
+    REQUIRE(f.doc.objectCount() == 1);
+    const ObjectId id = f.doc.objects().begin()->first;
+    f.doc.selection().clear();
+    f.click({103.0, 103.0});
+    auto& ed = f.tool.textEditor();
+    REQUIRE(ed.hasDraft());
+    REQUIRE(ed.editedObject() == id);
+    f.tool.typeText("T");
+    f.tool.setTool(ToolKind::Select);
+    REQUIRE(ed.hasDraft());
+    REQUIRE(f.doc.execute(std::make_unique<RemoveObjectsCommand>(std::vector<ObjectId>{id})));
+    REQUIRE(f.doc.objectCount() == 0);
+    f.tool.setTool(ToolKind::Text);
+    const std::uint64_t gen = f.doc.undoStack().generation();
+    const ToolResult r = f.tool.key(ToolKey::Enter);
+    CHECK_FALSE(r.committed);
+    CHECK_FALSE(r.message.empty());
+    CHECK(f.doc.objectCount() == 0);  // not resurrected
+    CHECK(f.doc.undoStack().generation() == gen);
+    CHECK_FALSE(ed.hasDraft());
+    CHECK(f.doc.checkIntegrity().empty());
+}
+
 TEST_CASE("a box being dragged is not kept across a tool switch", "[text][tool][switch]") {
     Fixture f;
     REQUIRE(f.tool.textEditor().setMode(TextMode::Box).ok);
