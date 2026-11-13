@@ -145,6 +145,7 @@ class CanvasWidget : public QWidget {
 
    private:
     void paintOverlay(QPainter& painter) const;
+    void paintTextFrame(QPainter& painter, const viewmodel::ToolPreview& preview) const;
     void paintNodes(QPainter& painter) const;
     void paintDimensionHandles(QPainter& painter) const;
     void updateNodeCursor(QPointF pos);
