@@ -994,7 +994,7 @@ TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` r
 Phase: 1   Module: core/geometry (offset), core/toolpath   Depends on: T-0186
 Director decision 2026-11-07 (T-0186 round 3): the Profile single-call cap stays at 6e8 units (never refuse a job main finishes in <=10 s); consequence: cancel latency is up to ~11 s while ONE huge vector (e.g. a 1,000-4,400-Bezier outline) is being offset. Fix at the source: (1) a cooperative poll/budget hook inside offsetOpenContour / offsetContours / union so a single call can stop in ms; (2) the exact Bezier length used by the offset costs 0.2 ms-8 ms per span depending on curvature (smooth 0.18 ms, quarter circle/loop 4-12 ms): use an adaptive cheaper length (error-bounded) or cache; (3) Clipper2 BuildIntersectList dominates starburst/nested Inside/V-bit (50-70 ns/unit): evaluate. Must keep byte-identical results for finished inputs. Large sign text (thousands of Bezier glyph spans) depends on (2).
 
-### T-0227 T-0130 documentation and test nits (verifier)   [status: in-progress]
+### T-0227 T-0130 documentation and test nits (verifier)   [status: done — merged #150]
 ADR-0033 sentence "a test sets these variables in-process" is inaccurate (they are separate ctest processes with the variables set before launch); THIRD_PARTY_NOTICES.md lacks a row for CarvettoTestCFF-Regular.otf; `requireFast` uses a 3 s wall-clock bound (use CPU time); no boundary test for `checkTextSize` `>=` on the path entry point; no test for the `loadFile` ceiling clamp; f04 zero-length-line drop is documented but unasserted.
 
 ### T-0211 Text tool (viewmodel + Qt): text object, text in box, text on curve   [status: done — merged PR #97; follow-ups T-0230]
@@ -1248,7 +1248,7 @@ Goal: (1) makeJobSheet tool lookup is a linear find_if on full names, quadratic 
 Acceptance criteria:
   1. 20,000 distinct tools build a sheet in well under a second; thumbnail notice present; tests.
 
-### T-0264 .carv minor-version wording and comment nits (T-0243 delta verifier)   [status: in-progress]
+### T-0264 .carv minor-version wording and comment nits (T-0243 delta verifier)   [status: done — merged #150]
 Phase: 1   Module: core/document + docs/adr   Depends on: T-0243
 Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older build refuse the file as too new; in fact the loader only checks the major version and older builds keep unknown keys in extras: fix the wording, or decide with the owner whether older readers should refuse files that use a newer minor feature (conflicts with the forward-compat test 'a higher minor version of the same major loads'); (2) carv_io.cpp comment above struct KeepOutFile says 1.3, keep-out is 1.4; a doc fragment meant for JobFile sits above KeepOutFile.
 Acceptance criteria:
