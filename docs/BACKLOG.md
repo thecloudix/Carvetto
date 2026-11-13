@@ -1269,13 +1269,13 @@ Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/
 Acceptance criteria:
   1. In the real app a user tiles a job larger than the machine and saves per-tile files; oversize tiles refused; one changelog fragment.
 
-### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: verifying]
+### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: done — merged #145]
 Phase: 1   Module: core/toolpath (cut_order / orderCuts)   Depends on: —
 Goal: with many coincident or heavily overlapping vectors the shared cut ordering costs O(n^2): 4000 identical vectors took 10.4 s and 20000 took 204 s in fluting (orderCuts is shared with thread mill, drill, engrave). Make ordering sub-quadratic (spatial index / duplicate merge) with byte-identical order for inputs that finished before, plus a work bound.
 Acceptance criteria:
   1. 20000 coincident vectors order in well under a second CPU; existing orders unchanged (golden tests); hostile bounds; tests.
 
-### T-0268 Tiling hardening (T-0242 verifier nits)   [status: verifying]
+### T-0268 Tiling hardening (T-0242 verifier nits)   [status: done — merged #148]
 Phase: 1   Module: core/toolpath/tiling   Depends on: T-0242
 Goal: (1) NaN/inf coordinates leak through to tile output as non-finite moves: reject or skip them (and consider a finite check in save_toolpaths); (2) cost is O(tiles x moves) with no bounding-box prefilter: 200k moves x 10000 tiles ran past 60 s; add a per-move bounds reject / spatial bucketing, lower the 100000-tile cap, add a work bound and cancel; (3) originalPosition=true does not check the tile lies inside the machine bed: decide/document; (4) huge or degenerate arcs (1e300 centre gives 0 tiles; zero-radius arc yields many moves); tests for the clip-boundary tolerances (kEps 1e-9, kMinPiece 1e-6) so mutants die; (5) document tile numbering ("tile N" counts non-empty tiles after ordering).
 Acceptance criteria:
@@ -1329,3 +1329,9 @@ Acceptance criteria:
   1. A grep for the banned third-party product names returns nothing outside git history (the generic words "V-carve"/"V-carving" and the existing `VCarving`/`v_carve` operation identifiers are fine).
   2. Behaviour unchanged: full ctest, Qt app self-test, MSVC CI green; save/load round trip of the renamed record.
   3. One changelog fragment.
+
+### T-0277 Tiling: test pinning the 10000-tile cap (T-0268 verifier nit)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath   Depends on: T-0268
+Goal: A mutant restoring the total-tile limit to 100000 passes all tests. Add a test with between 10,001 and 100,000 tiles expecting a refusal; also confirm the kMinPiece 1e-6 -> 1e-8 mutant is killed (verifier left it unchecked).
+Acceptance criteria:
+  1. Both mutants fail a test; one changelog fragment; CI green.
