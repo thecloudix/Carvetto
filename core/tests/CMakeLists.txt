@@ -125,6 +125,7 @@ add_executable(carvetto_tests
   io/dxf_curves_test.cpp
   io/dxf_fuzz_test.cpp
   io/bitmap_trace_test.cpp
+  io/mesh_test.cpp
   io/svg_export_test.cpp
   io/svg_fuzz_test.cpp
   io/svg_import_test.cpp
