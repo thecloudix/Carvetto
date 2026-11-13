@@ -1212,7 +1212,7 @@ Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expre
 Acceptance criteria:
   1. In the real app: define W-based variable, use it in a toolpath depth box, change it and the toolpath recalculates; deleting a used variable is refused; self-test drives the dialog; one undo step per edit.
 
-### T-0258 Keep-out routing for large outlines (spatial index / outline simplification) (T-0241 follow-up)   [status: in-progress]
+### T-0258 Keep-out routing for large outlines (spatial index / outline simplification) (T-0241 follow-up)   [status: done — merged #144]
 Phase: 1   Module: core/toolpath/keepout   Depends on: T-0241
 Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left straight) but outlines of ~1000+ vertices needing a wrapping detour exceed the budget. Add a spatial index for edge scans and/or tolerance-bounded outline simplification so large DXF-imported outlines route. Also preserve unknown keys in the keepout record.
 Acceptance criteria:
