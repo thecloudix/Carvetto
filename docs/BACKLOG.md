@@ -994,7 +994,7 @@ TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` r
 Phase: 1   Module: core/geometry (offset), core/toolpath   Depends on: T-0186
 Director decision 2026-11-07 (T-0186 round 3): the Profile single-call cap stays at 6e8 units (never refuse a job main finishes in <=10 s); consequence: cancel latency is up to ~11 s while ONE huge vector (e.g. a 1,000-4,400-Bezier outline) is being offset. Fix at the source: (1) a cooperative poll/budget hook inside offsetOpenContour / offsetContours / union so a single call can stop in ms; (2) the exact Bezier length used by the offset costs 0.2 ms-8 ms per span depending on curvature (smooth 0.18 ms, quarter circle/loop 4-12 ms): use an adaptive cheaper length (error-bounded) or cache; (3) Clipper2 BuildIntersectList dominates starburst/nested Inside/V-bit (50-70 ns/unit): evaluate. Must keep byte-identical results for finished inputs. Large sign text (thousands of Bezier glyph spans) depends on (2).
 
-### T-0227 T-0130 documentation and test nits (verifier)   [status: ready — LOW]
+### T-0227 T-0130 documentation and test nits (verifier)   [status: in-progress]
 ADR-0033 sentence "a test sets these variables in-process" is inaccurate (they are separate ctest processes with the variables set before launch); THIRD_PARTY_NOTICES.md lacks a row for CarvettoTestCFF-Regular.otf; `requireFast` uses a 3 s wall-clock bound (use CPU time); no boundary test for `checkTextSize` `>=` on the path entry point; no test for the `loadFile` ceiling clamp; f04 zero-length-line drop is documented but unasserted.
 
 ### T-0211 Text tool (viewmodel + Qt): text object, text in box, text on curve   [status: done — merged PR #97; follow-ups T-0230]
@@ -1007,7 +1007,7 @@ The Save Toolpaths dialog (T-0224) posts every calculated toolpath (ids empty) a
 ### T-0230 Text follow-ups (from T-0211 verification)   [status: starter font DECIDED by owner 2026-11-08: DejaVu Serif; rest ready]
 Real starter font (OWNER picks an OFL font; placeholder has ~8 glyphs so DXF text imports as .notdef boxes), caret/selection and in-canvas text frame, live guide link for text on curve (refit when the guide moves), app-level system-font picker that embeds the chosen file, cross-document paste copies fonts, DXF Aligned/Fit modes, IME input, mixed-script (bidi) lines, vertical text, font family names in UI, 8 MiB font cap excludes most CJK fonts (revisit), tool switch mid-draft discards typed text (decide commit vs keep), pre-existing: setActiveSheet is not undoable.
 
-### T-0231 Preview/simulation nits (T-0223 verifier)   [status: ready — LOW]
+### T-0231 Preview/simulation nits (T-0223 verifier)   [status: in-progress]
 (1) Test gap: mutant removing the `targetPending` supersede break in the simulation controller survives (the "latest seek wins / abandoned run publishes no frame" test waits for `state == Working`, which `seek()` itself sets; wait for `progress().movesDone > 0` instead). (2) Pathological jobs (500k full-width 280 mm lines, 1M moves): first paint 1.4 s, 2.5-3.8 s per zoom step, simulation start 54 s UI-starved wait — add LOD/cancel for such jobs. (3) Relief raster samples one cell per stride: thin grooves can disappear on large sheets (use min-pooling). (4) Vertical Feed/Rapid moves counted but not drawn; arcs never split (4097 points for r=1e5). (5) ToolpathsPanel summary recompute cost at 1M moves (~160 ms once, cached by move-list identity). (6) Two stale t0221 driver expectations (not repo code).
 
 ### T-0232 CI resilience against GitHub release-download outages   [status: done — merged PR #99; nits T-0234]
@@ -1175,7 +1175,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0252 Profile loose pieces: remaining residuals of T-0177 (b, c, e-l)   [status: ready — LOW]
+### T-0252 Profile loose pieces: remaining residuals of T-0177 (b, c, e-l)   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0177   ADR: 0016 §14
 Goal: items left after T-0177 fixed (a) (V-bit 3D-tab ramp bands): (b) miss6_7104_351 knife-edge, six 0.0505 mm pieces below the band slack threshold (~0.055 mm): decide slack vs misses, documented limit acceptable; (e)/(g) lead-in/lead-out moves and plunges are not in the band model (add taper bands like T-0177); (f) 9302_2199 leaves 1 of 3 tabs out (corner-move tab check sweptNow/judgeSidedTab), 9301_2132 threshold knife-edge; (h)(i)(j)(l) see T-0177 coder notes and the T-0156 verifier harness; (l) exact capsule-union tab judge; (c) not reproducible, drop unless a scene reappears. Also add a hand-built scene for the ramp 'closing' direction (taper radius 0 mutant is currently not killed).
 Acceptance criteria:
@@ -1218,7 +1218,7 @@ Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left st
 Acceptance criteria:
   1. A 4000-vertex circle zone routes a blocked rapid within a few seconds CPU in Debug, with the no-rapid-enters-zone guarantee (independent oracle test); byte-identical routes for inputs routed before.
 
-### T-0259 Job sheet: menu action, save/print and PDF (T-0244 follow-up)   [status: ready — LOW]
+### T-0259 Job sheet: menu action, save/print and PDF (T-0244 follow-up)   [status: in-progress]
 Phase: 1   Module: app/src + app/viewmodel   Depends on: T-0244
 Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dialog (atomic write, safe name), open in browser, optional PDF through Qt printing, per-sheet/per-side split once T-0243 lands.
 Acceptance criteria:
@@ -1236,19 +1236,19 @@ Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view 
 Acceptance criteria:
   1. A two-sided job can be set up, drawn, copied across and saved with per-side posts whose Z zero matches the side; self-test drives it.
 
-### T-0262 Thread milling: thread-mill tool type and Create Circles command (T-0237 follow-up)   [status: in-progress]
+### T-0262 Thread milling: thread-mill tool type and Create Circles command (T-0237 follow-up)   [status: done — merged #147]
 Phase: 1   Module: core/tooling + core/document + app/viewmodel   Depends on: T-0237, T-0235
 Goal: model single/multi-point thread-mill tools in the tool database (S, H, D, A, O, threaded length; versioned tool file migration), use them in the Thread Mill form; 'Create circles for internal threads' inserts the bore circles into the document as one undo step on calculation.
 Acceptance criteria:
   1. A thread-mill tool saved in the tool DB round-trips (old files still load); the form lists only such tools (and end mills); circles are inserted undoably and removed on undo; tests incl. hostile tool files.
 
-### T-0263 Job sheet nits (T-0244 round-2 verifier)   [status: ready — LOW]
+### T-0263 Job sheet nits (T-0244 round-2 verifier)   [status: in-progress]
 Phase: 1   Module: app/viewmodel   Depends on: T-0244
 Goal: (1) makeJobSheet tool lookup is a linear find_if on full names, quadratic with many distinct tools (5000 distinct 100 KB tool names took 56 s): key a map on (number, name, diameter); (2) header says "well below 1 MB" but the measured worst case is ~740 KB: reword; (3) SVG thumbnail drops toolpaths beyond the 500th without a notice; (4) cap the stored sheet size for huge inputs.
 Acceptance criteria:
   1. 20,000 distinct tools build a sheet in well under a second; thumbnail notice present; tests.
 
-### T-0264 .carv minor-version wording and comment nits (T-0243 delta verifier)   [status: ready — LOW]
+### T-0264 .carv minor-version wording and comment nits (T-0243 delta verifier)   [status: in-progress]
 Phase: 1   Module: core/document + docs/adr   Depends on: T-0243
 Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older build refuse the file as too new; in fact the loader only checks the major version and older builds keep unknown keys in extras: fix the wording, or decide with the owner whether older readers should refuse files that use a newer minor feature (conflicts with the forward-compat test 'a higher minor version of the same major loads'); (2) carv_io.cpp comment above struct KeepOutFile says 1.3, keep-out is 1.4; a doc fragment meant for JobFile sits above KeepOutFile.
 Acceptance criteria:
@@ -1269,25 +1269,25 @@ Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/
 Acceptance criteria:
   1. In the real app a user tiles a job larger than the machine and saves per-tile files; oversize tiles refused; one changelog fragment.
 
-### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: in-progress]
+### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: verifying]
 Phase: 1   Module: core/toolpath (cut_order / orderCuts)   Depends on: —
 Goal: with many coincident or heavily overlapping vectors the shared cut ordering costs O(n^2): 4000 identical vectors took 10.4 s and 20000 took 204 s in fluting (orderCuts is shared with thread mill, drill, engrave). Make ordering sub-quadratic (spatial index / duplicate merge) with byte-identical order for inputs that finished before, plus a work bound.
 Acceptance criteria:
   1. 20000 coincident vectors order in well under a second CPU; existing orders unchanged (golden tests); hostile bounds; tests.
 
-### T-0268 Tiling hardening (T-0242 verifier nits)   [status: in-progress]
+### T-0268 Tiling hardening (T-0242 verifier nits)   [status: verifying]
 Phase: 1   Module: core/toolpath/tiling   Depends on: T-0242
 Goal: (1) NaN/inf coordinates leak through to tile output as non-finite moves: reject or skip them (and consider a finite check in save_toolpaths); (2) cost is O(tiles x moves) with no bounding-box prefilter: 200k moves x 10000 tiles ran past 60 s; add a per-move bounds reject / spatial bucketing, lower the 100000-tile cap, add a work bound and cancel; (3) originalPosition=true does not check the tile lies inside the machine bed: decide/document; (4) huge or degenerate arcs (1e300 centre gives 0 tiles; zero-radius arc yields many moves); tests for the clip-boundary tolerances (kEps 1e-9, kMinPiece 1e-6) so mutants die; (5) document tile numbering ("tile N" counts non-empty tiles after ordering).
 Acceptance criteria:
   1. Hostile jobs finish or refuse within a documented bound; non-finite input never reaches output; byte-identical tile output for inputs that finished before; tests.
 
-### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: in-progress]
+### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: verifying]
 Phase: 1   Module: core/toolpath/inlay   Depends on: T-0238
 Goal: the 4000 derived-span cap refuses polygonal inputs above ~1000-1500 vertices that the old code handled in <0.3 s (real cost cliff is ~15,000-20,000 derived spans): raise the cap (~15,000) or key it to estimated work, keep the 20,000-span zigzag repro bounded; refusal message should name the input span count and suggest simplifying; replace the string-compare of kAllowanceConsumes with a flag on InlayShapes; mention the cap in ADR-0040.
 Acceptance criteria:
   1. 3,000-span inputs that finished before are accepted again with byte-identical output; the 20,000-span repro stays refused in <1 s CPU; tests.
 
-### T-0270 Flaky timing tests: 'selection removal scales near-linearly in every order' and other ratio/absolute CPU bounds (T-0226 verifier)   [status: in-progress]
+### T-0270 Flaky timing tests: 'selection removal scales near-linearly in every order' and other ratio/absolute CPU bounds (T-0226 verifier)   [status: done — merged #146]
 Phase: 1   Module: core/tests, app/viewmodel/tests   Depends on: T-0226
 Goal: the T-0226 verifier saw 'selection removal scales near-linearly in every order' flake under heavy load; the T-0226 coder left unhardened: the 2.5-per-doubling checks in toolpath_scale_test, toolpath_residual_scale_test, perf_test, offset_unnested_hole_test, v_carve_test, boolean_batch_test, medial_axis_robustness_test, open_offset_chains_test and absolute CPU-second bounds (e.g. spiral seconds < 0.5*kAbsSlack). Measure idle ratios and under-load behaviour, harden the fragile ones (least-of-N, longer workloads, justified bounds), keep each test's guarding power (mutant check).
 Acceptance criteria:
