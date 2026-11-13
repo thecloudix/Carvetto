@@ -3,6 +3,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <limits>
 #include <locale>
 #include <string>
@@ -283,4 +286,124 @@ TEST_CASE("job sheet: output does not depend on the global locale", "[jobsheet]"
     std::locale::global(old);
     CHECK(html == html2);
     CHECK(text == text2);
+}
+
+namespace {
+
+JobSummary manyToolsSummary(std::size_t tools, std::size_t perTool, std::size_t nameBytes) {
+    JobSummary sum;
+    for (std::size_t i = 0; i < tools * perTool; ++i) {
+        ToolpathSummaryEntry e;
+        e.name = "tp" + std::to_string(i);
+        e.included = true;
+        e.toolNumber = static_cast<int>(i % tools);
+        e.toolName = std::to_string(i % tools) + std::string(nameBytes, 'n');
+        e.bounds = geometry::Box2{{0.0, 0.0}, {10.0, 10.0}};
+        sum.entries.push_back(std::move(e));
+    }
+    sum.toolpaths = sum.entries.size();
+    sum.included = sum.entries.size();
+    return sum;
+}
+
+}  // namespace
+
+TEST_CASE("job sheet: 20000 distinct tools build and the stored sheet is capped", "[jobsheet]") {
+    const document::Document doc;
+    const JobSheet s = makeJobSheet(doc, manyToolsSummary(20000, 1, 200), "big");
+    CHECK(s.toolsTotal == 20000);
+    CHECK(s.tools.size() == kJobSheetMaxToolRows);
+    CHECK(s.toolpaths.size() == kJobSheetMaxToolpathRows);
+    CHECK(s.toolpathsTotal == 20000);
+    CHECK(s.thumbnailOmitted == 20000 - kJobSheetMaxToolpathRows);
+    // Stored names are clipped.
+    CHECK(s.tools[0].name.size() <= kJobSheetMaxNameBytes + 3);
+    const std::string text = renderJobSheetText(s);
+    CHECK(contains(text, "... and 19900 more tools"));
+    CHECK(contains(text, "... and 19500 more toolpaths"));
+    CHECK(contains(renderJobSheetHtml(s), "... and 19900 more tools"));
+}
+
+TEST_CASE("job sheet: tools are told apart by number, name and diameter; shared tools gather toolpaths", "[jobsheet]") {
+    const document::Document doc;
+    const JobSheet s = makeJobSheet(doc, manyToolsSummary(3, 50, 1), "t");
+    REQUIRE(s.tools.size() == 3);
+    CHECK(s.toolsTotal == 3);
+    CHECK(s.tools[0].toolpaths.size() == kJobSheetMaxToolpathsPerTool);
+    CHECK(s.tools[0].toolpathsTotal == 50);
+    CHECK(contains(renderJobSheetText(s), "... and 30 more"));
+}
+
+TEST_CASE("job sheet: the thumbnail says when toolpaths are left out", "[jobsheet]") {
+    const document::Document doc;
+    const JobSheet few = makeJobSheet(doc, manyToolsSummary(1, 10, 1), "t");
+    CHECK_FALSE(contains(renderJobSheetHtml(few), "are not drawn"));
+    const JobSheet many = makeJobSheet(doc, manyToolsSummary(1, kJobSheetMaxToolpathRows + 7, 1), "t");
+    CHECK(contains(renderJobSheetHtml(many), "7 more are not drawn"));
+    // A hand-built sheet with more rows than the cap too.
+    JobSheet hand = bigSheet(kJobSheetMaxToolpathRows + 3, 1);
+    for (JobSheetToolpath& t : hand.toolpaths) {
+        t.included = true;
+        t.bounds = geometry::Box2{{0.0, 0.0}, {5.0, 5.0}};
+    }
+    CHECK(contains(renderJobSheetHtml(hand), "more are not drawn"));
+}
+
+TEST_CASE("job sheet: writing is atomic, safe and refuses hostile paths", "[jobsheet]") {
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::temp_directory_path() / "carvetto-jobsheet-test";
+    fs::remove_all(dir);
+    fs::create_directories(dir);
+    Fixture f;
+    f.addProfile("Outline");
+    const JobSheet sheet = makeJobSheet(f.doc, f.session.summary(), "Sign");
+
+    const auto read = [](const fs::path& p) {
+        std::ifstream in(p, std::ios::binary);
+        return std::string(std::istreambuf_iterator<char>(in), {});
+    };
+    const fs::path html = dir / "sheet.html";
+    auto r = writeJobSheet(sheet, JobSheetFormat::Html, html, false);
+    REQUIRE(r.ok);
+    CHECK(read(html) == renderJobSheetHtml(sheet));
+    const fs::path txt = dir / "sheet.txt";
+    REQUIRE(writeJobSheet(sheet, JobSheetFormat::Text, txt, false).ok);
+    CHECK(read(txt) == renderJobSheetText(sheet));
+
+    // Existing file: refused unless overwrite; content untouched when refused.
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Text, txt, false).ok);
+    CHECK(writeJobSheet(sheet, JobSheetFormat::Text, txt, true).ok);
+
+    // Hostile paths.
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, {}, true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / ".." / "x.html", true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / "x.txt", true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Text, dir / "x.html", true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / "a\nb.html", true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / "CON.html", true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / "x.html.", true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / ".html", true).ok);
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / "sub" / "x.html", true).ok);
+    fs::create_directories(dir / "folder.html");
+    CHECK_FALSE(writeJobSheet(sheet, JobSheetFormat::Html, dir / "folder.html", true).ok);
+    std::size_t files = 0;
+    for (const auto& e : fs::directory_iterator(dir)) {
+        (void)e;
+        ++files;
+    }
+    CHECK(files == 3);  // sheet.html, sheet.txt, folder.html: no stray temp files
+
+    CHECK(defaultJobSheetFileName("My/Sign: v2", JobSheetFormat::Html) == "My_Sign_ v2.html");
+    CHECK(defaultJobSheetFileName("", JobSheetFormat::Text) == "job-sheet.txt");
+    CHECK(checkJobSheetPath(dir / "ok.HTM", JobSheetFormat::Html).empty());
+    fs::remove_all(dir);
+}
+
+TEST_CASE("job sheet: PDF names are checked but not written by the viewmodel", "[jobsheet]") {
+    CHECK(checkJobSheetPath("/x/a.pdf", JobSheetFormat::Pdf).empty());
+    CHECK_FALSE(checkJobSheetPath("/x/a.html", JobSheetFormat::Pdf).empty());
+    CHECK(defaultJobSheetFileName("Sign", JobSheetFormat::Pdf) == "Sign.pdf");
+    const document::Document doc;
+    const JobSheet s = makeJobSheet(doc, JobSummary{}, "t");
+    CHECK_FALSE(writeJobSheet(s, JobSheetFormat::Pdf, "/tmp/never.pdf", true).ok);
 }
