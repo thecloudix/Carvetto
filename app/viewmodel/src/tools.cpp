@@ -216,7 +216,14 @@ void ToolController::setView(const ViewTransform& view) {
 }
 
 void ToolController::setTool(ToolKind tool) {
-    cancel();
+    // Keep a typed text draft across a tool switch (T-0230); everything else is cancelled. A box
+    // being dragged is not kept.
+    if (tool_ == ToolKind::Text && textEditor_.hasDraft()) {
+        cancelShapes();
+        textEditor_.abandonGesture();
+    } else {
+        cancel();
+    }
     tool_ = tool;
 }
 
@@ -227,17 +234,23 @@ bool ToolController::isTwoPointTool() const {
 
 bool ToolController::active() const {
     return !pts_.empty() || pressed_ || selPressed_ || nodeEditor_.pressed() || textEditor_.pressed() ||
-           textEditor_.hasDraft() || dimensionTool_.pickedCount() > 0 || dimensionTool_.dragging();
+           (tool_ == ToolKind::Text && textEditor_.hasDraft()) || dimensionTool_.pickedCount() > 0 || dimensionTool_.dragging();
 }
 
 void ToolController::cancel() {
+    cancelShapes();
+    if (tool_ == ToolKind::Text) {
+        textEditor_.cancel();  // a draft kept across a tool switch survives cancels of other tools
+    }
+}
+
+void ToolController::cancelShapes() {
     pts_.clear();
     pressed_ = false;
     typed_.clear();
     selPressed_ = false;
     selDragging_ = false;
     nodeEditor_.escape();
-    textEditor_.cancel();
     dimensionTool_.cancel();
     dimensionTool_.cancelDrag();
     if (gesture_.active() && doc_ != nullptr) {
@@ -671,6 +684,9 @@ ToolPreview ToolController::preview() const {
         out.contours = textEditor_.previewContours();
         out.valid = textEditor_.hasDraft() && textEditor_.previewMessage().empty();
         out.message = textEditor_.previewMessage();
+        out.textFrameMm = textEditor_.frameMm();
+        out.textCaretMm = textEditor_.caretSegmentMm();
+        out.textSelectionMm = textEditor_.selectionQuadsMm();
         if (const auto box = textEditor_.dragBoxMm()) {
             out.marqueePx = geometry::Box2(view_.worldToScreen(box->min), view_.worldToScreen(box->max));
         }
@@ -1031,6 +1047,11 @@ ToolResult ToolController::key(ToolKey k) {
                 pts_.pop_back();
             }
             return {};
+        case ToolKey::Delete:
+            if (tool_ == ToolKind::Text) {
+                return fromText(textEditor_.deleteForward());
+            }
+            return {};
         case ToolKey::Close:
             if (tool_ == ToolKind::Polyline) {
                 if (pts_.size() < 3) {
@@ -1048,6 +1069,20 @@ ToolResult ToolController::typeText(std::string_view utf8) {
         return refuse("the Text tool is not active");
     }
     return fromText(textEditor_.insertText(utf8));
+}
+
+ToolResult ToolController::moveTextCaret(CaretMove move, bool extend) {
+    if (tool_ != ToolKind::Text) {
+        return refuse("the Text tool is not active");
+    }
+    return fromText(textEditor_.moveCaret(move, extend));
+}
+
+ToolResult ToolController::selectAllText() {
+    if (tool_ != ToolKind::Text) {
+        return refuse("the Text tool is not active");
+    }
+    return fromText(textEditor_.selectAll());
 }
 
 // --- Numeric entry ---------------------------------------------------------------------------

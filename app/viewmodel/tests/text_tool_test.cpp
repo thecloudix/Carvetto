@@ -544,3 +544,213 @@ TEST_CASE("characters outside the BMP are typed and deleted whole", "[text][tool
     f.tool.key(ToolKey::Backspace);
     CHECK(ed.draftParams()->text == "I");
 }
+
+// --- T-0230: caret, selection, frame, tool switch ------------------------------------------------
+
+TEST_CASE("caret: typing inserts at the caret, delete and backspace act around it", "[text][tool][caret]") {
+    Fixture f;
+    f.click({10.0, 10.0});
+    auto& ed = f.tool.textEditor();
+    ed.insertText("TOI");
+    CHECK(ed.caretOffset() == 3);
+    f.tool.moveTextCaret(CaretMove::Left, false);
+    f.tool.moveTextCaret(CaretMove::Left, false);
+    CHECK(ed.caretOffset() == 1);
+    f.tool.typeText("I");
+    CHECK(ed.draftParams()->text == "TIOI");
+    CHECK(ed.caretOffset() == 2);
+    f.tool.key(ToolKey::Delete);
+    CHECK(ed.draftParams()->text == "TII");
+    CHECK(ed.caretOffset() == 2);
+    f.tool.key(ToolKey::Backspace);
+    CHECK(ed.draftParams()->text == "TI");
+    CHECK(ed.caretOffset() == 1);
+    // At the ends nothing happens and nothing breaks.
+    f.tool.moveTextCaret(CaretMove::TextStart, false);
+    f.tool.key(ToolKey::Backspace);
+    CHECK(ed.draftParams()->text == "TI");
+    f.tool.moveTextCaret(CaretMove::TextEnd, false);
+    f.tool.key(ToolKey::Delete);
+    CHECK(ed.draftParams()->text == "TI");
+    CHECK(f.doc.objectCount() == 0);  // typing never touches the document
+}
+
+TEST_CASE("caret moves over whole code points and lines", "[text][tool][caret]") {
+    Fixture f;
+    f.click({10.0, 10.0});
+    auto& ed = f.tool.textEditor();
+    ed.insertText("I\xC3\x89\nT\xF0\x9F\x98\x80");  // I E-acute LF T emoji(4 bytes)
+    CHECK(ed.caretOffset() == 9);
+    f.tool.moveTextCaret(CaretMove::Left, false);
+    CHECK(ed.caretOffset() == 5);
+    f.tool.moveTextCaret(CaretMove::Left, false);
+    CHECK(ed.caretOffset() == 4);
+    f.tool.moveTextCaret(CaretMove::LineStart, false);
+    CHECK(ed.caretOffset() == 4);  // start of the second line
+    f.tool.moveTextCaret(CaretMove::Left, false);
+    CHECK(ed.caretOffset() == 3);  // before the LF, end of the first line
+    f.tool.moveTextCaret(CaretMove::LineStart, false);
+    CHECK(ed.caretOffset() == 0);
+    f.tool.moveTextCaret(CaretMove::LineEnd, false);
+    CHECK(ed.caretOffset() == 3);
+    f.tool.moveTextCaret(CaretMove::Right, false);
+    f.tool.moveTextCaret(CaretMove::Right, false);
+    CHECK(ed.caretOffset() == 5);
+    f.tool.moveTextCaret(CaretMove::Right, false);
+    CHECK(ed.caretOffset() == 9);  // over the 4-byte character
+    f.tool.moveTextCaret(CaretMove::Right, false);
+    CHECK(ed.caretOffset() == 9);
+    // A caret set into the middle of a character snaps back to its start.
+    ed.setCaret(7);
+    CHECK(ed.caretOffset() == 5);
+    ed.setCaret(1000);
+    CHECK(ed.caretOffset() == 9);
+}
+
+TEST_CASE("selection: shift-move, replace on typing, delete, select all", "[text][tool][caret]") {
+    Fixture f;
+    f.click({10.0, 10.0});
+    auto& ed = f.tool.textEditor();
+    ed.insertText("TOI");
+    CHECK_FALSE(ed.selectionRange().has_value());
+    f.tool.moveTextCaret(CaretMove::Left, true);
+    f.tool.moveTextCaret(CaretMove::Left, true);
+    REQUIRE(ed.selectionRange().has_value());
+    CHECK(*ed.selectionRange() == std::make_pair<std::size_t, std::size_t>(1, 3));
+    f.tool.typeText("T");
+    CHECK(ed.draftParams()->text == "TT");
+    CHECK_FALSE(ed.selectionRange().has_value());
+    f.tool.selectAllText();
+    CHECK(*ed.selectionRange() == std::make_pair<std::size_t, std::size_t>(0, 2));
+    f.tool.key(ToolKey::Backspace);
+    CHECK(ed.draftParams()->text.empty());
+    CHECK(ed.caretOffset() == 0);
+    // Plain Left collapses a selection to its near edge.
+    ed.insertText("TOI");
+    f.tool.selectAllText();
+    f.tool.moveTextCaret(CaretMove::Left, false);
+    CHECK(ed.caretOffset() == 0);
+    CHECK_FALSE(ed.selectionRange().has_value());
+    f.tool.selectAllText();
+    f.tool.moveTextCaret(CaretMove::Right, false);
+    CHECK(ed.caretOffset() == 3);
+    f.tool.selectAllText();
+    f.tool.key(ToolKey::Delete);
+    CHECK(ed.draftParams()->text.empty());
+    // The size cap applies to a replacement too.
+    ed.insertText("T");
+    CHECK(ed.insertText(std::string(kMaxTextObjectBytes, 'T')).ok == false);
+    CHECK(ed.draftParams()->text == "T");
+}
+
+TEST_CASE("caret geometry and frame for the overlay", "[text][tool][caret]") {
+    Fixture f;
+    f.click({10.0, 10.0});
+    auto& ed = f.tool.textEditor();
+    REQUIRE(ed.caretSegmentMm().has_value());  // an empty draft still shows a caret
+    CHECK(ed.caretSegmentMm()->first.x == Approx(10.0));
+    ed.insertText("TOI");
+    const auto atEnd = *ed.caretSegmentMm();
+    CHECK(atEnd.second.y > atEnd.first.y);
+    CHECK(atEnd.first.x == Approx(atEnd.second.x));
+    f.tool.moveTextCaret(CaretMove::TextStart, false);
+    const auto atStart = *ed.caretSegmentMm();
+    CHECK(atStart.first.x == Approx(10.0));
+    CHECK(atEnd.first.x > atStart.first.x + 1.0);
+    // The caret is in the middle after one Right.
+    f.tool.moveTextCaret(CaretMove::Right, false);
+    const auto mid = *ed.caretSegmentMm();
+    CHECK(mid.first.x > atStart.first.x);
+    CHECK(mid.first.x < atEnd.first.x);
+    // Selection quads cover the selected glyphs only.
+    CHECK(ed.selectionQuadsMm().empty());
+    f.tool.moveTextCaret(CaretMove::Right, true);
+    REQUIRE(ed.selectionQuadsMm().size() == 1);
+    CHECK(ed.selectionQuadsMm()[0][0].x == Approx(mid.first.x));
+    CHECK(ed.selectionQuadsMm()[0][1].x > mid.first.x);
+    CHECK(ed.selectionQuadsMm()[0][1].x < atEnd.first.x);
+    // A selection across a line break is one quad per line.
+    f.tool.moveTextCaret(CaretMove::TextEnd, false);
+    ed.insertText("\nTO");
+    f.tool.selectAllText();
+    CHECK(ed.selectionQuadsMm().size() == 2);
+    // The frame surrounds the glyphs with a margin.
+    const auto frame = ed.frameMm();
+    REQUIRE(frame.has_value());
+    const geometry::Box2 glyphs = boundsOf(ed.previewContours());
+    CHECK(frame->min.x < glyphs.min.x);
+    CHECK(frame->max.y > glyphs.max.y);
+    // The preview carries all three overlay items while the Text tool is active.
+    const ToolPreview pv = f.tool.preview();
+    CHECK(pv.textFrameMm.has_value());
+    CHECK(pv.textCaretMm.has_value());
+    CHECK(pv.textSelectionMm.size() == 2);
+    // Box text: the frame is the box and no caret is drawn.
+    f.tool.key(ToolKey::Escape);
+    REQUIRE(ed.setMode(TextMode::Box).ok);
+    f.drag({10.0, 10.0}, {60.0, -10.0});
+    REQUIRE(ed.hasDraft());
+    ed.insertText("TOI");
+    REQUIRE(ed.frameMm().has_value());
+    CHECK(ed.frameMm()->width() == Approx(50.0));
+    CHECK_FALSE(ed.caretSegmentMm().has_value());
+}
+
+TEST_CASE("switching tools keeps the typed draft; Escape and document change drop it", "[text][tool][switch]") {
+    Fixture f;
+    f.click({10.0, 10.0});
+    f.tool.typeText("TOI");
+    const std::uint64_t gen = f.doc.undoStack().generation();
+    f.tool.setTool(ToolKind::Rectangle);
+    CHECK(f.tool.textEditor().hasDraft());
+    CHECK(f.tool.textEditor().draftParams()->text == "TOI");
+    CHECK_FALSE(f.tool.active());     // the Rectangle tool is idle
+    CHECK_FALSE(f.tool.wantsKeys());
+    CHECK(f.tool.preview().contours.empty());  // not painted outside the Text tool
+    CHECK(f.doc.undoStack().generation() == gen);
+    // Escape and cancel in another tool leave it alone.
+    f.tool.key(ToolKey::Escape);
+    f.tool.setTool(ToolKind::Select);
+    CHECK(f.tool.textEditor().hasDraft());
+    // Back in the Text tool the draft resumes with its caret, and can be committed (one undo step).
+    f.tool.setTool(ToolKind::Text);
+    CHECK(f.tool.active());
+    CHECK(f.tool.wantsKeys());
+    CHECK(f.tool.textEditor().caretOffset() == 3);
+    f.tool.typeText("T");
+    const ToolResult r = f.tool.key(ToolKey::Enter);
+    CHECK(r.committed);
+    CHECK(f.doc.objectCount() == 1);
+    CHECK(std::get<TextParams>(f.onlyVector()->params).text == "TOIT");
+    CHECK(f.doc.undoStack().generation() == gen + 1);
+
+    // A held draft is dropped by Escape in the Text tool and by a document replacement.
+    f.click({30.0, 30.0});
+    f.tool.typeText("TO");
+    f.tool.setTool(ToolKind::Circle);
+    f.tool.setTool(ToolKind::Text);
+    CHECK(f.tool.textEditor().hasDraft());
+    f.tool.key(ToolKey::Escape);
+    CHECK_FALSE(f.tool.textEditor().hasDraft());
+    f.click({30.0, 30.0});
+    f.tool.typeText("TO");
+    f.tool.setTool(ToolKind::Select);
+    Document other(Job::singleSided(100.0, 100.0, 18.0, Units::Millimetres));
+    f.tool.setDocument(&other);
+    CHECK_FALSE(f.tool.textEditor().hasDraft());
+    f.tool.setTool(ToolKind::Text);
+    CHECK_FALSE(f.tool.active());
+    f.tool.setDocument(&f.doc);
+}
+
+TEST_CASE("a box being dragged is not kept across a tool switch", "[text][tool][switch]") {
+    Fixture f;
+    REQUIRE(f.tool.textEditor().setMode(TextMode::Box).ok);
+    f.tool.pointerMove(f.px({10.0, 10.0}));
+    f.tool.pointerPress(f.px({10.0, 10.0}));
+    f.tool.pointerMove(f.px({50.0, -10.0}));
+    CHECK(f.tool.textEditor().pressed());
+    f.tool.setTool(ToolKind::Select);
+    CHECK_FALSE(f.tool.textEditor().pressed());
+    CHECK_FALSE(f.tool.textEditor().hasDraft());
+}
