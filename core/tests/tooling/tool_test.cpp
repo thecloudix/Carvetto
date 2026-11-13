@@ -28,7 +28,7 @@ TEST_CASE("ToolType names round-trip", "[tooling][tool]") {
         REQUIRE(parsed.has_value());
         CHECK(*parsed == type);
     }
-    CHECK(allToolTypes().size() == 9);
+    CHECK(allToolTypes().size() == 10);
     CHECK(toString(ToolType::VBit) == "v_bit");
     CHECK_FALSE(parseToolType("laser").has_value());
     CHECK_FALSE(parseToolType("").has_value());
@@ -300,4 +300,37 @@ TEST_CASE("validate rejects bad geometry", "[tooling][tool]") {
     CHECK(validate(t).has_value());
     t.profile = {{0.0, 0.0}, {0.0, 1.0}};
     CHECK(validate(t).has_value());
+}
+
+TEST_CASE("thread mill tool: validation and cutting width (T-0262)", "[tooling][tool]") {
+    Tool t;
+    t.id = "tm";
+    t.type = ToolType::ThreadMill;
+    t.diameter = 4.0;
+    t.includedAngle = kPi / 3.0;
+    t.toothHeight = 0.6;
+    CHECK_FALSE(validate(t).has_value());
+    CHECK(cuttingWidthAtDepth(t, 0.0) == 4.0);
+    CHECK(cuttingWidthAtDepth(t, 5.0) == 4.0);
+    Tool bad = t;
+    bad.toothHeight = 2.5;  // taller than the radius
+    CHECK(validate(bad).has_value());
+    bad = t;
+    bad.toothHeight = 2.0;  // exactly the radius is allowed
+    CHECK_FALSE(validate(bad).has_value());
+    bad = t;
+    bad.includedAngle = kPi;
+    CHECK(validate(bad).has_value());
+    bad = t;
+    bad.toothOffset = -0.1;
+    CHECK(validate(bad).has_value());
+    bad = t;
+    bad.shankDiameter = -0.1;
+    CHECK(validate(bad).has_value());
+    bad = t;
+    bad.threadedLength = -0.1;
+    CHECK(validate(bad).has_value());
+    bad = t;
+    bad.diameter = 0.0;
+    CHECK(validate(bad).has_value());
 }

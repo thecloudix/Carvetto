@@ -97,6 +97,7 @@ const char* toolTypeText(tooling::ToolType type) {
         case tooling::ToolType::FormTool: return "a form tool";
         case tooling::ToolType::DiamondDrag: return "a diamond drag tool";
         case tooling::ToolType::Drill: return "a drill";
+        case tooling::ToolType::ThreadMill: return "a thread mill";
     }
     return "an unknown tool type";
 }

@@ -17,8 +17,12 @@ struct ImportResult {
     explicit operator bool() const { return ok; }
 };
 
-/// Current tool-database file format version written by `exportToolDatabaseJson`.
-inline constexpr int kToolDatabaseFormatVersion = 1;
+/// Current tool-database file format version written by `exportToolDatabaseJson`. Version 2
+/// (T-0262, ADR-0056) adds the thread-mill tool type and its fields (`shank_diameter_mm`,
+/// `tooth_height_mm`, `tooth_offset_mm`, `threaded_length_mm`). Version 1 files still import
+/// (the new keys are not read from them, and a thread mill in one is refused); a newer build's
+/// files are refused by an older one ("unsupported version").
+inline constexpr int kToolDatabaseFormatVersion = 2;
 
 /// Serialises the database to JSON text. Deterministic: object keys are sorted, arrays are in id
 /// order, lengths are rounded to 1e-6 mm, angles are written in degrees rounded to 1e-6.

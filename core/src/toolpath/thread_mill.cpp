@@ -117,9 +117,26 @@ std::string plan(const tooling::Tool& tool, const ThreadMillParams& p, Plan& out
         return "the thread reaches " + num(p.startDepth + p.threadLength) + " mm deep; the maximum depth is " +
                num(p.maxDepth) + " mm";
     }
+    const geometry::Tolerance& t = p.tolerance;
+    if (t.chordal < kMinChordal || t.chordal > 1.0 || !(t.distance > 0.0) || t.distance > t.chordal) {
+        return "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal";
+    }
+    if (!threadMillToolAllowed(tool.type)) {
+        issue = ToolpathIssue::InvalidTool;
+        return "tool '" + tool.name + "' must be a thread mill or an end mill for thread milling";
+    }
+    if (const std::optional<std::string> bad = tooling::validate(tool)) {
+        issue = ToolpathIssue::InvalidTool;
+        return "tool '" + tool.name + "': " + *bad;
+    }
+    // A thread mill tool states its own teeth (ADR-0056): single point when its threaded length is
+    // 0, else multi point over that length; the form's cutter fields then do not apply.
+    const bool toolTeeth = tool.type == tooling::ToolType::ThreadMill;
+    const bool multi = toolTeeth ? tool.threadedLength > 0.0 : p.cutter == ThreadCutter::MultiPoint;
+    const double toothedLength = toolTeeth ? tool.threadedLength : p.threadedLength;
     double teeth = P;
-    if (p.cutter == ThreadCutter::MultiPoint) {
-        teeth = p.threadedLength;
+    if (multi) {
+        teeth = toothedLength;
         if (!(teeth >= P * (1.0 - 1e-12))) {
             return "the threaded length of the cutter must be at least one pitch";
         }
@@ -127,18 +144,6 @@ std::string plan(const tooling::Tool& tool, const ThreadMillParams& p, Plan& out
             return "the threaded length of the cutter (" + num(teeth) + " mm) is longer than the thread (" +
                    num(p.threadLength) + " mm)";
         }
-    }
-    const geometry::Tolerance& t = p.tolerance;
-    if (t.chordal < kMinChordal || t.chordal > 1.0 || !(t.distance > 0.0) || t.distance > t.chordal) {
-        return "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal";
-    }
-    if (!threadMillToolAllowed(tool.type)) {
-        issue = ToolpathIssue::InvalidTool;
-        return "tool '" + tool.name + "' must be an end mill (the thread mill) for thread milling";
-    }
-    if (const std::optional<std::string> bad = tooling::validate(tool)) {
-        issue = ToolpathIssue::InvalidTool;
-        return "tool '" + tool.name + "': " + *bad;
     }
     const double d = tool.diameter;
     if (p.type == ThreadType::Internal && !(d < threadBoreDiameter(p.diameter, P))) {
@@ -244,7 +249,7 @@ void emitThread(std::vector<Move>& moves, Vec2 c, const Plan& pl, double safeZ, 
 }  // namespace
 
 bool threadMillToolAllowed(tooling::ToolType type) {
-    return type == tooling::ToolType::EndMill;
+    return type == tooling::ToolType::EndMill || type == tooling::ToolType::ThreadMill;
 }
 
 std::optional<double> threadPresetPitch(ThreadPitchPreset preset, double diameter) {

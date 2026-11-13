@@ -374,6 +374,10 @@ std::uint64_t toolFingerprint(const ResolvedTool& r) {
     fp.add(t.includedAngle);
     fp.add(t.tipDiameter);
     fp.add(t.cornerRadius);
+    fp.add(t.shankDiameter);
+    fp.add(t.toothHeight);
+    fp.add(t.toothOffset);
+    fp.add(t.threadedLength);
     fp.add(static_cast<std::uint64_t>(t.profile.size()));
     for (const geometry::Vec2 p : t.profile) {
         fp.add(p.x);
@@ -709,6 +713,15 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
                 contours, tool->tool, tool->data, std::get<toolpath::ThreadMillParams>(definition.params));
             diagnostics = r.diagnostics;
             if (r.ok()) {
+                const auto& tm = std::get<toolpath::ThreadMillParams>(definition.params);
+                if (tm.createCircles && tm.type == toolpath::ThreadType::Internal) {
+                    for (const toolpath::ThreadMillThread& t : r.threads) {
+                        const std::vector<geometry::Contour> c = toolpath::threadBoreCircles(tm, {t.centre});
+                        if (!c.empty() && t.contour < owners.size()) {
+                            out.boreCircles.push_back({c.front(), owners[t.contour]});
+                        }
+                    }
+                }
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
             }
         } else if (op == ToolpathOperation::Inlay) {

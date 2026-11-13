@@ -107,7 +107,8 @@ std::optional<std::string> validateToolForEdit(const Tool& t) {
     if (t.name.empty()) {
         return std::string("tool '") + t.id + "' needs a name";
     }
-    for (const double v : {t.diameter, t.tipDiameter, t.cornerRadius}) {
+    for (const double v : {t.diameter, t.tipDiameter, t.cornerRadius, t.shankDiameter, t.toothHeight,
+                           t.toothOffset, t.threadedLength}) {
         if (!saneNonNegative(v)) {
             return what + ": a dimension is not a usable number";
         }
@@ -318,6 +319,12 @@ Tool defaultTool(ToolType type) {
         case ToolType::RadiusedEndMill:
             t.cornerRadius = 1.0;
             break;
+        case ToolType::ThreadMill:
+            t.diameter = 4.0;
+            t.includedAngle = 60.0 * geometry::kPi / 180.0;
+            t.shankDiameter = 3.8;
+            t.toothHeight = 0.6;
+            break;
         case ToolType::FormTool:
             t.profile = {{0.0, 0.0}, {3.0, 6.0}};
             break;
@@ -351,6 +358,10 @@ ToolFields toolFields(ToolType type) {
         case ToolType::RadiusedEndMill:
             f.cornerRadius = true;
             break;
+        case ToolType::ThreadMill:
+            f.includedAngle = true;
+            f.threadMill = true;
+            break;
         case ToolType::FormTool:
             f.profile = true;
             f.diameter = false;
@@ -381,6 +392,8 @@ std::string toolTypeLabel(ToolType type) {
             return "Diamond drag";
         case ToolType::Drill:
             return "Drill";
+        case ToolType::ThreadMill:
+            return "Thread mill";
     }
     return "Tool";
 }

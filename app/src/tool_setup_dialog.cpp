@@ -196,6 +196,10 @@ void ToolSetupDialog::buildTools(QWidget* page) {
     toolAngle_->setSuffix(QStringLiteral(" deg"));
     toolTip_ = makeBox(toolForm_, "toolTip");
     toolCorner_ = makeBox(toolForm_, "toolCorner");
+    toolShank_ = makeBox(toolForm_, "toolShank");
+    toolToothHeight_ = makeBox(toolForm_, "toolToothHeight");
+    toolToothOffset_ = makeBox(toolForm_, "toolToothOffset");
+    toolThreadedLength_ = makeBox(toolForm_, "toolThreadedLength");
     toolFlutes_ = new QSpinBox(toolForm_);
     toolFlutes_->setObjectName(QStringLiteral("toolFlutes"));
     toolFlutes_->setRange(1, 1000);
@@ -219,6 +223,10 @@ void ToolSetupDialog::buildTools(QWidget* page) {
     addRow(QStringLiteral("Included angle"), toolAngle_, &angleWidgets_);
     addRow(QStringLiteral("Tip / ball diameter"), toolTip_, &tipWidgets_);
     addRow(QStringLiteral("Corner radius"), toolCorner_, &cornerWidgets_);
+    addRow(QStringLiteral("Shank diameter (S)"), toolShank_, &threadWidgets_);
+    addRow(QStringLiteral("Tooth height (H)"), toolToothHeight_, &threadWidgets_);
+    addRow(QStringLiteral("Tooth offset (O)"), toolToothOffset_, &threadWidgets_);
+    addRow(QStringLiteral("Threaded length (0 = single point)"), toolThreadedLength_, &threadWidgets_);
     addRow(QStringLiteral("Profile"), toolProfile_, &profileWidgets_);
     addRow(QStringLiteral("Flutes"), toolFlutes_, nullptr);
     addRow(QStringLiteral("Notes"), toolNotes_, nullptr);
@@ -269,6 +277,17 @@ void ToolSetupDialog::buildTools(QWidget* page) {
             toolCorner_->setProperty("mm", fresh.cornerRadius);
             toolCorner_->setProperty("ui", toolCorner_->value());
         }
+        if (fields.threadMill) {
+            const std::pair<QDoubleSpinBox*, double> boxes[] = {{toolShank_, fresh.shankDiameter},
+                                                                {toolToothHeight_, fresh.toothHeight},
+                                                                {toolToothOffset_, fresh.toothOffset},
+                                                                {toolThreadedLength_, fresh.threadedLength}};
+            for (const auto& [box, mm] : boxes) {
+                box->setValue(lengthToUi(mm));
+                box->setProperty("mm", mm);
+                box->setProperty("ui", box->value());
+            }
+        }
         if (fields.profile) {
             QString text;
             for (const geometry::Vec2& p : fresh.profile) {
@@ -285,6 +304,9 @@ void ToolSetupDialog::buildTools(QWidget* page) {
     connect(toolAngle_, &QDoubleSpinBox::valueChanged, this, commit);
     connect(toolTip_, &QDoubleSpinBox::valueChanged, this, commit);
     connect(toolCorner_, &QDoubleSpinBox::valueChanged, this, commit);
+    for (QDoubleSpinBox* b : {toolShank_, toolToothHeight_, toolToothOffset_, toolThreadedLength_}) {
+        connect(b, &QDoubleSpinBox::valueChanged, this, commit);
+    }
     connect(toolFlutes_, &QSpinBox::valueChanged, this, commit);
     connect(toolProfile_, &QPlainTextEdit::textChanged, this, commit);
     connect(cuttingTable_, &QTableWidget::itemChanged, this, commit);
@@ -491,7 +513,8 @@ void ToolSetupDialog::setUnits(document::Units units) {
     const bool in = units == document::Units::Inches;
     const QString len = in ? QStringLiteral(" in") : QStringLiteral(" mm");
     const int decimals = in ? 4 : 3;
-    for (QDoubleSpinBox* b : {toolDiameter_, toolTip_, toolCorner_, workX_, workY_, workZ_}) {
+    for (QDoubleSpinBox* b : {toolDiameter_, toolTip_, toolCorner_, toolShank_, toolToothHeight_, toolToothOffset_,
+                              toolThreadedLength_, workX_, workY_, workZ_}) {
         b->setSuffix(len);
         b->setDecimals(decimals);
     }
@@ -613,6 +636,7 @@ void ToolSetupDialog::updateFieldVisibility() {
     show(tipWidgets_, f.tipDiameter);
     show(cornerWidgets_, f.cornerRadius);
     show(profileWidgets_, f.profile);
+    show(threadWidgets_, f.threadMill);
 }
 
 void ToolSetupDialog::fillCuttingTable(const tooling::Tool& tool) {
@@ -738,6 +762,10 @@ void ToolSetupDialog::loadTool() {
     toolAngle_->setProperty("ui", toolAngle_->value());
     setLengthBox(toolTip_, tool->tipDiameter, units_);
     setLengthBox(toolCorner_, tool->cornerRadius, units_);
+    setLengthBox(toolShank_, tool->shankDiameter, units_);
+    setLengthBox(toolToothHeight_, tool->toothHeight, units_);
+    setLengthBox(toolToothOffset_, tool->toothOffset, units_);
+    setLengthBox(toolThreadedLength_, tool->threadedLength, units_);
     toolFlutes_->setValue(tool->flutes);
     QString profile;
     for (const geometry::Vec2& p : tool->profile) {
@@ -769,6 +797,10 @@ void ToolSetupDialog::commitTool() {
                           : toolAngle_->value() / kRadToDeg;
     t.tipDiameter = lengthOf(toolTip_, units_);
     t.cornerRadius = lengthOf(toolCorner_, units_);
+    t.shankDiameter = lengthOf(toolShank_, units_);
+    t.toothHeight = lengthOf(toolToothHeight_, units_);
+    t.toothOffset = lengthOf(toolToothOffset_, units_);
+    t.threadedLength = lengthOf(toolThreadedLength_, units_);
     t.flutes = toolFlutes_->value();
     const viewmodel::ToolFields fields = viewmodel::toolFields(t.type);
     if (fields.profile) {
@@ -805,6 +837,12 @@ void ToolSetupDialog::commitTool() {
     }
     if (!fields.cornerRadius) {
         t.cornerRadius = 0.0;
+    }
+    if (!fields.threadMill) {
+        t.shankDiameter = 0.0;
+        t.toothHeight = 0.0;
+        t.toothOffset = 0.0;
+        t.threadedLength = 0.0;
     }
     QString tableError;
     if (!readCuttingTable(t, tableError)) {

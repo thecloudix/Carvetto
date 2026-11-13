@@ -158,6 +158,7 @@ std::optional<ToolShape> ToolShape::fromTool(const tooling::Tool& tool, std::opt
     switch (tool.type) {
         case tooling::ToolType::EndMill:
         case tooling::ToolType::DiamondDrag:
+        case tooling::ToolType::ThreadMill:  // the envelope of the teeth: a plain cylinder of diameter D
             s = flatEndMill(tool.diameter);
             break;
         case tooling::ToolType::BallNose:

@@ -22,6 +22,7 @@ constexpr TypeName kTypeNames[] = {
     {ToolType::FormTool, "form_tool"},
     {ToolType::DiamondDrag, "diamond_drag"},
     {ToolType::Drill, "drill"},
+    {ToolType::ThreadMill, "thread_mill"},
 };
 
 /// Chord width of a circle of radius r at `depth` below its lowest point (0 when depth <= 0,
@@ -117,6 +118,7 @@ double cuttingWidthAtDepth(const Tool& tool, double depth) {
     switch (tool.type) {
         case ToolType::EndMill:
         case ToolType::DiamondDrag:
+        case ToolType::ThreadMill:
             return diameter;
         case ToolType::BallNose:
             return sphereChord(diameter * 0.5, d);
@@ -156,7 +158,8 @@ std::optional<std::string> validate(const Tool& tool) {
     using namespace std::string_literals;
     if (tool.flutes < 1) return "flutes must be at least 1"s;
     const bool needsAngle = tool.type == ToolType::VBit || tool.type == ToolType::Engraving ||
-                            tool.type == ToolType::TaperedBallNose || tool.type == ToolType::Drill;
+                            tool.type == ToolType::TaperedBallNose || tool.type == ToolType::Drill ||
+                            tool.type == ToolType::ThreadMill;
     if (needsAngle && !(tool.includedAngle > 0.0 && tool.includedAngle < geometry::kPi)) {
         return "included angle must be in (0, pi) radians"s;
     }
@@ -188,6 +191,14 @@ std::optional<std::string> validate(const Tool& tool) {
             if (!(tool.cornerRadius > 0.0) || tool.cornerRadius > tool.diameter * 0.5) {
                 return "corner radius must be in (0, diameter/2]"s;
             }
+            break;
+        case ToolType::ThreadMill:
+            if (!(tool.toothHeight > 0.0) || tool.toothHeight > tool.diameter * 0.5) {
+                return "thread mill tooth height must be in (0, diameter/2]"s;
+            }
+            if (!(tool.toothOffset >= 0.0)) return "thread mill tooth offset must not be negative"s;
+            if (!(tool.shankDiameter >= 0.0)) return "thread mill shank diameter must not be negative"s;
+            if (!(tool.threadedLength >= 0.0)) return "thread mill threaded length must not be negative"s;
             break;
         default:
             break;

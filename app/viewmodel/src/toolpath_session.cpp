@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <set>
 #include <span>
 #include <tuple>
 #include <utility>
@@ -623,6 +624,7 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
                 ++newIds;
             }
         }
+        newIds += c.boreCircles.size();
         o.ok = true;  // provisionally
         plans.push_back(std::move(plan));
     }
@@ -722,6 +724,39 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
             if (failed) {
                 break;
             }
+            // Thread mill bore circles (T-0262): one drawing object per hole, on the layer and sheet
+            // of the vector it was found in; a circle already in the document is not added twice (a
+            // recalculation).
+            using Bounds = std::tuple<document::SheetId, double, double, double, double>;
+            std::set<Bounds> existing;  // contours already there, by sheet and bounds
+            if (!c.boreCircles.empty()) {
+                for (const auto& kv : work->objects()) {
+                    if (const document::VectorObject* v = kv.second.asVector()) {
+                        for (const geometry::Contour& k : v->contours) {
+                            const geometry::Box2 bb = k.bounds();
+                            existing.insert({kv.second.sheet, bb.min.x, bb.min.y, bb.max.x, bb.max.y});
+                        }
+                    }
+                }
+            }
+            for (const ToolpathCalculation::BoreCircle& bc : c.boreCircles) {
+                const document::Object* src = work->findObject(bc.source);
+                if (src == nullptr) {
+                    continue;
+                }
+                const geometry::Box2 bb = bc.circle.bounds();
+                if (!existing.insert({src->sheet, bb.min.x, bb.min.y, bb.max.x, bb.max.y}).second) {
+                    continue;
+                }
+                document::Object circle = document::Object::vector(bc.circle, src->layer, src->sheet);
+                circle.name = "Thread bore";
+                if (!run(std::make_unique<document::AddObjectCommand>(std::move(circle)))) {
+                    break;
+                }
+            }
+            if (failed) {
+                break;
+            }
             std::vector<ToolpathId> obsolete;
             for (const ToolpathId m : plan.members) {
                 if (!kept.contains(m)) {
@@ -790,6 +825,10 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
         Baseline b;
         b.def = c.definition;
         b.vectors = c.vectorsFingerprint;
+        if (!c.boreCircles.empty()) {
+            // The bore circles just added are not an edit of the toolpath's inputs.
+            b.vectors = inputsFingerprint(*doc_, normalisedSelector(c.definition.selector), c.definition.params);
+        }
         b.tools = c.toolsFingerprint;
         b.group = reg.group;
         b.role = reg.role;

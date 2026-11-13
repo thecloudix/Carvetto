@@ -111,13 +111,17 @@ class ToolSetupDialog : public QDialog {
     QDoubleSpinBox* toolAngle_{nullptr};
     QDoubleSpinBox* toolTip_{nullptr};
     QDoubleSpinBox* toolCorner_{nullptr};
+    QDoubleSpinBox* toolShank_{nullptr};
+    QDoubleSpinBox* toolToothHeight_{nullptr};
+    QDoubleSpinBox* toolToothOffset_{nullptr};
+    QDoubleSpinBox* toolThreadedLength_{nullptr};
     QSpinBox* toolFlutes_{nullptr};
     QPlainTextEdit* toolProfile_{nullptr};
     QLineEdit* toolNotes_{nullptr};
     QTableWidget* cuttingTable_{nullptr};
     QComboBox* entryMachine_{nullptr};
     QComboBox* entryMaterial_{nullptr};
-    std::vector<QWidget*> angleWidgets_, tipWidgets_, cornerWidgets_, profileWidgets_, diameterWidgets_;
+    std::vector<QWidget*> angleWidgets_, tipWidgets_, cornerWidgets_, profileWidgets_, diameterWidgets_, threadWidgets_;
 
     // Machines tab.
     QTreeWidget* machineList_{nullptr};

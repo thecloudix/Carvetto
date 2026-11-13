@@ -59,6 +59,12 @@ ToolDatabase sampleDb() {
         t.tipDiameter = (type == ToolType::Engraving) ? 0.2 : 3.175;
         t.cornerRadius = 1.5875;
         t.flutes = 2;
+        if (type == ToolType::ThreadMill) {
+            t.shankDiameter = 11.0;
+            t.toothHeight = 0.65;
+            t.toothOffset = 0.3333333;
+            t.threadedLength = 9.5;
+        }
         if (type == ToolType::FormTool) t.profile = {{1.0, 0.0}, {3.3333333, 2.5}, {6.35, 7.0}};
         t.defaultCuttingData = cd;
         t.setCuttingData("mc-router", "mat-oak", cd);
@@ -338,4 +344,86 @@ TEST_CASE("Machine rapid rate, work area and limits round-trip; missing keys def
         R"({"format":"carvetto-tool-database","version":1,"groups":[],"materials":[],"tools":[],)"
         R"("machines":[{"id":"m","name":"Inf","rapid_mm_min":1e999}]})");
     CHECK_FALSE(inf.ok);
+}
+
+// T-0262: format version 2 (ADR-0056): the thread mill tool type and its fields.
+namespace {
+Tool threadMillSample() {
+    Tool t;
+    t.id = "tm-1";
+    t.name = "Thread mill M6";
+    t.type = ToolType::ThreadMill;
+    t.diameter = 4.5;
+    t.includedAngle = kPi / 3.0;
+    t.shankDiameter = 4.0;
+    t.toothHeight = 0.65;
+    t.toothOffset = 0.25;
+    t.threadedLength = 8.0;
+    return t;
+}
+}  // namespace
+
+TEST_CASE("thread mill tool round-trips through the tool database file", "[tooling][json][T-0262]") {
+    ToolDatabase db;
+    REQUIRE(db.addTool(threadMillSample()));
+    Tool single = threadMillSample();
+    single.id = "tm-2";
+    single.threadedLength = 0.0;
+    REQUIRE(db.addTool(single));
+    const std::string text = exportToolDatabaseJson(db);
+    CHECK_THAT(text, ContainsSubstring("\"version\": 2"));
+    const ImportResult r = importToolDatabaseJson(text);
+    REQUIRE(r.ok);
+    const Tool* back = r.database.findTool("tm-1");
+    REQUIRE(back != nullptr);
+    CHECK(back->type == ToolType::ThreadMill);
+    CHECK(back->shankDiameter == 4.0);
+    CHECK(back->toothHeight == 0.65);
+    CHECK(back->toothOffset == 0.25);
+    CHECK(back->threadedLength == 8.0);
+    CHECK_THAT(back->includedAngle, WithinAbs(kPi / 3.0, 1e-6));
+    CHECK(r.database.findTool("tm-2")->threadedLength == 0.0);
+    CHECK(exportToolDatabaseJson(r.database) == text);
+}
+
+TEST_CASE("version 1 tool files still load; a thread mill in one is refused", "[tooling][json][T-0262]") {
+    const std::string v1 =
+        R"({"format": "carvetto-tool-database", "version": 1, "groups": [], "materials": [], "machines": [], )"
+        R"("tools": [{"id": "e", "type": "end_mill", "diameter_mm": 6, "tooth_height_mm": 99}]})";
+    const ImportResult r = importToolDatabaseJson(v1);
+    REQUIRE(r.ok);
+    CHECK(r.database.findTool("e")->toothHeight == 0.0);  // version 2 keys are not read from version 1
+    CHECK(importToolDatabaseJson(exportToolDatabaseJson(r.database)).ok);
+    const ImportResult bad = importToolDatabaseJson(
+        R"({"format": "carvetto-tool-database", "version": 1, "groups": [], "materials": [], "machines": [], )"
+        R"("tools": [{"id": "t", "type": "thread_mill", "diameter_mm": 6}]})");
+    CHECK_FALSE(bad.ok);
+    CHECK_THAT(bad.error, ContainsSubstring("unknown tool type"));
+    CHECK_FALSE(importToolDatabaseJson(
+                    R"({"format": "carvetto-tool-database", "version": 3, "groups": [], "materials": [], "machines": [], "tools": []})")
+                    .ok);
+}
+
+TEST_CASE("hostile thread mill tool files are refused with a message", "[tooling][json][T-0262]") {
+    const std::string head =
+        R"({"format": "carvetto-tool-database", "version": 2, "groups": [], "materials": [], "machines": [], "tools": [)";
+    const auto bad = [&](const std::string& tool, const char* needle) {
+        const ImportResult r = importToolDatabaseJson(head + tool + "]}");
+        INFO(tool);
+        CHECK_FALSE(r.ok);
+        CHECK(r.database.isEmpty());
+        CHECK_THAT(r.error, ContainsSubstring(needle));
+    };
+    const std::string base = R"({"id": "t", "type": "thread_mill", "diameter_mm": 6, "included_angle_deg": 60, )";
+    CHECK(importToolDatabaseJson(head + base + R"("tooth_height_mm": 0.6}])" + "}").ok);
+    bad(base + R"("tooth_height_mm": 0})", "tooth height");
+    bad(base + R"("tooth_height_mm": 4})", "tooth height");
+    bad(base + R"("tooth_height_mm": "x"})", "must be a number");
+    bad(base + R"("tooth_height_mm": 0.6, "tooth_offset_mm": -1})", "tooth offset");
+    bad(base + R"("tooth_height_mm": 0.6, "shank_diameter_mm": -1})", "shank");
+    bad(base + R"("tooth_height_mm": 0.6, "threaded_length_mm": -2})", "threaded length");
+    bad(base + R"("tooth_height_mm": 0.6, "threaded_length_mm": null})", "must be a number");
+    bad(R"({"id": "t", "type": "thread_mill", "diameter_mm": 6, "tooth_height_mm": 0.6})", "included angle");
+    bad(R"({"id": "t", "type": "thread_mill", "tooth_height_mm": 0.6, "included_angle_deg": 60})", "diameter");
+    bad(base + R"("tooth_height_mm": 1e999})", "");
 }

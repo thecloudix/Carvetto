@@ -120,3 +120,121 @@ TEST_CASE("thread mill session: add, undo, save, load and recalculate", "[toolpa
     REQUIRE(doc.undo());
     CHECK(doc.toolpaths().empty());
 }
+
+// T-0262: the thread mill tool type in the form, and "create circles for internal threads".
+namespace {
+tooling::ToolDatabase dbWithThreadMill() {
+    tooling::ToolDatabase db = cliToolDatabase();
+    tooling::Tool t;
+    t.id = "tm-4";
+    t.name = "Thread mill 4";
+    t.type = tooling::ToolType::ThreadMill;
+    t.diameter = 4.0;
+    t.includedAngle = 3.14159265358979 / 3.0;
+    t.toothHeight = 0.6;
+    t.threadedLength = 0.0;
+    t.defaultCuttingData.toolNumber = 7;
+    t.defaultCuttingData.feedRate = 500.0;
+    t.defaultCuttingData.plungeRate = 200.0;
+    t.defaultCuttingData.spindleSpeed = 12000.0;
+    t.defaultCuttingData.passDepth = 1.0;
+    t.defaultCuttingData.stepover = 1.0;
+    REQUIRE(db.addTool(t));
+    return db;
+}
+
+std::size_t vectorCount(const Document& doc) {
+    std::size_t n = 0;
+    for (const auto& kv : doc.objects()) {
+        n += kv.second.isVector() ? 1u : 0u;
+    }
+    return n;
+}
+}  // namespace
+
+TEST_CASE("thread mill form accepts thread mills and end mills only", "[toolpath][form][thread_mill][T-0262]") {
+    const tooling::ToolDatabase db = dbWithThreadMill();
+    ToolpathForm form(ToolpathOperation::ThreadMill, Units::Millimetres);
+    CHECK(form.setTool(db, source("tm-4")).ok);
+    CHECK(form.setTool(db, source("end-mill-3mm")).ok);
+    CHECK_FALSE(form.setTool(db, source("drill-3mm")).ok);
+    CHECK_FALSE(form.setTool(db, source("v-bit-90")).ok);
+    // Other operations do not offer a thread mill.
+    ToolpathForm drill(ToolpathOperation::Drill, Units::Millimetres);
+    CHECK_FALSE(drill.setTool(db, source("tm-4")).ok);
+}
+
+TEST_CASE("thread mill: create circles inserts the bores in the same undo step", "[toolpath][session][thread_mill][T-0262]") {
+    Document doc;
+    const tooling::ToolDatabase db = dbWithThreadMill();
+    ToolpathSession session(&doc);
+    session.setToolDatabase(db);
+    addVector(doc, geometry::Contour::circle({20, 20}, 2.45));
+    addVector(doc, geometry::Contour::circle({40, 20}, 2.45));
+    doc.undoStack().clear();
+    ToolpathForm form(ToolpathOperation::ThreadMill, Units::Millimetres);
+    REQUIRE(form.setTool(db, source("tm-4")).ok);
+    REQUIRE(form.setChoice("pitchPreset", 1).ok);  // M6 x 1
+    REQUIRE(form.setChoice("createCircles", 1).ok);
+    REQUIRE(vectorCount(doc) == 2);
+    const std::size_t before = doc.undoStack().count();
+    const ToolpathOutcome out = session.add(form.definition());
+    INFO(out.message);
+    REQUIRE(out.ok);
+    CHECK(doc.toolpaths().size() == 1);
+    CHECK(vectorCount(doc) == 4);
+    CHECK(doc.undoStack().count() == before + 1);  // one step: toolpath and circles
+    // The circles are the bore (minor) diameter of M6x1: 6 - 1.0825.
+    int bores = 0;
+    for (const auto& kv : doc.objects()) {
+        const document::VectorObject* v = kv.second.asVector();
+        if (v != nullptr && kv.second.name == "Thread bore") {
+            ++bores;
+            REQUIRE(v->contours.size() == 1);
+            const geometry::Box2 b = v->contours.front().bounds();
+            CHECK(b.max.x - b.min.x == Approx(6.0 - 1.0825).margin(1e-6));
+        }
+    }
+    CHECK(bores == 2);
+    CHECK(doc.checkIntegrity().empty());
+    // The toolpath is not stale because of the circles it made.
+    const auto list = session.list();
+    REQUIRE(list.size() == 1);
+    CHECK(list[0].status == ToolpathStatus::Current);
+    // Recalculating does not add them again.
+    REQUIRE(session.recalculate(list[0].id).ok);
+    CHECK(vectorCount(doc) == 4);
+
+    REQUIRE(doc.undo());  // the add (the recalculation changed nothing)
+    CHECK(doc.toolpaths().empty());
+    CHECK(vectorCount(doc) == 2);
+    REQUIRE(doc.redo());
+    CHECK(vectorCount(doc) == 4);
+    CHECK(doc.toolpaths().size() == 1);
+}
+
+TEST_CASE("thread mill: no circles unless asked for, internal, and calculated", "[toolpath][session][thread_mill][T-0262]") {
+    Document doc;
+    const tooling::ToolDatabase db = dbWithThreadMill();
+    ToolpathSession session(&doc);
+    session.setToolDatabase(db);
+    addVector(doc, geometry::Contour::circle({20, 20}, 2.45));
+    ToolpathForm form(ToolpathOperation::ThreadMill, Units::Millimetres);
+    REQUIRE(form.setTool(db, source("tm-4")).ok);
+    REQUIRE(form.setChoice("pitchPreset", 1).ok);
+    REQUIRE(session.add(form.definition()).ok);  // flag off
+    CHECK(vectorCount(doc) == 1);
+    REQUIRE(form.setChoice("createCircles", 1).ok);
+    REQUIRE(form.setChoice("type", 1).ok);  // external
+    REQUIRE(session.add(form.definition()).ok);
+    CHECK(vectorCount(doc) == 1);
+    // A refused calculation (tool too large for the bore) adds nothing.
+    REQUIRE(form.setChoice("type", 0).ok);
+    REQUIRE(form.setField("diameter", "4").ok);
+    REQUIRE(form.setChoice("pitchPreset", 0).ok);
+    const std::size_t toolpaths = doc.toolpaths().size();
+    const ToolpathOutcome bad = session.add(form.definition());
+    CHECK_FALSE(bad.ok);
+    CHECK(doc.toolpaths().size() == toolpaths);
+    CHECK(vectorCount(doc) == 1);
+}

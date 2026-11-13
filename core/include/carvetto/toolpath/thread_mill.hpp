@@ -108,10 +108,12 @@ std::optional<double> threadPathRadius(const ThreadMillParams& params, double to
 std::vector<geometry::Contour> threadBoreCircles(const ThreadMillParams& params,
                                                  const std::vector<geometry::Vec2>& centres);
 
-/// Only an end mill (the thread mill, with its diameter the cutting diameter of the teeth).
+/// A thread mill tool (T-0262) or an end mill (with its diameter the cutting diameter of the teeth).
 bool threadMillToolAllowed(tooling::ToolType type);
 
-/// Computes the thread milling toolpath (ADR-0037). Per thread: a rapid to a point above it at
+/// Computes the thread milling toolpath (ADR-0037). With a `ThreadMill` tool the teeth come from the
+/// tool (single point when its `threadedLength` is 0, else multi point over that length) and
+/// `params.cutter`/`threadedLength` are ignored (ADR-0056). Per thread: a rapid to a point above it at
 /// safe Z, a plunge to the start of the helix, a lead-in (internal: a half circle out from the
 /// centre; external: a tangent line), the helix, a lead-out (the same, mirrored) and a retract.
 /// The helix is arcs of one revolution each whose Z changes by exactly the pitch, then an arc of

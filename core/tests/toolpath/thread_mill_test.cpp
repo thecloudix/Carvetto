@@ -495,3 +495,66 @@ TEST_CASE("thread mill: hostile vectors", "[thread_mill]") {
         CHECK(std::isfinite(m.to.z));
     }
 }
+
+// T-0262: the thread mill tool type (ADR-0056).
+namespace {
+tooling::Tool threadMillTool(double threadedLength = 0.0) {
+    tooling::Tool t = endMill(3.0);
+    t.type = tooling::ToolType::ThreadMill;
+    t.includedAngle = geometry::kPi / 3.0;
+    t.toothHeight = 0.6;
+    t.toothOffset = 0.5;
+    t.shankDiameter = 2.8;
+    t.threadedLength = threadedLength;
+    return t;
+}
+}  // namespace
+
+TEST_CASE("thread mill tool: allowed, and a single point tool cuts one pitch per revolution", "[thread_mill][T-0262]") {
+    CHECK(threadMillToolAllowed(tooling::ToolType::ThreadMill));
+    CHECK(threadMillToolAllowed(tooling::ToolType::EndMill));
+    CHECK_FALSE(threadMillToolAllowed(tooling::ToolType::Drill));
+    const ThreadMillResult r = run(m6(), {hole()}, threadMillTool());
+    REQUIRE(r.ok());
+    CHECK(turnsOf(r.toolpath).size() == 5);
+}
+
+TEST_CASE("thread mill tool: the tool's threaded length makes it multi point whatever the form says",
+          "[thread_mill][T-0262]") {
+    ThreadMillParams p = m6();
+    p.cutter = ThreadCutter::SinglePoint;  // ignored for a thread mill tool
+    const ThreadMillResult multi = run(p, {hole()}, threadMillTool(3.0));
+    REQUIRE(multi.ok());
+    // Teeth over 3 mm: the helix advances (5 - 3) + 1 = 3 mm.
+    CHECK(turnsOf(multi.toolpath).size() == 3);
+    p.cutter = ThreadCutter::MultiPoint;  // the form's multi point is ignored for a single point tool
+    p.threadedLength = 3.0;
+    const ThreadMillResult single = run(p, {hole()}, threadMillTool(0.0));
+    REQUIRE(single.ok());
+    CHECK(turnsOf(single.toolpath).size() == 5);
+    // Too long for the thread, and shorter than a pitch.
+    CHECK_FALSE(run(m6(), {hole()}, threadMillTool(6.0)).ok());
+    const ThreadMillResult shortTeeth = run(m6(), {hole()}, threadMillTool(0.5));
+    CHECK_FALSE(shortTeeth.ok());
+    CHECK(shortTeeth.has(ToolpathIssue::InvalidParameters));
+}
+
+TEST_CASE("thread mill tool: invalid tool geometry is refused", "[thread_mill][T-0262]") {
+    tooling::Tool t = threadMillTool();
+    t.toothHeight = 0.0;
+    ThreadMillResult r = run(m6(), {hole()}, t);
+    CHECK_FALSE(r.ok());
+    CHECK(r.has(ToolpathIssue::InvalidTool));
+    t = threadMillTool();
+    t.includedAngle = 0.0;
+    CHECK(run(m6(), {hole()}, t).has(ToolpathIssue::InvalidTool));
+    t = threadMillTool();
+    t.toothOffset = -1.0;
+    CHECK(run(m6(), {hole()}, t).has(ToolpathIssue::InvalidTool));
+    t = threadMillTool();
+    t.threadedLength = std::numeric_limits<double>::quiet_NaN();
+    CHECK(run(m6(), {hole()}, t).has(ToolpathIssue::InvalidTool));
+    t = threadMillTool();
+    t.shankDiameter = -1.0;
+    CHECK(run(m6(), {hole()}, t).has(ToolpathIssue::InvalidTool));
+}

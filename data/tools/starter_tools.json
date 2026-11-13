@@ -136,7 +136,11 @@
       "name": "Ball Nose 1/4 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "ball_nose"
     },
     {
@@ -207,7 +211,11 @@
       "name": "Ball Nose 1/8 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "ball_nose"
     },
     {
@@ -278,7 +286,11 @@
       "name": "Ball Nose 3 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "ball_nose"
     },
     {
@@ -349,7 +361,11 @@
       "name": "Ball Nose 6 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "ball_nose"
     },
     {
@@ -405,7 +421,11 @@
       "name": "Drill 1/8 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "drill"
     },
     {
@@ -461,7 +481,11 @@
       "name": "Drill 6 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "drill"
     },
     {
@@ -547,7 +571,11 @@
       "name": "End Mill 1/16 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -633,7 +661,11 @@
       "name": "End Mill 1/2 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -719,7 +751,11 @@
       "name": "End Mill 1/4 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -805,7 +841,11 @@
       "name": "End Mill 1/8 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -891,7 +931,11 @@
       "name": "End Mill 10 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -977,7 +1021,11 @@
       "name": "End Mill 12 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1063,7 +1111,11 @@
       "name": "End Mill 1 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1149,7 +1201,11 @@
       "name": "End Mill 2 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1235,7 +1291,11 @@
       "name": "End Mill 3/8 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1321,7 +1381,11 @@
       "name": "End Mill 3 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1407,7 +1471,11 @@
       "name": "End Mill 4 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1493,7 +1561,11 @@
       "name": "End Mill 6 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1579,7 +1651,11 @@
       "name": "End Mill 8 mm",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1650,7 +1726,11 @@
       "name": "Engraving Bit 30° 0.2 mm tip",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.2,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "engraving"
     },
     {
@@ -1706,7 +1786,11 @@
       "name": "Single Flute End Mill 1/4 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1762,7 +1846,11 @@
       "name": "Single Flute End Mill 1/8 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "end_mill"
     },
     {
@@ -1818,7 +1906,11 @@
       "name": "Tapered Ball Nose 1 mm ball, 10° taper",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 1.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "tapered_ball_nose"
     },
     {
@@ -1889,7 +1981,11 @@
       "name": "V-Bit 120° 1/2 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "v_bit"
     },
     {
@@ -1960,7 +2056,11 @@
       "name": "V-Bit 120° 1/4 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "v_bit"
     },
     {
@@ -2031,7 +2131,11 @@
       "name": "V-Bit 60° 1/2 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "v_bit"
     },
     {
@@ -2102,7 +2206,11 @@
       "name": "V-Bit 60° 1/4 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "v_bit"
     },
     {
@@ -2173,7 +2281,11 @@
       "name": "V-Bit 90° 1/2 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "v_bit"
     },
     {
@@ -2244,9 +2356,13 @@
       "name": "V-Bit 90° 1/4 in",
       "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
       "profile_mm": [],
+      "shank_diameter_mm": 0.0,
+      "threaded_length_mm": 0.0,
       "tip_diameter_mm": 0.0,
+      "tooth_height_mm": 0.0,
+      "tooth_offset_mm": 0.0,
       "type": "v_bit"
     }
   ],
-  "version": 1
+  "version": 2
 }
