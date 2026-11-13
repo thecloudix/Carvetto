@@ -155,7 +155,7 @@ add_executable(carvetto_tests
   toolpath/thread_mill_test.cpp
   toolpath/inlay_test.cpp
   toolpath/fluting_test.cpp
-  toolpath/photo_vcarve_test.cpp
+  toolpath/image_engrave_test.cpp
   toolpath/engrave_test.cpp
   toolpath/engrave_post_test.cpp
   toolpath/v_carve_test.cpp

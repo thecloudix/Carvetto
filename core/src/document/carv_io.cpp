@@ -446,7 +446,7 @@ constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profi
                                                       {ToolpathOperation::Prism, "prism"},
                                                       {ToolpathOperation::Fluting, "fluting"},
                                                       {ToolpathOperation::Inlay, "inlay"},
-                                                      {ToolpathOperation::PhotoVCarve, "photo_vcarve"}};
+                                                      {ToolpathOperation::ImageEngrave, "image_engrave"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -922,7 +922,7 @@ json encodeInlayParams(const toolpath::InlayParams& p) {
     return j;
 }
 
-json encodePhotoVCarveParams(const toolpath::PhotoVCarveParams& p) {
+json encodeImageEngraveParams(const toolpath::ImageEngraveParams& p) {
     json j = json::object();
     j["name"] = p.name;
     j["max_depth"] = p.maxDepth;
@@ -1030,8 +1030,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodePrismParams(*prism);
     } else if (const auto* inlay = std::get_if<toolpath::InlayParams>(&tp.params)) {
         j["params"] = encodeInlayParams(*inlay);
-    } else if (const auto* photo = std::get_if<toolpath::PhotoVCarveParams>(&tp.params)) {
-        j["params"] = encodePhotoVCarveParams(*photo);
+    } else if (const auto* photo = std::get_if<toolpath::ImageEngraveParams>(&tp.params)) {
+        j["params"] = encodeImageEngraveParams(*photo);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2222,8 +2222,8 @@ constexpr std::array<std::string_view, 16> kInlayKeys{
     "step_depth",  "step_width", "allowance",  "safe_z",         "direction",   "order",
     "start_position", "tolerance", "tool",     "layers"};
 
-// Photo V-carve records exist only in job.json, like V-carve.
-constexpr std::array<std::string_view, 12> kPhotoVCarveKeys{
+// Image Engrave records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 12> kImageEngraveKeys{
     "name",   "max_depth", "invert",    "stepover_retract", "line_spacing_percent", "line_angle_rad",
     "strategy", "safe_z",  "depth_tolerance", "tolerance",   "tool",              "layers"};
 
@@ -2678,10 +2678,10 @@ toolpath::InlayParams decodeInlayParams(JsonReader& r, const Path& p, ParamsDial
     return out;
 }
 
-toolpath::PhotoVCarveParams decodePhotoVCarveParams(JsonReader& r, const Path& p, ParamsDialect d,
+toolpath::ImageEngraveParams decodeImageEngraveParams(JsonReader& r, const Path& p, ParamsDialect d,
                                                     LegacyParamsExtras* legacy) {
-    toolpath::PhotoVCarveParams out;
-    ParamsRecord rec(r, p, keysFor(kPhotoVCarveKeys, d), d);
+    toolpath::ImageEngraveParams out;
+    ParamsRecord rec(r, p, keysFor(kImageEngraveKeys, d), d);
     while (rec.next()) {
         const std::string& k = rec.key();
         if (k == "name") {
@@ -2815,8 +2815,8 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     if (operation == ToolpathOperation::Inlay) {
         return decodeInlayParams(r, p, d, legacy);
     }
-    if (operation == ToolpathOperation::PhotoVCarve) {
-        return decodePhotoVCarveParams(r, p, d, legacy);
+    if (operation == ToolpathOperation::ImageEngrave) {
+        return decodeImageEngraveParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

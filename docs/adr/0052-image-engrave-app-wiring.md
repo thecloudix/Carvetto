@@ -1,16 +1,16 @@
-# ADR-0052: Photo V-carve app wiring (T-0275)
+# ADR-0052: Image Engrave app wiring (T-0275)
 
 Date: 2026-11-11 · Status: accepted (T-0275, follows ADR-0047 and ADR-0051)
 
 ## Context
-T-0250 delivered the Qt-free photo V-carve and T-0273 the embedded bitmap store. What was missing is
+T-0250 delivered the Qt-free image engrave and T-0273 the embedded bitmap store. What was missing is
 everything between a picture on disk and a toolpath in the Toolpaths dock: import, a record, a form,
 calculation, staleness, canvas display. The cards leave open how a toolpath record refers to its bitmap
 and how the existing vector-based session machinery copes with an operation that reads a bitmap.
 
 ## Decision
-1. **Record.** `ToolpathParams` gains `PhotoVCarveParams` (variant index 10, `ToolpathOperation::PhotoVCarve`,
-   operation name `photo_vcarve`, params in `job.json` only, like V-carve). The record's `selection.objects`
+1. **Record.** `ToolpathParams` gains `ImageEngraveParams` (variant index 10, `ToolpathOperation::ImageEngrave`,
+   operation name `image_engrave`, params in `job.json` only, like V-carve). The record's `selection.objects`
    names the bitmap object (the first bitmap object among them) and, for Selected Vectors, the vectors to
    follow. No new record field and no format minor bump: older readers refuse an unknown operation name
    exactly as they do for chamfer, inlay and the other operations added since 1.0.
@@ -24,7 +24,7 @@ and how the existing vector-based session machinery copes with an operation that
 4. **Calculation.** The job copies the encoded image bytes and placement (`PhotoInput`) so it stays
    independent of the document. Decoding (core reads Netpbm, the app's QImage decoder everything else) and
    gray conversion happen in `ToolpathJob::run`, on the worker thread, where the cancel flag is passed
-   to `photoVCarve` (polled per line) and the 50 million sample work limit refuses oversized runs
+   to `imageEngrave` (polled per line) and the 50 million sample work limit refuses oversized runs
    before generating. A cancelled run stores nothing. One calculation, one undo step, as for the other
    operations.
 5. **Decoder.** `ToolpathSession::setBitmapDecoder` takes the app's decoder (`qtBitmapDecoder`: QImage
@@ -39,9 +39,14 @@ and how the existing vector-based session machinery copes with an operation that
    toolpath is previewed by the existing toolpath preview.
 8. **Form.** Max Carving Depth, Stepover Retract, Safe Z, Line Spacing (% of tool diameter), Line Angle
    (not for Selected Vectors), chordal tolerance (Selected Vectors only), choices Strategy
-   (Raster/Hatch/Selected vectors) and Invert. V-bits and engraving bits only (`photoVCarveToolAllowed`).
+   (Raster/Hatch/Selected vectors) and Invert. V-bits and engraving bits only (`imageEngraveToolAllowed`).
    The depth tolerance of ADR-0047 keeps its default and is stored in the record but is not a form field.
 
 ## Consequences
 A photo toolpath depends on its bitmap object staying in the document; deleting the bitmap leaves a stale
 toolpath that cannot be recalculated ("select a bitmap"), like deleting the vectors of any other toolpath.
+
+## Naming (T-0276)
+The operation was first named after a third-party product feature; it is now `image_engrave` (core
+`imageEngrave`, `ImageEngraveParams`, UI "Image Engrave"). The `job.json` operation name changed from the
+old key with no compatibility shim: no release was ever tagged with the old key, so no saved job in the wild uses it.

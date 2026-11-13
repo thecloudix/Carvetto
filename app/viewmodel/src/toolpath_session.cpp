@@ -275,7 +275,7 @@ void ToolpathSession::computeStaleness() {
     std::vector<std::pair<VectorSelector, std::uint64_t>> memo;
     const auto vectorsOf = [&](const ToolpathDefinition& def) {
         const VectorSelector& selector = def.selector;
-        if (def.operation() == ToolpathOperation::PhotoVCarve) {
+        if (def.operation() == ToolpathOperation::ImageEngrave) {
             return inputsFingerprint(*doc_, selector, def.params);
         }
         for (const auto& [sel, fp] : memo) {
@@ -464,8 +464,8 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     const std::string bad = validateSelector(*doc_, definition.selector);
     const VectorSelector selector = bad.empty() ? normalisedSelector(definition.selector) : VectorSelector{};
     const ResolvedVectors resolved = resolveVectors(*doc_, selector);
-    const bool photo = std::holds_alternative<toolpath::PhotoVCarveParams>(definition.params);
-    // A photo V-carve stores its explicit selection as it is (it names the bitmap, which no vector filter keeps).
+    const bool photo = std::holds_alternative<toolpath::ImageEngraveParams>(definition.params);
+    // A image engrave stores its explicit selection as it is (it names the bitmap, which no vector filter keeps).
     const document::VectorSelection stored = photo ? selector.base : storedSelection(selector, resolved);
     ToolpathJob job = makeToolpathJob(definition, resolved, db_, stored);
     if (!bad.empty()) {

@@ -1,5 +1,5 @@
-// T-0275: photo V-carve toolpaths as native toolpath records (ADR-0021 schema, ADR-0047/ADR-0052): the
-// PhotoVCarveParams variant alternative, its job.json params, exact round trips, non-finite refusal.
+// T-0275: image engrave toolpaths as native toolpath records (ADR-0021 schema, ADR-0047/ADR-0052): the
+// ImageEngraveParams variant alternative, its job.json params, exact round trips, non-finite refusal.
 
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
@@ -17,15 +17,15 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/tooling/tool.hpp"
-#include "carvetto/toolpath/photo_vcarve.hpp"
+#include "carvetto/toolpath/image_engrave.hpp"
 
 using namespace carvetto;
 using namespace carvetto::document;
 
 namespace {
 
-toolpath::PhotoVCarveParams fullPhoto(toolpath::PhotoStrategy strategy) {
-    toolpath::PhotoVCarveParams p;
+toolpath::ImageEngraveParams fullPhoto(toolpath::PhotoStrategy strategy) {
+    toolpath::ImageEngraveParams p;
     p.name = "Photo \"carve\" \xC3\xA9";
     p.maxDepth = 1.75;
     p.invert = true;
@@ -51,7 +51,7 @@ tooling::Tool vBit() {
 }
 
 /// A document holding an embedded 4x2 PGM bitmap and a photo toolpath over it.
-Document photoDocument(const toolpath::PhotoVCarveParams& params) {
+Document photoDocument(const toolpath::ImageEngraveParams& params) {
     Document doc;
     BitmapImport in;
     const std::string pgm = "P5\n4 2\n255\n";
@@ -74,8 +74,8 @@ Document photoDocument(const toolpath::PhotoVCarveParams& params) {
     gray.width = 4;
     gray.height = 2;
     gray.pixels = {0, 30, 60, 90, 120, 150, 180, 210};
-    toolpath::PhotoVCarveResult r =
-        toolpath::photoVCarve(gray, geometry::Box2{{0, 0}, {20, 10}}, vBit(), std::nullopt, params);
+    toolpath::ImageEngraveResult r =
+        toolpath::imageEngrave(gray, geometry::Box2{{0, 0}, {20, 10}}, vBit(), std::nullopt, params);
     REQUIRE(r.ok());
     ToolpathRecord rec;
     rec.name = r.toolpath.name;
@@ -94,8 +94,8 @@ TEST_CASE("T-0275: photo records save and load exactly; save -> load -> save is 
           "[document][toolpath][carv][photo]") {
     for (const toolpath::PhotoStrategy strategy :
          {toolpath::PhotoStrategy::Raster, toolpath::PhotoStrategy::Hatch, toolpath::PhotoStrategy::SelectedVectors}) {
-        const toolpath::PhotoVCarveParams params = fullPhoto(strategy);
-        toolpath::PhotoVCarveParams run = params;
+        const toolpath::ImageEngraveParams params = fullPhoto(strategy);
+        toolpath::ImageEngraveParams run = params;
         run.strategy = toolpath::PhotoStrategy::Raster;  // the vectors of Selected Vectors are not needed to store it
         Document doc = photoDocument(run);
         ToolpathRecord edit = doc.toolpaths()[0];
@@ -104,7 +104,7 @@ TEST_CASE("T-0275: photo records save and load exactly; save -> load -> save is 
             REQUIRE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
         }
         REQUIRE(doc.toolpaths().size() == 1);
-        CHECK(doc.toolpaths()[0].operation() == ToolpathOperation::PhotoVCarve);
+        CHECK(doc.toolpaths()[0].operation() == ToolpathOperation::ImageEngrave);
         CHECK(doc.toolpaths()[0].safeZ() == 7.0);
         auto saved = saveCarv(doc, CarvExtras{});
         REQUIRE(saved.ok());
@@ -112,7 +112,7 @@ TEST_CASE("T-0275: photo records save and load exactly; save -> load -> save is 
         REQUIRE(back.ok());
         REQUIRE(back.value().document.toolpaths().size() == 1);
         CHECK(back.value().document.toolpaths()[0] == doc.toolpaths()[0]);
-        CHECK(std::get<toolpath::PhotoVCarveParams>(back.value().document.toolpaths()[0].params) == params);
+        CHECK(std::get<toolpath::ImageEngraveParams>(back.value().document.toolpaths()[0].params) == params);
         CHECK(back.value().document.bitmaps().size() == 1);
         auto again = saveCarv(back.value().document, back.value().extras);
         REQUIRE(again.ok());
@@ -124,17 +124,17 @@ TEST_CASE("T-0275: non-finite photo parameters are refused by the commands", "[d
     Document doc = photoDocument(fullPhoto(toolpath::PhotoStrategy::Raster));
     ToolpathRecord edit = doc.toolpaths()[0];
     const double inf = std::numeric_limits<double>::infinity();
-    auto& p = std::get<toolpath::PhotoVCarveParams>(edit.params);
+    auto& p = std::get<toolpath::ImageEngraveParams>(edit.params);
     struct Field {
-        double toolpath::PhotoVCarveParams::*member;
+        double toolpath::ImageEngraveParams::*member;
         const char* key;
     };
-    const Field fields[] = {{&toolpath::PhotoVCarveParams::maxDepth, "max_depth"},
-                            {&toolpath::PhotoVCarveParams::stepoverRetract, "stepover_retract"},
-                            {&toolpath::PhotoVCarveParams::lineSpacingPercent, "line_spacing_percent"},
-                            {&toolpath::PhotoVCarveParams::lineAngle, "line_angle_rad"},
-                            {&toolpath::PhotoVCarveParams::safeZ, "safe_z"},
-                            {&toolpath::PhotoVCarveParams::depthTolerance, "depth_tolerance"}};
+    const Field fields[] = {{&toolpath::ImageEngraveParams::maxDepth, "max_depth"},
+                            {&toolpath::ImageEngraveParams::stepoverRetract, "stepover_retract"},
+                            {&toolpath::ImageEngraveParams::lineSpacingPercent, "line_spacing_percent"},
+                            {&toolpath::ImageEngraveParams::lineAngle, "line_angle_rad"},
+                            {&toolpath::ImageEngraveParams::safeZ, "safe_z"},
+                            {&toolpath::ImageEngraveParams::depthTolerance, "depth_tolerance"}};
     for (const Field& f : fields) {
         p = fullPhoto(toolpath::PhotoStrategy::Raster);
         p.*(f.member) = inf;

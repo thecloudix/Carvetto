@@ -121,7 +121,7 @@ inline ToolpathDefinition prismDefinition(const tooling::ToolDatabase& db) {
 }
 
 inline ToolpathDefinition photoDefinition(const tooling::ToolDatabase& db) {
-    ToolpathForm form(document::ToolpathOperation::PhotoVCarve, document::Units::Millimetres);
+    ToolpathForm form(document::ToolpathOperation::ImageEngrave, document::Units::Millimetres);
     REQUIRE(form.setTool(db, source("v-bit-90")).ok);
     return form.definition();
 }

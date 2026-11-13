@@ -86,7 +86,7 @@ struct ResolvedVectors {
 /// Resolves `selector` against `doc` (see the rules above). Never fails.
 ResolvedVectors resolveVectors(const document::Document& doc, const VectorSelector& selector);
 
-/// The bitmap a photo V-carve reads (T-0275): the first bitmap object among the selector's
+/// The bitmap an image engrave reads (T-0275): the first bitmap object among the selector's
 /// explicit objects (a selection of every vector or of layers names none).
 struct ResolvedBitmap {
     /// Null when there is none; then `problem` says why.
@@ -130,7 +130,7 @@ class Fingerprint {
     std::uint64_t state_{14695981039346656037ULL};
 };
 
-/// Hash of what a photo V-carve reads: the bitmap's object, image key, size and placement (the
+/// Hash of what an image engrave reads: the bitmap's object, image key, size and placement (the
 /// pixels are named by their content key), or its problem.
 std::uint64_t fingerprint(const ResolvedBitmap& resolved);
 

@@ -166,7 +166,7 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", n->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(n->tolerance) : key;
     }
-    if (const auto* v = std::get_if<toolpath::PhotoVCarveParams>(&params)) {
+    if (const auto* v = std::get_if<toolpath::ImageEngraveParams>(&params)) {
         std::string key = firstNonFinite({{"max_depth", v->maxDepth},
                                           {"stepover_retract", v->stepoverRetract},
                                           {"line_spacing_percent", v->lineSpacingPercent},

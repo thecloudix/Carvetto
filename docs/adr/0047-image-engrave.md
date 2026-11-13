@@ -1,9 +1,9 @@
-# ADR-0047: Photo V-carve (depth mapping and conventions)
+# ADR-0047: Image Engrave (depth mapping and conventions)
 
 Date: 2026-11-10 · Status: accepted, core implemented (T-0250).
 
 ## Context
-The inventory lists Photo V-Carve: source a selected bitmap; Max Carving Depth; Stepover Retract;
+The inventory lists Image Engrave: source a selected bitmap; Max Carving Depth; Stepover Retract;
 strategy Raster / Hatch / Selected Vectors with Line Spacing % and Line Angle. It does not say how
 brightness maps to depth, so the mapping is decided here.
 

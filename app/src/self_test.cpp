@@ -757,8 +757,8 @@ int runSelfTest() {
         return fail(why);
     }
 
-    // 9b. Photo V-carve: import a bitmap, form, calculation, stale, save and reload (T-0275).
-    if (const std::string why = photoSelfTest(window); !why.empty()) {
+    // 9b. Image Engrave: import a bitmap, form, calculation, stale, save and reload (T-0275).
+    if (const std::string why = imageSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

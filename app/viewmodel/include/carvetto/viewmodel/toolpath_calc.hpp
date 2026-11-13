@@ -138,7 +138,7 @@ struct ToolpathCalculation {
     std::string errorText() const;
 };
 
-/// What a photo V-carve reads, copied from the document so the job stays independent of it (T-0275):
+/// What an image engrave reads, copied from the document so the job stays independent of it (T-0275):
 /// the encoded image (decoded on the worker thread, where the cancel flag is honoured) and where it
 /// is placed.
 struct PhotoInput {
@@ -152,7 +152,7 @@ struct PhotoInput {
 /// of both: it may be run on another thread, and run more than once with the same result.
 struct ToolpathJob {
     ToolpathDefinition definition;
-    /// Photo V-carve only: the bitmap. The contours are then the vectors of the Selected Vectors
+    /// Image Engrave only: the bitmap. The contours are then the vectors of the Selected Vectors
     /// strategy (none for Raster and Hatch).
     std::optional<PhotoInput> photo;
     std::vector<geometry::Contour> contours;
@@ -194,13 +194,13 @@ inline constexpr double kMaxToolpathLengthMm = 1.0e7;
 ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const ResolvedVectors& vectors,
                             const tooling::ToolDatabase& db, const document::VectorSelection& selection);
 
-/// Gives `job` the bitmap of a photo V-carve (a no-op for other operations): copies the encoded
+/// Gives `job` the bitmap of an image engrave (a no-op for other operations): copies the encoded
 /// image and placement of `bitmap`, or sets the job's refusal when there is none or it is unusable.
 void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
                       const document::BitmapDecoder& decoder);
 
 /// Hash of what the toolpath of `params` reads from `selector` in `doc`: the resolved vectors, or
-/// for a photo V-carve its bitmap (and, for Selected Vectors, the vectors too).
+/// for an image engrave its bitmap (and, for Selected Vectors, the vectors too).
 std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
                                 const document::ToolpathParams& params);
 
@@ -211,7 +211,7 @@ std::uint64_t toolsFingerprintOf(const ToolpathDefinition& definition, const too
 /// Profile and Pocket accept any type (the core refuses unusable geometry).
 bool toolAllowedFor(document::ToolpathOperation operation, tooling::ToolType type, bool clearance = false);
 
-/// Name of an operation for messages: "profile", "pocket", "drill", "engrave", "v_carve", "photo_vcarve".
+/// Name of an operation for messages: "profile", "pocket", "drill", "engrave", "v_carve", "image_engrave".
 const char* operationName(document::ToolpathOperation operation);
 
 }  // namespace carvetto::viewmodel
