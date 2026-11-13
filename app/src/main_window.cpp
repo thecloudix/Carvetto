@@ -9,6 +9,13 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QDesktopServices>
+#include <QPageSize>
+#include <QPdfWriter>
+#include <QSaveFile>
+#include <QTextDocument>
+#include <QUrl>
+#include <QRegularExpression>
 #include <QDockWidget>
 #include <QGridLayout>
 #include <QInputDialog>
@@ -42,6 +49,7 @@
 #include "double_sided_menu.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/job_sheet.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/starter_font.hpp"
 #include "carvetto/viewmodel/text_tool.hpp"
@@ -285,6 +293,9 @@ void MainWindow::buildMenus() {
     file->addSeparator();
     saveToolpathsAction_ = file->addAction(QStringLiteral("Save &Toolpaths..."));
     connect(saveToolpathsAction_, &QAction::triggered, this, [this]() { saveToolpathsDialog(); });
+    createJobSheetAction_ = file->addAction(QStringLiteral("Create &Job Sheet..."));
+    createJobSheetAction_->setObjectName(QStringLiteral("createJobSheetAction"));
+    connect(createJobSheetAction_, &QAction::triggered, this, [this]() { createJobSheetDialog(); });
     file->addSeparator();
     QAction* importAction = file->addAction(QStringLiteral("&Import DXF..."));
     importAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+I")));
@@ -717,6 +728,91 @@ void MainWindow::saveToolpathsDialog() {
     }
     SaveToolpathsDialog dialog(std::move(source), job, machines, folder, this);
     dialog.exec();
+}
+
+void MainWindow::createJobSheetDialog() {
+    const std::filesystem::path current = session_.path();
+    const std::string title = current.empty() ? std::string() : viewmodel::pathToUtf8(current.stem());
+    const QString folder = current.empty() ? QDir::homePath() : qs(viewmodel::pathToUtf8(current.parent_path()));
+    const QString suggested =
+        QDir(folder).filePath(qs(viewmodel::defaultJobSheetFileName(title, viewmodel::JobSheetFormat::Html)));
+    QString selected;
+    const QString name = QFileDialog::getSaveFileName(
+        this, QStringLiteral("Create Job Sheet"), suggested,
+        QStringLiteral("HTML job sheet (*.html);;Text job sheet (*.txt);;PDF job sheet (*.pdf)"), &selected);
+    if (name.isEmpty()) {
+        return;
+    }
+    std::filesystem::path path = viewmodel::pathFromUtf8(name.toStdString());
+    viewmodel::JobSheetFormat format = viewmodel::JobSheetFormat::Html;
+    if (selected.contains(QStringLiteral("*.txt"))) {
+        format = viewmodel::JobSheetFormat::Text;
+    } else if (selected.contains(QStringLiteral("*.pdf"))) {
+        format = viewmodel::JobSheetFormat::Pdf;
+    }
+    // A typed extension of another kind wins over the filter.
+    const QString suffix = QFileInfo(name).suffix().toLower();
+    if (suffix == QStringLiteral("txt")) {
+        format = viewmodel::JobSheetFormat::Text;
+    } else if (suffix == QStringLiteral("pdf")) {
+        format = viewmodel::JobSheetFormat::Pdf;
+    } else if (suffix == QStringLiteral("html") || suffix == QStringLiteral("htm")) {
+        format = viewmodel::JobSheetFormat::Html;
+    } else if (suffix.isEmpty()) {
+        path += viewmodel::jobSheetExtension(format);
+    }
+    // The file dialog asked about replacing an existing file already.
+    createJobSheetFile(path, format, true, true);
+}
+
+std::string MainWindow::createJobSheetFile(const std::filesystem::path& path, viewmodel::JobSheetFormat format,
+                                           bool overwrite, bool openAfter) {
+    const auto fail = [this](const std::string& why) {
+        if (!quiet_) {
+            QMessageBox::critical(this, QStringLiteral("Create Job Sheet"), qs(why));
+        }
+        return why;
+    };
+    const std::filesystem::path current = session_.path();
+    const viewmodel::JobSheet sheet = viewmodel::makeJobSheet(
+        currentDocument(), toolpaths_->session().summary(), current.empty() ? std::string() : viewmodel::pathToUtf8(current.stem()));
+    if (format != viewmodel::JobSheetFormat::Pdf) {
+        const viewmodel::JobSheetWriteResult r = viewmodel::writeJobSheet(sheet, format, path, overwrite);
+        if (!r.ok) {
+            return fail(r.error);
+        }
+    } else {
+        if (const std::string why = viewmodel::checkJobSheetPath(path, format); !why.empty()) {
+            return fail(why);
+        }
+        std::error_code ec;
+        if (!overwrite && std::filesystem::exists(path, ec)) {
+            return fail("'" + viewmodel::pathToUtf8(path) + "' exists already");
+        }
+        // The PDF paginates the HTML without the inline SVG layout (rich text has no SVG).
+        QString html = qs(viewmodel::renderJobSheetHtml(sheet));
+        html.remove(QRegularExpression(QStringLiteral("<svg.*?</svg>"), QRegularExpression::DotMatchesEverythingOption));
+        QTextDocument doc;
+        doc.setHtml(html);
+        // QSaveFile writes a temporary file and renames it on commit: no half-written PDF.
+        QSaveFile file(qs(viewmodel::pathToUtf8(path)));
+        if (!file.open(QIODevice::WriteOnly)) {
+            return fail("cannot write '" + viewmodel::pathToUtf8(path) + "': " + file.errorString().toStdString());
+        }
+        {
+            QPdfWriter pdf(&file);
+            pdf.setPageSize(QPageSize(QPageSize::A4));
+            doc.print(&pdf);
+        }
+        if (!file.commit()) {
+            return fail("cannot write '" + viewmodel::pathToUtf8(path) + "': " + file.errorString().toStdString());
+        }
+    }
+    if (openAfter && !quiet_) {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(qs(viewmodel::pathToUtf8(path))));
+    }
+    statusBar()->showMessage(QStringLiteral("Job sheet written to %1").arg(qs(viewmodel::pathToUtf8(path))), 5000);
+    return {};
 }
 
 void MainWindow::showError(const QString& title) {

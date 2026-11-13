@@ -46,6 +46,7 @@
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
 #include "main_window.hpp"
+#include "job_sheet_self_test.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
 #include "dimension_menu.hpp"
@@ -1008,6 +1009,11 @@ int runSelfTest() {
 
     // 13. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
     if (const std::string why = keepOutSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 14. Create Job Sheet (T-0259): HTML, text and PDF files, hostile paths refused.
+    if (const std::string why = jobSheetSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

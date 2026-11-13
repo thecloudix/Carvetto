@@ -13,6 +13,7 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/tooling/machine.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/job_sheet.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
 class QAction;
@@ -94,6 +95,15 @@ class MainWindow : public QMainWindow {
     /// Opens the Save Toolpaths dialog (modal) for `toolpaths()->session().enabledToolpaths()`, with
     /// the machines of the tool database.
     void saveToolpathsDialog();
+    /// File > Create Job Sheet... (T-0259): the HTML / text / PDF report of the job (makeJobSheet).
+    QAction* createJobSheetAction() const { return createJobSheetAction_; }
+    /// Asks for a file (HTML, text or PDF by the chosen filter) and writes the sheet.
+    void createJobSheetDialog();
+    /// Writes the job sheet to `path` in `format` (checked path, atomic write, `overwrite` replaces
+    /// an existing file); HTML is opened in the browser when `openAfter` and the window is not quiet.
+    /// Returns "" on success, else why not (also shown unless quiet).
+    std::string createJobSheetFile(const std::filesystem::path& path, viewmodel::JobSheetFormat format,
+                                   bool overwrite, bool openAfter);
     ToolpathsPanel* toolpaths() const { return toolpaths_; }
     /// Setup > Job Setup... (edits the open job, one undo step) and Setup > Tools, Machines and
     /// Materials... (T-0235). The dialogs are modal; the self-test drives the dialog classes directly.
@@ -181,6 +191,7 @@ class MainWindow : public QMainWindow {
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
     QAction* saveToolpathsAction_{nullptr};
+    QAction* createJobSheetAction_{nullptr};
     QAction* jobSetupAction_{nullptr};
     QAction* toolSetupAction_{nullptr};
     QAction* variablesAction_{nullptr};
