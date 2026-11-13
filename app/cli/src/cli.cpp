@@ -488,6 +488,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Fluting: return "fluting";
         case document::ToolpathOperation::Prism: return "prism";
         case document::ToolpathOperation::PhotoVCarve: return "photo_vcarve";
+        case document::ToolpathOperation::VCarveInlay: return "vcarve_inlay";
     }
     return "?";
 }

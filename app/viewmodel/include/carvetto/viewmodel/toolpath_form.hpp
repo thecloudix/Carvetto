@@ -39,6 +39,9 @@
 //               distance chordal (pitch is hidden while a pitch preset is chosen)
 //   Inlay       startDepth cutDepth stepDepth stepWidth allowance safeZ startX startY chordal (step fields only
 //               for a stepped male; choices piece, maleStyle, femaleStyle, direction, order)
+//   V-Carve Inlay  pocketDepth glueGap surfaceClearance (plug only) safeZ plugSheet (plug only; sheet id, 0 = the
+//               vectors' sheet) boundaryOffset (plug, not with Sheet Limits) clearanceRasterAngle rampDistance startX
+//               startY chordal; choices piece, plugBoundary, clearanceStrategy, clearanceDirection, rampPlunge, order
 //   Fluting     fluteDepth rampLength|rampPercent (by the ramp basis; hidden for a ramp over the complete
 //               length) safeZ startX startY chordal
 //   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal

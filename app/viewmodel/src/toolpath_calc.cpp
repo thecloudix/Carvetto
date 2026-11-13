@@ -16,6 +16,7 @@
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/vcarve_inlay.hpp"
 #include "carvetto/toolpath/photo_vcarve.hpp"
 #include "carvetto/toolpath/prism.hpp"
 #include "carvetto/toolpath/engrave.hpp"
@@ -223,6 +224,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Fluting: def.params = toolpath::FlutingParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
         case ToolpathOperation::PhotoVCarve: def.params = toolpath::PhotoVCarveParams{}; break;
+        case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
     }
     return def;
 }
@@ -297,6 +299,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Fluting: return "fluting";
         case ToolpathOperation::Prism: return "prism";
         case ToolpathOperation::PhotoVCarve: return "photo_vcarve";
+        case ToolpathOperation::VCarveInlay: return "vcarve_inlay";
     }
     return "?";
 }
@@ -313,10 +316,16 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::PhotoVCarve: return toolpath::photoVCarveToolAllowed(type);
+        case ToolpathOperation::VCarveInlay:
+            return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarveInlayToolAllowed(type);
         case ToolpathOperation::VCarving:
             return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarvingToolAllowed(type);
     }
     return false;
+}
+
+bool hasClearanceTools(ToolpathOperation operation) {
+    return operation == ToolpathOperation::VCarving || operation == ToolpathOperation::VCarveInlay;
 }
 
 // --- Tools ---------------------------------------------------------------------------------------
@@ -392,7 +401,7 @@ std::uint64_t toolsFingerprintOf(const ToolpathDefinition& definition, const too
     if (!one(definition.tool)) {
         return 0;
     }
-    if (definition.operation() == ToolpathOperation::VCarving) {
+    if (hasClearanceTools(definition.operation())) {
         for (const document::ToolSource& c : definition.clearanceTools) {
             if (!one(c)) {
                 return 0;
@@ -426,7 +435,7 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
     ToolpathJob job;
     job.definition = definition;
     job.definition.selector = normalisedSelector(job.definition.selector);
-    if (job.definition.operation() != ToolpathOperation::VCarving) {
+    if (!hasClearanceTools(job.definition.operation())) {
         job.definition.clearanceTools.clear();
     }
     if (auto* profile = std::get_if<toolpath::ProfileParams>(&job.definition.params)) {
@@ -540,6 +549,31 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
         job.owners.push_back(c.object);
     }
     return job;
+}
+
+void attachPlugSheet(ToolpathJob& job, const document::Document& doc) {
+    const auto* params = std::get_if<toolpath::VCarveInlayParams>(&job.definition.params);
+    if (params == nullptr || params->piece != toolpath::VCarveInlayPiece::Plug) {
+        return;
+    }
+    const document::Sheet* sheet = nullptr;
+    if (params->plugSheet != 0) {
+        sheet = doc.findSheet(document::SheetId{params->plugSheet});
+        if (sheet == nullptr) {
+            if (job.refusal.empty()) {
+                job.refusal = "the plug's sheet (id " + std::to_string(params->plugSheet) + ") does not exist";
+            }
+            return;
+        }
+        if (doc.job().type == document::JobType::DoubleSided) {
+            job.sheet = sheet->id;  // the plug's toolpath belongs to the sheet it is cut on
+        }
+    } else {
+        sheet = doc.findSheet(doc.activeSheet());
+    }
+    if (sheet != nullptr) {
+        job.plugSheetBounds = sheet->materialBoundsMm();
+    }
 }
 
 void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
@@ -717,6 +751,24 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
                                                                   *photoParams, contours, control);
             diagnostics = r.diagnostics;
             if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::VCarveInlay) {
+            std::vector<toolpath::PocketTool> clearanceTools;
+            for (const ResolvedTool& c : clearance) {
+                clearanceTools.push_back(toolpath::PocketTool{c.tool, c.data});
+            }
+            toolpath::VCarvingResult r = toolpath::vCarveInlayToolpath(
+                contours, tool->tool, tool->data, clearanceTools, std::get<toolpath::VCarveInlayParams>(definition.params),
+                plugSheetBounds);
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                for (std::size_t i = 0; i < r.clearance.size(); ++i) {
+                    if (!r.clearance[i].isEmpty() && i < definition.clearanceTools.size()) {
+                        items.push_back({static_cast<int>(i),
+                                         makeRecord(*this, std::move(r.clearance[i]), definition.clearanceTools[i])});
+                    }
+                }
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
             }
         } else if (op == ToolpathOperation::VCarving) {
