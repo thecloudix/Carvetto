@@ -1311,7 +1311,7 @@ Out of scope: Image Engrave wiring (T-0275).
 
 ### T-0275 Image Engrave app wiring (T-0250 follow-up)   [status: done — merged #136]
 Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
-Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
+Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, Image Engrave form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
 Acceptance criteria:
   1. Form exposes Max Carving Depth, Stepover Retract, Line Spacing %, Line Angle, strategy (Raster/Hatch/Selected Vectors), invert; generates and previews; recalculates on edit; one undo step.
   2. Record saves/loads; cancel and work cap honoured; changelog fragment; CI green.
