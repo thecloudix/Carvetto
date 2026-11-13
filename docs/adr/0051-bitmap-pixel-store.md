@@ -4,7 +4,7 @@ Date: 2026-11-10 · Status: proposed (T-0273, extends ADR-0003 and ADR-0013; fol
 
 ## Context
 `BitmapObject` held only a placement and an opaque `sourceRef`. Owner decision 2026-11-10: the pixel
-data is stored inside the `.carv` file so a job is portable and bitmap-driven toolpaths (Photo V-carve,
+data is stored inside the `.carv` file so a job is portable and bitmap-driven toolpaths (Image Engrave,
 T-0275) can read it.
 
 ## Decision

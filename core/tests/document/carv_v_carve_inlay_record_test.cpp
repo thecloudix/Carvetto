@@ -17,7 +17,7 @@
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/tooling/tool.hpp"
-#include "carvetto/toolpath/vcarve_inlay.hpp"
+#include "carvetto/toolpath/v_carve_inlay.hpp"
 
 using namespace carvetto;
 using namespace carvetto::document;
@@ -79,7 +79,7 @@ Document inlayDocument(const toolpath::VCarveInlayParams& params) {
 }  // namespace
 
 TEST_CASE("T-0265: V-carve inlay records save and load exactly; save -> load -> save is byte-identical",
-          "[document][toolpath][carv][vcarve_inlay]") {
+          "[document][toolpath][carv][v_carve_inlay]") {
     for (const toolpath::VCarveInlayPiece piece : {toolpath::VCarveInlayPiece::Pocket, toolpath::VCarveInlayPiece::Plug}) {
         for (const std::uint64_t sheet : {std::uint64_t{0}, std::uint64_t{7}}) {
             toolpath::VCarveInlayParams params = fullInlay();
@@ -106,7 +106,7 @@ TEST_CASE("T-0265: V-carve inlay records save and load exactly; save -> load -> 
 }
 
 TEST_CASE("T-0265: non-finite V-carve inlay parameters are refused by the commands",
-          "[document][toolpath][vcarve_inlay]") {
+          "[document][toolpath][v_carve_inlay]") {
     Document doc = inlayDocument(fullInlay());
     ToolpathRecord edit = doc.toolpaths()[0];
     const double inf = std::numeric_limits<double>::infinity();

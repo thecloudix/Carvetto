@@ -1,4 +1,4 @@
-// T-0250: Photo V-Carve (photo_vcarve.hpp, ADR-0047): depth mapping, tool depth limit, strategies,
+// T-0250: Image Engrave (image_engrave.hpp, ADR-0047): depth mapping, tool depth limit, strategies,
 // stepover retract, determinism, cancel and hostile input.
 
 #include <atomic>
@@ -14,7 +14,7 @@
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/move.hpp"
-#include "carvetto/toolpath/photo_vcarve.hpp"
+#include "carvetto/toolpath/image_engrave.hpp"
 
 using namespace carvetto;
 using namespace carvetto::toolpath;
@@ -66,16 +66,16 @@ GrayImage gradient(int w, int h) {
 
 const Box2 kRect{{0, 0}, {20, 10}};
 
-PhotoVCarveParams params() {
-    PhotoVCarveParams p;
+ImageEngraveParams params() {
+    ImageEngraveParams p;
     p.maxDepth = 2.0;
     p.lineSpacingPercent = 50.0;  // 3 mm
     return p;
 }
 
-PhotoVCarveResult run(const GrayImage& im, const PhotoVCarveParams& p, const std::vector<Contour>& c = {},
+ImageEngraveResult run(const GrayImage& im, const ImageEngraveParams& p, const std::vector<Contour>& c = {},
                       const ToolpathRunControl& ctl = {}) {
-    return photoVCarve(im, kRect, vbit(), std::nullopt, p, c, ctl);
+    return imageEngrave(im, kRect, vbit(), std::nullopt, p, c, ctl);
 }
 
 std::vector<Vec3> cutPoints(const Toolpath& tp) {
@@ -90,39 +90,39 @@ std::vector<Vec3> cutPoints(const Toolpath& tp) {
 
 }  // namespace
 
-TEST_CASE("depth mapping: darkness times max depth, invert, clamp", "[photo_vcarve]") {
-    PhotoVCarveParams p;
+TEST_CASE("depth mapping: darkness times max depth, invert, clamp", "[image_engrave]") {
+    ImageEngraveParams p;
     p.maxDepth = 2.0;
-    CHECK(photoVCarveDepth(p, 3.0, 0.0) == Approx(2.0));
-    CHECK(photoVCarveDepth(p, 3.0, 255.0) == Approx(0.0));
-    CHECK(photoVCarveDepth(p, 3.0, 127.5) == Approx(1.0));
-    CHECK(photoVCarveDepth(p, 1.5, 0.0) == Approx(1.5));
+    CHECK(imageEngraveDepth(p, 3.0, 0.0) == Approx(2.0));
+    CHECK(imageEngraveDepth(p, 3.0, 255.0) == Approx(0.0));
+    CHECK(imageEngraveDepth(p, 3.0, 127.5) == Approx(1.0));
+    CHECK(imageEngraveDepth(p, 1.5, 0.0) == Approx(1.5));
     p.invert = true;
-    CHECK(photoVCarveDepth(p, 3.0, 0.0) == Approx(0.0));
-    CHECK(photoVCarveDepth(p, 3.0, 255.0) == Approx(2.0));
-    CHECK(photoVCarveDepth(p, 3.0, 300.0) == Approx(2.0));
-    CHECK(photoVCarveDepth(p, 3.0, std::nan("")) == 0.0);
+    CHECK(imageEngraveDepth(p, 3.0, 0.0) == Approx(0.0));
+    CHECK(imageEngraveDepth(p, 3.0, 255.0) == Approx(2.0));
+    CHECK(imageEngraveDepth(p, 3.0, 300.0) == Approx(2.0));
+    CHECK(imageEngraveDepth(p, 3.0, std::nan("")) == 0.0);
 }
 
-TEST_CASE("tool depth limit is where the cone is as wide as the tool", "[photo_vcarve]") {
-    CHECK(photoVCarveDepthLimit(vbit()) == Approx(3.0));
+TEST_CASE("tool depth limit is where the cone is as wide as the tool", "[image_engrave]") {
+    CHECK(imageEngraveDepthLimit(vbit()) == Approx(3.0));
     tooling::Tool v60 = vbit();
     v60.includedAngle = kPi / 3.0;
-    CHECK(photoVCarveDepthLimit(v60) == Approx(3.0 / std::tan(kPi / 6.0)));
+    CHECK(imageEngraveDepthLimit(v60) == Approx(3.0 / std::tan(kPi / 6.0)));
     tooling::Tool eng = vbit();
     eng.type = tooling::ToolType::Engraving;
     eng.tipDiameter = 2.0;
-    CHECK(photoVCarveDepthLimit(eng) == Approx(2.0));
+    CHECK(imageEngraveDepthLimit(eng) == Approx(2.0));
     tooling::Tool em = vbit();
     em.type = tooling::ToolType::EndMill;
-    CHECK(photoVCarveDepthLimit(em) == 0.0);
-    CHECK_FALSE(photoVCarveToolAllowed(tooling::ToolType::BallNose));
-    CHECK(photoVCarveToolAllowed(tooling::ToolType::VBit));
-    CHECK(photoVCarveToolAllowed(tooling::ToolType::Engraving));
+    CHECK(imageEngraveDepthLimit(em) == 0.0);
+    CHECK_FALSE(imageEngraveToolAllowed(tooling::ToolType::BallNose));
+    CHECK(imageEngraveToolAllowed(tooling::ToolType::VBit));
+    CHECK(imageEngraveToolAllowed(tooling::ToolType::Engraving));
 }
 
-TEST_CASE("a uniform image cuts at a constant depth", "[photo_vcarve]") {
-    const PhotoVCarveResult r = run(uniform(16, 8, 127), params());  // 127/255 -> darkness ~0.502
+TEST_CASE("a uniform image cuts at a constant depth", "[image_engrave]") {
+    const ImageEngraveResult r = run(uniform(16, 8, 127), params());  // 127/255 -> darkness ~0.502
     REQUIRE(r.ok());
     const double expect = 2.0 * (1.0 - 127.0 / 255.0);
     for (const Vec3& p : cutPoints(r.toolpath)) {
@@ -130,21 +130,21 @@ TEST_CASE("a uniform image cuts at a constant depth", "[photo_vcarve]") {
     }
     CHECK(r.deepest == Approx(expect));
     // A white image cuts nothing.
-    const PhotoVCarveResult w = run(uniform(16, 8, 255), params());
+    const ImageEngraveResult w = run(uniform(16, 8, 255), params());
     CHECK_FALSE(w.ok());
     CHECK(w.has(ToolpathIssue::NoRegion));
     // Inverted, white cuts full depth.
-    PhotoVCarveParams p = params();
+    ImageEngraveParams p = params();
     p.invert = true;
-    const PhotoVCarveResult wi = run(uniform(16, 8, 255), p);
+    const ImageEngraveResult wi = run(uniform(16, 8, 255), p);
     REQUIRE(wi.ok());
     CHECK(wi.deepest == Approx(2.0));
 }
 
-TEST_CASE("depth never exceeds the tool's full-width depth", "[photo_vcarve]") {
-    PhotoVCarveParams p = params();
+TEST_CASE("depth never exceeds the tool's full-width depth", "[image_engrave]") {
+    ImageEngraveParams p = params();
     p.maxDepth = 10.0;
-    const PhotoVCarveResult r = run(uniform(8, 8, 0), p);
+    const ImageEngraveResult r = run(uniform(8, 8, 0), p);
     REQUIRE(r.ok());
     CHECK(r.has(ToolpathIssue::CarveDepthLimited));
     CHECK(r.deepest == Approx(3.0));
@@ -154,8 +154,8 @@ TEST_CASE("depth never exceeds the tool's full-width depth", "[photo_vcarve]") {
     CHECK(r.toolDepthLimit == Approx(3.0));
 }
 
-TEST_CASE("raster lines: spacing, angle, zig-zag and depth follow the image", "[photo_vcarve]") {
-    const PhotoVCarveResult r = run(gradient(41, 5), params());
+TEST_CASE("raster lines: spacing, angle, zig-zag and depth follow the image", "[image_engrave]") {
+    const ImageEngraveResult r = run(gradient(41, 5), params());
     REQUIRE(r.ok());
     // 10 mm tall at 3 mm spacing: ceil(10/3) = 4 lines, pitch 2.5 mm at y = 1.25, 3.75, 6.25, 8.75.
     CHECK(r.lineCount == 4);
@@ -187,10 +187,10 @@ TEST_CASE("raster lines: spacing, angle, zig-zag and depth follow the image", "[
     CHECK(seenSecond);
 }
 
-TEST_CASE("line angle rotates the lines and they stay inside the placement", "[photo_vcarve]") {
-    PhotoVCarveParams p = params();
+TEST_CASE("line angle rotates the lines and they stay inside the placement", "[image_engrave]") {
+    ImageEngraveParams p = params();
     p.lineAngle = kPi / 4.0;
-    const PhotoVCarveResult r = run(uniform(20, 10, 0), p);
+    const ImageEngraveResult r = run(uniform(20, 10, 0), p);
     REQUIRE(r.ok());
     for (const Move& m : r.toolpath.moves) {
         if (m.kind == MoveKind::Feed) {
@@ -208,18 +208,18 @@ TEST_CASE("line angle rotates the lines and they stay inside the placement", "[p
     CHECK(std::fabs(std::fabs(dx) - std::fabs(dy)) < 1e-6);
     // 90 degrees: lines run along Y.
     p.lineAngle = kPi / 2.0;
-    const PhotoVCarveResult v = run(uniform(20, 10, 0), p);
+    const ImageEngraveResult v = run(uniform(20, 10, 0), p);
     REQUIRE(v.ok());
     const std::vector<Vec3> vp = cutPoints(v.toolpath);
     CHECK(vp[0].x == Approx(vp[1].x).margin(1e-9));
     CHECK(v.lineCount == 7);  // ceil(20 / 3)
 }
 
-TEST_CASE("hatch adds a perpendicular pass", "[photo_vcarve]") {
-    PhotoVCarveParams p = params();
-    const PhotoVCarveResult raster = run(uniform(20, 10, 0), p);
+TEST_CASE("hatch adds a perpendicular pass", "[image_engrave]") {
+    ImageEngraveParams p = params();
+    const ImageEngraveResult raster = run(uniform(20, 10, 0), p);
     p.strategy = PhotoStrategy::Hatch;
-    const PhotoVCarveResult hatch = run(uniform(20, 10, 0), p);
+    const ImageEngraveResult hatch = run(uniform(20, 10, 0), p);
     REQUIRE(hatch.ok());
     CHECK(hatch.lineCount == raster.lineCount + 7);
     CHECK(hatch.toolpath.moves.size() > raster.toolpath.moves.size());
@@ -228,15 +228,15 @@ TEST_CASE("hatch adds a perpendicular pass", "[photo_vcarve]") {
     CHECK(hatch.toolpath.moves.back().to.z == Approx(5.0));
 }
 
-TEST_CASE("stepover retract: link at depth when the change is small, retract otherwise", "[photo_vcarve]") {
-    PhotoVCarveParams p = params();
+TEST_CASE("stepover retract: link at depth when the change is small, retract otherwise", "[image_engrave]") {
+    ImageEngraveParams p = params();
     const GrayImage im = gradient(41, 5);
     // Zig-zag lines of a horizontal gradient meet end to end at the same depth: all links stay down.
-    const PhotoVCarveResult stay = run(im, p);
+    const ImageEngraveResult stay = run(im, p);
     CHECK(stay.toolpath.count(MoveKind::Rapid) == 1);
     // With stepover retract 0 every line retracts.
     p.stepoverRetract = 0.0;
-    const PhotoVCarveResult always = run(im, p);
+    const ImageEngraveResult always = run(im, p);
     CHECK(always.toolpath.count(MoveKind::Rapid) == always.lineCount);
     CHECK(always.toolpath.count(MoveKind::Retract) == always.lineCount);
     // Vertical gradient, lines along X: each line has its own constant depth, 0.5 mm apart.
@@ -248,19 +248,19 @@ TEST_CASE("stepover retract: link at depth when the change is small, retract oth
     }
     p.stepoverRetract = 2.0;
     p.lineAngle = 0.0;
-    const PhotoVCarveResult big = run(vert, p);
+    const ImageEngraveResult big = run(vert, p);
     p.stepoverRetract = 0.0001;
-    const PhotoVCarveResult tiny = run(vert, p);
+    const ImageEngraveResult tiny = run(vert, p);
     CHECK(big.toolpath.count(MoveKind::Rapid) == 1);
     CHECK(tiny.toolpath.count(MoveKind::Rapid) == tiny.lineCount);
 }
 
-TEST_CASE("selected vectors: depth sampled along the vector, outside parts not cut", "[photo_vcarve]") {
-    PhotoVCarveParams p = params();
+TEST_CASE("selected vectors: depth sampled along the vector, outside parts not cut", "[image_engrave]") {
+    ImageEngraveParams p = params();
     p.strategy = PhotoStrategy::SelectedVectors;
     Contour c;
     c.append(LineSpan{{2, 5}, {18, 5}});
-    const PhotoVCarveResult r = run(gradient(41, 5), p, {c});
+    const ImageEngraveResult r = run(gradient(41, 5), p, {c});
     REQUIRE(r.ok());
     CHECK(r.lineCount == 1);
     for (const Vec3& q : cutPoints(r.toolpath)) {
@@ -270,28 +270,28 @@ TEST_CASE("selected vectors: depth sampled along the vector, outside parts not c
     // A vector wholly outside the image is not cut.
     Contour away;
     away.append(LineSpan{{30, 5}, {40, 5}});
-    const PhotoVCarveResult none = run(gradient(41, 5), p, {away});
+    const ImageEngraveResult none = run(gradient(41, 5), p, {away});
     CHECK_FALSE(none.ok());
     // Empty and discontinuous vectors are named; no vectors at all is NoRegion.
     Contour gap;
     gap.append(LineSpan{{0, 0}, {1, 0}});
     gap.append(LineSpan{{5, 5}, {6, 5}});
-    const PhotoVCarveResult bad = run(gradient(41, 5), p, {Contour{}, gap, c});
+    const ImageEngraveResult bad = run(gradient(41, 5), p, {Contour{}, gap, c});
     CHECK(bad.ok());
     CHECK(bad.has(ToolpathIssue::EmptyContour));
     CHECK(bad.has(ToolpathIssue::DiscontinuousContour));
     CHECK(run(gradient(41, 5), p, {}).has(ToolpathIssue::NoRegion));
 }
 
-TEST_CASE("degenerate and hostile input gives a diagnostic, never a crash", "[photo_vcarve]") {
+TEST_CASE("degenerate and hostile input gives a diagnostic, never a crash", "[image_engrave]") {
     const GrayImage ok = uniform(4, 4, 0);
     CHECK(run(GrayImage{}, params()).has(ToolpathIssue::InvalidParameters));
     GrayImage bad = ok;
     bad.pixels.pop_back();
     CHECK_FALSE(run(bad, params()).ok());
-    CHECK_FALSE(photoVCarve(ok, Box2{}, vbit(), std::nullopt, params()).ok());
-    CHECK_FALSE(photoVCarve(ok, Box2{{0, 0}, {0, 5}}, vbit(), std::nullopt, params()).ok());
-    PhotoVCarveParams p = params();
+    CHECK_FALSE(imageEngrave(ok, Box2{}, vbit(), std::nullopt, params()).ok());
+    CHECK_FALSE(imageEngrave(ok, Box2{{0, 0}, {0, 5}}, vbit(), std::nullopt, params()).ok());
+    ImageEngraveParams p = params();
     p.lineSpacingPercent = 0.0;
     CHECK(run(ok, p).has(ToolpathIssue::InvalidParameters));
     p = params();
@@ -311,73 +311,73 @@ TEST_CASE("degenerate and hostile input gives a diagnostic, never a crash", "[ph
     CHECK(run(ok, p).has(ToolpathIssue::InvalidParameters));
     tooling::Tool em = vbit();
     em.type = tooling::ToolType::EndMill;
-    CHECK(photoVCarve(ok, kRect, em, std::nullopt, params()).has(ToolpathIssue::InvalidTool));
+    CHECK(imageEngrave(ok, kRect, em, std::nullopt, params()).has(ToolpathIssue::InvalidTool));
     tooling::Tool noFeed = vbit();
     noFeed.defaultCuttingData.feedRate = 0.0;
-    CHECK_FALSE(photoVCarve(ok, kRect, noFeed, std::nullopt, params()).ok());
+    CHECK_FALSE(imageEngrave(ok, kRect, noFeed, std::nullopt, params()).ok());
 }
 
-TEST_CASE("the work budget refuses absurdly fine spacing quickly", "[photo_vcarve]") {
-    PhotoVCarveParams p = params();
+TEST_CASE("the work budget refuses absurdly fine spacing quickly", "[image_engrave]") {
+    ImageEngraveParams p = params();
     p.lineSpacingPercent = 0.0001;
-    const PhotoVCarveResult r = photoVCarve(uniform(64, 64, 0), Box2{{0, 0}, {100000, 100000}}, vbit(), std::nullopt, p);
+    const ImageEngraveResult r = imageEngrave(uniform(64, 64, 0), Box2{{0, 0}, {100000, 100000}}, vbit(), std::nullopt, p);
     CHECK_FALSE(r.ok());
     CHECK(r.has(ToolpathIssue::WorkLimitExceeded));
     ToolpathRunControl ctl;
     ctl.workLimit = 100;
-    const PhotoVCarveResult s = run(uniform(64, 64, 0), params(), {}, ctl);
+    const ImageEngraveResult s = run(uniform(64, 64, 0), params(), {}, ctl);
     CHECK(s.has(ToolpathIssue::WorkLimitExceeded));
     CHECK(s.toolpath.isEmpty());
     ToolpathRunControl moves;
     moves.moveLimit = 5;
-    const PhotoVCarveResult m = run(uniform(64, 64, 0), params(), {}, moves);
+    const ImageEngraveResult m = run(uniform(64, 64, 0), params(), {}, moves);
     CHECK(m.has(ToolpathIssue::WorkLimitExceeded));
     CHECK(m.toolpath.isEmpty());
 }
 
-TEST_CASE("cancel returns nothing partial", "[photo_vcarve]") {
+TEST_CASE("cancel returns nothing partial", "[image_engrave]") {
     std::atomic<bool> flag{true};
     ToolpathRunControl ctl;
     ctl.cancel = &flag;
-    const PhotoVCarveResult r = run(uniform(64, 64, 0), params(), {}, ctl);
+    const ImageEngraveResult r = run(uniform(64, 64, 0), params(), {}, ctl);
     CHECK(r.has(ToolpathIssue::Cancelled));
     CHECK(r.toolpath.isEmpty());
-    PhotoVCarveParams p = params();
+    ImageEngraveParams p = params();
     p.strategy = PhotoStrategy::SelectedVectors;
     Contour c;
     c.append(LineSpan{{2, 5}, {18, 5}});
-    const PhotoVCarveResult v = run(uniform(64, 64, 0), p, {c}, ctl);
+    const ImageEngraveResult v = run(uniform(64, 64, 0), p, {c}, ctl);
     CHECK(v.has(ToolpathIssue::Cancelled));
     CHECK(v.toolpath.isEmpty());
     flag = false;
     CHECK(run(uniform(64, 64, 0), params(), {}, ctl).ok());
 }
 
-TEST_CASE("deterministic and bounded for a large image", "[photo_vcarve]") {
+TEST_CASE("deterministic and bounded for a large image", "[image_engrave]") {
     GrayImage big = uniform(1024, 1024, 0);
     for (std::size_t i = 0; i < big.pixels.size(); ++i) {
         big.pixels[i] = static_cast<std::uint8_t>((i * 2654435761u) >> 24);
     }
-    const PhotoVCarveResult a = photoVCarve(big, Box2{{0, 0}, {100, 100}}, vbit(), std::nullopt, params());
-    const PhotoVCarveResult b = photoVCarve(big, Box2{{0, 0}, {100, 100}}, vbit(), std::nullopt, params());
+    const ImageEngraveResult a = imageEngrave(big, Box2{{0, 0}, {100, 100}}, vbit(), std::nullopt, params());
+    const ImageEngraveResult b = imageEngrave(big, Box2{{0, 0}, {100, 100}}, vbit(), std::nullopt, params());
     REQUIRE(a.ok());
     CHECK(a.toolpath == b.toolpath);
     CHECK(a.toolpath.moves.size() < 20000000);
 }
 
-TEST_CASE("depth tolerance merges colinear samples", "[photo_vcarve]") {
-    PhotoVCarveParams p = params();
-    const PhotoVCarveResult flat = run(uniform(200, 100, 100), p);
+TEST_CASE("depth tolerance merges colinear samples", "[image_engrave]") {
+    ImageEngraveParams p = params();
+    const ImageEngraveResult flat = run(uniform(200, 100, 100), p);
     // A flat line is one plunge and one feed per line.
     CHECK(flat.toolpath.count(MoveKind::Feed) <= flat.lineCount * 2 + 4);
     p.depthTolerance = 0.0001;
-    const PhotoVCarveResult fine = run(gradient(41, 5), p);
+    const ImageEngraveResult fine = run(gradient(41, 5), p);
     p.depthTolerance = 0.5;
-    const PhotoVCarveResult coarse = run(gradient(41, 5), p);
+    const ImageEngraveResult coarse = run(gradient(41, 5), p);
     CHECK(coarse.toolpath.moves.size() <= fine.toolpath.moves.size());
 }
 
-TEST_CASE("grayFromRaster uses luma weights", "[photo_vcarve]") {
+TEST_CASE("grayFromRaster uses luma weights", "[image_engrave]") {
     io::RasterImage im;
     im.width = 2;
     im.height = 1;

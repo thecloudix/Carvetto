@@ -52,8 +52,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "Fluting";
         case ToolpathOperation::Prism:
             return "Prism";
-        case ToolpathOperation::PhotoVCarve:
-            return "Photo V-Carve";
+        case ToolpathOperation::ImageEngrave:
+            return "Image Engrave";
         case ToolpathOperation::VCarveInlay:
             return "V-Carve Inlay";
     }
@@ -88,7 +88,7 @@ ToolpathFormDialog::ToolpathFormDialog(viewmodel::ToolpathForm form, tooling::To
     setWindowTitle(QStringLiteral("%1 toolpath").arg(QString::fromUtf8(operationLabel(form_.operation()))));
     form_.refreshTools(db_);
     if (isPhoto() && form_.selector().base.all) {
-        // The photo V-carve reads the selected bitmap: start from the current selection.
+        // The image engrave reads the selected bitmap: start from the current selection.
         form_.setSelector(viewmodel::VectorSelector::fromObjects(info_.selection));
     }
     buildStatic();
@@ -121,11 +121,11 @@ void ToolpathFormDialog::buildStatic() {
     toolCombo_ = new QComboBox(this);
     toolCombo_->setObjectName(QStringLiteral("toolCombo"));
     toolCombo_->addItem(QStringLiteral("(choose a tool)"), QString());
-    const bool vcarve = viewmodel::hasClearanceTools(form_.operation());
+    const bool vBitMode = viewmodel::hasClearanceTools(form_.operation());
     for (const tooling::Tool* t : viewmodel::toolsFor(db_, form_.operation(), false)) {
         toolCombo_->addItem(qs(t->name), qs(t->id));
     }
-    top->addRow(vcarve ? QStringLiteral("Carving tool") : QStringLiteral("Tool"), toolCombo_);
+    top->addRow(vBitMode ? QStringLiteral("Carving tool") : QStringLiteral("Tool"), toolCombo_);
     dataCombo_ = new QComboBox(this);
     dataCombo_->setObjectName(QStringLiteral("cuttingDataCombo"));
     top->addRow(QStringLiteral("Cutting data"), dataCombo_);
@@ -181,7 +181,7 @@ void ToolpathFormDialog::buildStatic() {
     }
     cbox->addLayout(crow);
     outer->addWidget(clearanceBox_);
-    clearanceBox_->setVisible(vcarve);
+    clearanceBox_->setVisible(vBitMode);
     auto edit = [this](const std::function<void(std::vector<document::ToolSource>&)>& change) {
         std::vector<document::ToolSource> list = form_.clearanceTools();
         change(list);
@@ -409,7 +409,7 @@ void ToolpathFormDialog::refreshVectors() {
         const std::string problem = info_.bitmapProblem ? info_.bitmapProblem(form_.selector()) : std::string();
         QString text = problem.empty() ? QStringLiteral("A bitmap is selected.") : qs(problem);
         if (info_.countVectors && problem.empty() &&
-            std::get<toolpath::PhotoVCarveParams>(form_.definition().params).strategy ==
+            std::get<toolpath::ImageEngraveParams>(form_.definition().params).strategy ==
                 toolpath::PhotoStrategy::SelectedVectors) {
             text += QStringLiteral(" %1 vector(s) to follow.")
                         .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
@@ -542,7 +542,7 @@ void ToolpathFormDialog::rebuildParameters() {
                     const viewmodel::FieldResult r = form_.setChoice(id, row);
                     setMessage(r.message, !r.ok);
                     rebuildParameters();
-                    refreshVectors();  // the strategy decides what a photo V-carve needs selected
+                    refreshVectors();  // the strategy decides what an image engrave needs selected
                 });
             }
         }
@@ -648,7 +648,7 @@ std::string ToolpathFormDialog::sourceProblem() const {
                 return bad;
             }
         }
-        const auto& p = std::get<toolpath::PhotoVCarveParams>(form_.definition().params);
+        const auto& p = std::get<toolpath::ImageEngraveParams>(form_.definition().params);
         if (p.strategy == toolpath::PhotoStrategy::SelectedVectors && info_.countVectors &&
             info_.countVectors(form_.selector()) == 0) {
             return "Selected Vectors needs vectors to follow: select some besides the bitmap";

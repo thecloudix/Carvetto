@@ -1,4 +1,4 @@
-// T-0265: V-carve inlay (vcarve_inlay.hpp, ADR-0054): the V-carved pocket and the V-carved plug of
+// T-0265: V-carve inlay (v_carve_inlay.hpp, ADR-0054): the V-carved pocket and the V-carved plug of
 // the same vector mate within the glue gap (V-bit flank geometry), the plug is mirrored (and centred
 // on another sheet), every plug boundary option, refusals.
 
@@ -18,7 +18,7 @@
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/move.hpp"
-#include "carvetto/toolpath/vcarve_inlay.hpp"
+#include "carvetto/toolpath/v_carve_inlay.hpp"
 
 using namespace carvetto;
 using namespace carvetto::toolpath;
@@ -118,7 +118,7 @@ bool near(Vec2 a, Vec2 b, double eps = 1e-6) {
 
 }  // namespace
 
-TEST_CASE("T-0265: only V-bits carve a V-carve inlay", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: only V-bits carve a V-carve inlay", "[toolpath][v_carve_inlay]") {
     CHECK(vCarveInlayToolAllowed(tooling::ToolType::VBit));
     CHECK_FALSE(vCarveInlayToolAllowed(tooling::ToolType::EndMill));
     CHECK_FALSE(vCarveInlayToolAllowed(tooling::ToolType::BallNose));
@@ -128,7 +128,7 @@ TEST_CASE("T-0265: only V-bits carve a V-carve inlay", "[toolpath][vcarve_inlay]
     CHECK(r.has(ToolpathIssue::InvalidTool));
 }
 
-TEST_CASE("T-0265: the pocket and the plug of one vector mate within the glue gap", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: the pocket and the plug of one vector mate within the glue gap", "[toolpath][v_carve_inlay]") {
     const std::vector<Contour> shape{rect(0, 0, 30, 14)};
     const tooling::Tool tool = vbit();
     VCarveInlayParams p = plugParams();
@@ -165,7 +165,7 @@ TEST_CASE("T-0265: the pocket and the plug of one vector mate within the glue ga
     CHECK(worstHigh >= gap - 0.08);
 }
 
-TEST_CASE("T-0265: the glue gap sets the plug's inset", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: the glue gap sets the plug's inset", "[toolpath][v_carve_inlay]") {
     const std::vector<Contour> shape{rect(0, 0, 30, 14)};
     VCarveInlayParams p = plugParams();
     for (const double gap : {0.0, 0.2, 1.0}) {
@@ -191,7 +191,7 @@ TEST_CASE("T-0265: the glue gap sets the plug's inset", "[toolpath][vcarve_inlay
     CHECK(top.width() == Approx(30.0 - 2.0 * 3.0 * std::tan(kPi / 6.0)).margin(1e-3));
 }
 
-TEST_CASE("T-0265: the plug is mirrored, in place or centred on another sheet", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: the plug is mirrored, in place or centred on another sheet", "[toolpath][v_carve_inlay]") {
     // A right triangle: its right angle is bottom-left; mirrored it is bottom-right.
     const std::vector<Contour> shape{polygon({{0, 0}, {40, 0}, {0, 20}})};
     VCarveInlayParams p = plugParams();
@@ -229,7 +229,7 @@ TEST_CASE("T-0265: the plug is mirrored, in place or centred on another sheet", 
     CHECK_FALSE(unknown.diagnostics.empty());
 }
 
-TEST_CASE("T-0265: plug outer boundary options", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: plug outer boundary options", "[toolpath][v_carve_inlay]") {
     const std::vector<Contour> shape{rect(100, 100, 130, 114)};
     VCarveInlayParams p = plugParams();
     const auto boundsOf = [](const std::vector<Contour>& cs) {
@@ -275,7 +275,7 @@ TEST_CASE("T-0265: plug outer boundary options", "[toolpath][vcarve_inlay]") {
     CHECK(g.diagnostics.front().issue == ToolpathIssue::ToolTooLarge);
 }
 
-TEST_CASE("T-0265: a boundary that is too tight is refused", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: a boundary that is too tight is refused", "[toolpath][v_carve_inlay]") {
     const std::vector<Contour> shape{rect(0, 0, 30, 14)};
     VCarveInlayParams p = plugParams();
     p.plugBoundary = PlugBoundary::BoundaryOffset;
@@ -291,7 +291,7 @@ TEST_CASE("T-0265: a boundary that is too tight is refused", "[toolpath][vcarve_
     CHECK(r.has(ToolpathIssue::ToolTooLarge));
 }
 
-TEST_CASE("T-0265: depth limits, glue gap, thin parts and surface clearance", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: depth limits, glue gap, thin parts and surface clearance", "[toolpath][v_carve_inlay]") {
     const std::vector<Contour> shape{rect(0, 0, 30, 14)};
     VCarveInlayParams p = plugParams();
 
@@ -358,7 +358,7 @@ TEST_CASE("T-0265: depth limits, glue gap, thin parts and surface clearance", "[
                        [](const ToolpathDiagnostic& d) { return d.issue == ToolpathIssue::RegionTrimmed; }));
 }
 
-TEST_CASE("T-0265: clearance tools clear the flat areas of both pieces", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: clearance tools clear the flat areas of both pieces", "[toolpath][v_carve_inlay]") {
     const std::vector<Contour> shape{rect(0, 0, 40, 30)};
     VCarveInlayParams p = plugParams();
     const std::vector<PocketTool> clearance{PocketTool{endMill(), std::nullopt}};
@@ -376,7 +376,7 @@ TEST_CASE("T-0265: clearance tools clear the flat areas of both pieces", "[toolp
     }
 }
 
-TEST_CASE("T-0265: refusals", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: refusals", "[toolpath][v_carve_inlay]") {
     const std::vector<Contour> shape{rect(0, 0, 30, 14)};
     const double inf = std::numeric_limits<double>::infinity();
     const auto run = [&](VCarveInlayParams p, const std::vector<Contour>& v = {rect(0, 0, 30, 14)}) {
@@ -414,7 +414,7 @@ TEST_CASE("T-0265: refusals", "[toolpath][vcarve_inlay]") {
     }
 }
 
-TEST_CASE("T-0265: deterministic", "[toolpath][vcarve_inlay]") {
+TEST_CASE("T-0265: deterministic", "[toolpath][v_carve_inlay]") {
     VCarveInlayParams p = plugParams();
     p.piece = VCarveInlayPiece::Plug;
     const std::vector<Contour> shape{polygon({{0, 0}, {30, 0}, {10, 12}})};

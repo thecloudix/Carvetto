@@ -515,7 +515,7 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
   - **Plug Outer Boundary:** Sheet Limits / Vector Offset / **Boundary Offset**.
   - Sub-pages "V-Carve Inlay Toolpath – Pocket" and "– Plug" exist (fields not fetched).
 - **Prism Carving Toolpath:** Prism Depth; **Set Depth for Full Prism**; Cut Direction.
-- **Photo V-Carve Toolpath:**
+- **Image Engrave Toolpath:**
   - Source: a selected bitmap.
   - Depths: Max Carving Depth; Stepover Retract.
   - Strategy: **Raster** / **Hatch** / **Selected Vectors**, with Line Spacing % and Line Angle.

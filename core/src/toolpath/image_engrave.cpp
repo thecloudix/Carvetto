@@ -1,4 +1,4 @@
-#include "carvetto/toolpath/photo_vcarve.hpp"
+#include "carvetto/toolpath/image_engrave.hpp"
 
 #include <algorithm>
 #include <array>
@@ -38,7 +38,7 @@ struct Stop {
     std::string message;
 };
 
-std::string check(const tooling::Tool& tool, const geometry::Box2& placement, const PhotoVCarveParams& p,
+std::string check(const tooling::Tool& tool, const geometry::Box2& placement, const ImageEngraveParams& p,
                   ToolpathIssue& issue) {
     issue = ToolpathIssue::InvalidParameters;
     const double values[] = {p.maxDepth,         p.stepoverRetract, p.lineSpacingPercent, p.lineAngle,
@@ -76,9 +76,9 @@ std::string check(const tooling::Tool& tool, const geometry::Box2& placement, co
     if (t.chordal < kMinChordal || t.chordal > 1.0 || !(t.distance > 0.0) || t.distance > t.chordal) {
         return "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal";
     }
-    if (!photoVCarveToolAllowed(tool.type)) {
+    if (!imageEngraveToolAllowed(tool.type)) {
         issue = ToolpathIssue::InvalidTool;
-        return "tool '" + tool.name + "' must be a V-bit or an engraving bit for a photo V-carve";
+        return "tool '" + tool.name + "' must be a V-bit or an engraving bit for an image engrave";
     }
     if (const std::optional<std::string> bad = tooling::validate(tool)) {
         issue = ToolpathIssue::InvalidTool;
@@ -121,8 +121,8 @@ class Sampler {
         return top * (1.0 - ty) + bot * ty;
     }
 
-    PhotoVCarveParams paramsForDepth() const {
-        PhotoVCarveParams q;
+    ImageEngraveParams paramsForDepth() const {
+        ImageEngraveParams q;
         q.maxDepth = maxDepth_;
         q.invert = invert_;
         return q;
@@ -132,7 +132,7 @@ class Sampler {
         if (!inside(p)) {
             return 0.0;
         }
-        return photoVCarveDepth(paramsForDepth(), limit_, gray(p));
+        return imageEngraveDepth(paramsForDepth(), limit_, gray(p));
     }
 
    private:
@@ -193,7 +193,7 @@ std::vector<bool> keepFlags(const std::vector<double>& s, const std::vector<doub
 
 class Builder {
    public:
-    Builder(PhotoVCarveResult& result, const PhotoVCarveParams& params, double linkDistance, double moveLimit)
+    Builder(ImageEngraveResult& result, const ImageEngraveParams& params, double linkDistance, double moveLimit)
         : result_(result), params_(params), linkDistance_(linkDistance), moveLimit_(moveLimit) {}
 
     /// Emits the cuts of one line: runs of samples that cut, each with a sample of depth ~0 on
@@ -262,8 +262,8 @@ class Builder {
         last_ = Vec3{v[b].p.x, v[b].p.y, -v[b].depth};
     }
 
-    PhotoVCarveResult& result_;
-    const PhotoVCarveParams& params_;
+    ImageEngraveResult& result_;
+    const ImageEngraveParams& params_;
     double linkDistance_;
     double moveLimit_;
     std::optional<Vec3> last_;
@@ -288,12 +288,12 @@ GrayImage grayFromRaster(const io::RasterImage& image) {
     return out;
 }
 
-bool photoVCarveToolAllowed(tooling::ToolType type) {
+bool imageEngraveToolAllowed(tooling::ToolType type) {
     return type == tooling::ToolType::VBit || type == tooling::ToolType::Engraving;
 }
 
-double photoVCarveDepthLimit(const tooling::Tool& tool) {
-    if (!photoVCarveToolAllowed(tool.type) || !std::isfinite(tool.diameter) || !std::isfinite(tool.includedAngle) ||
+double imageEngraveDepthLimit(const tooling::Tool& tool) {
+    if (!imageEngraveToolAllowed(tool.type) || !std::isfinite(tool.diameter) || !std::isfinite(tool.includedAngle) ||
         !(tool.includedAngle > 0.0) || !(tool.includedAngle < kPi)) {
         return 0.0;
     }
@@ -304,7 +304,7 @@ double photoVCarveDepthLimit(const tooling::Tool& tool) {
     return (tool.diameter - tip) / (2.0 * std::tan(tool.includedAngle * 0.5));
 }
 
-double photoVCarveDepth(const PhotoVCarveParams& params, double depthLimit, double gray) {
+double imageEngraveDepth(const ImageEngraveParams& params, double depthLimit, double gray) {
     if (!std::isfinite(gray) || !std::isfinite(params.maxDepth)) {
         return 0.0;
     }
@@ -313,11 +313,11 @@ double photoVCarveDepth(const PhotoVCarveParams& params, double depthLimit, doub
     return std::max(0.0, std::min(params.maxDepth * darkness, depthLimit));
 }
 
-PhotoVCarveResult photoVCarve(const GrayImage& image, const geometry::Box2& placement, const tooling::Tool& tool,
+ImageEngraveResult imageEngrave(const GrayImage& image, const geometry::Box2& placement, const tooling::Tool& tool,
                               const std::optional<tooling::CuttingData>& cuttingData,
-                              const PhotoVCarveParams& params, const std::vector<Contour>& contours,
+                              const ImageEngraveParams& params, const std::vector<Contour>& contours,
                               const ToolpathRunControl& control) {
-    PhotoVCarveResult result;
+    ImageEngraveResult result;
     result.toolpath.name = params.name;
     auto say = [&result](ToolpathIssue issue, std::optional<std::size_t> contour, std::string message) {
         result.diagnostics.push_back(ToolpathDiagnostic{issue, contour, std::move(message), std::nullopt});
@@ -349,7 +349,7 @@ PhotoVCarveResult photoVCarve(const GrayImage& image, const geometry::Box2& plac
             "tool '" + tool.name + "': the feed rate and plunge rate must be greater than zero");
         return result;
     }
-    const double limit = photoVCarveDepthLimit(tool);
+    const double limit = imageEngraveDepthLimit(tool);
     result.toolDepthLimit = limit;
     if (!(limit > 0.0)) {
         say(ToolpathIssue::InvalidTool, std::nullopt, "tool '" + tool.name + "' has no usable cone angle");
