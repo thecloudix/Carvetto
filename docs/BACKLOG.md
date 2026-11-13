@@ -650,7 +650,7 @@ Acceptance criteria:
   2. An ASan/UBSan build of the tests compiles with -Werror and passes.
   3. Output otherwise byte-identical to main (hash sweep).
 
-### T-0166 Profile: platform-stable start for near-equal spans (symmetric shapes)   [status: ready (director decision 2026-11-06)]
+### T-0166 Profile: platform-stable start for near-equal spans (symmetric shapes)   [status: in-progress]
 Director decision 2026-11-06 (owner delegated): approved the tolerance tie-break (lowest span within tol of the nearest distance) because identical output across compilers/platforms outweighs a small one-time change in cut starts; the coder must report the output change rate and keep tab safety unchanged.
 Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Found by the T-0158 coder. After T-0158, GCC 13 and GCC 15 still choose different cut starts in 9 of 2,183 stored harness scenes (31 on main) and different tab-left counts in 6 (main 8). These are not arc-centre ties: with the bounding-box Centre anchor on symmetric shapes (rectangles, point-symmetric m2_1330009_35), two spans are equally near up to rounding, and "ties go to the lowest span" only works when the distances are bit-equal. A tolerance tie-break (lowest span within tol of the nearest distance) would change more outputs, so it needs the owner's approval first.
@@ -1263,7 +1263,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; the straight inlay (T-0238); 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md 'V-carve inlay Toolpath' (the Pocket and Plug sub-pages' fields are not fetched: the owner may need to supply them); ADR-0040.
 
-### T-0266 Toolpath tiling: dialog checkbox and Tiling Manager panel (T-0242 follow-up)   [status: ready — LOW]
+### T-0266 Toolpath tiling: dialog checkbox and Tiling Manager panel (T-0242 follow-up)   [status: in-progress]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0242
 Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/feed-through X/Y), tile size, overlap, order, original-position option, machine work area default; Tiling Manager panel with a tile preview over the job; self-test drives it.
 Acceptance criteria:
@@ -1316,7 +1316,7 @@ Acceptance criteria:
   1. Form exposes Max Carving Depth, Stepover Retract, Line Spacing %, Line Angle, strategy (Raster/Hatch/Selected Vectors), invert; generates and previews; recalculates on edit; one undo step.
   2. Record saves/loads; cancel and work cap honoured; changelog fragment; CI green.
 
-### T-0274 Trace Bitmap follow-ups: Pick from 2D View, Bitmap Fading (T-0260 follow-up)   [status: ready]
+### T-0274 Trace Bitmap follow-ups: Pick from 2D View, Bitmap Fading (T-0260 follow-up)   [status: in-progress]
 Phase: 1   Module: app   Depends on: T-0260
 Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferred (see ADR-0049): "Pick from 2D View" (choose the bitmap object on the canvas) and "Bitmap Fading" (dim the source bitmap while tracing).
 Acceptance criteria:
