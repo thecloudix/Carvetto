@@ -37,6 +37,12 @@ struct RouteResult {
 /// `route` finds the shortest XY path between two free points that stays out of the region
 /// (visibility graph over the polygon vertices, A*, bounded work). Visibility between vertices is
 /// memoised, so one field serves a whole job. Not thread-safe.
+///
+/// Large outlines (T-0258): edge scans use a uniform grid index. The exhaustive search runs first
+/// (so every input that routed before routes identically); when it exceeds its budget the field
+/// switches to a search that only joins vertices whose joining segment leaves both vertices into
+/// free space (the shortest path bends only at such tangent vertices), counting the edges it
+/// really examines. A 4000-vertex circle therefore routes in well under a second.
 class KeepOutField {
    public:
     /// Open contours and contours with fewer than three vertices are ignored. A non-finite or
@@ -59,6 +65,10 @@ class KeepOutField {
     /// Per-`route` work limit in polygon-edge scans.
     std::uint64_t routeWorkLimit() const { return workLimit_; }
     void setRouteWorkLimit(std::uint64_t limit) { workLimit_ = limit; }
+    /// Selects the tangent-pruned search from the start (it is otherwise entered when the
+    /// exhaustive search runs out of budget). Used by tests that compare the two.
+    void forceTangentSearch(bool on) { scalable_ = on; }
+    bool usesTangentSearch() const { return scalable_; }
 
    private:
     struct Edge {
@@ -67,6 +77,29 @@ class KeepOutField {
     };
     bool segmentClear(geometry::Vec2 a, geometry::Vec2 b) const;
     bool vertexVisible(std::size_t i, std::size_t j);
+    // Uniform grid over the edges (T-0258): edge scans touch only the cells a segment crosses.
+    void buildGrid();
+    void gather(geometry::Vec2 p, geometry::Vec2 q, double margin, std::vector<std::uint32_t>& out) const;
+    // Local cone test at a region vertex: false when the direction enters the region's interior.
+    bool leavesVertexFree(std::size_t vertex, geometry::Vec2 towards) const;
+    RouteResult routeFull(geometry::Vec2 a, geometry::Vec2 b);
+    RouteResult routeScalable(geometry::Vec2 a, geometry::Vec2 b);
+
+    struct Link {
+        std::uint32_t prev{0}, next{0};
+        geometry::Vec2 unitNext{}, unitPrev{};  ///< unit directions to the next / previous ring vertex
+        bool interiorLeft{true};
+        bool prune{true};
+    };
+    std::vector<Link> links_;
+    std::size_t gridCols_{1}, gridRows_{1};
+    double cellW_{1.0}, cellH_{1.0};
+    std::vector<std::vector<std::uint32_t>> cells_;
+    mutable std::vector<std::uint32_t> stamp_;
+    mutable std::uint32_t stampGen_{0};
+    // Set once the exhaustive search ran out of budget: later routes of this field use the
+    // tangent-pruned search, whose work is counted by the edges it actually examines.
+    bool scalable_{false};
 
     std::vector<Edge> edges_;
     std::vector<geometry::Vec2> vertices_;
