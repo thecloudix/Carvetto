@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,9 @@ struct VariableEdit {
     /// Toolpaths recalculated because of the edit / that could not be.
     std::size_t recalculated{0};
     std::size_t failed{0};
+    /// Deferred mode only: toolpaths hold expressions, so the caller should now run
+    /// `ToolpathSession::prepareRecalculateBound` off the UI thread (the edit itself is done).
+    bool recalculationPending{false};
     /// Variables created or overwritten by an import; lines it rejected (1-based).
     std::size_t imported{0};
     std::vector<std::size_t> rejectedLines;
@@ -43,6 +47,13 @@ class VariablesModel {
    public:
     /// `session` may be null (no toolpath bookkeeping); both must outlive the model.
     explicit VariablesModel(document::Document* doc, ToolpathSession* session = nullptr);
+
+    /// Deferred recalculation (T-0271): an edit changes the variables only (one undo step) and sets
+    /// `recalculationPending`; the caller recalculates the dependent toolpaths in the background (a
+    /// second undo step). Off (default): recalculated inside the edit's undo step, on this thread.
+    void setDeferRecalculation(bool defer) { defer_ = defer; }
+    /// While it returns true every edit is refused ("wait ...") - a background recalculation runs.
+    void setBusyCheck(std::function<bool()> busy) { busy_ = std::move(busy); }
 
     std::vector<VariableRow> rows() const;
     /// Names of the toolpaths whose expressions name `name`.
@@ -73,6 +84,8 @@ class VariablesModel {
 
     document::Document* doc_;
     ToolpathSession* session_;
+    bool defer_{false};
+    std::function<bool()> busy_;
 };
 
 }  // namespace carvetto::viewmodel

@@ -718,9 +718,7 @@ void ToolpathsPanel::finishRun() {
         const viewmodel::ToolpathCalculation& calc = results->front();
         const viewmodel::ToolpathOutcome out = session_.apply(calc);
         if (out.ok) {
-            if (pending.kind == Kind::Add || pending.kind == Kind::Edit) {
-                session_.bindExpressions(out.ids, pendingExpressions_);  // also forgets them when none
-            }
+            session_.refreshReferences();  // the records carry their expressions
             pendingExpressions_.clear();
             if (!calc.target.isNull()) {
                 failed_.erase(calc.target);
@@ -825,6 +823,30 @@ void ToolpathsPanel::doRecalculate() {
     std::vector<viewmodel::ToolpathJob> jobs;
     jobs.push_back(session_.prepare(*def, *target));
     start(std::move(jobs), Kind::Recalculate, "Recalculate toolpath");
+}
+
+void ToolpathsPanel::recalculateBound() {
+    if (busy_ || doc_ == nullptr) {
+        return;
+    }
+    std::vector<viewmodel::ToolpathOutcome> refused;
+    std::vector<viewmodel::ToolpathJob> jobs = session_.prepareRecalculateBound(&refused);
+    std::vector<ToolpathMessage> notes;
+    for (const viewmodel::ToolpathOutcome& o : refused) {
+        ToolpathMessage m;
+        m.severity = MessageSeverity::Error;
+        m.text = o.message;
+        notes.push_back(std::move(m));
+    }
+    if (jobs.empty()) {
+        lastMessages_ = notes;
+        if (!notes.empty()) {
+            setStatus(QStringLiteral("A toolpath could not be recalculated: ") + qs(notes.front().text), true);
+        }
+        rebuildDiagnostics();
+        return;
+    }
+    start(std::move(jobs), Kind::RecalculateAll, "Recalculate toolpaths for the changed variables", std::move(notes));
 }
 
 void ToolpathsPanel::doRecalculateAll() {

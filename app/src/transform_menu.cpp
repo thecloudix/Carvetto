@@ -1,4 +1,5 @@
 #include "transform_menu.hpp"
+#include "variable_menu.hpp"
 
 #include <QAction>
 #include <QCheckBox>
@@ -176,6 +177,7 @@ void TransformDialog::rebuild() {
     for (const viewmodel::NumericField& f : form_.fields(doc_())) {
         auto* edit = new QLineEdit(body_);
         edit->setText(qs(f.text));
+        attachVariableMenu(edit);
         edit->setPlaceholderText(qs(f.text));
         edits_[f.id] = edit;
         grid->addRow(qs(f.label), edit);

@@ -1003,7 +1003,7 @@ std::vector<ToolpathField> ToolpathForm::fields() const {
         std::erase_if(out, [](const ToolpathField& f) { return f.id == "angle"; });
     }
     for (ToolpathField& f : out) {
-        if (const auto it = expressions_.find(f.id); it != expressions_.end()) {
+        if (const auto it = definition_.expressions.find(f.id); it != definition_.expressions.end()) {
             f.text = it->second;
             f.typed = true;
         }
@@ -1037,17 +1037,40 @@ FieldResult ToolpathForm::setField(const std::string& id, const std::string& tex
         // A calculation (`=...`) keeps its text so the toolpath can be recalculated when a document
         // variable it names changes; any other entry (or a reset) drops it.
         if (isExpressionText(text)) {
-            expressions_[id] = trimmed(text);
+            definition_.expressions[id] = trimmed(text);
         } else {
-            expressions_.erase(id);
+            definition_.expressions.erase(id);
+        }
+        if (std::holds_alternative<toolpath::ChamferParams>(definition_.params)) {
+            // Angle A, Width W and Cut depth C are linked (T-0271): an entry for W or C replaces the
+            // other's calculation (the other is derived from it), and a new angle re-derives W from
+            // a kept C calculation.
+            if (id == "width") {
+                definition_.expressions.erase("cutDepth");
+            } else if (id == "cutDepth") {
+                definition_.expressions.erase("width");
+            } else if (id == "angle") {
+                rederiveChamfer();
+            }
         }
     }
     return out;
 }
 
+void ToolpathForm::rederiveChamfer() {
+    if (!std::holds_alternative<toolpath::ChamferParams>(definition_.params)) {
+        return;
+    }
+    const auto it = definition_.expressions.find("cutDepth");
+    if (it != definition_.expressions.end()) {
+        const std::string text = it->second;  // setField rewrites the entry
+        setField("cutDepth", text);
+    }
+}
+
 std::vector<std::string> ToolpathForm::usedVariables() const {
     std::vector<std::string> out;
-    for (const auto& [id, text] : expressions_) {
+    for (const auto& [id, text] : definition_.expressions) {
         const Calculation calc = calculate(text, units_);
         out.insert(out.end(), calc.usedVariables.begin(), calc.usedVariables.end());
     }
@@ -1057,13 +1080,14 @@ std::vector<std::string> ToolpathForm::usedVariables() const {
 }
 
 std::string ToolpathForm::expression(const std::string& id) const {
-    const auto it = expressions_.find(id);
-    return it == expressions_.end() ? std::string() : it->second;
+    const auto it = definition_.expressions.find(id);
+    return it == definition_.expressions.end() ? std::string() : it->second;
 }
 
 FieldResult ToolpathForm::setExpressions(const std::map<std::string, std::string>& expressions) {
     FieldResult first;
-    for (const auto& [id, text] : expressions) {
+    const std::map<std::string, std::string> entries = expressions;  // may alias the form's own
+    for (const auto& [id, text] : entries) {
         FieldResult r = setField(id, text);
         if (!r.ok && first.ok) {
             first = std::move(r);
@@ -1130,6 +1154,7 @@ FieldResult ToolpathForm::setTool(const tooling::ToolDatabase& db, const documen
         definition_.tool = source;
         toolSummary_ = std::move(summary);
         syncChamferAngle(definition_.params, toolSummary_);
+        rederiveChamfer();
     }
     return res;
 }
@@ -1160,6 +1185,7 @@ void ToolpathForm::refreshTools(const tooling::ToolDatabase& db) {
         if (checkTool(db, definition_.tool, false, &summary).ok) {
             toolSummary_ = std::move(summary);
             syncChamferAngle(definition_.params, toolSummary_);
+            rederiveChamfer();
         }
     }
 }
@@ -1211,7 +1237,7 @@ void ToolpathForm::resetValues() {
     const std::string name = definition_.name();
     definition_.params = defaultDefinition(operation()).params;
     definition_.setName(name);
-    expressions_.clear();
+    definition_.expressions.clear();
 }
 
 }  // namespace carvetto::viewmodel

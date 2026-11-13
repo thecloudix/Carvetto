@@ -1,4 +1,5 @@
 #include "dimension_menu.hpp"
+#include "variable_menu.hpp"
 
 #include <QAction>
 #include <QApplication>
@@ -104,6 +105,8 @@ DimensionDialog::DimensionDialog(document::Document& doc, const DimensionOptions
     textHeight_->setObjectName(QStringLiteral("dimTextHeight"));
     form->addRow(QStringLiteral("Text height (%1)").arg(suffix), textHeight_);
     offset_ = new QLineEdit(this);
+    attachVariableMenu(textHeight_);
+    attachVariableMenu(offset_);
     offset_->setObjectName(QStringLiteral("dimOffset"));
     reflex_ = new QCheckBox(QStringLiteral("Angular: measure the reflex angle (more than 180 degrees)"), this);
     reflex_->setObjectName(QStringLiteral("dimReflex"));

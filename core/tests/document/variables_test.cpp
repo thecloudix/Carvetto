@@ -160,6 +160,17 @@ TEST_CASE("letter variables, feet and document variables in expressions",
     CHECK(r.usedVariables == std::vector<std::string>{"Margin", "Other"});
 }
 
+TEST_CASE("T-0271: a foot is 12 in inch display units", "[document][variables][expression]") {
+    DocumentVariables vars;
+    vars.set("Two", 2.0);
+    ExpressionContext inches;
+    inches.feet = 12.0;
+    CHECK_THAT(evalOk("2'", vars, inches), WithinAbs(24.0, 1e-12));
+    CHECK_THAT(evalOk("{Two}'+1", vars, inches), WithinAbs(25.0, 1e-12));
+    CHECK_THAT(evalOk("1''", vars, inches), WithinAbs(144.0, 1e-12));
+    CHECK_THAT(evalOk("2'", vars, ExpressionContext{}), WithinAbs(609.6, 1e-9));  // millimetres by default
+}
+
 TEST_CASE("malformed and hostile expressions fail cleanly and bounded",
           "[document][variables][expression]") {
     DocumentVariables vars;

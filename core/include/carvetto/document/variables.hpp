@@ -65,6 +65,8 @@ struct ExpressionContext {
     double width{0.0};
     double height{0.0};
     double thickness{0.0};
+    /// Length of one foot (`'`) in the units of the box: 304.8 for millimetres, 12 for inches.
+    double feet{304.8};
 };
 
 /// Result of `evaluateExpression`: either a finite value or an error message.
@@ -83,7 +85,7 @@ inline constexpr int kMaxExpressionDepth = 64;
 
 /// Evaluates a calculation-edit-box expression: numbers, `+ - * / ^` (`^` right-associative,
 /// binds tighter than unary minus), parentheses, `{Name}` document variables, letter variables
-/// (case-insensitive) and a postfix `'` meaning feet (x 304.8 mm). A leading `=` is ignored.
+/// (case-insensitive) and a postfix `'` meaning feet (x `ctx.feet`, 304.8 mm by default). A leading `=` is ignored.
 /// Division by zero, unknown names, non-finite results, over-long or too-deeply-nested input
 /// are errors; never throws.
 ExpressionResult evaluateExpression(std::string_view text, const DocumentVariables& vars,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -92,6 +93,9 @@ struct ToolpathRecord {
     /// Double-sided jobs (T-0261, ADR-0048): the sheet (face of the stock) the toolpath machines;
     /// null for single-sided jobs and for records made before the job became double-sided.
     SheetId sheet{};
+    /// Calculation edit boxes (T-0257, T-0271): form field id -> the `=...` text typed there, so the
+    /// toolpath can be recalculated when a document variable changes. Empty for most records.
+    std::map<std::string, std::string> expressions;
 
     ToolpathOperation operation() const { return static_cast<ToolpathOperation>(params.index()); }
     /// Absolute safe Z of the operation's parameters (mm).

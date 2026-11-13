@@ -1,4 +1,5 @@
 #include "tool_panel.hpp"
+#include "variable_menu.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -67,6 +68,7 @@ void ToolPanel::addOptionRows(ToolKind tool) {
             canvas_->update();
         });
         auto* size = new QLineEdit(this);
+        attachVariableMenu(size);
         size->setPlaceholderText(QStringLiteral("corner size"));
         form_->addRow(QStringLiteral("Corner size"), size);
         connect(size, &QLineEdit::textEdited, this, [this, size](const QString& t) {
@@ -328,6 +330,7 @@ void ToolPanel::rebuild() {
     const document::Units units = ctl.displayUnits();
     for (const viewmodel::NumericField& f : ctl.fields()) {
         auto* edit = new QLineEdit(this);
+        attachVariableMenu(edit);
         QString label = qs(f.label);
         if (f.kind == FieldKind::Length) {
             label += QStringLiteral(" (%1)").arg(QString::fromUtf8(document::unitSuffix(units).data()));

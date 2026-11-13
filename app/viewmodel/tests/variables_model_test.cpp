@@ -5,7 +5,12 @@
 
 #include <filesystem>
 #include <fstream>
+#include <map>
+#include <span>
+#include <string>
+#include <vector>
 
+#include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
 #include "carvetto/viewmodel/toolpath_session.hpp"
@@ -188,4 +193,89 @@ TEST_CASE("variables model: import overwrites same-named variables, export round
     CHECK_FALSE(g.model.importText("").ok);
     CHECK_FALSE(g.model.importText(std::string(VariablesModel::kMaxImportBytes + 1, 'x')).ok);
     CHECK_FALSE(g.model.exportFile("/nonexistent-dir-t0257/vars.txt").ok);
+}
+
+TEST_CASE("T-0271: a toolpath's expressions live in its record and survive save and load", "[variables]") {
+    Fixture f;
+    REQUIRE(f.model.set("Depth", "3").ok);
+    const document::ToolpathId id = f.addBoundPocket();
+    REQUIRE(f.doc.findToolpath(id) != nullptr);
+    CHECK(f.doc.findToolpath(id)->expressions == std::map<std::string, std::string>{{"cutDepth", "={Depth}"}});
+    CHECK(f.session.expressionsOf(id) == f.doc.findToolpath(id)->expressions);
+
+    const auto bytes = document::saveCarv(f.doc);
+    REQUIRE(bytes.ok());
+    auto loaded = document::loadCarv(std::span<const std::uint8_t>(bytes.value()));
+    REQUIRE(loaded.ok());
+    document::Document& copy = loaded.value().document;
+    ToolpathSession session(&copy);
+    session.setToolDatabase(f.db);
+    VariablesModel model(&copy, &session);
+    setCalculationProvider(&copy, [&copy]() { return std::optional<CalculationEnv>(environmentOf(copy)); });
+    struct Release {
+        const void* owner;
+        ~Release() { clearCalculationProvider(owner); }
+    } release{&copy};
+    CHECK(model.rows().front().references == 1);  // the loaded toolpath holds Depth
+    const VariableEdit refused = model.remove("Depth");
+    CHECK_FALSE(refused.ok);
+    CHECK(refused.message.find("Pocket") != std::string::npos);
+    CHECK(copy.variables().contains("Depth"));
+    // Changing the variable recalculates the loaded toolpath: the expression came back.
+    const VariableEdit r = model.set("Depth", "4");
+    REQUIRE(r.ok);
+    CHECK(r.recalculated == 1);
+    CHECK(std::get<toolpath::PocketParams>(copy.toolpaths().front().params).cutDepth == Approx(4.0));
+    // Editing the loaded toolpath shows the expression.
+    CHECK(session.form(copy.toolpaths().front().id)->expression("cutDepth") == "={Depth}");
+    // Undoing the toolpath's removal brings the expressions back with it.
+    REQUIRE(f.session.deleteToolpaths({id}).ok);
+    f.session.refreshReferences();
+    CHECK(f.doc.variables().referenceCount("Depth") == 0);
+    f.doc.undo();
+    f.session.refreshReferences();
+    CHECK(f.doc.variables().referenceCount("Depth") == 1);
+}
+
+TEST_CASE("T-0271: deferred recalculation edits the variable, then recalculates off the edit", "[variables]") {
+    Fixture f;
+    REQUIRE(f.model.set("Depth", "3").ok);
+    const document::ToolpathId id = f.addBoundPocket();
+    f.doc.undoStack().breakCoalescing();
+    const std::size_t steps = f.doc.undoStack().index();
+    f.model.setDeferRecalculation(true);
+    bool busy = false;
+    f.model.setBusyCheck([&busy]() { return busy; });
+
+    const VariableEdit r = f.model.set("Depth", "5");
+    REQUIRE(r.ok);
+    CHECK(r.recalculationPending);
+    CHECK(r.recalculated == 0);
+    CHECK(f.depthOf(id) == Approx(3.0));  // not yet
+    CHECK(f.doc.undoStack().index() == steps + 1);
+
+    // The background half: jobs are prepared against the new value, run anywhere, then applied.
+    std::vector<ToolpathOutcome> refused;
+    std::vector<ToolpathJob> jobs = f.session.prepareRecalculateBound(&refused);
+    REQUIRE(jobs.size() == 1);
+    CHECK(refused.empty());
+    std::vector<ToolpathCalculation> calcs;
+    for (const ToolpathJob& job : jobs) {
+        calcs.push_back(job.run(nullptr));
+    }
+    const BatchOutcome applied = f.session.applyAll(calcs);
+    REQUIRE(applied.ok);
+    CHECK(f.depthOf(id) == Approx(5.0));
+    CHECK(f.doc.findToolpath(id)->expressions.size() == 1);  // still bound
+    CHECK(f.doc.undoStack().index() == steps + 2);
+    CHECK(f.session.prepareRecalculateBound().empty());  // nothing changed since
+
+    // A busy check refuses every edit; an unrelated variable needs no recalculation.
+    busy = true;
+    CHECK_FALSE(f.model.set("Depth", "6").ok);
+    CHECK_FALSE(f.model.remove("Depth").ok);
+    busy = false;
+    REQUIRE(f.model.set("Other", "1").ok);
+    CHECK(f.model.set("Other", "2").recalculationPending);  // any bound toolpath: the job list is what filters
+    CHECK(f.session.prepareRecalculateBound().empty());
 }

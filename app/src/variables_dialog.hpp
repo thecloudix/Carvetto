@@ -25,6 +25,9 @@ class VariablesDialog : public QDialog {
     VariablesDialog(viewmodel::VariablesModel& model, QWidget* parent = nullptr);
 
     std::function<void()> onEdited;
+    /// Runs after an edit that left dependent toolpaths to recalculate (the window starts the
+    /// background recalculation; T-0271). Set `model.setDeferRecalculation(true)` to use it.
+    std::function<void()> onRecalculate;
 
     /// The inline message of the last action.
     QString message() const;

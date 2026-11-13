@@ -47,9 +47,13 @@ inline constexpr int kCarvFormatMinorDoubleSided = 5;
 /// The newest minor this build writes and reads.
 inline constexpr int kCarvFormatMinorBitmap = 6;
 /// 1.7 (T-0261, ADR-0048) adds the sheet a toolpath record belongs to (`job.json` toolpath
-/// `sheet`); written only when a record links to a sheet. The newest minor this build writes and reads.
+/// `sheet`); written only when a record links to a sheet.
 inline constexpr int kCarvFormatMinorToolpathSheet = 7;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorToolpathSheet;
+/// 1.8 (T-0271, ADR-0055) adds the calculation expressions of a toolpath record (`job.json` toolpath
+/// `expressions`, field id -> text); written only when a record has one. The newest minor this build
+/// writes and reads.
+inline constexpr int kCarvFormatMinorExpressions = 8;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorExpressions;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.
