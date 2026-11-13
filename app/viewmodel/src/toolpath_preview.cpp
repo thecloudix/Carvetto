@@ -166,8 +166,8 @@ std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<Mo
             continue;
         }
         if (still) {
-            // A vertical move: a dot where it happens (once for a plunge/retract pair repeats).
-            if (*cls == MoveClass::Plunge || *cls == MoveClass::Retract) {
+            // A vertical move (of any class): a dot where it happens (repeats at one place merge).
+            if (*cls == MoveClass::Plunge || *cls == MoveClass::Retract || std::fabs(m.to.z - from.z) > 1e-9) {
                 close();
                 PreviewChunk dot;
                 dot.cls = *cls;
@@ -197,6 +197,18 @@ std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<Mo
             isOpen = true;
         }
         for (const Vec2& p : pts) {
+            if (open.points.size() >= kPreviewChunkPoints) {
+                // A long arc is split into chunks (so culling can skip its off-screen parts); each
+                // piece starts at the last point of the one before and carries the arc's move index.
+                const Vec2 joint = open.points.back();
+                open.lastMove = idx;
+                close();
+                open.cls = *cls;
+                open.firstMove = idx;
+                open.points.push_back(joint);
+                open.bounds.expand(joint);
+                isOpen = true;
+            }
             open.points.push_back(p);
             open.bounds.expand(p);
         }
@@ -380,7 +392,10 @@ PreviewDrawList PreviewModel::draw(const ViewTransform& view, const PreviewDrawO
             const std::size_t before = batch.points.size();
             ++out.stats.chunksDrawn;
             const Box2 px = view.worldToScreen(chunk.bounds);
-            if (chunk.points.size() > 1 && px.width() < spacing && px.height() < spacing) {
+            const bool overBudget = options.maxPointsOut != 0 && out.stats.pointsOut >= options.maxPointsOut;
+            if (chunk.points.size() > 1 && ((px.width() < spacing && px.height() < spacing) || overBudget)) {
+                // (Over the point budget the rest of the job is drawn as one stroke per chunk.)
+                out.stats.chunksCoarse += overBudget ? 1 : 0;
                 // Smaller than a pixel: one short stroke across its extent keeps the density.
                 batch.points.push_back(view.worldToScreen(chunk.points.front()));
                 batch.points.push_back(view.worldToScreen(chunk.points.back()));

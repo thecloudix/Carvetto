@@ -390,6 +390,7 @@ void CanvasWidget::renderPreviewRange(QImage& layer, const ViewTransform& view, 
     options.toMove = to;
     options.played = played;
     options.classVisible = previewState_.classVisible;
+    options.maxPointsOut = 400000;  // bounds per-frame stroking cost; beyond it chunks draw as single strokes
     const viewmodel::PreviewDrawList list = preview_->draw(view, options);
     lastPreviewPoints_ += list.stats.pointsOut;
     QPainter p(&layer);

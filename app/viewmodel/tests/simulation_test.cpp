@@ -507,6 +507,116 @@ TEST_CASE("playback: unknown times fall back to moves", "[playback]") {
 
 // --- relief -------------------------------------------------------------------------------------
 
+TEST_CASE("relief: min-pooling keeps a groove narrower than the stride", "[relief]") {
+    simulate::Stock stock;
+    stock.width = 64;
+    stock.height = 64;
+    stock.thickness = 6;
+    stock.cellSize = 0.5;
+    simulate::Simulator sim(stock);
+    REQUIRE(sim.ok());
+    toolpath::Toolpath tp;
+    // A 1 mm wide groove along y = 20.25 (2 cells wide on a 128 x 128 grid).
+    tp.moves = {Move::rapid({2, 20.25, 5}), Move::feed({2, 20.25, -2}), Move::feed({60, 20.25, -2})};
+    auto tool = simulate::ToolShape::flatEndMill(1.0);
+    REQUIRE(tool);
+    REQUIRE(sim.addToolpath(tp, *tool, 1));
+    REQUIRE(sim.advanceAll());
+
+    ReliefOptions coarse;
+    coarse.maxPixels = 16;  // stride 8: the groove is far narrower than one pixel
+    const Raster r = renderRelief(sim.heightfield(), coarse);
+    REQUIRE(r.stride == 8);
+    std::size_t darkest = 0;
+    for (std::size_t py = 0; py < r.height; ++py) {
+        if (r.pixels[py * r.width + r.width / 2] != kStockColour) {
+            ++darkest;
+        }
+    }
+    CHECK(darkest >= 1);  // some pixel row in the middle column differs from plain stock
+    // Every pixel column the groove crosses (x from 2 to 60 mm) shows it somewhere.
+    std::size_t withGroove = 0;
+    for (std::size_t px = 0; px < r.width; ++px) {
+        bool seen = false;
+        for (std::size_t py = 0; py < r.height; ++py) {
+            const std::uint32_t c = r.pixels[py * r.width + px];
+            seen = seen || (c != kStockColour && ((c >> 16) & 0xFF) < 0xDE);
+        }
+        withGroove += seen ? 1 : 0;
+    }
+    CHECK(withGroove >= 12);
+    // Uncut stock far from the groove keeps the stock colour.
+    CHECK(r.pixels[0] == kStockColour);
+    CHECK(r.pixels[(r.height - 1) * r.width] == kStockColour);
+}
+
+TEST_CASE("relief: stride 1 is unchanged by pooling (flat stock, one cut cell)", "[relief]") {
+    simulate::Stock stock;
+    stock.width = 8;
+    stock.height = 8;
+    stock.thickness = 4;
+    stock.cellSize = 0.5;
+    simulate::Simulator sim(stock);
+    REQUIRE(sim.ok());
+    const Raster flat = renderRelief(sim.heightfield());
+    REQUIRE(flat.stride == 1);
+    REQUIRE(flat.width == 16);
+    for (const std::uint32_t c : flat.pixels) {
+        CHECK(c == kStockColour);
+    }
+    toolpath::Toolpath tp;
+    tp.moves = {Move::rapid({4, 4, 5}), Move::feed({4, 4, -1})};
+    auto tool = simulate::ToolShape::flatEndMill(1.0);
+    REQUIRE(tool);
+    REQUIRE(sim.addToolpath(tp, *tool, 1));
+    REQUIRE(sim.advanceAll());
+    const Raster r = renderRelief(sim.heightfield());
+    REQUIRE(r.stride == 1);
+    // The pixel of the cell at (4.25, 4.25) mm (i = 8, j = 8): row 0 is the top grid row.
+    const std::uint32_t cut = r.pixels[(r.height - 1 - 8) * r.width + 8];
+    CHECK(cut != kStockColour);
+    CHECK(r.pixels[(r.height - 1 - 2) * r.width + 2] == kStockColour);
+}
+
+TEST_CASE("relief: stride 1 golden hashes on a multi-pass sheet", "[relief]") {
+    // Hashes computed with the pre-pooling renderer (main before T-0231): at stride 1 the picture
+    // must not change at all, in either colour mode.
+    simulate::Stock stock;
+    stock.width = 40;
+    stock.height = 40;
+    stock.thickness = 6;
+    stock.cellSize = 0.5;
+    simulate::Simulator sim(stock);
+    REQUIRE(sim.ok());
+    toolpath::Toolpath a;
+    a.moves = {Move::rapid({5, 20, 5}), Move::feed({5, 20, -2}), Move::feed({35, 20, -2}),
+               Move::feed({35, 30, -9}), Move::feed({5, 30, -9})};
+    toolpath::Toolpath b;
+    b.moves = {Move::rapid({8, 8, 5}), Move::feed({8, 8, -3}), Move::feed({30, 12, -4}), Move::feed({12, 34, -1})};
+    auto big = simulate::ToolShape::flatEndMill(4.0);
+    auto small = simulate::ToolShape::flatEndMill(1.5);
+    REQUIRE(big);
+    REQUIRE(small);
+    REQUIRE(sim.addToolpath(a, *big, 1));
+    REQUIRE(sim.addToolpath(b, *small, 2));
+    REQUIRE(sim.advanceAll());
+    auto fnv = [](const Raster& r) {
+        std::uint64_t h = 1469598103934665603ull;
+        for (const std::uint32_t c : r.pixels) {
+            for (int s = 0; s < 32; s += 8) {
+                h = (h ^ ((c >> s) & 0xFFu)) * 1099511628211ull;
+            }
+        }
+        return h;
+    };
+    ReliefOptions opt;
+    const Raster depth = renderRelief(sim.heightfield(), opt);
+    REQUIRE(depth.stride == 1);
+    CHECK(fnv(depth) == 0x81ad88a2798f922cull);
+    opt.colourBy = ReliefOptions::ColourBy::Toolpath;
+    CHECK(fnv(renderRelief(sim.heightfield(), opt)) == 0x7c49aa918b24a9ddull);
+}
+
 TEST_CASE("relief: cut shows darker, through-cut shows the table, passes get colours", "[relief]") {
     simulate::Stock stock;
     stock.width = 40;
