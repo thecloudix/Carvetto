@@ -45,7 +45,7 @@ geometry::Box2 cutBounds(const document::ToolpathRecord& rec) {
 }
 }  // namespace
 
-TEST_CASE("vcarve inlay form: piece-dependent fields, bounds, tools", "[toolpath][form][vcarve_inlay]") {
+TEST_CASE("V-carve inlay form: piece-dependent fields, bounds, tools", "[toolpath][form][v_carve_inlay]") {
     const tooling::ToolDatabase db = cliToolDatabase();
     ToolpathForm form(ToolpathOperation::VCarveInlay, Units::Millimetres);
     CHECK(form.setTool(db, source("v-bit-90")).ok);
@@ -88,8 +88,8 @@ TEST_CASE("vcarve inlay form: piece-dependent fields, bounds, tools", "[toolpath
     CHECK(std::get<toolpath::VCarveInlayParams>(form.definition().params).plugSheet == 0);
 }
 
-TEST_CASE("vcarve inlay session: pocket and plug, clearance groups, undo, save, load, recalculate",
-          "[toolpath][session][vcarve_inlay]") {
+TEST_CASE("V-carve inlay session: pocket and plug, clearance groups, undo, save, load, recalculate",
+          "[toolpath][session][v_carve_inlay]") {
     namespace fs = std::filesystem;
     Document doc;
     const tooling::ToolDatabase db = cliToolDatabase();
@@ -126,7 +126,7 @@ TEST_CASE("vcarve inlay session: pocket and plug, clearance groups, undo, save, 
     CHECK(plug.max.x > 50.0);
     CHECK(doc.checkIntegrity().empty());
 
-    const fs::path dir = fs::path(CARVETTO_VM_WORK_DIR) / "vcarve_inlay";
+    const fs::path dir = fs::path(CARVETTO_VM_WORK_DIR) / "v_carve_inlay";
     fs::create_directories(dir);
     REQUIRE(document::saveCarv(doc, dir / "t.carv", {}));
     auto loaded = document::loadCarv(dir / "t.carv");
@@ -146,8 +146,8 @@ TEST_CASE("vcarve inlay session: pocket and plug, clearance groups, undo, save, 
     CHECK(doc.toolpaths().empty());
 }
 
-TEST_CASE("vcarve inlay session: the plug on another sheet is mirrored and centred there",
-          "[toolpath][session][vcarve_inlay]") {
+TEST_CASE("V-carve inlay session: the plug on another sheet is mirrored and centred there",
+          "[toolpath][session][v_carve_inlay]") {
     Document doc;
     const tooling::ToolDatabase db = cliToolDatabase();
     ToolpathSession session(&doc);

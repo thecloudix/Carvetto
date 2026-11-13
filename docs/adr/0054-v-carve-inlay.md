@@ -11,7 +11,7 @@ sub-pages are not in the reference, so what each field does is decided here. Eve
 
 ## Decision
 1. **One toolpath per piece**, as the straight inlay (ADR-0040): `VCarveInlayParams::piece` is Pocket
-   or Plug; the user adds one of each. New operation `VCarveInlay`, record `vcarve_inlay` (job.json
+   or Plug; the user adds one of each. New operation `VCarveInlay`, record `v_carve_inlay` (job.json
    only). Both pieces are built on `vCarvingToolpath` (ADR-0025): the V-bit carves along the medial
    axis and the flat areas are cleared by clearance tools (end mills) or by the V-bit itself. The
    carving tool must be a V-bit (the flank angle is what makes the pieces mate); clearance tools end

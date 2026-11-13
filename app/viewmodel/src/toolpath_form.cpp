@@ -12,8 +12,8 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/inlay.hpp"
-#include "carvetto/toolpath/vcarve_inlay.hpp"
-#include "carvetto/toolpath/photo_vcarve.hpp"
+#include "carvetto/toolpath/v_carve_inlay.hpp"
+#include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
@@ -556,8 +556,8 @@ Table<toolpath::VCarveInlayParams> makeVCarveInlayTable() {
     return t;
 }
 
-Table<toolpath::PhotoVCarveParams> makePhotoVCarveTable() {
-    using P = toolpath::PhotoVCarveParams;
+Table<toolpath::ImageEngraveParams> makeImageEngraveTable() {
+    using P = toolpath::ImageEngraveParams;
     Table<P> t;
     t.num("maxDepth", "Max carving depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.maxDepth; });
     bound(t, "maxDepth", 1e-3, 100000.0);
@@ -688,8 +688,8 @@ const Table<toolpath::VCarveInlayParams>& tableOf() {
 }
 
 template <>
-const Table<toolpath::PhotoVCarveParams>& tableOf() {
-    static const Table<toolpath::PhotoVCarveParams> t = makePhotoVCarveTable();
+const Table<toolpath::ImageEngraveParams>& tableOf() {
+    static const Table<toolpath::ImageEngraveParams> t = makeImageEngraveTable();
     return t;
 }
 

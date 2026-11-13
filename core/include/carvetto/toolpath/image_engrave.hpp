@@ -15,7 +15,7 @@
 #include "carvetto/toolpath/operation.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
 
-// Photo V-Carve toolpath (T-0250, ADR-0047; feature-inventory "Photo V-Carve Toolpath"): a V-bit
+// Image Engrave toolpath (T-0250, ADR-0047; feature-inventory "Image Engrave Toolpath"): a V-bit
 // (or engraving bit) runs along lines over a bitmap and its depth follows the image: dark pixels
 // cut deep, light pixels shallow, bounded by Max Carving Depth and by the depth at which the cone
 // is as wide as the tool.
@@ -43,9 +43,9 @@ GrayImage grayFromRaster(const io::RasterImage& image);
 /// SelectedVectors: the supplied vectors are followed, the depth sampled along them.
 enum class PhotoStrategy { Raster, Hatch, SelectedVectors };
 
-/// Parameters of a photo V-carve. Lengths in mm, angles in radians.
-struct PhotoVCarveParams {
-    std::string name{"Photo V-Carve"};
+/// Parameters of an image engrave. Lengths in mm, angles in radians.
+struct ImageEngraveParams {
+    std::string name{"Image Engrave"};
     /// Max Carving Depth (> 0): the depth of a fully dark pixel (before the tool limit).
     double maxDepth{2.0};
     /// Dark pixels cut deep by default; true makes light pixels cut deep.
@@ -65,10 +65,10 @@ struct PhotoVCarveParams {
     /// `chordal`: polygonising selected vectors.
     geometry::Tolerance tolerance{geometry::Tolerance::defaults()};
 
-    bool operator==(const PhotoVCarveParams&) const = default;
+    bool operator==(const ImageEngraveParams&) const = default;
 };
 
-struct PhotoVCarveResult {
+struct ImageEngraveResult {
     Toolpath toolpath;
     std::vector<ToolpathDiagnostic> diagnostics;
     /// Lines (or vectors) that carry a cut.
@@ -82,15 +82,15 @@ struct PhotoVCarveResult {
 };
 
 /// V-bit and engraving bit.
-bool photoVCarveToolAllowed(tooling::ToolType type);
+bool imageEngraveToolAllowed(tooling::ToolType type);
 
 /// Depth at which the cone of a V-bit or engraving bit is as wide as its diameter:
 /// (D - tip) / (2 tan(angle / 2)); 0 for another type or a malformed tool.
-double photoVCarveDepthLimit(const tooling::Tool& tool);
+double imageEngraveDepthLimit(const tooling::Tool& tool);
 
 /// Depth (mm, >= 0) for a gray value 0..255 (may be fractional): maxDepth * darkness, darkness =
 /// 1 - gray/255 (gray/255 when inverted), then clamped to `depthLimit` (ADR-0047).
-double photoVCarveDepth(const PhotoVCarveParams& params, double depthLimit, double gray);
+double imageEngraveDepth(const ImageEngraveParams& params, double depthLimit, double gray);
 
 /// Computes the toolpath. `placement` is the rectangle the image covers in document mm (top row at
 /// placement.max.y). `contours` are used by SelectedVectors only (polygonised to
@@ -100,9 +100,9 @@ double photoVCarveDepth(const PhotoVCarveParams& params, double depthLimit, doub
 /// out-of-range parameters, wrong tool) gives an empty toolpath and a diagnostic, never a crash.
 /// `control.cancel` stops the run with `Cancelled`; `control.workLimit` (samples; default 50
 /// million) and `control.moveLimit` bound the work.
-PhotoVCarveResult photoVCarve(const GrayImage& image, const geometry::Box2& placement, const tooling::Tool& tool,
+ImageEngraveResult imageEngrave(const GrayImage& image, const geometry::Box2& placement, const tooling::Tool& tool,
                               const std::optional<tooling::CuttingData>& cuttingData,
-                              const PhotoVCarveParams& params,
+                              const ImageEngraveParams& params,
                               const std::vector<geometry::Contour>& contours = {},
                               const ToolpathRunControl& control = {});
 

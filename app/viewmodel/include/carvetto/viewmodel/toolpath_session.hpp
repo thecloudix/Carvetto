@@ -156,7 +156,7 @@ class ToolpathSession {
     void setDocument(document::Document* doc);
     document::Document* document() const { return doc_; }
 
-    /// Decodes the non-Netpbm images (PNG, JPEG, ...) of a photo V-carve; the app supplies QImage's.
+    /// Decodes the non-Netpbm images (PNG, JPEG, ...) of an image engrave; the app supplies QImage's.
     /// Without one only Netpbm bitmaps can be carved. Must be thread-safe: it runs on the worker.
     void setBitmapDecoder(document::BitmapDecoder decoder) { bitmapDecoder_ = std::move(decoder); }
 
@@ -193,7 +193,7 @@ class ToolpathSession {
     std::optional<ToolpathForm> form(document::ToolpathId id);
     /// Number of vectors (contours) `selector` selects now ("objects count readout").
     std::size_t countVectors(const VectorSelector& selector) const;
-    /// Photo V-carve: why `selector` names no usable bitmap now (empty when it does).
+    /// Image Engrave: why `selector` names no usable bitmap now (empty when it does).
     std::string bitmapProblem(const VectorSelector& selector) const;
 
     // --- Calculation -------------------------------------------------------------------------

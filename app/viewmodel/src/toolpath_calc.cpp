@@ -16,8 +16,8 @@
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/toolpath/inlay.hpp"
-#include "carvetto/toolpath/vcarve_inlay.hpp"
-#include "carvetto/toolpath/photo_vcarve.hpp"
+#include "carvetto/toolpath/v_carve_inlay.hpp"
+#include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/prism.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
@@ -223,7 +223,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Inlay: def.params = toolpath::InlayParams{}; break;
         case ToolpathOperation::Fluting: def.params = toolpath::FlutingParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
-        case ToolpathOperation::PhotoVCarve: def.params = toolpath::PhotoVCarveParams{}; break;
+        case ToolpathOperation::ImageEngrave: def.params = toolpath::ImageEngraveParams{}; break;
         case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
     }
     return def;
@@ -298,8 +298,8 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Inlay: return "inlay";
         case ToolpathOperation::Fluting: return "fluting";
         case ToolpathOperation::Prism: return "prism";
-        case ToolpathOperation::PhotoVCarve: return "photo_vcarve";
-        case ToolpathOperation::VCarveInlay: return "vcarve_inlay";
+        case ToolpathOperation::ImageEngrave: return "image_engrave";
+        case ToolpathOperation::VCarveInlay: return "v_carve_inlay";
     }
     return "?";
 }
@@ -315,7 +315,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Inlay: return toolpath::inlayToolAllowed(type);
         case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
-        case ToolpathOperation::PhotoVCarve: return toolpath::photoVCarveToolAllowed(type);
+        case ToolpathOperation::ImageEngrave: return toolpath::imageEngraveToolAllowed(type);
         case ToolpathOperation::VCarveInlay:
             return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarveInlayToolAllowed(type);
         case ToolpathOperation::VCarving:
@@ -498,7 +498,7 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
         job.notes.push_back(note(MessageSeverity::Info, std::to_string(vectors.skippedOtherSheet) +
                                                             " vector(s) on other sheets are not machined"));
     }
-    const auto* photoParams = std::get_if<toolpath::PhotoVCarveParams>(&job.definition.params);
+    const auto* photoParams = std::get_if<toolpath::ImageEngraveParams>(&job.definition.params);
     const bool photoWithoutVectors = photoParams != nullptr && photoParams->strategy != toolpath::PhotoStrategy::SelectedVectors;
     if (photoWithoutVectors) {
         return job;  // reads the bitmap only (see attachPhotoInput)
@@ -578,7 +578,7 @@ void attachPlugSheet(ToolpathJob& job, const document::Document& doc) {
 
 void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
                       const document::BitmapDecoder& decoder) {
-    if (!std::holds_alternative<toolpath::PhotoVCarveParams>(job.definition.params)) {
+    if (!std::holds_alternative<toolpath::ImageEngraveParams>(job.definition.params)) {
         return;
     }
     const auto refuse = [&](std::string why) {
@@ -612,7 +612,7 @@ void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const Res
 
 std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
                                 const document::ToolpathParams& params) {
-    const auto* photo = std::get_if<toolpath::PhotoVCarveParams>(&params);
+    const auto* photo = std::get_if<toolpath::ImageEngraveParams>(&params);
     if (photo == nullptr) {
         return fingerprint(resolveVectors(doc, selector));
     }
@@ -657,7 +657,7 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         out.messages.push_back(note(MessageSeverity::Error, refusal));
         return out;
     }
-    const auto* photoParams = std::get_if<toolpath::PhotoVCarveParams>(&definition.params);
+    const auto* photoParams = std::get_if<toolpath::ImageEngraveParams>(&definition.params);
     const bool needsContours = photoParams == nullptr || photoParams->strategy == toolpath::PhotoStrategy::SelectedVectors;
     if (!tool.has_value() || (needsContours && contours.empty()) || (photoParams != nullptr && !photo.has_value())) {
         // a job not made by makeToolpathJob
@@ -732,7 +732,7 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
             }
-        } else if (op == ToolpathOperation::PhotoVCarve) {
+        } else if (op == ToolpathOperation::ImageEngrave) {
             const document::BitmapDecoder& decode = photo->decoder;
             geometry::ShapeResult<io::RasterImage> raster =
                 document::decodeBitmapBytes(std::span<const std::uint8_t>(photo->bytes), decode);
@@ -748,7 +748,7 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
             const toolpath::GrayImage gray = toolpath::grayFromRaster(raster.value());
             toolpath::ToolpathRunControl control;
             control.cancel = cancel;
-            toolpath::PhotoVCarveResult r = toolpath::photoVCarve(gray, photo->placement, tool->tool, tool->data,
+            toolpath::ImageEngraveResult r = toolpath::imageEngrave(gray, photo->placement, tool->tool, tool->data,
                                                                   *photoParams, contours, control);
             diagnostics = r.diagnostics;
             if (r.ok()) {

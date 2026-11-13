@@ -1,6 +1,7 @@
 // Keep-out zone routing (T-0241, ADR-0036): rapids never enter a zone, detours are shortest
 // around the obstacle, post blocks are chosen by detour role.
 
+#include <algorithm>
 #include <atomic>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
@@ -333,13 +334,155 @@ void checkRouteSafe(KeepOutField& field, Vec2 a, Vec2 b, const RouteResult& r) {
 
 }  // namespace
 
-TEST_CASE("routing cost is bounded: a 4000-vertex polygon", "[keepout][scale]") {
+namespace {
+
+double pathLength(Vec2 a, const std::vector<Vec2>& pts) {
+    double len = 0.0;
+    Vec2 prev = a;
+    for (const Vec2& p : pts) {
+        len += carvetto::geometry::distance(prev, p);
+        prev = p;
+    }
+    return len;
+}
+
+// Independent oracle: a leg enters a convex polygon's interior when a sampled point lies strictly
+// inside every half-plane (circle polygon: closer to the centre than the apothem less a hair).
+bool legEntersCircle(Vec2 a, Vec2 b, Vec2 c, double r, int n) {
+    const double apothem = r * std::cos(3.141592653589793 / n);
+    for (int i = 1; i < 2000; ++i) {
+        const double t = i / 2000.0;
+        const Vec2 q{a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t};
+        if (carvetto::geometry::distance(q, c) < apothem - 1e-6) {
+            return true;
+        }
+    }
+    return false;
+}
+
+}  // namespace
+
+TEST_CASE("a 4000-vertex circle zone routes a blocked rapid quickly and safely", "[keepout][scale]") {
     const double t0 = carvetto::test::processCpuSeconds();
     KeepOutField field({polygonCircle({0, 0}, 50.0, 4000)}, 0.0);
     const RouteResult r = field.route({-80, 1}, {80, 1});
-    CHECK(r.status != RouteStatus::Clear);
+    REQUIRE(r.status == RouteStatus::Routed);
     checkRouteSafe(field, {-80, 1}, {80, 1}, r);
+    Vec2 prev{-80, 1};
+    for (const Vec2& p : r.points) {
+        CHECK_FALSE(legEntersCircle(prev, p, {0, 0}, 50.0, 4000));
+        prev = p;
+    }
+    // Shortest path: two tangents plus the arc (about the half circle) between them.
+    const double len = pathLength({-80, 1}, r.points);
+    CHECK(len > 160.0);
+    CHECK(len < 160.0 + 50.0 * 3.141592653589793 - 50.0 * 2.0 + 20.0);
     CHECK(carvetto::test::processCpuSeconds() - t0 < 5.0);
+}
+
+TEST_CASE("a toolpath with many blocked rapids round a 4000-vertex circle routes in time", "[keepout][scale]") {
+    const double t0 = carvetto::test::processCpuSeconds();
+    KeepOutField field({polygonCircle({0, 0}, 50.0, 4000)}, 0.0);
+    Toolpath tp = rapidsOnly({{-80, 1}, {80, 1}, {-80, -3}, {80, -1}, {-80, 2}});
+    const RoutingReport rep = routeRapids(tp, field, Vec3{-80, 1, 5});
+    CHECK(rep.routed == 4);
+    CHECK(rep.tooComplex == 0);
+    CHECK(countBlockedRapids(tp, field, Vec3{-80, 1, 5}) == 0);
+    CHECK(carvetto::test::processCpuSeconds() - t0 < 10.0);
+}
+
+TEST_CASE("tangent search finds the same shortest routes as the exhaustive search", "[keepout][property]") {
+    std::mt19937 rng(777);
+    std::uniform_real_distribution<double> coord(-60.0, 60.0);
+    std::uniform_real_distribution<double> size(3.0, 25.0);
+    int compared = 0;
+    for (int iter = 0; iter < 60; ++iter) {
+        std::vector<Contour> zones;
+        const int nz = 1 + static_cast<int>(rng() % 6);
+        for (int i = 0; i < nz; ++i) {
+            const double x = coord(rng);
+            const double y = coord(rng);
+            switch (rng() % 3) {
+                case 0: zones.push_back(Contour::circle({x, y}, size(rng) * 0.5)); break;
+                case 1: zones.push_back(rect(x, y, x + size(rng), y + size(rng))); break;
+                default: zones.push_back(polygonCircle({x, y}, size(rng) * 0.5, 7)); break;
+            }
+        }
+        // A ring-shaped pair (hole) and an L shape exercise concave corners.
+        if (iter % 4 == 0) {
+            zones.push_back(rect(-20, -20, 20, 20));
+            zones.push_back(rect(-10, -10, 10, 10));
+        }
+        const double clearance = (iter % 3) * 1.5;
+        KeepOutField full(zones, clearance);
+        KeepOutField tang(zones, clearance);
+        tang.forceTangentSearch(true);
+        for (int k = 0; k < 8; ++k) {
+            const Vec2 a{coord(rng), coord(rng)};
+            const Vec2 b{coord(rng), coord(rng)};
+            const RouteResult rf = full.route(a, b);
+            const RouteResult rt = tang.route(a, b);
+            CHECK(rf.status == rt.status);
+            if (rf.status == RouteStatus::Routed && rt.status == RouteStatus::Routed) {
+                CHECK(std::fabs(pathLength(a, rf.points) - pathLength(a, rt.points)) < 1e-9);
+                checkRouteSafe(tang, a, b, rt);
+                ++compared;
+            }
+        }
+    }
+    CHECK(compared > 30);
+}
+
+TEST_CASE("the grid index agrees with a closed-form oracle on a 4000-vertex circle", "[keepout][property]") {
+    const KeepOutField field({polygonCircle({3, -2}, 50.0, 4000)}, 0.0);
+    const double apothem = 50.0 * std::cos(3.141592653589793 / 4000);
+    std::mt19937 rng(4242);
+    std::uniform_real_distribution<double> coord(-90.0, 90.0);
+    int blocked = 0;
+    int clear = 0;
+    for (int i = 0; i < 400; ++i) {
+        const Vec2 a{coord(rng), coord(rng)};
+        const Vec2 b{coord(rng), coord(rng)};
+        // Distance from the centre to the segment.
+        const Vec2 c{3, -2};
+        const Vec2 d = b - a;
+        const double len2 = d.dot(d);
+        const double t = std::clamp((c - a).dot(d) / len2, 0.0, 1.0);
+        const double dist = carvetto::geometry::distance(c, a + d * t);
+        if (dist < apothem - 1e-6) {
+            CHECK(field.blocks(a, b));
+            ++blocked;
+        } else if (dist > 50.0 + 1e-6) {
+            CHECK_FALSE(field.blocks(a, b));
+            ++clear;
+        }
+        const bool inside = carvetto::geometry::distance(c, a) < apothem - 1e-6;
+        if (inside) {
+            CHECK(field.contains(a));
+        } else if (carvetto::geometry::distance(c, a) > 50.0 + 1e-6) {
+            CHECK_FALSE(field.contains(a));
+        }
+    }
+    CHECK(blocked > 50);
+    CHECK(clear > 50);
+}
+
+TEST_CASE("the exhaustive search is unchanged when it fits the budget", "[keepout]") {
+    KeepOutField field({rect(0, 0, 10, 10)}, 0.0);
+    const RouteResult r = field.route({-5, 5}, {15, 5});
+    REQUIRE(r.status == RouteStatus::Routed);
+    CHECK_FALSE(field.usesTangentSearch());
+    REQUIRE(r.points.size() == 3);
+    CHECK(r.points[0] == Vec2{0, 10});
+    CHECK(r.points[1] == Vec2{10, 10});
+    CHECK(r.points[2] == Vec2{15, 5});
+}
+
+TEST_CASE("running out of budget switches the field to the tangent search", "[keepout]") {
+    KeepOutField field({polygonCircle({0, 0}, 50.0, 400)}, 0.0);
+    field.setRouteWorkLimit(200'000);
+    CHECK(field.route({-80, 1}, {80, 1}).status == RouteStatus::Routed);
+    CHECK(field.usesTangentSearch());
 }
 
 TEST_CASE("routing cost is bounded: maximum clearance on a small square", "[keepout][scale]") {

@@ -1,4 +1,4 @@
-// T-0275: the Photo V-carve form, bitmap import and the session around the T-0250 core: the bitmap
+// T-0275: the Image Engrave form, bitmap import and the session around the T-0250 core: the bitmap
 // is read from the selection, the record names it, one undo step, save/load, staleness, cancel and
 // the work cap.
 
@@ -65,7 +65,7 @@ document::ObjectId importHalf(Document& doc) {
 }
 
 ToolpathDefinition photoFor(const tooling::ToolDatabase& db, const Document& doc) {
-    ToolpathForm form(ToolpathOperation::PhotoVCarve, Units::Millimetres);
+    ToolpathForm form(ToolpathOperation::ImageEngrave, Units::Millimetres);
     REQUIRE(form.setTool(db, source("v-bit-90")).ok);
     form.setSelector(VectorSelector::fromSelection(doc));
     return form.definition();
@@ -83,8 +83,8 @@ double minZ(const document::ToolpathRecord& rec) {
 
 TEST_CASE("photo form: fields, choices and bounds", "[toolpath][form][photo]") {
     const tooling::ToolDatabase db = cliToolDatabase();
-    ToolpathForm form(ToolpathOperation::PhotoVCarve, Units::Millimetres);
-    CHECK(toolsFor(db, ToolpathOperation::PhotoVCarve).size() >= 1);
+    ToolpathForm form(ToolpathOperation::ImageEngrave, Units::Millimetres);
+    CHECK(toolsFor(db, ToolpathOperation::ImageEngrave).size() >= 1);
     CHECK_FALSE(form.setTool(db, source("end-mill-3mm")).ok);
     CHECK_FALSE(form.setTool(db, source("drill-3mm")).ok);
     REQUIRE(form.setTool(db, source("v-bit-90")).ok);
@@ -103,7 +103,7 @@ TEST_CASE("photo form: fields, choices and bounds", "[toolpath][form][photo]") {
     REQUIRE(form.setField("lineSpacing", "35").ok);
     REQUIRE(form.setField("lineAngle", "45").ok);
     REQUIRE(form.setChoice("invert", 1).ok);
-    const auto& p = std::get<toolpath::PhotoVCarveParams>(form.definition().params);
+    const auto& p = std::get<toolpath::ImageEngraveParams>(form.definition().params);
     CHECK(p.maxDepth == Approx(1.5));
     CHECK(p.stepoverRetract == 0.0);
     CHECK(p.lineSpacingPercent == Approx(35.0));
@@ -203,7 +203,7 @@ TEST_CASE("photo session: carve the selected bitmap, one undo step, save, load, 
     doc.undoStack().clear();
 
     ToolpathDefinition def = photoFor(db, doc);
-    auto& params = std::get<toolpath::PhotoVCarveParams>(def.params);
+    auto& params = std::get<toolpath::ImageEngraveParams>(def.params);
     params.maxDepth = 1.0;
     params.lineSpacingPercent = 100.0;
     const ToolpathOutcome out = session.add(def);
@@ -211,7 +211,7 @@ TEST_CASE("photo session: carve the selected bitmap, one undo step, save, load, 
     REQUIRE(out.ok);
     REQUIRE(doc.toolpaths().size() == 1);
     const document::ToolpathRecord& rec = doc.toolpaths().front();
-    CHECK(rec.operation() == ToolpathOperation::PhotoVCarve);
+    CHECK(rec.operation() == ToolpathOperation::ImageEngrave);
     CHECK(rec.selection.objects == std::vector<document::ObjectId>{bitmap});
     REQUIRE(rec.hasMoves());
     CHECK(minZ(rec) == Approx(-1.0).margin(1e-6));
@@ -233,7 +233,7 @@ TEST_CASE("photo session: carve the selected bitmap, one undo step, save, load, 
     // Invert swaps the halves.
     {
         ToolpathDefinition inv = def;
-        std::get<toolpath::PhotoVCarveParams>(inv.params).invert = true;
+        std::get<toolpath::ImageEngraveParams>(inv.params).invert = true;
         const ToolpathCalculation calc = session.prepare(inv).run();
         REQUIRE(calc.ok);
         bool deepRight = false;
@@ -286,7 +286,7 @@ TEST_CASE("photo session: edit recalculates in one undo step; moving the bitmap 
     const document::ObjectId bitmap = importHalf(doc);
     doc.undoStack().clear();
     ToolpathDefinition def = photoFor(db, doc);
-    std::get<toolpath::PhotoVCarveParams>(def.params).maxDepth = 1.0;
+    std::get<toolpath::ImageEngraveParams>(def.params).maxDepth = 1.0;
     REQUIRE(session.add(def).ok);
     const document::ToolpathId id = doc.toolpaths().front().id;
     CHECK(session.list().front().status == ToolpathStatus::Current);
@@ -294,7 +294,7 @@ TEST_CASE("photo session: edit recalculates in one undo step; moving the bitmap 
     // Recalculate with another depth (Edit): one step.
     const std::size_t steps = doc.undoStack().index();
     ToolpathDefinition edited = *session.definition(id);
-    std::get<toolpath::PhotoVCarveParams>(edited.params).maxDepth = 0.5;
+    std::get<toolpath::ImageEngraveParams>(edited.params).maxDepth = 0.5;
     REQUIRE(session.update(id, edited).ok);
     CHECK(doc.undoStack().index() == steps + 1);
     CHECK(minZ(doc.toolpaths().front()) == Approx(-0.5).margin(1e-6));
@@ -359,7 +359,7 @@ TEST_CASE("photo session: refusals say what is missing", "[toolpath][session][ph
     REQUIRE(doc.execute(std::make_unique<document::SetLayerPropertiesCommand>(l)));
 
     // Selected Vectors needs vectors beside the bitmap.
-    std::get<toolpath::PhotoVCarveParams>(def.params).strategy = toolpath::PhotoStrategy::SelectedVectors;
+    std::get<toolpath::ImageEngraveParams>(def.params).strategy = toolpath::PhotoStrategy::SelectedVectors;
     out = session.add(def);
     CHECK_FALSE(out.ok);
     CHECK(out.message.find("Selected Vectors") != std::string::npos);
@@ -384,8 +384,8 @@ TEST_CASE("photo session: Selected Vectors follows the chosen vectors; Hatch add
     doc.undoStack().clear();
 
     ToolpathDefinition def = photoDefinition(db);
-    std::get<toolpath::PhotoVCarveParams>(def.params).strategy = toolpath::PhotoStrategy::SelectedVectors;
-    std::get<toolpath::PhotoVCarveParams>(def.params).maxDepth = 1.0;
+    std::get<toolpath::ImageEngraveParams>(def.params).strategy = toolpath::PhotoStrategy::SelectedVectors;
+    std::get<toolpath::ImageEngraveParams>(def.params).maxDepth = 1.0;
     def.selector = VectorSelector::fromObjects({bitmap, vec});
     const ToolpathOutcome out = session.add(def);
     INFO(out.message);
@@ -404,7 +404,7 @@ TEST_CASE("photo session: Selected Vectors follows the chosen vectors; Hatch add
     ToolpathDefinition raster = photoDefinition(db);
     raster.selector = VectorSelector::fromObjects({bitmap});
     ToolpathDefinition hatch = raster;
-    std::get<toolpath::PhotoVCarveParams>(hatch.params).strategy = toolpath::PhotoStrategy::Hatch;
+    std::get<toolpath::ImageEngraveParams>(hatch.params).strategy = toolpath::PhotoStrategy::Hatch;
     const ToolpathCalculation r = session.prepare(raster).run();
     const ToolpathCalculation h = session.prepare(hatch).run();
     REQUIRE(r.ok);
@@ -454,7 +454,7 @@ TEST_CASE("photo session: cancel and work cap", "[toolpath][session][photo]") {
     // The work cap: far more samples than the limit are refused before generating.
     {
         ToolpathDefinition big = def;
-        auto& p = std::get<toolpath::PhotoVCarveParams>(big.params);
+        auto& p = std::get<toolpath::ImageEngraveParams>(big.params);
         p.lineSpacingPercent = 0.01;
         ToolpathJob job = session.prepare(big);
         job.photo->bytes = pgm(1000, 1000, [](int x, int y) { return (x + y) % 256; });
@@ -490,7 +490,7 @@ TEST_CASE("photo session: a decoder supplies non-Netpbm images", "[toolpath][ses
     doc.undoStack().clear();
     calls = 0;
     ToolpathDefinition def = photoFor(db, doc);
-    std::get<toolpath::PhotoVCarveParams>(def.params).maxDepth = 1.0;
+    std::get<toolpath::ImageEngraveParams>(def.params).maxDepth = 1.0;
     REQUIRE(session.add(def).ok);
     CHECK(calls == 1);
     // A flat black image carves a constant depth.

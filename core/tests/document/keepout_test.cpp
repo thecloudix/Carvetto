@@ -4,8 +4,10 @@
 #include <cmath>
 #include <memory>
 #include <span>
+#include <string>
 #include <vector>
 
+#include "carv_zip.hpp"
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
@@ -155,4 +157,54 @@ TEST_CASE("a document without zones keeps its old format version and has no keep
     CHECK(loaded.value().formatMinor == kCarvFormatMinorBase);
     CHECK(loaded.value().document.keepOutZones().empty());
     CHECK(loaded.value().document.keepOutVisible());
+}
+
+namespace {
+
+std::string jobJson(const std::vector<std::uint8_t>& archive) {
+    auto r = carvetto::document::detail::readZip(archive);
+    REQUIRE(r.ok);
+    for (const auto& m : r.members) {
+        if (m.name == "job.json") {
+            return {m.data.begin(), m.data.end()};
+        }
+    }
+    FAIL("no job.json");
+    return {};
+}
+
+}  // namespace
+
+TEST_CASE("unknown keys inside the keepout record are preserved on re-save (T-0258)", "[keepout][document][carv]") {
+    Document doc;
+    REQUIRE(doc.execute(std::make_unique<CreateKeepOutZonesCommand>(std::vector<Contour>{rect(0, 0, 10, 10)})));
+    auto bytes = saveCarv(doc);
+    REQUIRE(bytes.ok());
+    auto r = carvetto::document::detail::readZip(bytes.value());
+    REQUIRE(r.ok);
+    for (auto& m : r.members) {
+        if (m.name == "job.json") {
+            std::string text(m.data.begin(), m.data.end());
+            const std::size_t pos = text.find("\"keepout\": {");
+            REQUIRE(pos != std::string::npos);
+            text.insert(pos + 13, "\"future_key\": {\"a\": [1, 2]}, ");
+            m.data.assign(text.begin(), text.end());
+        }
+    }
+    auto w = carvetto::document::detail::writeZip(r.members);
+    REQUIRE(w.ok);
+
+    auto loaded = loadCarv(std::span<const std::uint8_t>(w.bytes));
+    REQUIRE(loaded.ok());
+    CHECK(loaded.value().document.keepOutZones().size() == 1);
+    auto again = saveCarv(loaded.value().document, loaded.value().extras);
+    REQUIRE(again.ok());
+    const std::string out = jobJson(again.value());
+    CHECK(out.find("\"future_key\"") != std::string::npos);
+    CHECK(out.find("\"a\"") != std::string::npos);
+
+    // Without the extras the key is gone (it is not invented).
+    auto plain = saveCarv(loaded.value().document);
+    REQUIRE(plain.ok());
+    CHECK(jobJson(plain.value()).find("future_key") == std::string::npos);
 }

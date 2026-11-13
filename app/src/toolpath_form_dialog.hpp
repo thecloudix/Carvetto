@@ -40,7 +40,7 @@ struct FormDocumentInfo {
     std::vector<document::ObjectId> selection;
     /// Number of vectors a selector selects now (the readout). Optional.
     std::function<std::size_t(const viewmodel::VectorSelector&)> countVectors;
-    /// Photo V-carve: why the bitmap the selector names cannot be carved (empty when it can).
+    /// Image Engrave: why the bitmap the selector names cannot be carved (empty when it can).
     /// Optional; without it only the presence of a bitmap object is not checked.
     std::function<std::string(const viewmodel::VectorSelector&)> bitmapProblem;
     /// Called with the document variables the form's calculation boxes name, whenever they change
@@ -89,7 +89,7 @@ class ToolpathFormDialog : public QDialog {
     void applyTool();
     void applyClearance();
     void setMessage(const std::string& text, bool error);
-    bool isPhoto() const { return form_.operation() == document::ToolpathOperation::PhotoVCarve; }
+    bool isPhoto() const { return form_.operation() == document::ToolpathOperation::ImageEngrave; }
     /// What is wrong with the vectors or bitmap the toolpath would read now; empty when fine.
     std::string sourceProblem() const;
     void reportVariables();

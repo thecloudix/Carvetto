@@ -302,14 +302,14 @@ TEST_CASE("form: the tool must suit the operation", "[toolpath][form]") {
     CHECK(drill.setTool(db, source("drill-3mm")).ok);
     CHECK(drill.setTool(db, source("end-mill-3mm")).ok);
 
-    ToolpathForm vcarve(ToolpathOperation::VCarving, Units::Millimetres);
-    CHECK_FALSE(vcarve.setTool(db, source("end-mill-3mm")).ok);
-    CHECK(vcarve.setTool(db, source("v-bit-90")).ok);
-    CHECK_FALSE(vcarve.setClearanceTools(db, {source("v-bit-90")}).ok);
-    CHECK_FALSE(vcarve.setClearanceTools(db, {source("end-mill-3mm"), source("missing")}).ok);
-    CHECK(vcarve.clearanceTools().empty());  // all or nothing
-    CHECK(vcarve.setClearanceTools(db, {source("end-mill-6mm"), source("end-mill-3mm")}).ok);
-    CHECK(vcarve.clearanceTools().size() == 2);
+    ToolpathForm vBitMode(ToolpathOperation::VCarving, Units::Millimetres);
+    CHECK_FALSE(vBitMode.setTool(db, source("end-mill-3mm")).ok);
+    CHECK(vBitMode.setTool(db, source("v-bit-90")).ok);
+    CHECK_FALSE(vBitMode.setClearanceTools(db, {source("v-bit-90")}).ok);
+    CHECK_FALSE(vBitMode.setClearanceTools(db, {source("end-mill-3mm"), source("missing")}).ok);
+    CHECK(vBitMode.clearanceTools().empty());  // all or nothing
+    CHECK(vBitMode.setClearanceTools(db, {source("end-mill-6mm"), source("end-mill-3mm")}).ok);
+    CHECK(vBitMode.clearanceTools().size() == 2);
 
     ToolpathForm pocket(ToolpathOperation::Pocket, Units::Millimetres);
     CHECK_FALSE(pocket.setClearanceTools(db, {source("end-mill-3mm")}).ok);

@@ -1,4 +1,4 @@
-#include "carvetto/toolpath/vcarve_inlay.hpp"
+#include "carvetto/toolpath/v_carve_inlay.hpp"
 
 #include <algorithm>
 #include <cmath>

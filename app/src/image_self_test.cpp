@@ -1,5 +1,5 @@
-// Self-test of Photo V-carve in the real app (T-0275), offscreen: File > Import Bitmap (a PNG,
-// decoded by QImage), the bitmap painted on the canvas, the Photo V-Carve form of the Toolpaths dock,
+// Self-test of Image Engrave in the real app (T-0275), offscreen: File > Import Bitmap (a PNG,
+// decoded by QImage), the bitmap painted on the canvas, the Image Engrave form of the Toolpaths dock,
 // calculation off the UI thread, edit, stale after moving the bitmap, undo, save and reload.
 
 #include <QAction>
@@ -36,7 +36,7 @@ namespace {
 #define PH_REQUIRE(cond, text)                         \
     do {                                               \
         if (!(cond)) {                                 \
-            return std::string("photo v-carve: ") + (text); \
+            return std::string("image engrave: ") + (text); \
         }                                              \
     } while (false)
 
@@ -61,7 +61,7 @@ bool accept(ToolpathsPanel* panel) {
 
 }  // namespace
 
-std::string photoSelfTest(MainWindow& window) {
+std::string imageSelfTest(MainWindow& window) {
     window.setQuiet(true);
     window.setDocument(std::make_unique<document::Document>(
         document::Job::singleSided(200.0, 100.0, 18.0, document::Units::Millimetres)));
@@ -102,14 +102,14 @@ std::string photoSelfTest(MainWindow& window) {
     const QColor px = frame.pixelColor(QPoint(static_cast<int>(left.x), static_cast<int>(left.y)));
     PH_REQUIRE(px.red() < 60 && px.green() < 60 && px.blue() < 60, "the bitmap is not painted on the canvas");
 
-    // 3. Add a Photo V-Carve through the form.
+    // 3. Add a Image Engrave through the form.
     window.documentChanged();
     const std::size_t steps = doc.undoStack().index();
-    QAction* add = panel->addAction(document::ToolpathOperation::PhotoVCarve);
-    PH_REQUIRE(add != nullptr && add->isEnabled(), "Add Photo V-Carve is missing or disabled");
+    QAction* add = panel->addAction(document::ToolpathOperation::ImageEngrave);
+    PH_REQUIRE(add != nullptr && add->isEnabled(), "Add Image Engrave is missing or disabled");
     add->trigger();
     ToolpathFormDialog* dlg = panel->formDialog();
-    PH_REQUIRE(dlg != nullptr, "Add Photo V-Carve opened no form");
+    PH_REQUIRE(dlg != nullptr, "Add Image Engrave opened no form");
     PH_REQUIRE(!dlg->okButton()->isEnabled(), "OK is enabled before a tool is chosen");
     PH_REQUIRE(dlg->pickTool("v-bit-90-1-4in"), "the V-bit cannot be picked");
     PH_REQUIRE(dlg->fieldEdit("maxDepth") != nullptr && dlg->fieldEdit("lineSpacing") != nullptr &&
@@ -124,9 +124,9 @@ std::string photoSelfTest(MainWindow& window) {
     PH_REQUIRE(accept(panel) && panel->busy(), "accepting the form did not start a calculation");
     PH_REQUIRE(panel->waitIdle(120000), "the calculation did not finish");
     PH_REQUIRE(doc.toolpaths().size() == 1 && doc.undoStack().index() == steps + 1,
-               "adding the photo V-carve was not one undo step: " + panel->statusText().toStdString());
+               "adding the image engrave was not one undo step: " + panel->statusText().toStdString());
     const document::ToolpathRecord& rec = doc.toolpaths().front();
-    PH_REQUIRE(rec.operation() == document::ToolpathOperation::PhotoVCarve && rec.hasMoves(), "wrong record");
+    PH_REQUIRE(rec.operation() == document::ToolpathOperation::ImageEngrave && rec.hasMoves(), "wrong record");
     PH_REQUIRE(deepest(rec) < -0.99 && deepest(rec) > -1.01, "the deepest cut is not the Max Carving Depth");
 
     // 4. Edit the depth: recalculated, one step.
@@ -169,7 +169,7 @@ std::string photoSelfTest(MainWindow& window) {
     PH_REQUIRE(window.openFile(file), "reloading failed");
     document::Document& loaded = window.currentDocument();
     PH_REQUIRE(loaded.bitmaps().size() == 1 && loaded.toolpaths().size() == 1, "the reloaded file lost the image or the toolpath");
-    PH_REQUIRE(loaded.toolpaths().front().operation() == document::ToolpathOperation::PhotoVCarve &&
+    PH_REQUIRE(loaded.toolpaths().front().operation() == document::ToolpathOperation::ImageEngrave &&
                    loaded.toolpaths().front().hasMoves(),
                "the reloaded record is wrong");
     PH_REQUIRE(window.toolpaths()->list()->topLevelItemCount() == 1 &&

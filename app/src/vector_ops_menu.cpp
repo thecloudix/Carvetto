@@ -162,9 +162,9 @@ void VectorOpsMenu::runValidator() {
     options.scope = viewmodel::defaultValidatorScope(doc);
     QMessageBox box(&window_);
     box.setWindowTitle(QStringLiteral("Vector Validator"));
-    auto* vcarve = new QCheckBox(QStringLiteral("V-carving mode (ignore crossings inside text)"), &box);
-    vcarve->setChecked(lastVCarvingMode_);
-    box.setCheckBox(vcarve);
+    auto* vBitMode = new QCheckBox(QStringLiteral("V-carving mode (ignore crossings inside text)"), &box);
+    vBitMode->setChecked(lastVCarvingMode_);
+    box.setCheckBox(vBitMode);
     QPushButton* fix = box.addButton(QStringLiteral("Fix"), QMessageBox::AcceptRole);
     QPushButton* select = box.addButton(QStringLiteral("Select Offenders"), QMessageBox::ActionRole);
     QPushButton* search = box.addButton(QStringLiteral("Search"), QMessageBox::ActionRole);
@@ -173,7 +173,7 @@ void VectorOpsMenu::runValidator() {
                               ? QStringLiteral("Checking the selected vectors.")
                               : QStringLiteral("Checking all visible vectors on this sheet.");
     for (;;) {
-        options.vCarvingMode = vcarve->isChecked();
+        options.vCarvingMode = vBitMode->isChecked();
         lastVCarvingMode_ = options.vCarvingMode;
         const viewmodel::ValidatorReport r = viewmodel::validateVectors(doc, options);
         box.setText(scope + QStringLiteral("\n\n") + QString::fromStdString(r.summary()));

@@ -93,7 +93,7 @@ std::string toolFor(ToolpathOperation op, Rng& rng) {
         case ToolpathOperation::Engrave: return rng.pick<std::string>({"v-bit-90", "end-mill-3mm"});
         case ToolpathOperation::VCarving:
         case ToolpathOperation::VCarveInlay:
-        case ToolpathOperation::PhotoVCarve:
+        case ToolpathOperation::ImageEngrave:
         case ToolpathOperation::Prism:
         case ToolpathOperation::Chamfer: return "v-bit-90";
         case ToolpathOperation::ThreadMill:
@@ -486,7 +486,7 @@ TEST_CASE("robustness: degenerate and hostile vectors", "[toolpath][robust]") {
                 case ToolpathOperation::Inlay: def = inlayDefinition(db); break;
                 case ToolpathOperation::Fluting: def = flutingDefinition(db); break;
                 case ToolpathOperation::Prism: def = prismDefinition(db); break;
-                case ToolpathOperation::PhotoVCarve: def = photoDefinition(db); break;
+                case ToolpathOperation::ImageEngrave: def = photoDefinition(db); break;
                 case ToolpathOperation::VCarveInlay: def = vCarveInlayDefinition(db); break;
             }
             if (tracing()) {
