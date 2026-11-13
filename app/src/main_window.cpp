@@ -789,6 +789,10 @@ std::string MainWindow::createJobSheetFile(const std::filesystem::path& path, vi
         if (!overwrite && std::filesystem::exists(path, ec)) {
             return fail("'" + viewmodel::pathToUtf8(path) + "' exists already");
         }
+        // Like the HTML/text writer, never write through a link: refuse a symlink target.
+        if (std::filesystem::is_symlink(std::filesystem::symlink_status(path, ec))) {
+            return fail("'" + viewmodel::pathToUtf8(path) + "' is a symbolic link; choose a regular file name");
+        }
         // The PDF paginates the HTML without the inline SVG layout (rich text has no SVG).
         QString html = qs(viewmodel::renderJobSheetHtml(sheet));
         html.remove(QRegularExpression(QStringLiteral("<svg.*?</svg>"), QRegularExpression::DotMatchesEverythingOption));

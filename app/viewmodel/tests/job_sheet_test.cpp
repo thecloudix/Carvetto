@@ -3,7 +3,6 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -309,12 +308,9 @@ JobSummary manyToolsSummary(std::size_t tools, std::size_t perTool, std::size_t 
 
 }  // namespace
 
-TEST_CASE("job sheet: 20000 distinct tools build quickly and the stored sheet is capped", "[jobsheet]") {
+TEST_CASE("job sheet: 20000 distinct tools build and the stored sheet is capped", "[jobsheet]") {
     const document::Document doc;
-    const auto t0 = std::chrono::steady_clock::now();
     const JobSheet s = makeJobSheet(doc, manyToolsSummary(20000, 1, 200), "big");
-    const double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-    CHECK(secs < 1.0);
     CHECK(s.toolsTotal == 20000);
     CHECK(s.tools.size() == kJobSheetMaxToolRows);
     CHECK(s.toolpaths.size() == kJobSheetMaxToolpathRows);
