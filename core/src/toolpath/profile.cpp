@@ -948,6 +948,13 @@ class ProfileBuilder {
     std::map<std::size_t, std::size_t> tabsEmpty_;      // of those: the cut leaves nothing for them to hold
     std::map<std::size_t, std::size_t> tabsOnCorner_;
     void emit(const Cut& cut, const std::vector<double>& levels, bool finishing);
+    /// A lead-out as emitted (T-0252): its path and the height along it, for the loose-piece
+    /// search (which runs after emit, so it sees the leads that were really made).
+    struct LeadRec {
+        Contour path;
+        double z{0.0};
+    };
+    std::vector<LeadRec> leadRecs_;
     void emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel, std::vector<bool>& cornerDone);
     template <class Make>
     bool leadFits(Make make, double scale, Contour& out, bool& gentler) const;
@@ -3415,6 +3422,44 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
             taper(at[j], at[j + 1], 0);
         }
     };
+    // Lead-out moves (T-0252, T-0177 (e)/(g)): a lead-out runs at one height, and the tool cuts the
+    // tab layer along it when its tip is below the tab top, a disc of the radius the cone (or a
+    // flat end) has there: min(radius, (tab top - z) tan(half angle)) for a V-bit, the radius for
+    // any other tool. It is banded by that disc swept along the lead, in pieces that are straight
+    // (within 0.5 um of straight) as the ramps and corner moves are. Like them it
+    // is not covered by the proof that most stretches enclose nothing, so every band is built.
+    // (Lead-ins are not modelled: see the ADR.)
+    {
+        const double tabTop = passes_.bottomZ() + p_.tabs.thickness;
+        const bool vtan = vbit_ && tanHalf > 0.0 && std::isfinite(tanHalf);
+        for (const LeadRec& lr : leadRecs_) {
+            const double disc = vtan ? std::clamp((tabTop - lr.z) * tanHalf, 0.0, radius_)
+                                     : (lr.z < tabTop - 1e-9 ? radius_ : 0.0);
+            if (!(disc > 0.0)) continue;
+            const ArcLengthPath lw(lr.path, offTol_);
+            const double len = lw.length();
+            if (!(len > 1e-9)) continue;
+            std::function<void(double, double, int)> piece = [&](double a, double b, int depth) {
+                const Vec2 pa = lw.pointAt(a);
+                const Vec2 pb = lw.pointAt(b);
+                bool straight = true;
+                for (double f : {0.25, 0.5, 0.75}) {
+                    if (geometry::distance(lw.pointAt(a + (b - a) * f), geometry::lerp(pa, pb, f)) > 5e-4) {
+                        straight = false;
+                    }
+                }
+                if (!straight && depth < 12 && b - a > 1e-4) {
+                    piece(a, 0.5 * (a + b), depth + 1);
+                    piece(0.5 * (a + b), b, depth + 1);
+                    return;
+                }
+                detail::PointRing ring = taperRing(Taper{pa, pb, disc, disc}, 2e-3, bandSag);
+                if (ring.size() >= 3) bands.push_back(std::move(ring));
+            };
+            piece(0.0, len, 0);
+            std::fill(search.begin(), search.end(), char{1});
+        }
+    }
     for (std::size_t i = 0; i < paths.size(); ++i) {
         if (!search[i]) continue;
         const Contour* pathPtr = &paths[i];
@@ -4140,6 +4185,7 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
                 out.append(Move::feed(Vec3{out.moves.back().to.xy(), z}));  // up out of the way of a tab
             }
             appendLeg(lw, 0.0, lw.length(), ZProfile::flat(z), out);
+            leadRecs_.push_back(LeadRec{lo, z});
         }
     }
     out.append(Move::retract(Vec3{out.moves.back().to.xy(), p_.safeZ}));
@@ -4305,6 +4351,8 @@ ProfileResult ProfileBuilder::run() {
     planLeadIns(finish);
     planExcursions(rough, levels, false);
     planExcursions(finish, {levels.back()}, true);
+    const std::vector<Cut>* loosePrimary = nullptr;  // the loose-piece search runs after emit (T-0252)
+    const std::vector<Cut>* looseSecondary = nullptr;
     if (separate) {
         // Three candidates, each placed, matched and checked: (A) exactly T-0127's matching: the
         // tabs placed as T-0127 placed them (a tab moved off the other pass's start goes to exactly
@@ -4386,13 +4434,14 @@ ProfileResult ProfileBuilder::run() {
             }
         }
         restore(best);
-        reportLoosePieces(finish, rough);
+        loosePrimary = &finish;
+        looseSecondary = &rough;
     } else {
         placeTabsOn(rough, {});
         dropSweptTabs(rough, finish);
-        reportLoosePieces(rough, finish);
+        loosePrimary = &rough;
+        looseSecondary = &finish;
     }
-    reportTabs();
     collectTabMaterial(rough);
     collectTabMaterial(finish);
     detail::pollCancel();
@@ -4404,6 +4453,11 @@ ProfileResult ProfileBuilder::run() {
         emit(finish[i], {levels.back()}, true);
         detail::pollCancel();
     }
+    // After emit: the search sees the lead moves that were made (T-0252).
+    if (loosePrimary != nullptr) {
+        reportLoosePieces(*loosePrimary, *looseSecondary);
+    }
+    reportTabs();
     // Roughing and finishing report the same vector-level issue once.
     std::vector<ProfileDiagnostic> unique;
     std::set<std::tuple<ProfileIssue, std::optional<std::size_t>, std::string>> seen;

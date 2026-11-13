@@ -547,6 +547,75 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     left out … cut through … at a corner") although the exact oracle finds all 3 holding; no free piece
     results, so the error is conservative (repro
     /home/chris/harness/t0156v2/dump/m1_9302_2199.scn; carded as a T-0177 item).
+    **Loose-piece residuals (T-0252, the rest of T-0177).** *Fixed: lead-outs (T-0177 (e)/(g)).* The
+    search ran before emit and had no lead moves, so a lead-out that cut the tab layer and sealed
+    off a piece left it unreported (m0_291002_11: 4.75 mm², flood 4.746; with leads off, or with
+    the lead-out off, nothing is free). It now runs after emit (the moves of every cut are made
+    first, so the diagnostics of the search follow those of emit: in 2 of 10,000 V-bit scenes the
+    order of the messages changed and nothing else) and takes each lead-out as made: its path and
+    its one height `z` (the height the cut ended at, raised to the tab top where tab material is
+    within reach: leadFloor). The tool cuts the tab layer along it when `z` is below the tab top,
+    a disc of radius min(r, (tab top - z) tan(half angle)) for a V-bit and r for any other tool;
+    the lead is banded by that disc swept along it (the hull of the end discs of each piece that
+    is straight to 0.5 µm, grown by 2 µm like the other bands), and every band is built when there
+    is one (the proof that most stretches enclose nothing does not cover it). A lead-out at the
+    tab top (`z` equal to it) cuts nothing in the layer and adds no band. *Mutants* (a release
+    build with each switched on): no band for any lead-out is killed by both lead tests (and by 4
+    of 741 end-mill screen scenes); the V-bit disc at the bit's full radius (44.56 for the 45.4
+    mm² piece) and at half the cone's disc (46.62) by the pinned areas of the V-bit test. One
+    survives: an end mill's lead-out at exactly the tab top (a lead raised by leadFloor, or a cut
+    ending in a tab) banded at the full radius. It happens (54 lead-outs in a screen of end-mill
+    screen scenes, and 216 tab variants of the end-mill scene) but in none does it change a
+    reported list, so there is no scene to pin it with; the `z < tab top - 1e-9` test stays as
+    the physically right one (the layer just below the tab top is not cut by a tool at it). Screen (harness t0156v1
+    o.cpp, V-bit forced, mode 1, exact flood of the moves, leads on, 900 scenes): one miss fixed
+    (seed 12 scene 60: 45.4 mm² flood, reported 45.37), two reported areas changed by 0.1 mm² or
+    less (0.27 to 0.25, 5.18 to 5.08; the same distance from the flood's), no false report; 10,000
+    V-bit-forced scenes with leads off (seeds 31-35, 2,000 each): moves and reports identical to
+    main. *Fixed: the ramp tapers' test gap.* Two hand-built scenes (tests) pin the taper radius at
+    both ends of a raised stretch: with a radius of 0 along every ramp, without the closing ramp
+    (the one that reaches the stretch) or without the opening one (the one that leaves it), the
+    first scene's pieces miss the flood's by 2.7 / 8.6 / 10.3 mm² (the true 567.49: reported
+    567.25, mutants 570.15, 558.94, 557.14), and the second has the radius-0 mutant report 0.26 mm²
+    that nothing in the flood is. *Accepted limits (each with its reason; none gets worse than at
+    the T-0156 head).* (b)/(k) pieces thinner than the slack: free pieces 0.0505 mm thick (six of
+    0.216 mm² in miss6_7104_351; r101_1_0_42's 2 of 100) are within 2.5 µm of the 0.05 mm
+    thickness threshold, which the bands' 2 µm growth and the polygons' 5 µm sagitta
+    (kLooseBandSagitta) put on the other side: the band model reports from about 0.055 mm and the
+    exact flood from 0.0505, so a sliver in between is missed, and one at 0.04-0.05 mm² area the
+    other way (d: 9301_2132's 3 pieces of 0.04 mm², reported by the branch, not by main, not by
+    the flood). Moving the threshold moves the knife-edge (every value has a scene on each side),
+    and a sliver that thin is no loose piece a user would act on (it falls out as dust): the
+    thresholds stay as chosen in T-0140, documented here. (c) The reported areas far from the
+    flood's (29.77 against 6.4 + 11.6; 61.5 and 149.7 against 6.6 and 19.7) could not be
+    reproduced on this code and no scene has come back (the card says to drop it); dropped. (e) Cut ramps (the descent over
+    `ramp.distance` along the cut itself) and the plunge at a cut's start are banded as full
+    depth: the plunge's disc is inside the cut's band at its start, and the ramp's shallow part
+    is over-banded, which can only close a channel, not open one; the screens
+    of the T-0156 head (3,000 scenes: single pass, lead-out off, leads and ramps random, half of
+    them V-bit) show no false report and no miss at all, so no witness exists.
+    *Lead-ins are not banded:* a lead-in runs at the cut's first level, which is above the tab
+    layer unless the cut is a single pass, and leadFloor raises it to the tab top wherever tab
+    material is within a tool diameter of it; no scene in 3,000 single-pass screen scenes
+    (harness o2.cpp, lead-out off, leads on) has a lead-in that cuts the tab layer and seals a
+    piece off, none could be built by varying the lead-out scenes, so there is no scene to test a
+    model against (a model of it would have mutants nothing kills). (f) 9302_2199 (one of three
+    tabs left out by the corner-move tab check, all three hold in the flood; still reproduces):
+    the cause is not diagnosed beyond the sample-based corner-move check; the error is on the safe
+    side (no free piece results; one tab fewer is kept than the flood allows), so it stays; 9301_2132 is (d). (h) partial tabs
+    whose unjoined piece is a 0.05-0.11 mm hairline sliver (0.41 and 0.067 mm²): the exact check
+    resolves necks from 0.11 mm and dropping the tab would free the part, so the sliver is
+    reported and the tab kept. (i) a tab kept that the oracle finds severed, the waste beyond it a
+    closed pocket (9301_153, 9308_412), (j) tabs left out where another place would hold
+    (mmrg_001_tabs_all_out at two starts, m1_272009_9), and (l) a tab round the bottom corner of a
+    notch kept as holding "a hole smaller than the kerf" (m0_271016_20) are all cases of the
+    quick answer's cell resolution (three raster cells, 0.1 mm); the exact capsule-union judge
+    that would replace it (acceptance: 0 holding tabs dropped and 0 parts freed on the U-part
+    family of harness t0167v1, which T-0167's cell widening failed) is not built: the loose-piece
+    search backs each of them up (a part a severed tab fails to hold is reported, a left-out tab
+    that would hold costs a tab, not a part), and the replacement is a change of the tab check's
+    resolution for a handful of scenes in a 123,274-scene screen. Open for the project owner if
+    it matters: the exact capsule-union judge for (i), (j), (l).
     **Triage of the T-0158 verifier's repros (T-0167, on main after T-0156, whole-scene flood of
     the moves, leads off unless said).** Fixed: m2_1330000_9 (V-bit tabs judged at the top
     radius, Tab layer above; both starts). Not fixed, as on main: m0_271016_20 at VectorStart/Outside
