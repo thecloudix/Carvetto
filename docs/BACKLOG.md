@@ -1,7 +1,7 @@
 # Carvetto backlog
 
 Format and rules: `docs/WORKFLOW.md`. Status values: `ready` · `in-progress` · `verifying` · `done` · `blocked`.
-Phase 0 = foundations. Phase 1 = 2D/2.5D CAM MVP. Later phases are outlined in `docs/PLAN.md` and get cards when Phase 1 nears completion.
+Phase 0 = foundations. Phase 1 = 2D/2.5D CAM MVP (done). Phase 2 = 3D relief (cards at the end). Phases 3-4 are outlined in `docs/PLAN.md` and get cards when Phase 2 nears completion.
 
 Concurrency note: T-0001 (geometry primitives) is the root dependency; everything else waits for it. Batch 1 = T-0001 alone. Batch 2 = T-0002, T-0003, T-0010, T-0020, T-0030, T-0040 in parallel.
 
@@ -1353,3 +1353,134 @@ Phase: 1   Module: app/viewmodel + core/toolpath   Depends on: T-0230, T-0252
 Goal: (a) text draft byte-cap on replacement: a mutant ignoring the replaced range survives (add a test filling to the cap with multi-byte characters, select all, replace with same size: must succeed); (b) stale-object test: a draft editing an existing object, tool switch, then deleting that object; (c) T-0252 ramp-taper test tolerance 1.0 mm2 lets single-side radius-0 mutants survive: pin the third area more tightly; (d) ADR-0016 wording: diagnostics reorder rate is 2/10000 with leads off but ~18% with leads on (content identical); the ramp mutants are killed by full-radius banding, not "without the ramp"; (e) T-0231 leftover from verification: none.
 Acceptance criteria:
   1. Mutants in (a) and (c) fail a test; ADR wording fixed; one changelog fragment; CI green.
+
+---
+
+## Phase 2 — 3D relief modeling
+
+Scope per docs/PLAN.md Phase 2 and docs/reference/feature-inventory.md §4 and §5. Core is Qt-free; heightfields are `float`, mm, on a regular grid (ARCHITECTURE.md `relief` module). Every card: ADR where a decision is made, clean-room per CONTRIBUTING.md, one changelog fragment, mutants killed or argued, CI green on Linux and MSVC. Models are 2.5D heightfields (no overhangs); undercuts are discarded or highlighted at import.
+
+### T-0281 Relief core: HeightField, Component, Level, CombineMode, composition   [status: in-progress]
+Phase: 2   Module: core/relief   Depends on: T-0001   ADR: 0060
+Goal: The root of Phase 2. `HeightField` (width/height cells, cell size mm, origin, float data, transparent cells as NaN or a mask; resample, crop, sample bilinear, min/max), `Component` (heightfield plus non-destructive properties: shape height %, base height, fade (anchor, second point, percent), tilt (pivot, raise point, angle), combine mode, name, visibility), `Level` (ordered components, own combine mode and base height) and `compose(levels)` producing the visible model. Combine modes: Add, Subtract, Merge High, Merge Low, Multiply. Keep this card NARROW so dependants unblock quickly: no UI, no I/O, no shape generators.
+Acceptance criteria:
+  1. Each combine mode has a hand-computed golden on a 3x3 pair, including transparent cells (transparent never changes the result under Add/Merge; Multiply and Subtract rules documented in the ADR).
+  2. Fade and tilt apply at compose time without modifying the stored field; `bake(component)` returns a field equal to the composed value.
+  3. Level base height is applied after combining and excluded from bake (per inventory).
+  4. Deterministic; memory bounded (cell-count cap with a clear error); degenerate input (zero size) returns an error, never a crash.
+  5. Tests plus mutation checks on the combine and fade/tilt maths.
+Out of scope: document integration (T-0282), generators, UI.
+
+### T-0282 Relief in the document: components and levels, commands, .carv persistence   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/document + core/io   Depends on: T-0281   ADR: 0061
+Goal: Components and levels live in the `Document` (per sheet), with undoable commands (add, delete, rename, reorder, move to level, set combine mode, edit properties, duplicate). `.carv` stores heightfields as `components/*.hf` (zstd or the existing compression helper; deterministic bytes) and component parameters in `job.json`; bump the minor format version only as needed, old files still load.
+Acceptance criteria:
+  1. Round-trip save/load is byte-stable; every command undoes and redoes exactly.
+  2. Corrupt or oversized `.hf` members fail with a clear error and never allocate beyond the cap.
+  3. Selection of components and ids follow the existing id/selection conventions.
+Out of scope: UI.
+
+### T-0283 Create Shape: flat, round, angled, smooth, custom (from closed vectors)   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0062
+Goal: Generate a component from selected closed vectors (holes respected): Plane (flat), Round, Angled, Smooth, Custom profile. Fields per inventory: profile/edge angle, limit (height cap), preserve internal corners, blend to inner vectors, scale to height, base height, fade, tilt, total height. Shapes store creation parameters so they can be re-edited.
+Acceptance criteria:
+  1. Angled shape of a rectangle: height at distance d inside the edge = d*tan(angle), capped at limit; analytic goldens.
+  2. Round shape of a circle gives a spherical-cap/rounded profile within a stated tolerance; smooth interpolates concave to convex.
+  3. Holes lower the surface correctly; total height edits update scale and base consistently.
+  4. Bounded work (distance transform), cancellable, deterministic.
+
+### T-0284 Create component from bitmap, Scale Model Z, zero plane   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281, T-0273
+Goal: Heightfield from a bitmap in the `.carv` bitmap store or a file (keep 16-bit depth, brightness maps to height, invert option, auto-scale, combine mode Add); Add Zero Plane (job-size zero component); Scale Model Z (percent or exact height, both sides option for double-sided jobs).
+Acceptance criteria: 16-bit input keeps full precision; uniform image gives a flat field; exact-height scale hits the target to 1e-6; zero plane matches the job size; degenerate input errors cleanly.
+
+### T-0285 Mesh reading: STL (binary and ASCII), OBJ, with orientation transform   [status: in-progress]
+Phase: 2   Module: core/io   Depends on: T-0001   ADR: 0063
+Goal: Qt-free triangle-mesh reader for STL (binary, ASCII) and OBJ (triangulate polygons; ignore materials), a `TriangleMesh` type, bounds, unit scale (mm/inches), Center Model, six top-face choices times five rotations about Z, arbitrary rotation, lock-ratio scale. 3DS, DXF-mesh and SKP are deferred (note in the ADR; open an extra card if cheap). Hostile input safe: size caps, NaN/inf rejected, truncated files report an error, fuzz-style tests.
+Acceptance criteria: round-trip against small hand-built meshes; orientation goldens; all malformed-file classes return errors without crash or unbounded allocation.
+
+### T-0286 Mesh to heightfield: rasterise, zero plane, undercuts, discard below zero   [status: blocked — waits on T-0281, T-0285]
+Phase: 2   Module: core/relief   Depends on: T-0281, T-0285   ADR: 0064
+Goal: Rasterise a oriented mesh to a top-down `HeightField` at a chosen resolution (highest surface per cell), zero-plane position in the model, discard data below the plane, optional second (bottom) side for two-sided jobs, undercut detection mask (cells where the mesh has material hidden below the top surface), backface caps, optional resize of material to fit.
+Acceptance criteria: pyramid, sphere and box meshes match analytic heights within the cell tolerance; undercut mask correct on an overhang test mesh; deterministic; bounded work with cancel for large meshes (triangle-bin acceleration).
+
+### T-0287 3D export: STL (with back-face options), OBJ, grayscale heightmap   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/io   Depends on: T-0281, T-0285
+Goal: Export the composed model as binary STL (watertight option with back face and walls, or top surface only), OBJ, and a 16-bit grayscale PNG/PGM heightmap (highest = white). Reuses raster writing where it exists. Clipart (`.3dclip`) is NOT in scope (own format, deferred; note in ADR).
+Acceptance criteria: STL re-read by T-0285 reproduces the surface; watertight option yields a closed manifold (edge count check); heightmap values scale linearly and hit white/black exactly at max/min.
+
+### T-0288 Two Rail Sweep   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0065
+Goal: Sweep one or more cross-section vectors along two rail vectors (proportional positioning, per-section smooth, scale cross sections with width, sweep between spans, fill centre of closed rails, scale to exact height). Stores parameters for re-edit.
+Acceptance criteria: a straight-rail rectangle-section sweep gives the analytic extrusion; swap/reverse rails behave; unequal node counts handled as the inventory says; bounded and cancellable.
+
+### T-0289 Extrude and Weave   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0066
+Goal: Extrude a vector cross section or a component along a rail (stretch to length or fill with copies with overlap % and alternate flips; create sharp corners; sweep between spans) and the weave option (Z under %, Z over %, scale shape or add base).
+Acceptance criteria: analytic goldens for straight rails; weave crossings alternate over/under correctly; deterministic.
+
+### T-0290 Turn and Spin   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0067
+Goal: Turn (revolve a profile about its start-end line) and Spin (revolve about its left end into a circular component); scale to exact height.
+Acceptance criteria: a half-circle profile spun gives a hemisphere within tolerance; turn of a rectangle gives a cylinder; degenerate profile errors cleanly.
+
+### T-0291 Textured area component   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281, T-0251
+Goal: Tile a seed component inside a closed vector boundary: spacing X/Y % (negative overlaps), X/Y shift % (alternate rows/columns), reflection (none/H/V/both); editable afterwards.
+Acceptance criteria: spacing/shift/reflection goldens on a small seed; clipping to the boundary exact at cell level; tile-count cap with a clear error.
+
+### T-0292 Modify ops 1: bake, replace below, reset inside/outside, offset model, smooth, emboss   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0068
+Goal: Bake components (Ctrl keeps originals), Replace Below (transparent or plane, lower component by value), Reset Inside/Outside selected vectors, Offset Model (+/- distance, clip to zero plane), Smooth selected components (percent, preserve transparency, bake smoothing), Emboss (scale height, detail smoothness).
+Acceptance criteria: each op has analytic or hand goldens; smoothing is deterministic and preserves transparency when asked; offset by d then -d returns near the original on smooth fields (stated tolerance).
+
+### T-0293 Modify ops 2: slice, add draft, split, vector boundary, cross-section vector, distort   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0069
+Goal: Slice Model (thickness, from top, count, optional boundary vectors, one component per slice), Add Draft (minimum draft angle, bakes to a new component), Split Component with a vector (A and B), Create Vector Boundary around components (silhouette contours), Create Cross Section Vector (two points to a profile), Distort Selected Component (reuses the 2D distort maths).
+Acceptance criteria: slices reconstruct the model when recombined; draft angle verified on a wall test; silhouette of a cone is a circle within tolerance; cross-section of a ramp is a straight line.
+
+### T-0294 Sculpting engine (brushes, custom brush, undo)   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0070
+Goal: Brush engine: Smooth, Smudge, Deposit, Remove, Undo Brush; diameter, strength, smoothness; Normal/Raise/Lower mode; preserve transparency; custom brush from a component or bitmap with angle and dynamic rotation; stroke as a deterministic list of dabs applied to a working copy, committed or discarded (Keep/Discard).
+Acceptance criteria: single-dab goldens per brush; strokes are order-deterministic and independent of the sampling rate within a stated tolerance; undo brush restores the original exactly; bounded memory.
+
+### T-0295 Level effects: clipping, mirror mode (non-destructive)   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/relief   Depends on: T-0281, T-0282
+Goal: Clipping (clip a level to selected closed vectors; apply/update/remove) and Mirror Mode (left-right, right-left, top-bottom, bottom-top, four quadrants) composed at render time; wrapping is Phase 3.
+Acceptance criteria: effects never modify stored fields; baking makes them permanent; mirror modes golden on an asymmetric field.
+
+### T-0296 Toolpath 3D rough: Z-level and 3D raster   [status: blocked — waits on T-0281]
+Phase: 2   Module: core/toolpath   Depends on: T-0281   ADR: 0071
+Goal: Roughing of the composed model with flat/ball/other tools (tool shapes from `simulate/tool_shape.hpp`): Z-level (constant-Z slices of the model with allowance, offset or pocket-style clearing) and 3D raster (raster over the drop-tool surface with allowance and stepover), model boundary choice (material block, selected vectors), cut direction, ramp/plunge entry, safe Z, tolerance. Drop-tool vs project option as in the reference options. Multi-tool via the existing tool list/rest machining mechanism.
+Acceptance criteria: simulating the output with the existing simulator never gouges below allowance; stock left within allowance everywhere; deterministic; cancellable; large grids bounded (spatial/column accelerated drop).
+
+### T-0297 Toolpath 3D finish: offset and raster, with rest machining   [status: blocked — waits on T-0296]
+Phase: 2   Module: core/toolpath   Depends on: T-0296   ADR: 0072
+Goal: Finishing passes: raster (angle, stepover) and offset (constant-scallop style) over the model with ball/tapered/flat tools, tolerance, boundary, and rest machining against a previous tool (tool list).
+Acceptance criteria: scallop height within the predicted bound on a sphere; rest machining only cuts where the previous tool could not reach; never gouges the model (simulator check).
+
+### T-0298 Moulding toolpath, project 2D toolpaths onto the model, 3D tabs, component from toolpath preview   [status: blocked — waits on T-0296]
+Phase: 2   Module: core/toolpath   Depends on: T-0296, T-0281   ADR: 0073
+Goal: Moulding toolpath (profile a moulding cross-section along vectors with the tool shape), Project Toolpath onto 3D (drop 2D toolpath Z by the model surface, with a drop vs project choice), 3D tabs for 3D profiling, and Create Component From Toolpath Preview (heightfield from the simulator result). Split this card if it exceeds one verifier round budget.
+Acceptance criteria: each has analytic goldens; projected paths lie on the surface within tolerance; the component from the preview matches the simulator heightfield.
+
+### T-0299 App: component tree panel and 3D view of the composed model   [status: blocked — waits on T-0282]
+Phase: 2   Module: app   Depends on: T-0282   ADR: 0074
+Goal: Component Tree panel (levels, components, drag/reorder, show/hide, combine mode, rename, delete, duplicate, move to level), Component Properties form (shape height, base height, fade, tilt, appearance), and a 3D view rendering the composed model (shaded, orbit/zoom/pan per the inventory, material colour). Reuses the existing relief rendering and playback code where it applies. Self-test coverage.
+Acceptance criteria: panel actions go through the undoable commands of T-0282; 3D view draws a known model (pixel-sampled self-test); view stays responsive on a 2000x2000 field (level-of-detail or tile).
+
+### T-0300 App: modelling dialogs (Create Shape, bitmap, zero plane, scale Z, modify ops)   [status: blocked — waits on T-0299, T-0283, T-0284, T-0292, T-0293]
+Phase: 2   Module: app   Depends on: T-0299, T-0283, T-0284, T-0292, T-0293
+Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, boundary and cross-section tools, each with preview and the common Apply / Reset / Start New Component buttons.
+
+### T-0301 App: 3D import/export dialogs (orientation, zero plane, undercuts) and sweeps/turn/textured dialogs   [status: blocked — waits on T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291]
+Phase: 2   Module: app   Depends on: T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291
+Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, centre), zero-plane positioning with undercut highlight, export actions, and the sweep, extrude/weave, turn/spin and textured-area forms. Split into two cards when picked up if the coder judges it too large.
+
+### T-0302 App: sculpting tool UI and level effects UI   [status: blocked — waits on T-0299, T-0294, T-0295]
+Phase: 2   Module: app   Depends on: T-0299, T-0294, T-0295
+Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, presets, Keep/Discard), plus Clipping and Mirror Mode level actions.
+
+### T-0303 App: 3D toolpath dialogs, preview and simulation   [status: blocked — waits on T-0299, T-0296, T-0297, T-0298]
+Phase: 2   Module: app   Depends on: T-0299, T-0296, T-0297, T-0298
+Goal: Toolpath panel entries and dialogs for 3D rough, 3D finish, moulding, project-onto-model and 3D tabs; preview in the 3D view; simulation of 3D toolpaths with the existing simulator; save/post output uses the existing pipeline.
