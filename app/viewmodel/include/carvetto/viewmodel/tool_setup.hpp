@@ -83,6 +83,8 @@ struct ToolFields {
     bool tipDiameter{false};
     bool cornerRadius{false};
     bool profile{false};
+    /// Thread mill: shank diameter, tooth height, tooth offset and threaded length (T-0262).
+    bool threadMill{false};
     /// False for form tools (their diameter follows from the profile).
     bool diameter{true};
 };

@@ -68,6 +68,10 @@ json toolToJson(const Tool& t) {
         {"included_angle_deg", toDeg(t.includedAngle)},
         {"tip_diameter_mm", quantise(t.tipDiameter)},
         {"corner_radius_mm", quantise(t.cornerRadius)},
+        {"shank_diameter_mm", quantise(t.shankDiameter)},
+        {"tooth_height_mm", quantise(t.toothHeight)},
+        {"tooth_offset_mm", quantise(t.toothOffset)},
+        {"threaded_length_mm", quantise(t.threadedLength)},
         {"profile_mm", std::move(profile)},
         {"flutes", t.flutes},
         {"default_cutting_data", cuttingDataToJson(t.defaultCuttingData)},
@@ -165,7 +169,7 @@ CuttingData cuttingDataFromJson(const json& j, const std::string& where) {
     return d;
 }
 
-Tool toolFromJson(const json& j, const std::string& where) {
+Tool toolFromJson(const json& j, const std::string& where, int version) {
     requireObject(j, where);
     Tool t;
     t.id = getString(j, "id", where, true);
@@ -173,7 +177,9 @@ Tool toolFromJson(const json& j, const std::string& where) {
     t.name = getString(j, "name", here, false);
     const std::string typeName = getString(j, "type", here, true);
     const auto type = parseToolType(typeName);
-    if (!type) fail(here, "unknown tool type '" + typeName + "'");
+    if (!type || (version < 2 && *type == ToolType::ThreadMill)) {
+        fail(here, "unknown tool type '" + typeName + "'");
+    }
     t.type = *type;
     t.notes = getString(j, "notes", here, false);
     t.groupId = getString(j, "group_id", here, false);
@@ -181,6 +187,12 @@ Tool toolFromJson(const json& j, const std::string& where) {
     t.includedAngle = getNumber(j, "included_angle_deg", here) * kDegToRad;
     t.tipDiameter = getNumber(j, "tip_diameter_mm", here);
     t.cornerRadius = getNumber(j, "corner_radius_mm", here);
+    if (version >= 2) {
+        t.shankDiameter = getNumber(j, "shank_diameter_mm", here);
+        t.toothHeight = getNumber(j, "tooth_height_mm", here);
+        t.toothOffset = getNumber(j, "tooth_offset_mm", here);
+        t.threadedLength = getNumber(j, "threaded_length_mm", here);
+    }
     t.flutes = getInt(j, "flutes", here, 1);
     if (const json* profile = optionalArray(j, "profile_mm", here)) {
         for (const auto& p : *profile) {
@@ -293,7 +305,7 @@ ToolDatabase databaseFromJson(const json& root) {
         if (!db.addMachine(machine)) fail("machine '" + machine.id + "'", "duplicate id");
     }
     for (const auto& t : requireArray(root, "tools", where)) {
-        Tool tool = toolFromJson(t, "tool");
+        Tool tool = toolFromJson(t, "tool", version);
         if (!db.addTool(tool))
             fail("tool '" + tool.id + "'", "duplicate id or unknown group '" + tool.groupId + "'");
     }

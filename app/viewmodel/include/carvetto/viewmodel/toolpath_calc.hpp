@@ -123,6 +123,14 @@ struct ToolpathCalculation {
     };
     std::vector<Item> items;
     std::vector<ToolpathMessage> messages;
+    /// Thread mill with "create circles for internal threads" (T-0262, ADR-0056): the bore circles
+    /// to insert into the document when the result is applied, in the same undo step as the toolpath.
+    struct BoreCircle {
+        geometry::Contour circle;
+        /// The vector the thread was made in: the circle goes onto its layer and sheet.
+        document::ObjectId source;
+    };
+    std::vector<BoreCircle> boreCircles;
     /// The definition calculated (normalised: selector deduplicated).
     ToolpathDefinition definition;
     /// Number of contours that were machined (the calculation's input).

@@ -23,6 +23,8 @@ enum class ToolType {
     FormTool,
     DiamondDrag,
     Drill,
+    /// Thread mill (T-0262, ADR-0056): a cutter with thread-form teeth; see `Tool`.
+    ThreadMill,
 };
 
 /// Stable lower-snake identifier used in files, e.g. "ball_nose".
@@ -49,6 +51,11 @@ struct CuttingDataLookup {
 ///   RadiusedEndMill:      diameter, cornerRadius.
 ///   FormTool:             profile (right-hand half profile), diameter derived from it.
 ///   Drill:                diameter, includedAngle (point angle).
+///   ThreadMill:           diameter (D, the diameter over the teeth), includedAngle (A, the angle of the
+///                         tooth form, 60 degrees for ISO/unified threads), shankDiameter (S), toothHeight
+///                         (H, the radial height of a tooth), toothOffset (O, the distance from the
+///                         tip to the first tooth) and threadedLength (the toothed length: 0 = a single
+///                         point cutter with one tooth, > 0 = a multi point cutter).
 struct Tool {
     /// Stable unique id (any non-empty string chosen by the creator; never regenerated).
     std::string id;
@@ -69,6 +76,14 @@ struct Tool {
     /// Form tool half profile: points (radius, height-above-tip) in mm, heights strictly
     /// ascending, first height 0. The width at a height is interpolated linearly.
     std::vector<geometry::Vec2> profile;
+    /// Thread mill: shank diameter S (mm; 0 = not stated).
+    double shankDiameter{0.0};
+    /// Thread mill: radial height H of a tooth (mm).
+    double toothHeight{0.0};
+    /// Thread mill: offset O of the first tooth from the tip (mm).
+    double toothOffset{0.0};
+    /// Thread mill: length of the toothed part (mm); 0 = single point, > 0 = multi point.
+    double threadedLength{0.0};
     int flutes{1};
 
     /// Cutting data used when no (machine, material) entry exists.
