@@ -426,6 +426,11 @@ constexpr EnumName<toolpath::FluteRampType> kFluteRampTypes[] = {{toolpath::Flut
                                                                 {toolpath::FluteRampType::Smooth, "smooth"}};
 constexpr EnumName<toolpath::FluteRampBasis> kFluteRampBases[] = {{toolpath::FluteRampBasis::Length, "length"},
                                                                  {toolpath::FluteRampBasis::Percent, "percent"}};
+constexpr EnumName<toolpath::VCarveInlayPiece> kVCarveInlayPieces[] = {{toolpath::VCarveInlayPiece::Pocket, "pocket"},
+                                                                       {toolpath::VCarveInlayPiece::Plug, "plug"}};
+constexpr EnumName<toolpath::PlugBoundary> kPlugBoundaries[] = {{toolpath::PlugBoundary::SheetLimits, "sheet_limits"},
+                                                                {toolpath::PlugBoundary::VectorOffset, "vector_offset"},
+                                                                {toolpath::PlugBoundary::BoundaryOffset, "boundary_offset"}};
 constexpr EnumName<toolpath::InlayPiece> kInlayPieces[] = {{toolpath::InlayPiece::Male, "male"},
                                                           {toolpath::InlayPiece::Female, "female"}};
 constexpr EnumName<toolpath::InlayMaleStyle> kInlayMaleStyles[] = {{toolpath::InlayMaleStyle::Straight, "straight"},
@@ -446,6 +451,7 @@ constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profi
                                                       {ToolpathOperation::Prism, "prism"},
                                                       {ToolpathOperation::Fluting, "fluting"},
                                                       {ToolpathOperation::Inlay, "inlay"},
+                                                      {ToolpathOperation::VCarveInlay, "v_carve_inlay"},
                                                       {ToolpathOperation::ImageEngrave, "image_engrave"}};
 
 template <class E, std::size_t N>
@@ -922,6 +928,30 @@ json encodeInlayParams(const toolpath::InlayParams& p) {
     return j;
 }
 
+json encodeVCarveInlayParams(const toolpath::VCarveInlayParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["piece"] = nameOf(kVCarveInlayPieces, p.piece);
+    j["pocket_depth"] = p.pocketDepth;
+    j["glue_gap"] = p.glueGap;
+    j["surface_clearance"] = p.surfaceClearance;
+    if (p.plugSheet != 0) {
+        j["plug_sheet"] = p.plugSheet;  // absent = the sheet of the vectors
+    }
+    j["plug_boundary"] = nameOf(kPlugBoundaries, p.plugBoundary);
+    j["boundary_offset"] = p.boundaryOffset;
+    j["safe_z"] = p.safeZ;
+    j["clearance_strategy"] = nameOf(kPocketStrategies, p.clearanceStrategy);
+    j["clearance_direction"] = nameOf(kCutDirections, p.clearanceDirection);
+    j["clearance_raster_angle_rad"] = p.clearanceRasterAngle;
+    j["ramp_plunge"] = p.rampPlunge;
+    j["ramp_distance"] = p.rampDistance;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 json encodeImageEngraveParams(const toolpath::ImageEngraveParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -1030,6 +1060,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodePrismParams(*prism);
     } else if (const auto* inlay = std::get_if<toolpath::InlayParams>(&tp.params)) {
         j["params"] = encodeInlayParams(*inlay);
+    } else if (const auto* vcInlay = std::get_if<toolpath::VCarveInlayParams>(&tp.params)) {
+        j["params"] = encodeVCarveInlayParams(*vcInlay);
     } else if (const auto* photo = std::get_if<toolpath::ImageEngraveParams>(&tp.params)) {
         j["params"] = encodeImageEngraveParams(*photo);
     } else {
@@ -2083,6 +2115,7 @@ class ParamsRecord {
         return dialect_ == ParamsDialect::ParamsJson ? v * kRadPerDeg : v;
     }
     bool boolean() { return readBool(r_, field()); }
+    std::uint64_t entityId() { return readEntityId(r_, field()); }
     int integer() {
         return readInt(r_, field(), std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
     }
@@ -2221,6 +2254,12 @@ constexpr std::array<std::string_view, 16> kInlayKeys{
     "name",        "piece",      "male_style", "female_style",   "start_depth", "cut_depth",
     "step_depth",  "step_width", "allowance",  "safe_z",         "direction",   "order",
     "start_position", "tolerance", "tool",     "layers"};
+
+// V-carve inlay records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 19> kVCarveInlayKeys{
+    "name",           "piece",          "pocket_depth",   "glue_gap",     "surface_clearance", "plug_sheet",
+    "plug_boundary",  "boundary_offset", "safe_z",        "clearance_strategy", "clearance_direction",
+    "clearance_raster_angle_rad", "ramp_plunge", "ramp_distance", "order", "start_position", "tolerance", "tool", "layers"};
 
 // Image Engrave records exist only in job.json, like V-carve.
 constexpr std::array<std::string_view, 12> kImageEngraveKeys{
@@ -2678,6 +2717,55 @@ toolpath::InlayParams decodeInlayParams(JsonReader& r, const Path& p, ParamsDial
     return out;
 }
 
+toolpath::VCarveInlayParams decodeVCarveInlayParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                                    LegacyParamsExtras* legacy) {
+    toolpath::VCarveInlayParams out;
+    ParamsRecord rec(r, p, keysFor(kVCarveInlayKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "piece") {
+            out.piece = rec.choice(kVCarveInlayPieces);
+        } else if (k == "pocket_depth") {
+            out.pocketDepth = rec.number();
+        } else if (k == "glue_gap") {
+            out.glueGap = rec.number();
+        } else if (k == "surface_clearance") {
+            out.surfaceClearance = rec.number();
+        } else if (k == "plug_sheet") {
+            out.plugSheet = rec.entityId();
+        } else if (k == "plug_boundary") {
+            out.plugBoundary = rec.choice(kPlugBoundaries);
+        } else if (k == "boundary_offset") {
+            out.boundaryOffset = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "clearance_strategy") {
+            out.clearanceStrategy = rec.choice(kPocketStrategies);
+        } else if (k == "clearance_direction") {
+            out.clearanceDirection = rec.choice(kCutDirections);
+        } else if (rec.isAngle("clearance_raster_angle")) {
+            out.clearanceRasterAngle = rec.angle();
+        } else if (k == "ramp_plunge") {
+            out.rampPlunge = rec.boolean();
+        } else if (k == "ramp_distance") {
+            out.rampDistance = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::ImageEngraveParams decodeImageEngraveParams(JsonReader& r, const Path& p, ParamsDialect d,
                                                     LegacyParamsExtras* legacy) {
     toolpath::ImageEngraveParams out;
@@ -2814,6 +2902,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::Inlay) {
         return decodeInlayParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::VCarveInlay) {
+        return decodeVCarveInlayParams(r, p, d, legacy);
     }
     if (operation == ToolpathOperation::ImageEngrave) {
         return decodeImageEngraveParams(r, p, d, legacy);

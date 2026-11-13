@@ -501,6 +501,15 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
             }
         }
     }
+    // No rule applies: the nearest point, where two spans equally near up to the tolerance (a box
+    // anchor on a symmetric shape) go to the lowest span (T-0166); rounding cannot pick between them.
+    for (std::size_t i = 0; i < n; ++i) {
+        if (dist[i] <= nearest + eps) {
+            const double u = walk.spanStart(i) + param[i] * walk.spanLength(i);
+            const double projected = walk.project(target);
+            return walk.pointAt(projected) == walk.pointAt(u) ? projected : u;
+        }
+    }
     return walk.project(target);
 }
 

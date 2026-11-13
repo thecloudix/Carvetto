@@ -54,6 +54,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "Prism";
         case ToolpathOperation::ImageEngrave:
             return "Image Engrave";
+        case ToolpathOperation::VCarveInlay:
+            return "V-Carve Inlay";
     }
     return "?";
 }
@@ -119,7 +121,7 @@ void ToolpathFormDialog::buildStatic() {
     toolCombo_ = new QComboBox(this);
     toolCombo_->setObjectName(QStringLiteral("toolCombo"));
     toolCombo_->addItem(QStringLiteral("(choose a tool)"), QString());
-    const bool vBitMode = form_.operation() == ToolpathOperation::VCarving;
+    const bool vBitMode = viewmodel::hasClearanceTools(form_.operation());
     for (const tooling::Tool* t : viewmodel::toolsFor(db_, form_.operation(), false)) {
         toolCombo_->addItem(qs(t->name), qs(t->id));
     }

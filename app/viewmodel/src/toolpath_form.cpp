@@ -12,6 +12,7 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/v_carve_inlay.hpp"
 #include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
@@ -500,6 +501,61 @@ Table<toolpath::InlayParams> makeInlayTable() {
     return t;
 }
 
+Table<toolpath::VCarveInlayParams> makeVCarveInlayTable() {
+    using P = toolpath::VCarveInlayParams;
+    using toolpath::PlugBoundary;
+    using toolpath::VCarveInlayPiece;
+    const auto plug = [](const P& p) { return p.piece == VCarveInlayPiece::Plug; };
+    const auto offsetBoundary = [](const P& p) {
+        return p.piece == VCarveInlayPiece::Plug && p.plugBoundary != PlugBoundary::SheetLimits;
+    };
+    Table<P> t;
+    t.num("pocketDepth", "Pocket depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.pocketDepth; });
+    t.num("glueGap", "Glue gap", "Fit", Kind::Length, false, true, [](P& p) -> double& { return p.glueGap; });
+    t.num("surfaceClearance", "Surface clearance", "Fit", Kind::Length, false, true,
+          [](P& p) -> double& { return p.surfaceClearance; }, plug);
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    NumDef<P>& sheetDef = t.derived(
+        "plugSheet", "Plug sheet (id, 0 = this sheet)", "Plug", Kind::Count,
+        [](const P& p) { return static_cast<double>(p.plugSheet); },
+        [](P& p, double v) -> std::string {
+            if (!(v >= 0.0) || v != std::floor(v) || v > 1e9) {
+                return "the sheet id must be a whole number (0 = this sheet)";
+            }
+            p.plugSheet = static_cast<std::uint64_t>(v);
+            return {};
+        },
+        [](P& p) { p.plugSheet = 0; });
+    sheetDef.visible = plug;
+    sheetDef.zero = true;
+    t.num("boundaryOffset", "Boundary offset", "Plug", Kind::Length, false, true,
+          [](P& p) -> double& { return p.boundaryOffset; }, offsetBoundary);
+    t.num("clearanceRasterAngle", "Clearance raster angle", "Clearance", Kind::Angle, true, true,
+          [](P& p) -> double& { return p.clearanceRasterAngle; },
+          [](const P& p) { return p.clearanceStrategy == toolpath::PocketStrategy::Raster; });
+    t.num("rampDistance", "Ramp distance", "Clearance", Kind::Length, false, false,
+          [](P& p) -> double& { return p.rampDistance; }, [](const P& p) { return p.rampPlunge; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    bound(t, "pocketDepth", 1e-6, 100000.0);
+    bound(t, "glueGap", 0.0, 100000.0);
+    bound(t, "surfaceClearance", 0.0, 100000.0);
+    bound(t, "plugSheet", 0.0, 1e9);
+    bound(t, "boundaryOffset", 0.0, kMaxOffsetMm);
+    bound(t, "rampDistance", -kMaxOffsetMm, kMaxOffsetMm);
+    t.option<VCarveInlayPiece>("piece", "Piece", "Inlay", {"Pocket", "Plug"},
+                               [](P& p) -> VCarveInlayPiece& { return p.piece; });
+    t.option<PlugBoundary>("plugBoundary", "Plug outer boundary", "Plug", {"Sheet limits", "Vector offset", "Boundary offset"},
+                           [](P& p) -> PlugBoundary& { return p.plugBoundary; }, plug);
+    t.option<toolpath::PocketStrategy>("clearanceStrategy", "Clearance strategy", "Clearance", {"Offset", "Raster"},
+                                       [](P& p) -> toolpath::PocketStrategy& { return p.clearanceStrategy; });
+    t.option<CutDirection>("clearanceDirection", "Clearance direction", "Clearance", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.clearanceDirection; });
+    t.flag("rampPlunge", "Ramp plunge moves", "Clearance", [](P& p) -> bool& { return p.rampPlunge; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 Table<toolpath::ImageEngraveParams> makeImageEngraveTable() {
     using P = toolpath::ImageEngraveParams;
     Table<P> t;
@@ -622,6 +678,12 @@ const Table<toolpath::PrismParams>& tableOf() {
 template <>
 const Table<toolpath::InlayParams>& tableOf() {
     static const Table<toolpath::InlayParams> t = makeInlayTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::VCarveInlayParams>& tableOf() {
+    static const Table<toolpath::VCarveInlayParams> t = makeVCarveInlayTable();
     return t;
 }
 
@@ -966,7 +1028,7 @@ ToolpathForm::ToolpathForm(ToolpathOperation operation, Units units)
     : definition_(defaultDefinition(operation)), units_(units) {}
 
 ToolpathForm::ToolpathForm(const ToolpathDefinition& definition, Units units) : definition_(definition), units_(units) {
-    if (definition_.operation() != ToolpathOperation::VCarving) {
+    if (!hasClearanceTools(definition_.operation())) {
         definition_.clearanceTools.clear();
     }
 }
@@ -1137,9 +1199,9 @@ FieldResult ToolpathForm::setTool(const tooling::ToolDatabase& db, const documen
 FieldResult ToolpathForm::setClearanceTools(const tooling::ToolDatabase& db,
                                             const std::vector<document::ToolSource>& sources) {
     FieldResult res;
-    if (operation() != ToolpathOperation::VCarving) {
+    if (!hasClearanceTools(operation())) {
         res.ok = false;
-        res.message = "only a V-carve has clearance tools";
+        res.message = "only a V-carve or a V-carve inlay has clearance tools";
         return res;
     }
     for (std::size_t i = 0; i < sources.size(); ++i) {

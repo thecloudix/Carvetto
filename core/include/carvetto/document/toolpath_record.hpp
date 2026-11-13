@@ -16,6 +16,7 @@
 #include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/v_carve_inlay.hpp"
 #include "carvetto/toolpath/prism.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
@@ -69,10 +70,11 @@ struct ToolSource {
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
                                     toolpath::EngraveParams, toolpath::VCarvingParams, toolpath::ChamferParams,
                                     toolpath::ThreadMillParams, toolpath::PrismParams, toolpath::FlutingParams,
-                                    toolpath::InlayParams, toolpath::ImageEngraveParams>;
+                                    toolpath::InlayParams, toolpath::ImageEngraveParams,
+                                    toolpath::VCarveInlayParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;

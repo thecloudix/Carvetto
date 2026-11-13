@@ -244,6 +244,7 @@ add_library(carvetto_core STATIC
   src/toolpath/prism.cpp
   src/toolpath/thread_mill.cpp
   src/toolpath/inlay.cpp
+  src/toolpath/v_carve_inlay.cpp
   src/toolpath/fluting.cpp
   src/toolpath/image_engrave.cpp
   src/toolpath/v_carve.cpp

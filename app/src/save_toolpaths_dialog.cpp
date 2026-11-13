@@ -25,6 +25,8 @@
 #include <utility>
 
 #include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/tiling_form.hpp"
+#include "tiling_manager_panel.hpp"
 
 #ifndef CARVETTO_SHIPPED_POSTS_DIR
 #define CARVETTO_SHIPPED_POSTS_DIR ""
@@ -89,7 +91,7 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
       cancel_(std::make_shared<std::atomic<bool>>(false)) {
     setWindowTitle(QStringLiteral("Save Toolpaths"));
     setObjectName(QStringLiteral("saveToolpathsDialog"));
-    resize(720, 640);
+    resize(760, 900);
 
     auto* layout = new QVBoxLayout(this);
     auto* form = new QFormLayout();
@@ -137,6 +139,9 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
     template_->setText(qs(viewmodel::defaultNameTemplate(viewmodel::OutputMode::SingleFile)));
     template_->setToolTip(QStringLiteral("File name without extension. Fields: {job} {toolpath} {tool} {n}"));
     form->addRow(QStringLiteral("File name:"), template_);
+
+    tiling_ = new TilingManagerPanel(this);
+    layout->addWidget(tiling_);
 
     overwrite_ = new QCheckBox(QStringLiteral("Replace existing files"), this);
     overwrite_->setObjectName(QStringLiteral("saveOverwrite"));
@@ -187,6 +192,11 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
         if (updating_) {
             return;
         }
+        if (const tooling::Machine* cur = currentMachine()) {
+            tiling_->setMachineWorkArea(cur->workAreaX, cur->workAreaY);
+        } else {
+            tiling_->setMachineWorkArea(0.0, 0.0);
+        }
         fillPosts();
         // The machine's own default post, when it names one.
         const int m = machine_->currentIndex() - 1;
@@ -225,6 +235,8 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
     connect(folder_, &QLineEdit::textChanged, this, [this](const QString&) { typingChanged(); });
     connect(template_, &QLineEdit::textChanged, this, [this](const QString&) { typingChanged(); });
     connect(overwrite_, &QCheckBox::toggled, this, [this](bool) { settingsChanged(); });
+    tiling_->onChanged = [this]() { settingsChanged(); };
+    tiling_->onTyped = [this]() { typingChanged(); };
 
     fillPosts();
     settingsChanged();
@@ -292,7 +304,31 @@ viewmodel::SaveOptions SaveToolpathsDialog::currentOptions() const {
     o.directory = viewmodel::pathFromUtf8(stdString(folder_->text()));
     o.nameTemplate = stdString(template_->text());
     o.jobName = jobName_;
+    viewmodel::applyTiling(o, tiling_->form(), currentMachine());
     return o;
+}
+
+const tooling::Machine* SaveToolpathsDialog::currentMachine() const {
+    const int m = machine_->currentIndex() - 1;
+    if (m >= 0 && static_cast<std::size_t>(m) < machines_.size()) {
+        return &machines_[static_cast<std::size_t>(m)];
+    }
+    return nullptr;
+}
+
+void SaveToolpathsDialog::setMachineIndex(int index) {
+    machine_->setCurrentIndex(index);
+}
+
+void SaveToolpathsDialog::updateTilePreview() {
+    const viewmodel::TilingForm form = tiling_->form();
+    if (!form.enabled) {
+        tiling_->showPreview({});
+        return;
+    }
+    const tooling::Machine* m = currentMachine();
+    tiling_->showPreview(viewmodel::previewTiling(source_.records, form, m != nullptr ? m->workAreaX : 0.0,
+                                                  m != nullptr ? m->workAreaY : 0.0));
 }
 
 void SaveToolpathsDialog::typingChanged() {
@@ -312,6 +348,7 @@ void SaveToolpathsDialog::settingsChanged() {
     debounce_->stop();
     outputFresh_ = false;
     writeError_.clear();
+    updateTilePreview();
     startGeneration();
     showState();
 }
@@ -492,6 +529,7 @@ bool SaveToolpathsDialog::selectPost(const std::string& fileName) {
     units_->setCurrentIndex(0);
     machine_->setCurrentIndex(0);
     updating_ = false;
+    tiling_->setMachineWorkArea(0.0, 0.0);
     fillPosts();
     for (std::size_t k = 0; k < listed_.size(); ++k) {
         if (viewmodel::pathToUtf8(posts_[listed_[k]].path.filename()) == fileName) {

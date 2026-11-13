@@ -190,5 +190,7 @@ std::string toolpathsSelfTest(MainWindow& window);
 /// Image Engrave end to end (T-0275): import a PNG, see it on the canvas, add a Image Engrave through
 /// the form, edit it, stale after moving the bitmap, save and reload. Replaces the window's document.
 std::string imageSelfTest(MainWindow& window);
+/// V-carve inlay (T-0265): the form, a pocket and a plug, undo, save and reload.
+std::string vCarveInlaySelfTest(MainWindow& window);
 
 }  // namespace carvetto::app
