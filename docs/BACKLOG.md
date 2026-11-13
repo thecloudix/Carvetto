@@ -1360,7 +1360,7 @@ Acceptance criteria:
 
 Scope per docs/PLAN.md Phase 2 and docs/reference/feature-inventory.md §4 and §5. Core is Qt-free; heightfields are `float`, mm, on a regular grid (ARCHITECTURE.md `relief` module). Every card: ADR where a decision is made, clean-room per CONTRIBUTING.md, one changelog fragment, mutants killed or argued, CI green on Linux and MSVC. Models are 2.5D heightfields (no overhangs); undercuts are discarded or highlighted at import.
 
-### T-0281 Relief core: HeightField, Component, Level, CombineMode, composition   [status: in-progress]
+### T-0281 Relief core: HeightField, Component, Level, CombineMode, composition   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0001   ADR: 0060
 Goal: The root of Phase 2. `HeightField` (width/height cells, cell size mm, origin, float data, transparent cells as NaN or a mask; resample, crop, sample bilinear, min/max), `Component` (heightfield plus non-destructive properties: shape height %, base height, fade (anchor, second point, percent), tilt (pivot, raise point, angle), combine mode, name, visibility), `Level` (ordered components, own combine mode and base height) and `compose(levels)` producing the visible model. Combine modes: Add, Subtract, Merge High, Merge Low, Multiply. Keep this card NARROW so dependants unblock quickly: no UI, no I/O, no shape generators.
 Acceptance criteria:
