@@ -49,9 +49,9 @@ const char* nameOf(MoveClass cls);
 /// helices); Dwell has no class (nullopt: nothing to draw).
 std::optional<MoveClass> classify(const toolpath::Move& move, const toolpath::Vec3& from);
 
-/// Most points of one polyline chunk (the unit of culling); an arc is never split, so a chunk holding
-/// one can have up to kPreviewMaxArcPoints + 1 points. Moves without XY travel (vertical feeds and
-/// rapids) are counted in `movesByClass` but not drawn; only vertical Plunge/Retract make dots.
+/// Most points of one polyline chunk (the unit of culling). An arc longer than that is split over
+/// several chunks (each carrying the arc's move index) so the parts off screen are culled. Moves
+/// without XY travel (vertical moves of any class) are drawn as a dot where they happen.
 inline constexpr std::size_t kPreviewChunkPoints = 256;
 /// Chord error in mm used to turn arcs into polylines, and the most points of one arc.
 inline constexpr double kPreviewArcTolerance = 0.01;
@@ -139,6 +139,8 @@ struct PreviewDrawStats {
     std::size_t chunksDrawn{0};
     std::size_t pointsIn{0};
     std::size_t pointsOut{0};
+    /// Chunks drawn as a single stroke because the point budget was used up (level of detail).
+    std::size_t chunksCoarse{0};
 };
 
 struct PreviewDrawList {
@@ -157,6 +159,10 @@ struct PreviewDrawOptions {
     std::array<bool, kMoveClassCount> classVisible{true, true, true, true, true};
     /// Points closer than this to the last kept point (pixels, Manhattan) are dropped.
     double minPointSpacingPx{1.5};
+    /// Level of detail for pathological jobs: once this many points are emitted, every further
+    /// visible chunk is drawn as one stroke (first to last point) so a frame stays bounded however
+    /// many moves are on screen. 0 = no budget (the output of ordinary jobs is unchanged).
+    std::size_t maxPointsOut{0};
 };
 
 /// The preview state: on/off, per-toolpath visibility, selection and the scene.

@@ -372,6 +372,91 @@ TEST_CASE("preview: 1M-move toolpath builds and paints within bounds", "[preview
 #endif
 }
 
+TEST_CASE("preview: vertical moves of every class are dots", "[preview][fidelity]") {
+    std::vector<Move> moves;
+    moves.push_back(Move::rapid({0, 0, 10}));
+    moves.push_back(Move::rapid({20, 0, 10}));
+    moves.push_back(Move::rapid({20, 0, 2}));   // vertical rapid: dot
+    moves.push_back(Move::feed({20, 0, -1}));   // vertical feed: dot
+    moves.push_back(Move::feed({20, 0, -2}));   // same place and class: merged
+    moves.push_back(Move::feed({20, 0, -2}));   // no travel at all: nothing
+    moves.push_back(Move::feed({40, 0, -2}));
+    const auto geo = buildPreviewGeometry(moves);
+    REQUIRE(geo->chunks.size() == 4);
+    CHECK(geo->chunks[1].cls == MoveClass::Rapid);
+    CHECK(geo->chunks[1].points.size() == 1);
+    CHECK(geo->chunks[2].cls == MoveClass::Feed);
+    CHECK(geo->chunks[2].points.size() == 1);
+    CHECK(geo->chunks[2].firstMove == 3);
+    CHECK(geo->chunks[2].lastMove == 4);
+    CHECK(geo->chunks[3].points.size() == 2);
+    CHECK(geo->movesByClass[static_cast<std::size_t>(MoveClass::Feed)] == 4);
+}
+
+TEST_CASE("preview: a huge arc is split into chunks of bounded size", "[preview][fidelity]") {
+    std::vector<Move> moves;
+    moves.push_back(Move::rapid({1e5, 0, 0}));
+    moves.push_back(Move::arcCCW({-1e5, 0, 0}, {0, 0}));  // half circle, r = 1e5
+    const auto geo = buildPreviewGeometry(moves);
+    REQUIRE(geo->chunks.size() > 10);
+    std::uint32_t last = 0;
+    for (std::size_t i = 0; i < geo->chunks.size(); ++i) {
+        const PreviewChunk& c = geo->chunks[i];
+        CHECK(c.points.size() <= kPreviewChunkPoints);
+        CHECK(c.firstMove == c.lastMove);
+        last = c.lastMove;
+        if (i > 0) {  // pieces join end to start
+            const geometry::Vec2 prev = geo->chunks[i - 1].points.back();
+            CHECK(prev.x == c.points.front().x);
+            CHECK(prev.y == c.points.front().y);
+        }
+    }
+    CHECK(last == 1);
+    CHECK(geo->chunks.back().points.back().x == -1e5);
+    // A short arc is still one chunk.
+    std::vector<Move> small{Move::rapid({10, 0, 0}), Move::arcCCW({-10, 0, 0}, {0, 0})};
+    CHECK(buildPreviewGeometry(small)->chunks.size() == 1);
+}
+
+TEST_CASE("preview: point budget turns the rest of a frame into one stroke per chunk", "[preview][lod]") {
+    std::vector<Move> moves;
+    moves.push_back(Move::rapid({0, 0, 5}));
+    for (int row = 0; row < 200; ++row) {  // 200 long zigzag rows, each many chunks
+        const double y = row * 1.0;
+        for (int i = 0; i < 300; ++i) {
+            moves.push_back(Move::feed({(row % 2 == 0 ? i + 1 : 299 - i) * 1.0, y, -1}));
+        }
+        moves.push_back(Move::feed({row % 2 == 0 ? 300.0 : 0.0, y + 1.0, -1}));
+    }
+    document::Document doc;
+    ToolpathSession session(&doc);
+    document::ToolpathRecord rec;
+    rec.name = "dense";
+    rec.tool.diameter = 3;
+    rec.moves = document::shareMoves(std::move(moves));
+    REQUIRE(doc.execute(std::make_unique<document::AddToolpathCommand>(rec)));
+    PreviewModel model;
+    model.setEnabled(true);
+    model.sync(session);
+    const ViewTransform view = viewOf(1200, 900, 3.0, {-10, 250});
+
+    const PreviewDrawList full = model.draw(view);
+    CHECK(full.stats.chunksCoarse == 0);
+    PreviewDrawOptions opt;
+    opt.maxPointsOut = 5000;
+    const PreviewDrawList lod = model.draw(view, opt);
+    CHECK(lod.stats.chunksCoarse > 0);
+    CHECK(lod.stats.pointsOut < full.stats.pointsOut);
+    // Bounded: the budget plus two points per remaining chunk, however many moves there are.
+    CHECK(lod.stats.pointsOut <= opt.maxPointsOut + 256 + 2 * lod.stats.chunksCoarse);
+    CHECK(lod.stats.chunksDrawn == full.stats.chunksDrawn);  // nothing dropped, only simplified
+    // A budget above the need changes nothing.
+    opt.maxPointsOut = full.stats.pointsOut + 1;
+    const PreviewDrawList same = model.draw(view, opt);
+    CHECK(same.stats.chunksCoarse == 0);
+    CHECK(same.stats.pointsOut == full.stats.pointsOut);
+}
+
 // --- time readout -------------------------------------------------------------------------------
 
 TEST_CASE("time readout: durations", "[readout]") {

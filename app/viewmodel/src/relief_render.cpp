@@ -62,25 +62,52 @@ Raster renderRelief(const simulate::Heightfield& field, const ReliefOptions& opt
     const double flat = kLz;  // shade of a horizontal surface
     const double tableLevel = field.bottomZ() + 1e-6;
     const auto& z = field.heights();
-    const auto at = [&](std::size_t i, std::size_t j) {
-        return static_cast<double>(z[j * nx + i]);
-    };
+    // Min-pooling: each pixel stands for the lowest cell of its stride x stride block (the cell
+    // index is kept for the cut state and pass id), so a groove narrower than the stride still
+    // shows. With stride 1 the block is the cell itself: the picture is unchanged.
+    std::vector<std::size_t> cellOf(out.width * out.height, 0);
+    std::vector<double> pooled(out.width * out.height, 0.0);
     for (std::size_t py = 0; py < out.height; ++py) {
         // Picture row 0 is the top of the stock: the highest grid row.
-        const std::size_t j = std::min(ny - 1, (out.height - 1 - py) * stride + stride / 2);
-        const std::size_t jm = j >= stride ? j - stride : j;
-        const std::size_t jp = std::min(ny - 1, j + stride);
+        const std::size_t row = out.height - 1 - py;
+        const std::size_t j0 = row * stride;
+        const std::size_t j1 = std::min(ny, j0 + stride);
         for (std::size_t px = 0; px < out.width; ++px) {
-            const std::size_t i = std::min(nx - 1, px * stride + stride / 2);
-            const std::size_t im = i >= stride ? i - stride : i;
-            const std::size_t ip = std::min(nx - 1, i + stride);
-            const double h = at(i, j);
-            const double dx = (at(ip, j) - at(im, j)) / (std::max<double>(static_cast<double>(ip - im), 1.0) * field.cellSize());
-            const double dy = (at(i, jp) - at(i, jm)) / (std::max<double>(static_cast<double>(jp - jm), 1.0) * field.cellSize());
+            const std::size_t i0 = px * stride;
+            const std::size_t i1 = std::min(nx, i0 + stride);
+            std::size_t best = j0 * nx + i0;
+            for (std::size_t j = j0; j < j1; ++j) {
+                for (std::size_t i = i0; i < i1; ++i) {
+                    if (z[j * nx + i] < z[best]) {
+                        best = j * nx + i;
+                    }
+                }
+            }
+            cellOf[py * out.width + px] = best;
+            pooled[py * out.width + px] = static_cast<double>(z[best]);
+        }
+    }
+    const double cell = field.cellSize() * static_cast<double>(stride);
+    for (std::size_t py = 0; py < out.height; ++py) {
+        // Neighbouring picture rows: a smaller py is a higher grid row.
+        const std::size_t pyUp = py > 0 ? py - 1 : py;
+        const std::size_t pyDown = std::min(out.height - 1, py + 1);
+        for (std::size_t px = 0; px < out.width; ++px) {
+            const std::size_t pxm = px > 0 ? px - 1 : px;
+            const std::size_t pxp = std::min(out.width - 1, px + 1);
+            const std::size_t k = py * out.width + px;
+            const double h = pooled[k];
+            const double dx = (pooled[py * out.width + pxp] - pooled[py * out.width + pxm]) /
+                              (std::max<double>(static_cast<double>(pxp - pxm), 1.0) * cell);
+            // Grid y grows as the picture row shrinks.
+            const double dy = (pooled[pyUp * out.width + px] - pooled[pyDown * out.width + px]) /
+                              (std::max<double>(static_cast<double>(pyDown - pyUp), 1.0) * cell);
             const double len = std::sqrt(1.0 + dx * dx + dy * dy);
             const double lit = std::max(0.0, (-dx * kLx - dy * kLy + kLz) / len);
             const double shade = std::clamp(0.45 + 0.55 * (lit / flat), 0.25, 1.35);
 
+            const std::size_t i = cellOf[k] % nx;
+            const std::size_t j = cellOf[k] / nx;
             std::uint32_t base = kStockColour;
             const bool cut = field.isCut(i, j);
             if (cut) {
@@ -90,11 +117,11 @@ Raster renderRelief(const simulate::Heightfield& field, const ReliefOptions& opt
                     base = toolpathColour(field.passId(i, j));
                 } else {
                     const double t = std::clamp((field.topZ() - h) / thickness, 0.0, 1.0);
-                    const double k = 1.0 - 0.55 * std::sqrt(t);
-                    base = pack(chan(kStockColour, 16) * k, chan(kStockColour, 8) * k, chan(kStockColour, 0) * k);
+                    const double kk = 1.0 - 0.55 * std::sqrt(t);
+                    base = pack(chan(kStockColour, 16) * kk, chan(kStockColour, 8) * kk, chan(kStockColour, 0) * kk);
                 }
             }
-            out.pixels[py * out.width + px] = pack(chan(base, 16) * shade, chan(base, 8) * shade, chan(base, 0) * shade);
+            out.pixels[k] = pack(chan(base, 16) * shade, chan(base, 8) * shade, chan(base, 0) * shade);
         }
     }
     return out;
