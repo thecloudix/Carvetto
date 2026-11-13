@@ -433,6 +433,19 @@ TEST_CASE("inlay shapes: 1500- and 3000-span vectors are accepted (derived spans
     CHECK(total(b.female) <= 15000);
 }
 
+TEST_CASE("inlay shapes: a smooth vector whose derived shape passes the cap is refused", "[inlay][robust]") {
+    const auto tol = carvetto::geometry::Tolerance::defaults();
+    // 4000 input spans derive more than 15000 (3600 gives 12,680, 3000 gives 10,504): refused, bounded.
+    const double t0 = carvetto::test::processCpuSeconds();
+    const InlayShapes sh = inlayShapes({wobblyCircle(4000)}, 2.0, 0.0, tol);
+    CHECK(carvetto::test::processCpuSeconds() - t0 < 20.0);
+    CHECK(sh.female.empty());
+    CHECK(sh.male.empty());
+    REQUIRE_FALSE(sh.diagnostics.empty());
+    CHECK(sh.diagnostics.front().issue == ToolpathIssue::WorkLimitExceeded);
+    CHECK(sh.diagnostics.front().message.find("4000 spans") != std::string::npos);
+}
+
 TEST_CASE("inlay: a cancel request stops the run with a Cancelled diagnostic", "[inlay][robust]") {
     std::atomic<bool> stop{true};
     carvetto::geometry::CancelScope scope(&stop);
