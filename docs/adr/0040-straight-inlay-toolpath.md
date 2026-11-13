@@ -40,3 +40,14 @@ clearance, plug destination sheet, mirrored plug, plug boundary); that is split 
    machining, the V-carve inlay.
 8. **Record and form.** `inlay` record in job.json only (like chamfer and thread mill); an Inlay form
    (step fields only for a stepped male, female style only for a female).
+9. **Derived-span cap (T-0269).** The offset stages (open, close, allowance, pocket growth) polygonise
+   their arcs, so a shape has several times the input's span count after them (a smooth closed
+   vector: about 3.5x after the corner rounding, 7x with the allowance). Each derived shape is
+   capped at 15,000 spans (it was 4,000, which refused smooth polygonal vectors of 1,000-1,500
+   vertices): the cost of the offset and cutting stages has its cliff at 15,000-20,000 derived
+   spans, so the cap keeps a refused run bounded (a 20,000-vertex zigzag stays refused in well
+   under a second of CPU) and still admits a 3,000-vertex smooth vector without an allowance. The
+   refusal names the input's span count and asks for a simpler vector. The cap changes only what is
+   refused, never the shape or toolpath of an accepted run (the geometry code is untouched).
+   `InlayShapes::allowanceConsumed` marks "the allowance consumed the plug" for the female piece
+   to drop that warning; the earlier message string compare is gone.

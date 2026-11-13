@@ -994,7 +994,7 @@ TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` r
 Phase: 1   Module: core/geometry (offset), core/toolpath   Depends on: T-0186
 Director decision 2026-11-07 (T-0186 round 3): the Profile single-call cap stays at 6e8 units (never refuse a job main finishes in <=10 s); consequence: cancel latency is up to ~11 s while ONE huge vector (e.g. a 1,000-4,400-Bezier outline) is being offset. Fix at the source: (1) a cooperative poll/budget hook inside offsetOpenContour / offsetContours / union so a single call can stop in ms; (2) the exact Bezier length used by the offset costs 0.2 ms-8 ms per span depending on curvature (smooth 0.18 ms, quarter circle/loop 4-12 ms): use an adaptive cheaper length (error-bounded) or cache; (3) Clipper2 BuildIntersectList dominates starburst/nested Inside/V-bit (50-70 ns/unit): evaluate. Must keep byte-identical results for finished inputs. Large sign text (thousands of Bezier glyph spans) depends on (2).
 
-### T-0227 T-0130 documentation and test nits (verifier)   [status: in-progress]
+### T-0227 T-0130 documentation and test nits (verifier)   [status: done — merged #150]
 ADR-0033 sentence "a test sets these variables in-process" is inaccurate (they are separate ctest processes with the variables set before launch); THIRD_PARTY_NOTICES.md lacks a row for CarvettoTestCFF-Regular.otf; `requireFast` uses a 3 s wall-clock bound (use CPU time); no boundary test for `checkTextSize` `>=` on the path entry point; no test for the `loadFile` ceiling clamp; f04 zero-length-line drop is documented but unasserted.
 
 ### T-0211 Text tool (viewmodel + Qt): text object, text in box, text on curve   [status: done — merged PR #97; follow-ups T-0230]
@@ -1004,10 +1004,10 @@ Goal: a Text tool and a text object stored in the native format (font reference/
 ### T-0229 Wire Save Toolpaths dialog to the Toolpaths dock (after T-0221 and T-0224 merge)   [status: wiring done in PR #96; remaining: core/post PostProcessor cancel hook (LOW)]
 The Save Toolpaths dialog (T-0224) posts every calculated toolpath (ids empty) and its machine list is empty (`setMachines` never called). Pass `ToolpathSession::enabledToolpaths()` ids and the machine/tool database machines; test that a disabled toolpath is NOT in the output and stale toolpaths are warned about (offer recalculate). Also: Save Toolpaths cancel/close freeze (PostProcessor::run has no cancel hook; add one in core/post without changing output).
 
-### T-0230 Text follow-ups (from T-0211 verification)   [status: starter font DECIDED by owner 2026-11-08: DejaVu Serif; rest ready]
+### T-0230 Text follow-ups (from T-0211 verification)   [status: in-progress]
 Real starter font (OWNER picks an OFL font; placeholder has ~8 glyphs so DXF text imports as .notdef boxes), caret/selection and in-canvas text frame, live guide link for text on curve (refit when the guide moves), app-level system-font picker that embeds the chosen file, cross-document paste copies fonts, DXF Aligned/Fit modes, IME input, mixed-script (bidi) lines, vertical text, font family names in UI, 8 MiB font cap excludes most CJK fonts (revisit), tool switch mid-draft discards typed text (decide commit vs keep), pre-existing: setActiveSheet is not undoable.
 
-### T-0231 Preview/simulation nits (T-0223 verifier)   [status: in-progress]
+### T-0231 Preview/simulation nits (T-0223 verifier)   [status: ready — LOW; item 1 done in nits batch PR; items 2-5 (LOD/cancel for pathological jobs, min-pooling relief raster, vertical moves + arc splitting, summary cost) remain]
 (1) Test gap: mutant removing the `targetPending` supersede break in the simulation controller survives (the "latest seek wins / abandoned run publishes no frame" test waits for `state == Working`, which `seek()` itself sets; wait for `progress().movesDone > 0` instead). (2) Pathological jobs (500k full-width 280 mm lines, 1M moves): first paint 1.4 s, 2.5-3.8 s per zoom step, simulation start 54 s UI-starved wait — add LOD/cancel for such jobs. (3) Relief raster samples one cell per stride: thin grooves can disappear on large sheets (use min-pooling). (4) Vertical Feed/Rapid moves counted but not drawn; arcs never split (4097 points for r=1e5). (5) ToolpathsPanel summary recompute cost at 1M moves (~160 ms once, cached by move-list identity). (6) Two stale t0221 driver expectations (not repo code).
 
 ### T-0232 CI resilience against GitHub release-download outages   [status: done — merged PR #99; nits T-0234]
@@ -1248,7 +1248,7 @@ Goal: (1) makeJobSheet tool lookup is a linear find_if on full names, quadratic 
 Acceptance criteria:
   1. 20,000 distinct tools build a sheet in well under a second; thumbnail notice present; tests.
 
-### T-0264 .carv minor-version wording and comment nits (T-0243 delta verifier)   [status: in-progress]
+### T-0264 .carv minor-version wording and comment nits (T-0243 delta verifier)   [status: done — merged #150]
 Phase: 1   Module: core/document + docs/adr   Depends on: T-0243
 Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older build refuse the file as too new; in fact the loader only checks the major version and older builds keep unknown keys in extras: fix the wording, or decide with the owner whether older readers should refuse files that use a newer minor feature (conflicts with the forward-compat test 'a higher minor version of the same major loads'); (2) carv_io.cpp comment above struct KeepOutFile says 1.3, keep-out is 1.4; a doc fragment meant for JobFile sits above KeepOutFile.
 Acceptance criteria:
@@ -1269,19 +1269,19 @@ Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/
 Acceptance criteria:
   1. In the real app a user tiles a job larger than the machine and saves per-tile files; oversize tiles refused; one changelog fragment.
 
-### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: verifying]
+### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: done — merged #145]
 Phase: 1   Module: core/toolpath (cut_order / orderCuts)   Depends on: —
 Goal: with many coincident or heavily overlapping vectors the shared cut ordering costs O(n^2): 4000 identical vectors took 10.4 s and 20000 took 204 s in fluting (orderCuts is shared with thread mill, drill, engrave). Make ordering sub-quadratic (spatial index / duplicate merge) with byte-identical order for inputs that finished before, plus a work bound.
 Acceptance criteria:
   1. 20000 coincident vectors order in well under a second CPU; existing orders unchanged (golden tests); hostile bounds; tests.
 
-### T-0268 Tiling hardening (T-0242 verifier nits)   [status: verifying]
+### T-0268 Tiling hardening (T-0242 verifier nits)   [status: done — merged #148]
 Phase: 1   Module: core/toolpath/tiling   Depends on: T-0242
 Goal: (1) NaN/inf coordinates leak through to tile output as non-finite moves: reject or skip them (and consider a finite check in save_toolpaths); (2) cost is O(tiles x moves) with no bounding-box prefilter: 200k moves x 10000 tiles ran past 60 s; add a per-move bounds reject / spatial bucketing, lower the 100000-tile cap, add a work bound and cancel; (3) originalPosition=true does not check the tile lies inside the machine bed: decide/document; (4) huge or degenerate arcs (1e300 centre gives 0 tiles; zero-radius arc yields many moves); tests for the clip-boundary tolerances (kEps 1e-9, kMinPiece 1e-6) so mutants die; (5) document tile numbering ("tile N" counts non-empty tiles after ordering).
 Acceptance criteria:
   1. Hostile jobs finish or refuse within a documented bound; non-finite input never reaches output; byte-identical tile output for inputs that finished before; tests.
 
-### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: verifying]
+### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: done — merged #149 (female limit ~2000-2500 smooth vertices; cap-40000 mutant test gap → T-0277)]
 Phase: 1   Module: core/toolpath/inlay   Depends on: T-0238
 Goal: the 4000 derived-span cap refuses polygonal inputs above ~1000-1500 vertices that the old code handled in <0.3 s (real cost cliff is ~15,000-20,000 derived spans): raise the cap (~15,000) or key it to estimated work, keep the 20,000-span zigzag repro bounded; refusal message should name the input span count and suggest simplifying; replace the string-compare of kAllowanceConsumes with a flag on InlayShapes; mention the cap in ADR-0040.
 Acceptance criteria:
@@ -1329,3 +1329,15 @@ Acceptance criteria:
   1. A grep for the banned third-party product names returns nothing outside git history (the generic words "V-carve"/"V-carving" and the existing `VCarving`/`v_carve` operation identifiers are fine).
   2. Behaviour unchanged: full ctest, Qt app self-test, MSVC CI green; save/load round trip of the renamed record.
   3. One changelog fragment.
+
+### T-0277 Tiling: test pinning the 10000-tile cap (T-0268 verifier nit)   [status: in-progress]
+Phase: 1   Module: core/toolpath   Depends on: T-0268
+Goal: (also from T-0269: a test asserting a case just above 15000 derived spans, e.g. a 3000-vertex female, is refused, so the cap-40000 mutant is killed.) A mutant restoring the tiling total-tile limit to 100000 passes all tests. Add a test with between 10,001 and 100,000 tiles expecting a refusal; also confirm the kMinPiece 1e-6 -> 1e-8 mutant is killed (verifier left it unchecked).
+Acceptance criteria:
+  1. Both mutants fail a test; one changelog fragment; CI green.
+
+### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: ready — LOW]
+Phase: 1   Module: app/viewmodel   Depends on: T-0259, T-0261
+Goal: The job sheet is a single document for the whole job. For double-sided jobs, produce per-sheet/per-side sections (setup, toolpaths, tools, thumbnail per side) as T-0243/T-0261 now allow; PDF output includes them. Optional: a direct print dialog if the PrintSupport module is acceptable (owner decision).
+Acceptance criteria:
+  1. A double-sided job's sheet lists each side with its own toolpaths and zero reference; single-sided output unchanged byte-for-byte; self-test; changelog fragment; CI green.

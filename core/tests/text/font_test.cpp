@@ -1,3 +1,5 @@
+#include <filesystem>
+#include <fstream>
 #include <algorithm>
 #include <cmath>
 
@@ -114,4 +116,24 @@ TEST_CASE("Font is movable and an empty Font is inert", "[text][font]") {
     CHECK(none.familyName().empty());
     const TextLayout l = layoutText(none, "I");
     CHECK(l.status == TextStatus::InvalidFont);
+}
+
+TEST_CASE("loadFile clamps the size limit to the absolute ceiling", "[text][font][hostile]") {
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::temp_directory_path() / "carvetto_font_ceiling_test";
+    fs::create_directories(dir);
+    const fs::path file = dir / "big.ttf";
+    {
+        std::ofstream out(file, std::ios::binary);
+        out.put('x');
+    }
+    std::error_code ec;
+    fs::resize_file(file, kAbsoluteMaxFontBytes + 1, ec);  // sparse where the file system allows
+    if (!ec) {
+        FontLimits lim;
+        lim.maxFileBytes = static_cast<std::size_t>(-1);  // "no limit" still hits the ceiling
+        CHECK(Font::loadFile(file.string(), lim).status == FontStatus::TooLarge);
+    }
+    fs::remove_all(dir, ec);
+    CHECK_FALSE(ec);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -64,8 +65,24 @@ std::vector<geometry::Box2> tileRects(const geometry::Box2& extent, const TileSp
 Toolpath clipToolpath(const Toolpath& tp, const geometry::Box2& rect, double safeZ, std::optional<Vec3> from = {});
 
 /// Tiles the toolpaths over their common extent (or `extent` when given).
+///
+/// Limits (T-0268; each refuses with `error`, nothing is tiled):
+///  - at most 10000 tiles in total;
+///  - every coordinate (move end, arc centre, extent) must be finite and within +-1e7 mm, so
+///    non-finite values never reach the output (`clipToolpath` alone skips such moves);
+///  - at most 5 million (move, tile) pairs may need clipping: each move is only clipped against
+///    the tiles its bounding box touches, so ordinary jobs cost about their move count, but a
+///    huge number of moves that each span the whole job is refused;
+///  - `cancel` (optional) is polled between tiles and every 1024 moves; true ends with the error
+///    "cancelled".
+/// Tile numbering: the "tile N" of the save path and preview counts only the tiles that have
+/// cuts, 1-based, in tile order (row by row, or ascending area when `smallestFirst`); empty
+/// tiles are left out and do not consume a number. `Tile::column`/`row` give the grid position.
+/// `originalPosition` keeps job coordinates and does not check that a tile lies inside the
+/// machine bed: the tile rectangles are regions of the job and placing the job on the bed is the
+/// caller's business (tileFitsWorkArea only checks the tile size).
 TilingResult tileToolpaths(const std::vector<Toolpath>& toolpaths, const TileSpec& spec,
-                           std::optional<geometry::Box2> extent = {});
+                           std::optional<geometry::Box2> extent = {}, const std::function<bool()>& cancel = {});
 
 /// True when the tile's rectangle fits a work area of `areaX` x `areaY` mm (0 = not set = fits).
 bool tileFitsWorkArea(const Tile& tile, double areaX, double areaY);

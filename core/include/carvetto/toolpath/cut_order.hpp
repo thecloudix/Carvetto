@@ -40,12 +40,21 @@ struct OrderItem {
     geometry::Vec2 end;
 };
 
+/// Work counters of one orderCuts call (T-0267), for tests that bound the cost without a clock.
+struct OrderStats {
+    /// Start-to-tool distances evaluated by the nearest-neighbour search.
+    std::size_t distanceEvals{0};
+    /// Point-in-loop tests run by the containment pass.
+    std::size_t containmentTests{0};
+};
+
 /// Machining order of `items` (indices into it). Inner cuts always come first: an item whose
 /// start point lies inside a closed item (smaller items only, so two loops never contain each
 /// other) is cut before it, and the strategy orders siblings within each container.
 /// `from` is the tool position before the first cut. Deterministic.
 std::vector<std::size_t> orderCuts(const std::vector<OrderItem>& items, const OrderOptions& options,
-                                   geometry::Vec2 from, const geometry::Tolerance& tol);
+                                   geometry::Vec2 from, const geometry::Tolerance& tol,
+                                   OrderStats* stats = nullptr);
 
 /// Rapid travel of an order: from `from` to the first start, then end → next start.
 double travelLength(const std::vector<OrderItem>& items, const std::vector<std::size_t>& order,

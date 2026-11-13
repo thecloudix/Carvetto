@@ -23,6 +23,10 @@ written only when paired). Loading checks that pairs are mutual and front/back. 
 is **1.5** (`kCarvFormatMinorDoubleSided`), written ONLY when the document has a back or paired
 sheet; the writer takes the highest minor any used feature requires (so keep-out zones plus paired
 sheets is 1.5, dimensions plus paired sheets is 1.5, and documents with neither keep their previous
-minors, byte-identical). The bump makes an older build refuse the file as too new instead of loading
-a paired sheet as two independent sheets and later stranding it. `kCarvFormatMinor` is 5 for the
-loader's too-new check.
+minors, byte-identical). The loader checks only the major version, so an older build with the
+same major still opens such a file: it does not know `side`/`partner`, keeps them as unknown keys in
+the sheet's extras and writes them back on save, but treats the sheets as independent while loaded.
+The minor bump only labels the file (and is what keeps documents without the feature byte-identical).
+Making older readers refuse files that use a newer minor feature would conflict with the
+forward-compatibility rule that a higher minor of the same major loads; that is an owner decision and
+is not taken here. `kCarvFormatMinor` is the newest minor this build writes and reads.

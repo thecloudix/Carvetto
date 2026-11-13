@@ -33,5 +33,8 @@ records, tile by tile, named "<toolpath> (tile N)", so the existing file modes w
 work area fails the job. Keep-out zones are refused together with tile coordinates (zones are in
 job coordinates); they still work with the original position.
 
+## Limits (T-0268)
+At most 10000 tiles; coordinates must be finite and within 1e7 mm (the job is refused otherwise); each move is clipped only against the tiles its bounding box touches, with a bound of 5 million (move, tile) pairs; the caller may cancel. "tile N" counts only tiles that have cuts. `originalPosition` does not check the tile against the machine bed.
+
 ## Not done
 The dialog's Tile Toolpaths checkbox and the Tiling Manager panel are a UI follow-up card.
