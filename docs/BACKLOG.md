@@ -1473,7 +1473,7 @@ Acceptance criteria: panel actions go through the undoable commands of T-0282; 3
 Phase: 2   Module: app   Depends on: T-0299, T-0283, T-0284, T-0292, T-0293
 Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, boundary and cross-section tools, each with preview and the common Apply / Reset / Start New Component buttons.
 
-### T-0301 App: 3D import/export dialogs (orientation, zero plane, undercuts) and sweeps/turn/textured dialogs   [status: verifying (first subset: import/export dialogs; sweep, extrude, turn, textured forms -> T-0308)]
+### T-0301 App: 3D import/export dialogs (orientation, zero plane, undercuts) and sweeps/turn/textured dialogs   [status: verifying (PR open; sweep, extrude, turn, textured forms -> T-0308)]
 Phase: 2   Module: app   Depends on: T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291
 Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, centre), zero-plane positioning with undercut highlight, export actions, and the sweep, extrude/weave, turn/spin and textured-area forms. Split into two cards when picked up if the coder judges it too large.
 
