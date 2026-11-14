@@ -11,8 +11,8 @@
 #include "carvetto/io/raster.hpp"
 #include "carvetto/relief/relief.hpp"
 
-// Bitmap to relief component, zero plane and Scale Model Z (T-0284, ADR-0075,
-// docs/adr/0075-bitmap-relief.md). Units are mm. Headless; no UI.
+// Bitmap to relief component, zero plane and Scale Model Z (T-0284, ADR-0076,
+// docs/adr/0076-bitmap-relief.md). Units are mm. Headless; no UI.
 
 namespace carvetto::relief {
 

@@ -1,4 +1,4 @@
-# ADR-0075: Bitmap to relief component, zero plane, Scale Model Z
+# ADR-0076: Bitmap to relief component, zero plane, Scale Model Z
 
 Status: accepted (T-0284)
 
