@@ -1454,12 +1454,12 @@ Phase: 2   Module: core/toolpath   Depends on: T-0281   ADR: 0071
 Goal: Roughing of the composed model with flat/ball/other tools (tool shapes from `simulate/tool_shape.hpp`): Z-level (constant-Z slices of the model with allowance, offset or pocket-style clearing) and 3D raster (raster over the drop-tool surface with allowance and stepover), model boundary choice (material block, selected vectors), cut direction, ramp/plunge entry, safe Z, tolerance. Drop-tool vs project option as in the reference options. Multi-tool via the existing tool list/rest machining mechanism.
 Acceptance criteria: simulating the output with the existing simulator never gouges below allowance; stock left within allowance everywhere; deterministic; cancellable; large grids bounded (spatial/column accelerated drop).
 
-### T-0297 Toolpath 3D finish: offset and raster, with rest machining   [status: blocked — waits on T-0296]
+### T-0297 Toolpath 3D finish: offset and raster, with rest machining   [status: in-progress]
 Phase: 2   Module: core/toolpath   Depends on: T-0296   ADR: 0072
 Goal: Finishing passes: raster (angle, stepover) and offset (constant-scallop style) over the model with ball/tapered/flat tools, tolerance, boundary, and rest machining against a previous tool (tool list).
 Acceptance criteria: scallop height within the predicted bound on a sphere; rest machining only cuts where the previous tool could not reach; never gouges the model (simulator check).
 
-### T-0298 Moulding toolpath, project 2D toolpaths onto the model, 3D tabs, component from toolpath preview   [status: blocked — waits on T-0296]
+### T-0298 Moulding toolpath, project 2D toolpaths onto the model, 3D tabs, component from toolpath preview   [status: in-progress]
 Phase: 2   Module: core/toolpath   Depends on: T-0296, T-0281   ADR: 0073
 Goal: Moulding toolpath (profile a moulding cross-section along vectors with the tool shape), Project Toolpath onto 3D (drop 2D toolpath Z by the model surface, with a drop vs project choice), 3D tabs for 3D profiling, and Create Component From Toolpath Preview (heightfield from the simulator result). Split this card if it exceeds one verifier round budget.
 Acceptance criteria: each has analytic goldens; projected paths lie on the surface within tolerance; the component from the preview matches the simulator heightfield.
