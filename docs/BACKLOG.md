@@ -1449,7 +1449,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281, T-0282
 Goal: Clipping (clip a level to selected closed vectors; apply/update/remove) and Mirror Mode (left-right, right-left, top-bottom, bottom-top, four quadrants) composed at render time; wrapping is Phase 3.
 Acceptance criteria: effects never modify stored fields; baking makes them permanent; mirror modes golden on an asymmetric field.
 
-### T-0296 Toolpath 3D rough: Z-level and 3D raster   [status: verifying (Z-level clears by raster rows only; offset clearing -> T-0304)]
+### T-0296 Toolpath 3D rough: Z-level and 3D raster   [status: done — PR #166 (offset clearing -> T-0304)]
 Phase: 2   Module: core/toolpath   Depends on: T-0281   ADR: 0071
 Goal: Roughing of the composed model with flat/ball/other tools (tool shapes from `simulate/tool_shape.hpp`): Z-level (constant-Z slices of the model with allowance, offset or pocket-style clearing) and 3D raster (raster over the drop-tool surface with allowance and stepover), model boundary choice (material block, selected vectors), cut direction, ramp/plunge entry, safe Z, tolerance. Drop-tool vs project option as in the reference options. Multi-tool via the existing tool list/rest machining mechanism.
 Acceptance criteria: simulating the output with the existing simulator never gouges below allowance; stock left within allowance everywhere; deterministic; cancellable; large grids bounded (spatial/column accelerated drop).
@@ -1485,7 +1485,7 @@ Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, p
 Phase: 2   Module: app   Depends on: T-0299, T-0296, T-0297, T-0298
 Goal: Toolpath panel entries and dialogs for 3D rough, 3D finish, moulding, project-onto-model and 3D tabs; preview in the 3D view; simulation of 3D toolpaths with the existing simulator; save/post output uses the existing pipeline.
 
-### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: blocked — waits on T-0296]
+### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: ready]
 Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
