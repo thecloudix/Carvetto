@@ -1371,7 +1371,7 @@ Acceptance criteria:
   5. Tests plus mutation checks on the combine and fade/tilt maths.
 Out of scope: document integration (T-0282), generators, UI.
 
-### T-0282 Relief in the document: components and levels, commands, .carv persistence   [status: in-progress]
+### T-0282 Relief in the document: components and levels, commands, .carv persistence   [status: verifying]
 Phase: 2   Module: core/document + core/io   Depends on: T-0281   ADR: 0061
 Goal: Components and levels live in the `Document` (per sheet), with undoable commands (add, delete, rename, reorder, move to level, set combine mode, edit properties, duplicate). `.carv` stores heightfields as `components/*.hf` (zstd or the existing compression helper; deterministic bytes) and component parameters in `job.json`; bump the minor format version only as needed, old files still load.
 Acceptance criteria:
