@@ -170,6 +170,7 @@ add_library(carvetto_core STATIC
   src/geometry/span.cpp
   src/geometry/polyline.cpp
   src/relief/relief.cpp
+  src/relief/shape.cpp
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp
