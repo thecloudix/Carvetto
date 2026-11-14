@@ -19,7 +19,7 @@ namespace {
 
 constexpr double kInf = std::numeric_limits<double>::infinity();
 constexpr double kPi = 3.14159265358979323846;
-constexpr int kMaxDepth = 0;
+constexpr int kMaxDepth = 10;
 constexpr double kEps = 1e-9;
 
 /// Bilinear sampler of a row-major node grid.
