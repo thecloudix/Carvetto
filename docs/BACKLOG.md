@@ -1469,7 +1469,7 @@ Phase: 2   Module: app   Depends on: T-0282   ADR: 0074
 Goal: Component Tree panel (levels, components, drag/reorder, show/hide, combine mode, rename, delete, duplicate, move to level), Component Properties form (shape height, base height, fade, tilt, appearance), and a 3D view rendering the composed model (shaded, orbit/zoom/pan per the inventory, material colour). Reuses the existing relief rendering and playback code where it applies. Self-test coverage.
 Acceptance criteria: panel actions go through the undoable commands of T-0282; 3D view draws a known model (pixel-sampled self-test); view stays responsive on a 2000x2000 field (level-of-detail or tile).
 
-### T-0300 App: modelling dialogs (Create Shape, bitmap, zero plane, scale Z, modify ops)   [status: in-progress]
+### T-0300 App: modelling dialogs (Create Shape, bitmap, zero plane, scale Z, modify ops)   [status: verifying (first subset: Create Shape, bitmap, zero plane, Scale Z; rest -> T-0306)]
 Phase: 2   Module: app   Depends on: T-0299, T-0283, T-0284, T-0292, T-0293
 Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, boundary and cross-section tools, each with preview and the common Apply / Reset / Start New Component buttons.
 
@@ -1493,3 +1493,7 @@ Acceptance criteria: simulator shows no gouge below model + allowance; offset cl
 ### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: ready — LOW]
 Phase: 2   Module: core/document + app   Depends on: T-0299
 Goal: Store an appearance per component and level in the document (needs a .carv minor-version bump, old files still load) and use it in the Model view; T-0299 ships one view-level material instead. Owner to confirm when a decision is needed on defaults; low priority.
+
+### T-0306 App: remaining modelling forms (T-0300 follow-up)   [status: blocked — waits on T-0300]
+Phase: 2   Module: app   Depends on: T-0300
+Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, vector boundary, cross section and distort (core ops are in relief/modify.hpp and relief/derive.hpp), each with one preview function and Apply through ReplaceReliefComponentCommand or an add, as one undo step; the Custom shape profile editor; preview merged with the rest of the model if affordable. Follow the T-0300 pattern (viewmodel relief_modelling, ModellingPanel pages, self-test).
