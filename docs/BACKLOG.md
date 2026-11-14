@@ -1380,7 +1380,7 @@ Acceptance criteria:
   3. Selection of components and ids follow the existing id/selection conventions.
 Out of scope: UI.
 
-### T-0283 Create Shape: flat, round, angled, smooth, custom (from closed vectors)   [status: in-progress]
+### T-0283 Create Shape: flat, round, angled, smooth, custom (from closed vectors)   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0062
 Goal: Generate a component from selected closed vectors (holes respected): Plane (flat), Round, Angled, Smooth, Custom profile. Fields per inventory: profile/edge angle, limit (height cap), preserve internal corners, blend to inner vectors, scale to height, base height, fade, tilt, total height. Shapes store creation parameters so they can be re-edited.
 Acceptance criteria:
