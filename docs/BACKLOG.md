@@ -1389,7 +1389,7 @@ Acceptance criteria:
   3. Holes lower the surface correctly; total height edits update scale and base consistently.
   4. Bounded work (distance transform), cancellable, deterministic.
 
-### T-0284 Create component from bitmap, Scale Model Z, zero plane   [status: ready]
+### T-0284 Create component from bitmap, Scale Model Z, zero plane   [status: in-progress]
 Phase: 2   Module: core/relief   Depends on: T-0281, T-0273
 Goal: Heightfield from a bitmap in the `.carv` bitmap store or a file (keep 16-bit depth, brightness maps to height, invert option, auto-scale, combine mode Add); Add Zero Plane (job-size zero component); Scale Model Z (percent or exact height, both sides option for double-sided jobs).
 Acceptance criteria: 16-bit input keeps full precision; uniform image gives a flat field; exact-height scale hits the target to 1e-6; zero plane matches the job size; degenerate input errors cleanly.
@@ -1404,12 +1404,12 @@ Phase: 2   Module: core/relief   Depends on: T-0281, T-0285   ADR: 0064
 Goal: Rasterise a oriented mesh to a top-down `HeightField` at a chosen resolution (highest surface per cell), zero-plane position in the model, discard data below the plane, optional second (bottom) side for two-sided jobs, undercut detection mask (cells where the mesh has material hidden below the top surface), backface caps, optional resize of material to fit.
 Acceptance criteria: pyramid, sphere and box meshes match analytic heights within the cell tolerance; undercut mask correct on an overhang test mesh; deterministic; bounded work with cancel for large meshes (triangle-bin acceleration).
 
-### T-0287 3D export: STL (with back-face options), OBJ, grayscale heightmap   [status: ready]
+### T-0287 3D export: STL (with back-face options), OBJ, grayscale heightmap   [status: in-progress]
 Phase: 2   Module: core/io   Depends on: T-0281, T-0285
 Goal: Export the composed model as binary STL (watertight option with back face and walls, or top surface only), OBJ, and a 16-bit grayscale PNG/PGM heightmap (highest = white). Reuses raster writing where it exists. Clipart (`.3dclip`) is NOT in scope (own format, deferred; note in ADR).
 Acceptance criteria: STL re-read by T-0285 reproduces the surface; watertight option yields a closed manifold (edge count check); heightmap values scale linearly and hit white/black exactly at max/min.
 
-### T-0288 Two Rail Sweep   [status: ready]
+### T-0288 Two Rail Sweep   [status: in-progress]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0065
 Goal: Sweep one or more cross-section vectors along two rail vectors (proportional positioning, per-section smooth, scale cross sections with width, sweep between spans, fill centre of closed rails, scale to exact height). Stores parameters for re-edit.
 Acceptance criteria: a straight-rail rectangle-section sweep gives the analytic extrusion; swap/reverse rails behave; unequal node counts handled as the inventory says; bounded and cancellable.
