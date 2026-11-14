@@ -1439,7 +1439,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0069
 Goal: Slice Model (thickness, from top, count, optional boundary vectors, one component per slice), Add Draft (minimum draft angle, bakes to a new component), Split Component with a vector (A and B), Create Vector Boundary around components (silhouette contours), Create Cross Section Vector (two points to a profile), Distort Selected Component (reuses the 2D distort maths).
 Acceptance criteria: slices reconstruct the model when recombined; draft angle verified on a wall test; silhouette of a cone is a circle within tolerance; cross-section of a ramp is a straight line.
 
-### T-0294 Sculpting engine (brushes, custom brush, undo)   [status: in-progress]
+### T-0294 Sculpting engine (brushes, custom brush, undo)   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0070
 Goal: Brush engine: Smooth, Smudge, Deposit, Remove, Undo Brush; diameter, strength, smoothness; Normal/Raise/Lower mode; preserve transparency; custom brush from a component or bitmap with angle and dynamic rotation; stroke as a deterministic list of dabs applied to a working copy, committed or discarded (Keep/Discard).
 Acceptance criteria: single-dab goldens per brush; strokes are order-deterministic and independent of the sampling rate within a stated tolerance; undo brush restores the original exactly; bounded memory.
