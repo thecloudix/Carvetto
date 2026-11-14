@@ -49,8 +49,14 @@ Status: accepted (T-0295)
   Mirror-centre edits coalesce in undo; clip and bake do not.
 
 ## Tests and mutants
-Mutants run by hand against `[effects]`/`[relief]` (each killed): crossing `<=` -> `<`; half-open
-test `<=` -> `<`; mirror source side inverted; mirror axis `>` -> `>=`; effects order swapped;
-effects skipped in compose; polygon minimum 3 -> 2; vertex cap off by one; polygon cap off by one;
-bake keeps level base height; bake leaves effects set; bake undo drops selection; minor not bumped;
-mirror centre not written; clip polygons not read; quadrant source mapping.
+Mutants run by hand against `[effects]` (each killed): clip crossing `<=` -> `<`; half-open
+vertex test `<=` -> `<`; mirror source side inverted (x and y); target Top-to-Bottom source side
+flipped; quadrant source mapping changed; effects order swapped; effects skipped in compose;
+polygon minimum 3 -> 2 (command and loader); vertex cap off by one (validator and loader);
+polygon cap off by one; bake keeps the level base height; bake leaves effects set; bake undo drops
+the selection; bake allowed without effects; minor not bumped to 10; mirror centre not written;
+clip polygons not read; unchanged clip not detected as a no-op.
+Equivalent, argued: `x >= center.x` for `x > center.x` in the mirror (a cell exactly on an axis
+mirrors onto itself and the bilinear sample at a cell centre is exact, so the value is the same);
+dropping the level-visibility test in `compose`'s base-height guard is unchanged code. The full
+suite also passes.

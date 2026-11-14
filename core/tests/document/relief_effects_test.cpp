@@ -252,6 +252,17 @@ TEST_CASE("level effects: hostile or malformed effects records are refused", "[d
     REQUIRE_FALSE(r.ok());
     CHECK(r.error().message.find("at least 3") != std::string::npos);
     CHECK_FALSE(mutated("\"clip\": [", "\"clip\": [7, ").ok());
+    {  // the vertex cap: exactly the cap loads, one more is refused
+        const auto polygon = [](std::size_t n) {
+            std::string t = "\"clip\": [[";
+            for (std::size_t i = 0; i < n; ++i) t += std::string(i ? ", " : "") + "[0, " + std::to_string(i % 7) + "]";
+            return t + "], ";
+        };
+        CHECK(mutated("\"clip\": [", polygon(relief::kMaxClipVertices - 4)).ok());  // plus the 4-point original
+        const auto over = mutated("\"clip\": [", polygon(relief::kMaxClipVertices - 3));
+        REQUIRE_FALSE(over.ok());
+        CHECK(over.error().message.find("clip vertices") != std::string::npos);
+    }
     CHECK_FALSE(mutated("\"clip\": [", "\"clip\": [[[0, \"a\"], [1, 1], [2, 2]], ").ok());
 }
 
