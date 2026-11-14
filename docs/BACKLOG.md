@@ -1414,12 +1414,12 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0065
 Goal: Sweep one or more cross-section vectors along two rail vectors (proportional positioning, per-section smooth, scale cross sections with width, sweep between spans, fill centre of closed rails, scale to exact height). Stores parameters for re-edit.
 Acceptance criteria: a straight-rail rectangle-section sweep gives the analytic extrusion; swap/reverse rails behave; unequal node counts handled as the inventory says; bounded and cancellable.
 
-### T-0289 Extrude and Weave   [status: in-progress]
+### T-0289 Extrude and Weave   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0066
 Goal: Extrude a vector cross section or a component along a rail (stretch to length or fill with copies with overlap % and alternate flips; create sharp corners; sweep between spans) and the weave option (Z under %, Z over %, scale shape or add base).
 Acceptance criteria: analytic goldens for straight rails; weave crossings alternate over/under correctly; deterministic.
 
-### T-0290 Turn and Spin   [status: verifying (PR #169)]
+### T-0290 Turn and Spin   [status: done — PR #169]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0067
 Goal: Turn (revolve a profile about its start-end line) and Spin (revolve about its left end into a circular component); scale to exact height.
 Acceptance criteria: a half-circle profile spun gives a hemisphere within tolerance; turn of a rectangle gives a cylinder; degenerate profile errors cleanly.
@@ -1464,7 +1464,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0296, T-0281   ADR: 0073
 Goal: Moulding toolpath (profile a moulding cross-section along vectors with the tool shape), Project Toolpath onto 3D (drop 2D toolpath Z by the model surface, with a drop vs project choice), 3D tabs for 3D profiling, and Create Component From Toolpath Preview (heightfield from the simulator result). Split this card if it exceeds one verifier round budget.
 Acceptance criteria: each has analytic goldens; projected paths lie on the surface within tolerance; the component from the preview matches the simulator heightfield.
 
-### T-0299 App: component tree panel and 3D view of the composed model   [status: verifying (PR #170; per-component appearance -> T-0305)]
+### T-0299 App: component tree panel and 3D view of the composed model   [status: done — PR #170 (per-component appearance -> T-0305)]
 Phase: 2   Module: app   Depends on: T-0282   ADR: 0074
 Goal: Component Tree panel (levels, components, drag/reorder, show/hide, combine mode, rename, delete, duplicate, move to level), Component Properties form (shape height, base height, fade, tilt, appearance), and a 3D view rendering the composed model (shaded, orbit/zoom/pan per the inventory, material colour). Reuses the existing relief rendering and playback code where it applies. Self-test coverage.
 Acceptance criteria: panel actions go through the undoable commands of T-0282; 3D view draws a known model (pixel-sampled self-test); view stays responsive on a 2000x2000 field (level-of-detail or tile).
@@ -1490,6 +1490,6 @@ Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
 
-### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: blocked — waits on T-0299]
+### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: ready — LOW]
 Phase: 2   Module: core/document + app   Depends on: T-0299
 Goal: Store an appearance per component and level in the document (needs a .carv minor-version bump, old files still load) and use it in the Model view; T-0299 ships one view-level material instead. Owner to confirm when a decision is needed on defaults; low priority.
