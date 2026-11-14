@@ -1404,7 +1404,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281, T-0285   ADR: 0064
 Goal: Rasterise a oriented mesh to a top-down `HeightField` at a chosen resolution (highest surface per cell), zero-plane position in the model, discard data below the plane, optional second (bottom) side for two-sided jobs, undercut detection mask (cells where the mesh has material hidden below the top surface), backface caps, optional resize of material to fit.
 Acceptance criteria: pyramid, sphere and box meshes match analytic heights within the cell tolerance; undercut mask correct on an overhang test mesh; deterministic; bounded work with cancel for large meshes (triangle-bin acceleration).
 
-### T-0287 3D export: STL (with back-face options), OBJ, grayscale heightmap   [status: in-progress]
+### T-0287 3D export: STL (with back-face options), OBJ, grayscale heightmap   [status: verifying]
 Phase: 2   Module: core/io   Depends on: T-0281, T-0285
 Goal: Export the composed model as binary STL (watertight option with back face and walls, or top surface only), OBJ, and a 16-bit grayscale PNG/PGM heightmap (highest = white). Reuses raster writing where it exists. Clipart (`.3dclip`) is NOT in scope (own format, deferred; note in ADR).
 Acceptance criteria: STL re-read by T-0285 reproduces the surface; watertight option yields a closed manifold (edge count check); heightmap values scale linearly and hit white/black exactly at max/min.
