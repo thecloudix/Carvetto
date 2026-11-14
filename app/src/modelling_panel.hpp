@@ -23,14 +23,17 @@ class MainWindow;
 /// Self-test of the modelling forms (T-0300); empty on success.
 std::string modellingSelfTest(MainWindow& window);
 
-/// Docked modelling forms (T-0300, ADR-0080): Create Shape, Bitmap, Zero Plane and Scale Model Z,
+/// Docked modelling forms (T-0300, ADR-0080; T-0306, ADR-0083): Create Shape, Bitmap, Zero Plane, Scale Model Z
+/// and the modify tools (replace below, reset, offset, smooth, emboss, slice, draft, split, boundary, cross
+/// section, distort),
 /// each with the common Preview / Apply / Reset / Start New Component buttons. The logic lives in
 /// `viewmodel/relief_modelling.hpp`; this widget only reads and writes the text of the forms.
 /// Preview shows the result alone in the Model view (`onPreview`), Apply is one undo step; Apply
 /// again re-applies to the same component until Start New Component.
 class ModellingPanel : public PanelBase {
    public:
-    enum class Tool { CreateShape = 0, Bitmap = 1, ZeroPlane = 2, ScaleZ = 3 };
+    /// `Modify` stands for every page of `viewmodel::ModifyTool` (T-0306); see `modifyTool()`.
+    enum class Tool { CreateShape = 0, Bitmap = 1, ZeroPlane = 2, ScaleZ = 3, Modify = 4 };
 
     explicit ModellingPanel(DocumentGetter getter, QWidget* parent = nullptr);
 
@@ -41,6 +44,8 @@ class ModellingPanel : public PanelBase {
 
     void setTool(Tool tool);
     Tool tool() const;
+    void setModifyTool(viewmodel::ModifyTool tool);
+    viewmodel::ModifyTool modifyTool() const;
 
     bool preview();      ///< Builds the result of the current form and shows it; false with a message.
     bool apply();        ///< The Apply button.
@@ -61,6 +66,9 @@ class ModellingPanel : public PanelBase {
     QWidget* buildBitmapPage();
     QWidget* buildZeroPlanePage();
     QWidget* buildScaleZPage();
+    QWidget* buildModifyPage(viewmodel::ModifyTool tool);
+    void writeModify(const viewmodel::ModifyForm& f);
+    viewmodel::ModifyForm readModify() const;
     void writeShape(const viewmodel::CreateShapeForm& f);
     void writeBitmap(const viewmodel::BitmapReliefForm& f);
     void writeZeroPlane(const viewmodel::ZeroPlaneForm& f);
@@ -75,6 +83,7 @@ class ModellingPanel : public PanelBase {
     QComboBox* toolBox_;
     QStackedWidget* stack_;
     QLabel* status_;
+    viewmodel::ModifyResult lastModify_;   ///< The previewed modify result (kept alive for the shown field).
     QPushButton* previewButton_;
     QPushButton* applyButton_;
     QPushButton* resetButton_;

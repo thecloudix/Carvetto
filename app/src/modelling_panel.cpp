@@ -71,12 +71,18 @@ ModellingPanel::ModellingPanel(DocumentGetter getter, QWidget* parent) : PanelBa
     toolBox_->addItem(QStringLiteral("Bitmap to Relief"));
     toolBox_->addItem(QStringLiteral("Zero Plane"));
     toolBox_->addItem(QStringLiteral("Scale Model Z"));
+    for (int i = 0; i < viewmodel::kModifyToolCount; ++i) {
+        toolBox_->addItem(QString::fromUtf8(viewmodel::modifyToolName(static_cast<viewmodel::ModifyTool>(i))));
+    }
     outer->addWidget(toolBox_);
     stack_ = new QStackedWidget(this);
     stack_->addWidget(buildShapePage());
     stack_->addWidget(buildBitmapPage());
     stack_->addWidget(buildZeroPlanePage());
     stack_->addWidget(buildScaleZPage());
+    for (int i = 0; i < viewmodel::kModifyToolCount; ++i) {
+        stack_->addWidget(buildModifyPage(static_cast<viewmodel::ModifyTool>(i)));
+    }
     outer->addWidget(stack_);
     status_ = new QLabel(this);
     status_->setObjectName(QStringLiteral("Modelling status"));
@@ -99,7 +105,12 @@ ModellingPanel::ModellingPanel(DocumentGetter getter, QWidget* parent) : PanelBa
         stack_->setCurrentIndex(i);
         clearPreview();
         message({}, false);
-        newButton_->setEnabled(i != static_cast<int>(Tool::ScaleZ));
+        const bool modify = i >= static_cast<int>(Tool::Modify);
+        // Scale Z and the modify tools change existing components; there is nothing to "start new".
+        newButton_->setEnabled(i != static_cast<int>(Tool::ScaleZ) && !modify);
+        if (modify && doc() != nullptr) {
+            writeModify(viewmodel::defaultModifyForm(*doc(), static_cast<viewmodel::ModifyTool>(i - 4)));
+        }
     });
     connect(previewButton_, &QPushButton::clicked, this, [this]() { preview(); });
     connect(applyButton_, &QPushButton::clicked, this, [this]() { apply(); });
@@ -120,6 +131,7 @@ QWidget* ModellingPanel::buildShapePage() {
     }
     form->addRow(QStringLiteral("Kind"), kind);
     addEdit(form, p, QStringLiteral("Angle"), "Edge angle in degrees (Angled: 0 to 90, Round: up to 90)");
+    addEdit(form, p, QStringLiteral("Profile"), "Custom kind: \"depth,height; depth,height; ...\", depth 0 to 1 rising");
     auto* limitOn = new QCheckBox(QStringLiteral("Limit height"), page);
     limitOn->setObjectName(QStringLiteral("Shape: Limit height"));
     form->addRow(limitOn);
@@ -204,6 +216,40 @@ QWidget* ModellingPanel::buildScaleZPage() {
     return page;
 }
 
+QWidget* ModellingPanel::buildModifyPage(viewmodel::ModifyTool tool) {
+    auto* page = new QWidget(this);
+    auto* form = new QFormLayout(page);
+    const QString p = QString::fromUtf8(viewmodel::modifyToolName(tool));
+    for (const viewmodel::ModifyField& spec : viewmodel::modifyFields(tool)) {
+        const QString label = qs(spec.label);
+        const QString name = p + QStringLiteral(": ") + label;
+        switch (spec.kind) {
+            case viewmodel::ModifyField::Kind::Number: addEdit(form, p, label, spec.tip.c_str()); break;
+            case viewmodel::ModifyField::Kind::Check: {
+                auto* c = new QCheckBox(label, page);
+                c->setObjectName(name);
+                c->setToolTip(qs(spec.tip));
+                form->addRow(c);
+                break;
+            }
+            case viewmodel::ModifyField::Kind::Choice: {
+                auto* c = new QComboBox(page);
+                c->setObjectName(name);
+                c->setToolTip(qs(spec.tip));
+                for (const std::string& ch : spec.choices) {
+                    c->addItem(qs(ch));
+                }
+                form->addRow(label, c);
+                break;
+            }
+        }
+    }
+    auto* help = new QLabel(QString::fromUtf8(viewmodel::modifyHelp(tool)), page);
+    help->setWordWrap(true);
+    form->addRow(help);
+    return page;
+}
+
 // --- form <-> widgets ---------------------------------------------------------------------------------
 
 void ModellingPanel::writeShape(const viewmodel::CreateShapeForm& f) {
@@ -219,6 +265,7 @@ void ModellingPanel::writeShape(const viewmodel::CreateShapeForm& f) {
     field(QStringLiteral("Shape: Base height"))->setText(qs(f.baseHeight));
     setMode(combo(QStringLiteral("Shape: Combine mode")), f.mode);
     field(QStringLiteral("Shape: Cell size"))->setText(qs(f.cellSize));
+    field(QStringLiteral("Shape: Profile"))->setText(qs(f.profile));
 }
 
 viewmodel::CreateShapeForm ModellingPanel::readShape() const {
@@ -235,6 +282,7 @@ viewmodel::CreateShapeForm ModellingPanel::readShape() const {
     f.baseHeight = str(field(QStringLiteral("Shape: Base height")));
     f.mode = modeOf(combo(QStringLiteral("Shape: Combine mode")));
     f.cellSize = str(field(QStringLiteral("Shape: Cell size")));
+    f.profile = str(field(QStringLiteral("Shape: Profile")));
     return f;
 }
 
@@ -295,6 +343,39 @@ viewmodel::ScaleZForm ModellingPanel::readScaleZ() const {
     return f;
 }
 
+void ModellingPanel::writeModify(const viewmodel::ModifyForm& f) {
+    const QString p = QString::fromUtf8(viewmodel::modifyToolName(f.tool));
+    for (const viewmodel::ModifyField& spec : viewmodel::modifyFields(f.tool)) {
+        const QString name = p + QStringLiteral(": ") + qs(spec.label);
+        const auto it = f.values.find(spec.label);
+        const std::string& v = it != f.values.end() ? it->second : spec.defaultValue;
+        switch (spec.kind) {
+            case viewmodel::ModifyField::Kind::Number: field(name)->setText(qs(v)); break;
+            case viewmodel::ModifyField::Kind::Check: check(name)->setChecked(v == "true"); break;
+            case viewmodel::ModifyField::Kind::Choice: combo(name)->setCurrentText(qs(v)); break;
+        }
+    }
+}
+
+viewmodel::ModifyForm ModellingPanel::readModify() const {
+    viewmodel::ModifyForm f;
+    f.tool = modifyTool();
+    const QString p = QString::fromUtf8(viewmodel::modifyToolName(f.tool));
+    for (const viewmodel::ModifyField& spec : viewmodel::modifyFields(f.tool)) {
+        const QString name = p + QStringLiteral(": ") + qs(spec.label);
+        switch (spec.kind) {
+            case viewmodel::ModifyField::Kind::Number: f.values[spec.label] = str(field(name)); break;
+            case viewmodel::ModifyField::Kind::Check:
+                f.values[spec.label] = check(name)->isChecked() ? "true" : "false";
+                break;
+            case viewmodel::ModifyField::Kind::Choice:
+                f.values[spec.label] = combo(name)->currentText().toStdString();
+                break;
+        }
+    }
+    return f;
+}
+
 // --- actions --------------------------------------------------------------------------------------------
 
 void ModellingPanel::setTool(Tool t) {
@@ -302,7 +383,16 @@ void ModellingPanel::setTool(Tool t) {
 }
 
 ModellingPanel::Tool ModellingPanel::tool() const {
-    return static_cast<Tool>(toolBox_->currentIndex());
+    const int i = toolBox_->currentIndex();
+    return i >= static_cast<int>(Tool::Modify) ? Tool::Modify : static_cast<Tool>(i);
+}
+
+void ModellingPanel::setModifyTool(viewmodel::ModifyTool t) {
+    toolBox_->setCurrentIndex(static_cast<int>(Tool::Modify) + static_cast<int>(t));
+}
+
+viewmodel::ModifyTool ModellingPanel::modifyTool() const {
+    return static_cast<viewmodel::ModifyTool>(toolBox_->currentIndex() - static_cast<int>(Tool::Modify));
 }
 
 void ModellingPanel::message(const std::string& text, bool error) {
@@ -335,6 +425,23 @@ bool ModellingPanel::preview() {
     viewmodel::ModellingPreview p;
     viewmodel::ScaleZPreview sp;
     switch (tool()) {
+        case Tool::Modify: {
+            lastModify_ = viewmodel::previewModify(*d, readModify());
+            p.ok = lastModify_.ok;
+            p.message = lastModify_.message;
+            p.info = lastModify_.info;
+            shown = lastModify_.previewField();
+            if (!p.ok) {
+                clearPreview();
+                message(p.message, true);
+                return false;
+            }
+            if (onPreview) {
+                onPreview(shown);   // null for vector-only results clears the preview
+            }
+            message(p.info, false);
+            return true;
+        }
         case Tool::CreateShape: p = viewmodel::previewCreateShape(*d, readShape()); break;
         case Tool::Bitmap: p = viewmodel::previewBitmapRelief(*d, readBitmap(), decoder); break;
         case Tool::ZeroPlane: p = viewmodel::previewZeroPlane(*d, readZeroPlane()); break;
@@ -370,6 +477,7 @@ bool ModellingPanel::apply() {
     viewmodel::EditResult r;
     switch (tool()) {
         case Tool::ScaleZ: r = viewmodel::applyScaleZ(*d, readScaleZ()); break;
+        case Tool::Modify: r = viewmodel::applyModify(*d, readModify()); break;
         default: {
             viewmodel::ModellingPreview p;
             if (tool() == Tool::CreateShape) {
@@ -392,7 +500,7 @@ bool ModellingPanel::apply() {
     if (!r.ok) {
         message(r.message, true);
     } else {
-        message(tool() == Tool::ScaleZ ? "Scaled." : "Applied.", false);
+        message(tool() == Tool::ScaleZ ? "Scaled." : tool() == Tool::Modify ? "Done." : "Applied.", false);
     }
     return finish(r);
 }
@@ -406,6 +514,11 @@ void ModellingPanel::reset() {
     writeBitmap(bf);
     writeZeroPlane(viewmodel::ZeroPlaneForm{});
     writeScaleZ(viewmodel::ScaleZForm{});
+    const document::Document none;
+    const document::Document* md = doc() != nullptr ? doc() : &none;
+    for (int i = 0; i < viewmodel::kModifyToolCount; ++i) {
+        writeModify(viewmodel::defaultModifyForm(*md, static_cast<viewmodel::ModifyTool>(i)));
+    }
     clearPreview();
     message({}, false);
 }

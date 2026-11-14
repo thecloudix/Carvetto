@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -7,6 +8,7 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/ids.hpp"
 #include "carvetto/relief/bitmap_relief.hpp"
+#include "carvetto/geometry/polyline.hpp"
 #include "carvetto/relief/relief.hpp"
 #include "carvetto/relief/shape.hpp"
 #include "carvetto/viewmodel/properties_model.hpp"
@@ -41,7 +43,12 @@ struct CreateShapeForm {
     std::string baseHeight{"0"};
     relief::CombineMode mode{relief::CombineMode::Add};
     std::string cellSize{"1"};
+    /// Custom profile as "depth,height; depth,height; ..." with depth 0..1 strictly ascending.
+    std::string profile{"0,0; 1,1"};
 };
+
+/// Parses a custom profile text ("0,0; 0.5,0.8; 1,1"); false with `error` when malformed.
+bool parseShapeProfile(const std::string& text, std::vector<relief::ProfilePoint>& out, std::string& error);
 
 /// Number of closed vector contours of the selected vectors that a shape would use.
 std::size_t selectedShapeVectorCount(const document::Document& doc);
@@ -100,6 +107,65 @@ ScaleZPreview previewScaleZ(const document::Document& doc, const ScaleZForm& for
 
 /// Applies the preview as one undo step.
 EditResult applyScaleZ(document::Document& doc, const ScaleZForm& form);
+
+// --- Modify forms (T-0306, ADR-0083) -------------------------------------------------------------------
+
+enum class ModifyTool {
+    ReplaceBelow,
+    ResetByVectors,
+    Offset,
+    Smooth,
+    Emboss,
+    Slice,
+    Draft,
+    Split,
+    VectorBoundary,
+    CrossSection,
+    Distort,
+};
+inline constexpr int kModifyToolCount = 11;
+const char* modifyToolName(ModifyTool tool);
+
+/// One field of a modify form, so the panel can build every page from data.
+struct ModifyField {
+    enum class Kind { Number, Check, Choice };
+    std::string label;
+    Kind kind{Kind::Number};
+    std::string defaultValue;               ///< Text; "true"/"false" for a check; a choice text.
+    std::vector<std::string> choices;       ///< Kind::Choice.
+    std::string tip;
+};
+const std::vector<ModifyField>& modifyFields(ModifyTool tool);
+/// One line of help shown under the form (what the tool works on).
+const char* modifyHelp(ModifyTool tool);
+
+/// A form as typed: field label -> text. Missing labels read as the field default.
+struct ModifyForm {
+    ModifyTool tool{ModifyTool::ReplaceBelow};
+    std::map<std::string, std::string> values;
+};
+/// Defaults of the tool; Cross Section and Distort start from the bounds of the first target.
+ModifyForm defaultModifyForm(const document::Document& doc, ModifyTool tool);
+
+/// What a modify form would do: replace targets in place, add components above the first target,
+/// and add vectors. Built without touching the document.
+struct ModifyResult {
+    bool ok{false};
+    std::string message;
+    std::string info;
+    std::vector<document::ComponentId> replaceIds;
+    std::vector<relief::Component> replacements;
+    std::vector<relief::Component> additions;
+    std::vector<geometry::Polyline> vectors;   ///< Added as one vector object on the active sheet.
+    /// The field to show for the preview (first replacement, else first addition); null for none.
+    const relief::HeightField* previewField() const;
+};
+
+/// Components a modify form works on: the selected ones, else every component of the active sheet.
+std::vector<document::ComponentId> modifyTargets(const document::Document& doc);
+ModifyResult previewModify(const document::Document& doc, const ModifyForm& form);
+/// Applies the preview as ONE undo step (replacements, additions and the vector object).
+EditResult applyModify(document::Document& doc, const ModifyForm& form);
 
 // --- Apply / Start New Component ----------------------------------------------------------------------
 
