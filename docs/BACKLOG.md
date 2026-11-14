@@ -1459,7 +1459,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0296   ADR: 0072
 Goal: Finishing passes: raster (angle, stepover) and offset (constant-scallop style) over the model with ball/tapered/flat tools, tolerance, boundary, and rest machining against a previous tool (tool list).
 Acceptance criteria: scallop height within the predicted bound on a sphere; rest machining only cuts where the previous tool could not reach; never gouges the model (simulator check).
 
-### T-0298 Moulding toolpath, project 2D toolpaths onto the model, 3D tabs, component from toolpath preview   [status: in-progress]
+### T-0298 Moulding toolpath, project 2D toolpaths onto the model, 3D tabs, component from toolpath preview   [status: verifying (first part: project, 3D tabs, preview component; moulding -> T-0307)]
 Phase: 2   Module: core/toolpath   Depends on: T-0296, T-0281   ADR: 0073
 Goal: Moulding toolpath (profile a moulding cross-section along vectors with the tool shape), Project Toolpath onto 3D (drop 2D toolpath Z by the model surface, with a drop vs project choice), 3D tabs for 3D profiling, and Create Component From Toolpath Preview (heightfield from the simulator result). Split this card if it exceeds one verifier round budget.
 Acceptance criteria: each has analytic goldens; projected paths lie on the surface within tolerance; the component from the preview matches the simulator heightfield.
@@ -1497,3 +1497,7 @@ Goal: Store an appearance per component and level in the document (needs a .carv
 ### T-0306 App: remaining modelling forms (T-0300 follow-up)   [status: blocked — waits on T-0300]
 Phase: 2   Module: app   Depends on: T-0300
 Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, vector boundary, cross section and distort (core ops are in relief/modify.hpp and relief/derive.hpp), each with one preview function and Apply through ReplaceReliefComponentCommand or an add, as one undo step; the Custom shape profile editor; preview merged with the rest of the model if affordable. Follow the T-0300 pattern (viewmodel relief_modelling, ModellingPanel pages, self-test).
+
+### T-0307 Moulding toolpath (T-0298 follow-up)   [status: blocked — waits on T-0298; needs owner product readings]
+Phase: 2   Module: core/toolpath   Depends on: T-0298, T-0296
+Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a moulding cross-section along drive rails with the tool shape; Toolpath Position, Z from the cross-section height; drive rails (reverse/clear) and an open profile vector (reverse profile); finishing (stepover, vary stepover, skip flat regions, sharp corners) and roughing (larger-area clearance tool, machine flat regions, ramp plunge, allowance); boundary offset. Position semantics and flat-region handling are product readings: the coder records its readings in the ADR (section of ADR-0073) and the director lists them for owner review; do not stop for them.
