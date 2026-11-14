@@ -1399,7 +1399,7 @@ Phase: 2   Module: core/io   Depends on: T-0001   ADR: 0063
 Goal: Qt-free triangle-mesh reader for STL (binary, ASCII) and OBJ (triangulate polygons; ignore materials), a `TriangleMesh` type, bounds, unit scale (mm/inches), Center Model, six top-face choices times five rotations about Z, arbitrary rotation, lock-ratio scale. 3DS, DXF-mesh and SKP are deferred (note in the ADR; open an extra card if cheap). Hostile input safe: size caps, NaN/inf rejected, truncated files report an error, fuzz-style tests.
 Acceptance criteria: round-trip against small hand-built meshes; orientation goldens; all malformed-file classes return errors without crash or unbounded allocation.
 
-### T-0286 Mesh to heightfield: rasterise, zero plane, undercuts, discard below zero   [status: verifying]
+### T-0286 Mesh to heightfield: rasterise, zero plane, undercuts, discard below zero   [status: done — PR #161]
 Phase: 2   Module: core/relief   Depends on: T-0281, T-0285   ADR: 0064
 Goal: Rasterise a oriented mesh to a top-down `HeightField` at a chosen resolution (highest surface per cell), zero-plane position in the model, discard data below the plane, optional second (bottom) side for two-sided jobs, undercut detection mask (cells where the mesh has material hidden below the top surface), backface caps, optional resize of material to fit.
 Acceptance criteria: pyramid, sphere and box meshes match analytic heights within the cell tolerance; undercut mask correct on an overhang test mesh; deterministic; bounded work with cancel for large meshes (triangle-bin acceleration).
@@ -1429,7 +1429,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281, T-0251
 Goal: Tile a seed component inside a closed vector boundary: spacing X/Y % (negative overlaps), X/Y shift % (alternate rows/columns), reflection (none/H/V/both); editable afterwards.
 Acceptance criteria: spacing/shift/reflection goldens on a small seed; clipping to the boundary exact at cell level; tile-count cap with a clear error.
 
-### T-0292 Modify ops 1: bake, replace below, reset inside/outside, offset model, smooth, emboss   [status: in-progress]
+### T-0292 Modify ops 1: bake, replace below, reset inside/outside, offset model, smooth, emboss   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0068
 Goal: Bake components (Ctrl keeps originals), Replace Below (transparent or plane, lower component by value), Reset Inside/Outside selected vectors, Offset Model (+/- distance, clip to zero plane), Smooth selected components (percent, preserve transparency, bake smoothing), Emboss (scale height, detail smoothness).
 Acceptance criteria: each op has analytic or hand goldens; smoothing is deterministic and preserves transparency when asked; offset by d then -d returns near the original on smooth fields (stated tolerance).
