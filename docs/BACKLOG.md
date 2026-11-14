@@ -1409,7 +1409,7 @@ Phase: 2   Module: core/io   Depends on: T-0281, T-0285
 Goal: Export the composed model as binary STL (watertight option with back face and walls, or top surface only), OBJ, and a 16-bit grayscale PNG/PGM heightmap (highest = white). Reuses raster writing where it exists. Clipart (`.3dclip`) is NOT in scope (own format, deferred; note in ADR).
 Acceptance criteria: STL re-read by T-0285 reproduces the surface; watertight option yields a closed manifold (edge count check); heightmap values scale linearly and hit white/black exactly at max/min.
 
-### T-0288 Two Rail Sweep   [status: in-progress]
+### T-0288 Two Rail Sweep   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0065
 Goal: Sweep one or more cross-section vectors along two rail vectors (proportional positioning, per-section smooth, scale cross sections with width, sweep between spans, fill centre of closed rails, scale to exact height). Stores parameters for re-edit.
 Acceptance criteria: a straight-rail rectangle-section sweep gives the analytic extrusion; swap/reverse rails behave; unequal node counts handled as the inventory says; bounded and cancellable.
