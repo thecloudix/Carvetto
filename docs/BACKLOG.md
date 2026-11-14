@@ -1434,7 +1434,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0068
 Goal: Bake components (Ctrl keeps originals), Replace Below (transparent or plane, lower component by value), Reset Inside/Outside selected vectors, Offset Model (+/- distance, clip to zero plane), Smooth selected components (percent, preserve transparency, bake smoothing), Emboss (scale height, detail smoothness).
 Acceptance criteria: each op has analytic or hand goldens; smoothing is deterministic and preserves transparency when asked; offset by d then -d returns near the original on smooth fields (stated tolerance).
 
-### T-0293 Modify ops 2: slice, add draft, split, vector boundary, cross-section vector, distort   [status: verifying (PR #168; along-curve distort deferred)]
+### T-0293 Modify ops 2: slice, add draft, split, vector boundary, cross-section vector, distort   [status: done — PR #168 (along-curve distort deferred)]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0069
 Goal: Slice Model (thickness, from top, count, optional boundary vectors, one component per slice), Add Draft (minimum draft angle, bakes to a new component), Split Component with a vector (A and B), Create Vector Boundary around components (silhouette contours), Create Cross Section Vector (two points to a profile), Distort Selected Component (reuses the 2D distort maths).
 Acceptance criteria: slices reconstruct the model when recombined; draft angle verified on a wall test; silhouette of a cone is a circle within tolerance; cross-section of a ramp is a straight line.
@@ -1469,7 +1469,7 @@ Phase: 2   Module: app   Depends on: T-0282   ADR: 0074
 Goal: Component Tree panel (levels, components, drag/reorder, show/hide, combine mode, rename, delete, duplicate, move to level), Component Properties form (shape height, base height, fade, tilt, appearance), and a 3D view rendering the composed model (shaded, orbit/zoom/pan per the inventory, material colour). Reuses the existing relief rendering and playback code where it applies. Self-test coverage.
 Acceptance criteria: panel actions go through the undoable commands of T-0282; 3D view draws a known model (pixel-sampled self-test); view stays responsive on a 2000x2000 field (level-of-detail or tile).
 
-### T-0300 App: modelling dialogs (Create Shape, bitmap, zero plane, scale Z, modify ops)   [status: blocked — waits on T-0299, T-0283, T-0284, T-0292, T-0293]
+### T-0300 App: modelling dialogs (Create Shape, bitmap, zero plane, scale Z, modify ops)   [status: in-progress]
 Phase: 2   Module: app   Depends on: T-0299, T-0283, T-0284, T-0292, T-0293
 Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, boundary and cross-section tools, each with preview and the common Apply / Reset / Start New Component buttons.
 
