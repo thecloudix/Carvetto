@@ -1424,7 +1424,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0067
 Goal: Turn (revolve a profile about its start-end line) and Spin (revolve about its left end into a circular component); scale to exact height.
 Acceptance criteria: a half-circle profile spun gives a hemisphere within tolerance; turn of a rectangle gives a cylinder; degenerate profile errors cleanly.
 
-### T-0291 Textured area component   [status: in-progress]
+### T-0291 Textured area component   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281, T-0251
 Goal: Tile a seed component inside a closed vector boundary: spacing X/Y % (negative overlaps), X/Y shift % (alternate rows/columns), reflection (none/H/V/both); editable afterwards.
 Acceptance criteria: spacing/shift/reflection goldens on a small seed; clipping to the boundary exact at cell level; tile-count cap with a clear error.
