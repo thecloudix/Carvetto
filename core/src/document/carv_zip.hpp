@@ -60,10 +60,20 @@ struct ZipEntry {
     /// A toolpath move cache (`toolpaths/NNNN.bin`, ADR-0021): exempt from the binary ratio
     /// checks, bounded instead by the loader's move budget.
     bool toolpathCache{false};
+    /// A relief height field (`components/<id>.hf`, ADR-0061): exempt from the ratio checks like a
+    /// move cache (flat fields compress extremely well); the loader bounds it by the cell caps.
+    bool reliefField{false};
 };
 
 /// True for "toolpaths/NNNN.bin" (four digits): the move cache of a toolpath record (ADR-0021).
 bool isToolpathCacheName(std::string_view name);
+/// The component id of a "components/<id>.hf" member name (canonical decimal, 1 .. 2^62 - 1);
+/// zero for any other name.
+std::uint64_t reliefFieldIdOfName(std::string_view name);
+/// True for a name `reliefFieldIdOfName` accepts.
+inline bool isReliefFieldName(std::string_view name) {
+    return reliefFieldIdOfName(name) != 0;
+}
 /// True for "toolpaths/NNNN.json" (four digits): a T-0122 interim toolpath member (ADR-0019),
 /// migrated to a toolpath record on load.
 bool isInterimToolpathName(std::string_view name);

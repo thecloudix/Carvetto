@@ -126,6 +126,10 @@ struct Level {
     bool visible = true;
 };
 
+/// Checks the dynamic properties (finite numbers, non-degenerate fade/tilt direction when enabled).
+/// Does not look at the field. BadParameter on failure (T-0282 reuses it to validate edits).
+Status validateProperties(const Component& c);
+
 /// The value of one component at a model point after shape height, fade, tilt and base height.
 /// Transparent where the stored field is. Does not modify the component.
 float componentValueAt(const Component& c, double x, double y);

@@ -216,6 +216,9 @@ add_library(carvetto_core STATIC
   src/document/document.cpp
   src/document/commands.cpp
   src/document/keepout_commands.cpp
+  src/document/relief_model.cpp
+  src/document/document_relief.cpp
+  src/document/relief_commands.cpp
   src/document/toolpath_record.cpp
   src/geometry/cancel.cpp
   src/geometry/clipper_interop.cpp
@@ -225,6 +228,7 @@ add_library(carvetto_core STATIC
   src/document/carv_zip.cpp
   src/document/carv_json_reader.cpp
   src/document/carv_moves.cpp
+  src/document/carv_relief.cpp
   src/document/carv_io.cpp
   src/io/dxf_pairs.cpp
   src/io/dxf_text.cpp

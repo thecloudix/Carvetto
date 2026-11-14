@@ -50,10 +50,13 @@ inline constexpr int kCarvFormatMinorBitmap = 6;
 /// `sheet`); written only when a record links to a sheet.
 inline constexpr int kCarvFormatMinorToolpathSheet = 7;
 /// 1.8 (T-0271, ADR-0055) adds the calculation expressions of a toolpath record (`job.json` toolpath
-/// `expressions`, field id -> text); written only when a record has one. The newest minor this build
-/// writes and reads.
+/// `expressions`, field id -> text); written only when a record has one.
 inline constexpr int kCarvFormatMinorExpressions = 8;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorExpressions;
+/// 1.9 (T-0282, ADR-0061) adds relief levels and components (`job.json` `relief`, one record per
+/// level) and their height fields (`components/<id>.hf` members); written only when the document
+/// has a relief level. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorRelief = 9;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorRelief;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

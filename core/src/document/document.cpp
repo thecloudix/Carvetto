@@ -79,7 +79,8 @@ SheetId Document::insertSheet(Sheet sheet, std::optional<std::size_t> index) {
 
 std::optional<Sheet> Document::takeSheet(SheetId id) {
     const auto it = findById(sheets_, id);
-    if (it == sheets_.end() || sheets_.size() == 1 || !objectsOnSheet(id).empty()) {
+    if (it == sheets_.end() || sheets_.size() == 1 || !objectsOnSheet(id).empty() ||
+        !reliefLevelsOnSheet(id).empty()) {
         return std::nullopt;
     }
     Sheet sheet = std::move(*it);
@@ -522,6 +523,26 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     for (const ToolpathRecord& tp : toolpaths_) {
         checkId(tp.id.value, {}, "toolpath");
     }
+    for (const ReliefLevel& level : reliefLevels_) {
+        checkId(level.id.value, {}, "relief level");
+        if (!findSheet(level.sheet)) {
+            report(Kind::MissingReliefSheet, {}, {},
+                   "relief level #" + std::to_string(level.id.value) + " is on a missing sheet");
+        }
+        for (const ReliefComponent& c : level.components) {
+            checkId(c.id.value, {}, "relief component");
+            if (const std::string problem = reliefComponentProblem(c.data); !problem.empty()) {
+                report(Kind::BadReliefComponent, {}, {},
+                       "relief component #" + std::to_string(c.id.value) + ": " + problem);
+            }
+        }
+    }
+    for (const ComponentId id : componentSelection_.ids()) {
+        if (!findReliefComponent(id)) {
+            report(Kind::StaleComponentSelection, {}, {},
+                   "component selection holds missing component #" + std::to_string(id.value));
+        }
+    }
     for (const auto& [id, obj] : objects_) {
         checkId(id.value, id, "object");
         if (obj.id != id) {
@@ -561,6 +582,12 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     }
     for (const ToolpathRecord& tp : toolpaths_) {
         owners[tp.id.value].names.push_back("toolpath");
+    }
+    for (const ReliefLevel& level : reliefLevels_) {
+        owners[level.id.value].names.push_back("relief level");
+        for (const ReliefComponent& c : level.components) {
+            owners[c.id.value].names.push_back("relief component");
+        }
     }
     for (const auto& [id, obj] : objects_) {
         if (const VectorObject* v = obj.asVector()) {

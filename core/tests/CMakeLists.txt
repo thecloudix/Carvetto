@@ -49,6 +49,8 @@ add_executable(carvetto_tests
   toolpath/keepout_test.cpp
   toolpath/tiling_test.cpp
   document/keepout_test.cpp
+  document/relief_document_test.cpp
+  document/relief_carv_test.cpp
   toolpath/time_test.cpp
   toolpath/block_settle_test.cpp
   toolpath/profile_tab_layer_test.cpp
