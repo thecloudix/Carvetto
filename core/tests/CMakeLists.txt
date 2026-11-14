@@ -144,6 +144,7 @@ add_executable(carvetto_tests
   relief/derive_test.cpp
   relief/extrude_test.cpp
   relief/textured_area_test.cpp
+  relief/sculpt_test.cpp
   text/font_test.cpp
   text/outline_test.cpp
   text/layout_test.cpp

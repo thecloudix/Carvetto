@@ -179,6 +179,7 @@ add_library(carvetto_core STATIC
   src/relief/derive.cpp
   src/relief/extrude.cpp
   src/relief/textured_area.cpp
+  src/relief/sculpt.cpp
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp
