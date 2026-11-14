@@ -133,6 +133,7 @@ add_executable(carvetto_tests
   io/svg_import_test.cpp
   io/svg_xml_test.cpp
   relief/relief_test.cpp
+  relief/shape_test.cpp
   text/font_test.cpp
   text/outline_test.cpp
   text/layout_test.cpp
