@@ -1371,7 +1371,7 @@ Acceptance criteria:
   5. Tests plus mutation checks on the combine and fade/tilt maths.
 Out of scope: document integration (T-0282), generators, UI.
 
-### T-0282 Relief in the document: components and levels, commands, .carv persistence   [status: verifying]
+### T-0282 Relief in the document: components and levels, commands, .carv persistence   [status: done — PR #162]
 Phase: 2   Module: core/document + core/io   Depends on: T-0281   ADR: 0061
 Goal: Components and levels live in the `Document` (per sheet), with undoable commands (add, delete, rename, reorder, move to level, set combine mode, edit properties, duplicate). `.carv` stores heightfields as `components/*.hf` (zstd or the existing compression helper; deterministic bytes) and component parameters in `job.json`; bump the minor format version only as needed, old files still load.
 Acceptance criteria:
@@ -1380,7 +1380,7 @@ Acceptance criteria:
   3. Selection of components and ids follow the existing id/selection conventions.
 Out of scope: UI.
 
-### T-0283 Create Shape: flat, round, angled, smooth, custom (from closed vectors)   [status: verifying]
+### T-0283 Create Shape: flat, round, angled, smooth, custom (from closed vectors)   [status: done — PR #160]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0062
 Goal: Generate a component from selected closed vectors (holes respected): Plane (flat), Round, Angled, Smooth, Custom profile. Fields per inventory: profile/edge angle, limit (height cap), preserve internal corners, blend to inner vectors, scale to height, base height, fade, tilt, total height. Shapes store creation parameters so they can be re-edited.
 Acceptance criteria:
