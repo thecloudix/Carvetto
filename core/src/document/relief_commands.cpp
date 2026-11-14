@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/relief/effects.hpp"
 
 namespace carvetto::document {
 
@@ -245,6 +246,133 @@ bool SetReliefLevelPropertiesCommand::mergeWith(const Command& next) {
     }
     after_ = n->after_;
     return true;
+}
+
+// --- Level effects (T-0295) ---------------------------------------------------------------------
+
+namespace {
+bool samePoints(const relief::Clip& a, const relief::Clip& b) {
+    if (a.polygons.size() != b.polygons.size()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < a.polygons.size(); ++i) {
+        if (a.polygons[i].size() != b.polygons[i].size()) {
+            return false;
+        }
+        for (std::size_t k = 0; k < a.polygons[i].size(); ++k) {
+            if (a.polygons[i][k].x != b.polygons[i][k].x || a.polygons[i][k].y != b.polygons[i][k].y) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+}  // namespace
+
+bool SetReliefLevelClipCommand::apply(Document& doc) {
+    ReliefLevel* l = doc.findReliefLevel(id_);
+    if (!l) {
+        return false;
+    }
+    relief::LevelEffects probe;
+    probe.clip = after_;
+    if (!reliefEffectsProblem(probe).empty() || samePoints(l->effects.clip, after_)) {
+        return false;
+    }
+    before_ = l->effects.clip;
+    l->effects.clip = after_;
+    return true;
+}
+
+void SetReliefLevelClipCommand::revert(Document& doc) {
+    if (ReliefLevel* l = doc.findReliefLevel(id_)) {
+        l->effects.clip = before_;
+    }
+}
+
+bool SetReliefLevelMirrorCommand::apply(Document& doc) {
+    ReliefLevel* l = doc.findReliefLevel(id_);
+    if (!l || !std::isfinite(after_.center.x) || !std::isfinite(after_.center.y)) {
+        return false;
+    }
+    before_ = {l->effects.mirror, l->effects.mirrorCenter};
+    if (before_.mode == after_.mode && before_.center.x == after_.center.x && before_.center.y == after_.center.y) {
+        return false;
+    }
+    l->effects.mirror = after_.mode;
+    l->effects.mirrorCenter = after_.center;
+    return true;
+}
+
+void SetReliefLevelMirrorCommand::revert(Document& doc) {
+    if (ReliefLevel* l = doc.findReliefLevel(id_)) {
+        l->effects.mirror = before_.mode;
+        l->effects.mirrorCenter = before_.center;
+    }
+}
+
+bool SetReliefLevelMirrorCommand::mergeWith(const Command& next) {
+    const auto* n = dynamic_cast<const SetReliefLevelMirrorCommand*>(&next);
+    if (!n || n->id_ != id_) {
+        return false;
+    }
+    after_ = n->after_;
+    return true;
+}
+
+bool BakeReliefLevelEffectsCommand::apply(Document& doc) {
+    ReliefLevel* l = doc.findReliefLevel(id_);
+    if (!l || !l->effects.any()) {
+        return false;
+    }
+    if (newId_.isNull() && !doc.idGenerator().canAllocate(1)) {
+        return false;
+    }
+    relief::Level core;
+    core.name = l->name;
+    core.effects = l->effects;
+    for (const ReliefComponent& c : l->components) {
+        core.components.push_back(c.data);
+    }
+    relief::Component baked;
+    if (relief::bakeLevel(core, baked) != relief::Status::Ok) {
+        return false;
+    }
+    if (baked.name.size() > kMaxReliefNameBytes) {
+        baked.name.resize(kMaxReliefNameBytes);  // a very long level name cannot take the suffix
+    }
+    std::uint64_t removedCells = 0;
+    for (const ReliefComponent& c : l->components) {
+        removedCells += cellsOf(c.data.field);
+    }
+    if (doc.reliefCellCount() - removedCells + cellsOf(baked.field) > kMaxReliefTotalCells ||
+        doc.reliefComponentCount() - l->components.size() + 1 > kMaxReliefComponents) {
+        return false;
+    }
+    if (newId_.isNull()) {
+        newId_ = doc.allocateComponentId();
+    }
+    selection_ = doc.componentSelection().ids();
+    effects_ = l->effects;
+    components_ = std::move(l->components);
+    l->components.clear();
+    l->effects = relief::LevelEffects{};
+    l->components.push_back(ReliefComponent{newId_, std::move(baked)});
+    for (const ReliefComponent& c : components_) {
+        doc.componentSelection().remove(c.id);
+    }
+    return true;
+}
+
+void BakeReliefLevelEffectsCommand::revert(Document& doc) {
+    ReliefLevel* l = doc.findReliefLevel(id_);
+    if (!l) {
+        return;
+    }
+    l->components = std::move(components_);
+    components_.clear();
+    l->effects = effects_;
+    doc.componentSelection().assign(selection_);
 }
 
 // --- Reordering and moving -----------------------------------------------------------------------

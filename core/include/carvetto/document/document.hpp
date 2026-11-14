@@ -51,6 +51,7 @@ struct IntegrityIssue {
         MissingBitmap,        ///< A bitmap object's `sourceRef` is an asset key with no embedded image (T-0273).
         MissingReliefSheet,   ///< A relief level's sheet does not exist (T-0282).
         StaleComponentSelection,  ///< The component selection holds an id that does not exist.
+        BadReliefEffects,     ///< A relief level's clipping or mirror settings are invalid (T-0295).
         BadReliefComponent,   ///< A relief component has an empty field or unstorable properties.
         BadToolpathSelection, ///< A toolpath's vector selection names an id that was never
                               ///< allocated or belongs to another kind of item, lists an id
