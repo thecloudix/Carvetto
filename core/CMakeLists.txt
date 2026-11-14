@@ -171,6 +171,7 @@ add_library(carvetto_core STATIC
   src/geometry/polyline.cpp
   src/relief/relief.cpp
   src/relief/shape.cpp
+  src/relief/mesh_raster.cpp
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp
