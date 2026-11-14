@@ -1389,7 +1389,7 @@ Acceptance criteria:
   3. Holes lower the surface correctly; total height edits update scale and base consistently.
   4. Bounded work (distance transform), cancellable, deterministic.
 
-### T-0284 Create component from bitmap, Scale Model Z, zero plane   [status: in-progress]
+### T-0284 Create component from bitmap, Scale Model Z, zero plane   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281, T-0273
 Goal: Heightfield from a bitmap in the `.carv` bitmap store or a file (keep 16-bit depth, brightness maps to height, invert option, auto-scale, combine mode Add); Add Zero Plane (job-size zero component); Scale Model Z (percent or exact height, both sides option for double-sided jobs).
 Acceptance criteria: 16-bit input keeps full precision; uniform image gives a flat field; exact-height scale hits the target to 1e-6; zero plane matches the job size; degenerate input errors cleanly.
