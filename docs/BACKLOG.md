@@ -1434,7 +1434,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0068
 Goal: Bake components (Ctrl keeps originals), Replace Below (transparent or plane, lower component by value), Reset Inside/Outside selected vectors, Offset Model (+/- distance, clip to zero plane), Smooth selected components (percent, preserve transparency, bake smoothing), Emboss (scale height, detail smoothness).
 Acceptance criteria: each op has analytic or hand goldens; smoothing is deterministic and preserves transparency when asked; offset by d then -d returns near the original on smooth fields (stated tolerance).
 
-### T-0293 Modify ops 2: slice, add draft, split, vector boundary, cross-section vector, distort   [status: in-progress]
+### T-0293 Modify ops 2: slice, add draft, split, vector boundary, cross-section vector, distort   [status: verifying (distort: bounding-box quad only; along-curve distort deferred)]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0069
 Goal: Slice Model (thickness, from top, count, optional boundary vectors, one component per slice), Add Draft (minimum draft angle, bakes to a new component), Split Component with a vector (A and B), Create Vector Boundary around components (silhouette contours), Create Cross Section Vector (two points to a profile), Distort Selected Component (reuses the 2D distort maths).
 Acceptance criteria: slices reconstruct the model when recombined; draft angle verified on a wall test; silhouette of a cone is a circle within tolerance; cross-section of a ramp is a straight line.
