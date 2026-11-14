@@ -1414,7 +1414,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0065
 Goal: Sweep one or more cross-section vectors along two rail vectors (proportional positioning, per-section smooth, scale cross sections with width, sweep between spans, fill centre of closed rails, scale to exact height). Stores parameters for re-edit.
 Acceptance criteria: a straight-rail rectangle-section sweep gives the analytic extrusion; swap/reverse rails behave; unequal node counts handled as the inventory says; bounded and cancellable.
 
-### T-0289 Extrude and Weave   [status: verifying (PR #171)]
+### T-0289 Extrude and Weave   [status: done — PR #171]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0066
 Goal: Extrude a vector cross section or a component along a rail (stretch to length or fill with copies with overlap % and alternate flips; create sharp corners; sweep between spans) and the weave option (Z under %, Z over %, scale shape or add base).
 Acceptance criteria: analytic goldens for straight rails; weave crossings alternate over/under correctly; deterministic.
@@ -1424,7 +1424,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0067
 Goal: Turn (revolve a profile about its start-end line) and Spin (revolve about its left end into a circular component); scale to exact height.
 Acceptance criteria: a half-circle profile spun gives a hemisphere within tolerance; turn of a rectangle gives a cylinder; degenerate profile errors cleanly.
 
-### T-0291 Textured area component   [status: verifying (PR #172)]
+### T-0291 Textured area component   [status: done — PR #172]
 Phase: 2   Module: core/relief   Depends on: T-0281, T-0251
 Goal: Tile a seed component inside a closed vector boundary: spacing X/Y % (negative overlaps), X/Y shift % (alternate rows/columns), reflection (none/H/V/both); editable afterwards.
 Acceptance criteria: spacing/shift/reflection goldens on a small seed; clipping to the boundary exact at cell level; tile-count cap with a clear error.
@@ -1439,12 +1439,12 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0069
 Goal: Slice Model (thickness, from top, count, optional boundary vectors, one component per slice), Add Draft (minimum draft angle, bakes to a new component), Split Component with a vector (A and B), Create Vector Boundary around components (silhouette contours), Create Cross Section Vector (two points to a profile), Distort Selected Component (reuses the 2D distort maths).
 Acceptance criteria: slices reconstruct the model when recombined; draft angle verified on a wall test; silhouette of a cone is a circle within tolerance; cross-section of a ramp is a straight line.
 
-### T-0294 Sculpting engine (brushes, custom brush, undo)   [status: verifying (PR #173)]
+### T-0294 Sculpting engine (brushes, custom brush, undo)   [status: done — PR #173]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0070
 Goal: Brush engine: Smooth, Smudge, Deposit, Remove, Undo Brush; diameter, strength, smoothness; Normal/Raise/Lower mode; preserve transparency; custom brush from a component or bitmap with angle and dynamic rotation; stroke as a deterministic list of dabs applied to a working copy, committed or discarded (Keep/Discard).
 Acceptance criteria: single-dab goldens per brush; strokes are order-deterministic and independent of the sampling rate within a stated tolerance; undo brush restores the original exactly; bounded memory.
 
-### T-0295 Level effects: clipping, mirror mode (non-destructive)   [status: verifying]
+### T-0295 Level effects: clipping, mirror mode (non-destructive)   [status: verifying (PR #176)]
 Phase: 2   Module: core/relief   Depends on: T-0281, T-0282
 Goal: Clipping (clip a level to selected closed vectors; apply/update/remove) and Mirror Mode (left-right, right-left, top-bottom, bottom-top, four quadrants) composed at render time; wrapping is Phase 3.
 Acceptance criteria: effects never modify stored fields; baking makes them permanent; mirror modes golden on an asymmetric field.
@@ -1454,7 +1454,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0281   ADR: 0071
 Goal: Roughing of the composed model with flat/ball/other tools (tool shapes from `simulate/tool_shape.hpp`): Z-level (constant-Z slices of the model with allowance, offset or pocket-style clearing) and 3D raster (raster over the drop-tool surface with allowance and stepover), model boundary choice (material block, selected vectors), cut direction, ramp/plunge entry, safe Z, tolerance. Drop-tool vs project option as in the reference options. Multi-tool via the existing tool list/rest machining mechanism.
 Acceptance criteria: simulating the output with the existing simulator never gouges below allowance; stock left within allowance everywhere; deterministic; cancellable; large grids bounded (spatial/column accelerated drop).
 
-### T-0297 Toolpath 3D finish: offset and raster, with rest machining   [status: verifying]
+### T-0297 Toolpath 3D finish: offset and raster, with rest machining   [status: verifying (PR #175)]
 Phase: 2   Module: core/toolpath   Depends on: T-0296   ADR: 0072
 Goal: Finishing passes: raster (angle, stepover) and offset (constant-scallop style) over the model with ball/tapered/flat tools, tolerance, boundary, and rest machining against a previous tool (tool list).
 Acceptance criteria: scallop height within the predicted bound on a sphere; rest machining only cuts where the previous tool could not reach; never gouges the model (simulator check).
@@ -1469,11 +1469,11 @@ Phase: 2   Module: app   Depends on: T-0282   ADR: 0074
 Goal: Component Tree panel (levels, components, drag/reorder, show/hide, combine mode, rename, delete, duplicate, move to level), Component Properties form (shape height, base height, fade, tilt, appearance), and a 3D view rendering the composed model (shaded, orbit/zoom/pan per the inventory, material colour). Reuses the existing relief rendering and playback code where it applies. Self-test coverage.
 Acceptance criteria: panel actions go through the undoable commands of T-0282; 3D view draws a known model (pixel-sampled self-test); view stays responsive on a 2000x2000 field (level-of-detail or tile).
 
-### T-0300 App: modelling dialogs (Create Shape, bitmap, zero plane, scale Z, modify ops)   [status: verifying (first subset: Create Shape, bitmap, zero plane, Scale Z; rest -> T-0306)]
+### T-0300 App: modelling dialogs (Create Shape, bitmap, zero plane, scale Z, modify ops)   [status: verifying (PR #174; first subset; rest -> T-0306)]
 Phase: 2   Module: app   Depends on: T-0299, T-0283, T-0284, T-0292, T-0293
 Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, boundary and cross-section tools, each with preview and the common Apply / Reset / Start New Component buttons.
 
-### T-0301 App: 3D import/export dialogs (orientation, zero plane, undercuts) and sweeps/turn/textured dialogs   [status: blocked — waits on T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291]
+### T-0301 App: 3D import/export dialogs (orientation, zero plane, undercuts) and sweeps/turn/textured dialogs   [status: in-progress]
 Phase: 2   Module: app   Depends on: T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291
 Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, centre), zero-plane positioning with undercut highlight, export actions, and the sweep, extrude/weave, turn/spin and textured-area forms. Split into two cards when picked up if the coder judges it too large.
 
@@ -1485,7 +1485,7 @@ Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, p
 Phase: 2   Module: app   Depends on: T-0299, T-0296, T-0297, T-0298
 Goal: Toolpath panel entries and dialogs for 3D rough, 3D finish, moulding, project-onto-model and 3D tabs; preview in the 3D view; simulation of 3D toolpaths with the existing simulator; save/post output uses the existing pipeline.
 
-### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: ready]
+### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: in-progress]
 Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
