@@ -1444,7 +1444,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0070
 Goal: Brush engine: Smooth, Smudge, Deposit, Remove, Undo Brush; diameter, strength, smoothness; Normal/Raise/Lower mode; preserve transparency; custom brush from a component or bitmap with angle and dynamic rotation; stroke as a deterministic list of dabs applied to a working copy, committed or discarded (Keep/Discard).
 Acceptance criteria: single-dab goldens per brush; strokes are order-deterministic and independent of the sampling rate within a stated tolerance; undo brush restores the original exactly; bounded memory.
 
-### T-0295 Level effects: clipping, mirror mode (non-destructive)   [status: in-progress]
+### T-0295 Level effects: clipping, mirror mode (non-destructive)   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281, T-0282
 Goal: Clipping (clip a level to selected closed vectors; apply/update/remove) and Mirror Mode (left-right, right-left, top-bottom, bottom-top, four quadrants) composed at render time; wrapping is Phase 3.
 Acceptance criteria: effects never modify stored fields; baking makes them permanent; mirror modes golden on an asymmetric field.
