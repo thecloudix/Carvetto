@@ -42,6 +42,9 @@ class NodeEditMenu;
 class PreviewPanel;
 class KeepOutPanel;
 class ReliefView;
+class ComponentTreePanel;
+class ComponentPropertiesPanel;
+class ModelView3D;
 class ToolPanel;
 class ToolpathsPanel;
 class TransformMenu;
@@ -118,6 +121,9 @@ class MainWindow : public QMainWindow {
     PreviewPanel* preview() const { return preview_; }
     QDockWidget* previewDock() const { return previewDock_; }
     ReliefView* reliefView() const { return relief_; }
+    ComponentTreePanel* componentTree() const { return componentTree_; }
+    ComponentPropertiesPanel* componentProperties() const { return componentProps_; }
+    ModelView3D* modelView() const { return modelView_; }
     /// Switches the central tabs: the 2D design view or the simulation ("3D") view.
     void showView(bool simulation);
     bool simulationViewShown() const;
@@ -234,6 +240,9 @@ class MainWindow : public QMainWindow {
     ToolpathsPanel* toolpaths_{nullptr};
     PreviewPanel* preview_{nullptr};
     ReliefView* relief_{nullptr};
+    ComponentTreePanel* componentTree_{nullptr};
+    ComponentPropertiesPanel* componentProps_{nullptr};
+    ModelView3D* modelView_{nullptr};
 
     QAction* undoAction_{nullptr};
     QAction* redoAction_{nullptr};

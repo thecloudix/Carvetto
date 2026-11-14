@@ -18,6 +18,7 @@
 #include <QRegularExpression>
 #include <QDockWidget>
 #include <QGridLayout>
+#include <QVBoxLayout>
 #include <QInputDialog>
 #include <QKeySequence>
 #include <QLabel>
@@ -60,6 +61,7 @@
 #include "save_toolpaths_dialog.hpp"
 #include "preview_panel.hpp"
 #include "properties_panel.hpp"
+#include "relief_panels.hpp"
 #include "relief_view.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
@@ -164,6 +166,8 @@ void MainWindow::buildCentralArea() {
     views_->setDocumentMode(true);
     views_->addTab(page2d, QStringLiteral("2D View"));
     views_->addTab(relief_, QStringLiteral("3D View"));
+    modelView_ = new ModelView3D([this]() { return &session_.document(); }, this);
+    views_->addTab(modelView_, QStringLiteral("Model"));
     setCentralWidget(views_);
 
     canvas_->onViewChanged = [this]() {
@@ -203,8 +207,20 @@ void MainWindow::buildDocks() {
     historyPanel_->historyBlocked = [this]() { return toolpaths_ != nullptr && toolpaths_->busy(); };
     sheetsPanel_->onPick = [this](int row) { pickSheet(row); };
     layersPanel_->onPick = [this](int row) { pickLayer(row); };
-    componentsDock_ =
-        makeDock("Components", "componentsDock", placeholder("3D components will be listed here.", this));
+    componentTree_ = new ComponentTreePanel(currentDoc, this);
+    componentProps_ = new ComponentPropertiesPanel(currentDoc, this);
+    auto* componentsPage = new QWidget(this);
+    auto* componentsLayout = new QVBoxLayout(componentsPage);
+    componentsLayout->setContentsMargins(0, 0, 0, 0);
+    componentsLayout->addWidget(componentTree_, 3);
+    componentsLayout->addWidget(componentProps_, 2);
+    for (PanelBase* panel : {static_cast<PanelBase*>(componentTree_), static_cast<PanelBase*>(componentProps_)}) {
+        panel->onEdited = [this]() { documentChanged(); };
+        panel->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
+    }
+    componentTree_->onLevelPicked = [this](document::LevelId level) { componentProps_->setLevel(level); };
+    componentTree_->onSelectionChanged = [this]() { componentProps_->refresh(); };
+    componentsDock_ = makeDock("Components", "componentsDock", componentsPage);
     libraryDock_ = makeDock("Library", "libraryDock", placeholder("Clipart and project library.", this));
     toolpaths_ = new ToolpathsPanel(&session_.document(), this);
     toolpaths_->onDocumentEdited = [this]() { documentChanged(); };
@@ -552,6 +568,11 @@ void MainWindow::documentChanged() {
     if (properties_ != nullptr) {
         properties_->refresh();
         historyPanel_->refresh();
+    }
+    if (componentTree_ != nullptr) {
+        componentTree_->refresh();
+        componentProps_->refresh();
+        modelView_->refresh();
     }
     if (toolpaths_ != nullptr) {
         toolpaths_->refresh();

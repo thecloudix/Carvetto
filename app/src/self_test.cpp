@@ -49,6 +49,7 @@
 #include "job_sheet_self_test.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
+#include "relief_panels.hpp"
 #include "dimension_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "tiling_manager_panel.hpp"
@@ -783,6 +784,11 @@ int runSelfTest() {
 
     // 8b. Properties, Layers, Sheets and History panels (T-0210).
     if (const std::string why = panelsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 8c. Component Tree, Component Properties and the Model 3D view (T-0299).
+    if (const std::string why = reliefPanelsSelfTest(window); !why.empty()) {
         return fail(why);
     }
 
