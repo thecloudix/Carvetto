@@ -174,6 +174,7 @@ add_library(carvetto_core STATIC
   src/relief/mesh_raster.cpp
   src/relief/bitmap_relief.cpp
   src/relief/sweep.cpp
+  src/relief/revolve.cpp
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp

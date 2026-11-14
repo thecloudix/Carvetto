@@ -138,6 +138,7 @@ add_executable(carvetto_tests
   relief/mesh_raster_test.cpp
   relief/bitmap_relief_test.cpp
   relief/sweep_test.cpp
+  relief/revolve_test.cpp
   text/font_test.cpp
   text/outline_test.cpp
   text/layout_test.cpp
