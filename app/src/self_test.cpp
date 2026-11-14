@@ -49,6 +49,7 @@
 #include "job_sheet_self_test.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
+#include "modelling_panel.hpp"
 #include "relief_panels.hpp"
 #include "dimension_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
@@ -789,6 +790,11 @@ int runSelfTest() {
 
     // 8c. Component Tree, Component Properties and the Model 3D view (T-0299).
     if (const std::string why = reliefPanelsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 8d. Modelling forms: Create Shape, Bitmap, Zero Plane, Scale Z (T-0300).
+    if (const std::string why = modellingSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

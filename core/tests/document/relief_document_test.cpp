@@ -546,3 +546,46 @@ TEST_CASE("relief: reliefModel feeds relief::compose", "[document][relief]") {
     CHECK(out.at(0, 1) == 2.0F);
     CHECK(out.at(1, 1) == 3.0F);
 }
+
+TEST_CASE("relief: replacing a component keeps id and place, undoes and refuses bad data", "[document][relief]") {
+    Document doc;
+    const LevelId lvl = [&] {
+        auto cmd = std::make_unique<AddReliefLevelCommand>(doc.activeSheet(), "L");
+        const AddReliefLevelCommand* raw = cmd.get();
+        REQUIRE(doc.execute(std::move(cmd)));
+        return raw->createdId();
+    }();
+    auto add = [&](const char* name) {
+        auto cmd = std::make_unique<AddReliefComponentCommand>(lvl, comp(name));
+        const AddReliefComponentCommand* raw = cmd.get();
+        REQUIRE(doc.execute(std::move(cmd)));
+        return raw->createdId();
+    };
+    const ComponentId a = add("A");
+    const ComponentId b = add("B");
+    const std::string before = dump(doc);
+
+    relief::Component next = comp("A2", 5.0F, 3, 3);
+    next.mode = relief::CombineMode::Subtract;
+    REQUIRE(doc.execute(std::make_unique<ReplaceReliefComponentCommand>(a, next)));
+    CHECK(doc.findReliefComponent(a)->data.name == "A2");
+    CHECK(doc.findReliefComponent(a)->data.field.width() == 3);
+    CHECK(doc.locateReliefComponent(a)->index == 0);
+    CHECK(doc.locateReliefComponent(b)->index == 1);
+    const std::string after = dump(doc);
+    CHECK(doc.undo());
+    CHECK(dump(doc) == before);
+    CHECK(doc.redo());
+    CHECK(dump(doc) == after);
+
+    // Refusals: unknown id, empty name, empty field, non-finite property.
+    CHECK_FALSE(doc.execute(std::make_unique<ReplaceReliefComponentCommand>(ComponentId{9999}, comp("x"))));
+    CHECK_FALSE(doc.execute(std::make_unique<ReplaceReliefComponentCommand>(a, comp(""))));
+    relief::Component empty;
+    empty.name = "E";
+    CHECK_FALSE(doc.execute(std::make_unique<ReplaceReliefComponentCommand>(a, empty)));
+    relief::Component bad = comp("B2");
+    bad.baseHeight = std::nan("");
+    CHECK_FALSE(doc.execute(std::make_unique<ReplaceReliefComponentCommand>(a, bad)));
+    CHECK(dump(doc) == after);
+}

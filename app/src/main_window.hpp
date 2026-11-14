@@ -45,6 +45,7 @@ class ReliefView;
 class ComponentTreePanel;
 class ComponentPropertiesPanel;
 class ModelView3D;
+class ModellingPanel;
 class ToolPanel;
 class ToolpathsPanel;
 class TransformMenu;
@@ -124,6 +125,7 @@ class MainWindow : public QMainWindow {
     ComponentTreePanel* componentTree() const { return componentTree_; }
     ComponentPropertiesPanel* componentProperties() const { return componentProps_; }
     ModelView3D* modelView() const { return modelView_; }
+    ModellingPanel* modelling() const { return modelling_; }
     /// Switches the central tabs: the 2D design view or the simulation ("3D") view.
     void showView(bool simulation);
     bool simulationViewShown() const;
@@ -243,6 +245,8 @@ class MainWindow : public QMainWindow {
     ComponentTreePanel* componentTree_{nullptr};
     ComponentPropertiesPanel* componentProps_{nullptr};
     ModelView3D* modelView_{nullptr};
+    ModellingPanel* modelling_{nullptr};
+    QDockWidget* modellingDock_{nullptr};
 
     QAction* undoAction_{nullptr};
     QAction* redoAction_{nullptr};

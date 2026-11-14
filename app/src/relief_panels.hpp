@@ -124,6 +124,11 @@ class ModelView3D : public QWidget {
     /// Recomposes the model from the document (after an edit) and redraws.
     void refresh();
     void setMaterial(viewmodel::ModelMaterial material);
+    /// Shows `field` alone instead of the document's model (the modelling forms' preview, T-0300);
+    /// `clearPreview` returns to the model. `refresh` keeps showing the preview until cleared.
+    void setPreview(const relief::HeightField& field);
+    void clearPreview();
+    bool previewing() const { return previewing_; }
     viewmodel::OrbitCamera& camera() { return camera_; }
     void cameraChanged();
 
@@ -148,6 +153,8 @@ class ModelView3D : public QWidget {
     viewmodel::ModelRenderOptions options_;
     QImage image_;
     bool dirty_{true};
+    bool previewing_{false};
+    viewmodel::ModelSurface previewSurface_;
     QPoint last_;
     QComboBox* materialBox_;
 };
