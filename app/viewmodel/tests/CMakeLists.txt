@@ -13,6 +13,8 @@ endif()
 
 add_executable(carvetto_viewmodel_tests
   bitmap_trace_test.cpp
+  relief_tree_test.cpp
+  model_view_test.cpp
   vector_ops_test.cpp
   keepout_test.cpp
   vector_validator_test.cpp
