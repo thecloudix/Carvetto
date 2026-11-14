@@ -61,6 +61,7 @@
 #include "save_toolpaths_dialog.hpp"
 #include "preview_panel.hpp"
 #include "properties_panel.hpp"
+#include "modelling_panel.hpp"
 #include "relief_panels.hpp"
 #include "relief_view.hpp"
 #include "ruler_widget.hpp"
@@ -221,6 +222,19 @@ void MainWindow::buildDocks() {
     componentTree_->onLevelPicked = [this](document::LevelId level) { componentProps_->setLevel(level); };
     componentTree_->onSelectionChanged = [this]() { componentProps_->refresh(); };
     componentsDock_ = makeDock("Components", "componentsDock", componentsPage);
+    modelling_ = new ModellingPanel(currentDoc, this);
+    modelling_->onEdited = [this]() { documentChanged(); };
+    modelling_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
+    modelling_->decoder = qtBitmapDecoder();
+    modelling_->onPreview = [this](const relief::HeightField* field) {
+        if (field != nullptr) {
+            modelView_->setPreview(*field);
+            views_->setCurrentWidget(modelView_);
+        } else {
+            modelView_->clearPreview();
+        }
+    };
+    modellingDock_ = makeDock("Modelling", "modellingDock", modelling_);
     libraryDock_ = makeDock("Library", "libraryDock", placeholder("Clipart and project library.", this));
     toolpaths_ = new ToolpathsPanel(&session_.document(), this);
     toolpaths_->onDocumentEdited = [this]() { documentChanged(); };
@@ -276,7 +290,9 @@ void MainWindow::buildDocks() {
     tabifyDockWidget(designDock_, sheetsDock_);
     tabifyDockWidget(sheetsDock_, layersDock_);
     tabifyDockWidget(layersDock_, componentsDock_);
-    tabifyDockWidget(componentsDock_, libraryDock_);
+    addDockWidget(Qt::LeftDockWidgetArea, modellingDock_);
+    tabifyDockWidget(componentsDock_, modellingDock_);
+    tabifyDockWidget(modellingDock_, libraryDock_);
     designDock_->raise();
     addDockWidget(Qt::LeftDockWidgetArea, propertiesDock_);
     addDockWidget(Qt::LeftDockWidgetArea, historyDock_);
@@ -368,7 +384,7 @@ void MainWindow::buildMenus() {
     view->addSeparator();
     QMenu* panels = view->addMenu(QStringLiteral("&Panels"));
     for (QDockWidget* dock :
-         {designDock_, sheetsDock_, layersDock_, propertiesDock_, historyDock_, componentsDock_, libraryDock_,
+         {designDock_, sheetsDock_, layersDock_, propertiesDock_, historyDock_, componentsDock_, modellingDock_, libraryDock_,
           toolpathsDock_, previewDock_, keepOutDock_}) {
         panels->addAction(dock->toggleViewAction());
     }

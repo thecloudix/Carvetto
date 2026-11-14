@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 #include "carvetto/document/document.hpp"
 
@@ -64,6 +65,28 @@ void AddReliefComponentCommand::revert(Document& doc) {
     const ComponentId id = held_.id;
     if (auto c = doc.takeReliefComponent(id)) {
         held_ = std::move(*c);
+    }
+}
+
+// --- ReplaceReliefComponentCommand ---------------------------------------------------------------
+
+bool ReplaceReliefComponentCommand::apply(Document& doc) {
+    ReliefComponent* c = doc.findReliefComponent(id_);
+    if (!c || !nameOk(held_.name) || !reliefComponentProblem(held_).empty()) {
+        return false;
+    }
+    const std::uint64_t oldCells = cellsOf(c->data.field);
+    const std::uint64_t newCells = cellsOf(held_.field);
+    if (doc.reliefCellCount() - oldCells + newCells > kMaxReliefTotalCells) {
+        return false;
+    }
+    std::swap(c->data, held_);
+    return true;
+}
+
+void ReplaceReliefComponentCommand::revert(Document& doc) {
+    if (ReliefComponent* c = doc.findReliefComponent(id_)) {
+        std::swap(c->data, held_);
     }
 }
 

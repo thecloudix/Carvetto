@@ -42,6 +42,9 @@ qt_add_executable(carvetto
   src/panels_self_test.cpp
   src/properties_panel.cpp
   src/properties_panel.hpp
+  src/modelling_panel.cpp
+  src/modelling_panel.hpp
+  src/modelling_self_test.cpp
   src/relief_panels.cpp
   src/relief_panels.hpp
   src/relief_panels_self_test.cpp

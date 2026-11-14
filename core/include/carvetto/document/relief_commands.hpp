@@ -219,6 +219,23 @@ class MoveReliefComponentToLevelCommand : public Command {
     std::size_t fromIndex_{0};
 };
 
+/// Replaces a component's data (field, name, mode and dynamic properties) in place, keeping its id,
+/// level, position and visibility slot. This is how the modelling dialogs (T-0300) apply a modify
+/// or scale on an existing component and re-apply a regenerated one. Refused for an unknown id, an
+/// unstorable component, an unchanged field/props or when the document's cell cap would be exceeded.
+class ReplaceReliefComponentCommand : public Command {
+   public:
+    ReplaceReliefComponentCommand(ComponentId id, relief::Component component)
+        : id_(id), held_(std::move(component)) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Replace relief component"; }
+
+   private:
+    ComponentId id_;
+    relief::Component held_;  ///< The data that is NOT currently in the document.
+};
+
 /// Duplicates a component into the same level, directly above the original, named "<name> copy".
 class DuplicateReliefComponentCommand : public Command {
    public:

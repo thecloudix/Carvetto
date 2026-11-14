@@ -620,12 +620,42 @@ ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(paren
 
 void ModelView3D::refresh() {
     document::Document* d = getter_ ? getter_() : nullptr;
-    if (d != nullptr) {
+    if (previewing_) {
+        surface_ = previewSurface_;
+    } else if (d != nullptr) {
         surface_ = viewmodel::composeModelSurface(*d, d->activeSheet());
     } else {
         surface_ = viewmodel::ModelSurface{};
     }
     invalidate();
+}
+
+void ModelView3D::setPreview(const relief::HeightField& field) {
+    viewmodel::ModelSurface s;
+    const std::size_t longest = std::max(field.width(), field.height());
+    if (field.empty()) {
+        s.problem = "Nothing to preview";
+    } else if (longest <= viewmodel::kMaxSurfaceDimension) {
+        s.field = field;
+    } else {
+        s.stride = (longest + viewmodel::kMaxSurfaceDimension - 1) / viewmodel::kMaxSurfaceDimension;
+        const relief::Grid g{(field.width() + s.stride - 1) / s.stride, (field.height() + s.stride - 1) / s.stride,
+                             field.cellSize() * static_cast<double>(s.stride), field.origin()};
+        if (field.resample(g, s.field) != relief::Status::Ok) {
+            s.problem = "The preview is too large to show";
+        }
+    }
+    previewSurface_ = std::move(s);
+    previewing_ = true;
+    surface_ = previewSurface_;
+    invalidate();
+}
+
+void ModelView3D::clearPreview() {
+    if (previewing_) {
+        previewing_ = false;
+        refresh();
+    }
 }
 
 void ModelView3D::setMaterial(viewmodel::ModelMaterial material) {
