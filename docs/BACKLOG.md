@@ -1454,7 +1454,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0281   ADR: 0071
 Goal: Roughing of the composed model with flat/ball/other tools (tool shapes from `simulate/tool_shape.hpp`): Z-level (constant-Z slices of the model with allowance, offset or pocket-style clearing) and 3D raster (raster over the drop-tool surface with allowance and stepover), model boundary choice (material block, selected vectors), cut direction, ramp/plunge entry, safe Z, tolerance. Drop-tool vs project option as in the reference options. Multi-tool via the existing tool list/rest machining mechanism.
 Acceptance criteria: simulating the output with the existing simulator never gouges below allowance; stock left within allowance everywhere; deterministic; cancellable; large grids bounded (spatial/column accelerated drop).
 
-### T-0297 Toolpath 3D finish: offset and raster, with rest machining   [status: verifying (PR #175)]
+### T-0297 Toolpath 3D finish: offset and raster, with rest machining   [status: done — PR #175]
 Phase: 2   Module: core/toolpath   Depends on: T-0296   ADR: 0072
 Goal: Finishing passes: raster (angle, stepover) and offset (constant-scallop style) over the model with ball/tapered/flat tools, tolerance, boundary, and rest machining against a previous tool (tool list).
 Acceptance criteria: scallop height within the predicted bound on a sphere; rest machining only cuts where the previous tool could not reach; never gouges the model (simulator check).
@@ -1477,7 +1477,7 @@ Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, re
 Phase: 2   Module: app   Depends on: T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291
 Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, centre), zero-plane positioning with undercut highlight, export actions, and the sweep, extrude/weave, turn/spin and textured-area forms. Split into two cards when picked up if the coder judges it too large.
 
-### T-0302 App: sculpting tool UI and level effects UI   [status: blocked — waits on T-0299, T-0294, T-0295]
+### T-0302 App: sculpting tool UI and level effects UI   [status: in-progress]
 Phase: 2   Module: app   Depends on: T-0299, T-0294, T-0295
 Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, presets, Keep/Discard), plus Clipping and Mirror Mode level actions.
 
@@ -1494,7 +1494,7 @@ Acceptance criteria: simulator shows no gouge below model + allowance; offset cl
 Phase: 2   Module: core/document + app   Depends on: T-0299
 Goal: Store an appearance per component and level in the document (needs a .carv minor-version bump, old files still load) and use it in the Model view; T-0299 ships one view-level material instead. Owner to confirm when a decision is needed on defaults; low priority.
 
-### T-0306 App: remaining modelling forms (T-0300 follow-up)   [status: verifying]
+### T-0306 App: remaining modelling forms (T-0300 follow-up)   [status: verifying (PR #178)]
 Phase: 2   Module: app   Depends on: T-0300
 Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, vector boundary, cross section and distort (core ops are in relief/modify.hpp and relief/derive.hpp), each with one preview function and Apply through ReplaceReliefComponentCommand or an add, as one undo step; the Custom shape profile editor; preview merged with the rest of the model if affordable. Follow the T-0300 pattern (viewmodel relief_modelling, ModellingPanel pages, self-test).
 
