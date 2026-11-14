@@ -140,6 +140,7 @@ add_executable(carvetto_tests
   relief/sweep_test.cpp
   relief/revolve_test.cpp
   toolpath/rough3d_test.cpp
+  relief/modify_test.cpp
   text/font_test.cpp
   text/outline_test.cpp
   text/layout_test.cpp
