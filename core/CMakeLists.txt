@@ -239,6 +239,7 @@ add_library(carvetto_core STATIC
   src/io/dxf_export.cpp
   src/io/raster.cpp
   src/io/mesh.cpp
+  src/io/export3d.cpp
   src/io/bitmap_trace.cpp
   src/io/svg_export.cpp
   src/io/svg_import.cpp
