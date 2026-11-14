@@ -1419,7 +1419,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0066
 Goal: Extrude a vector cross section or a component along a rail (stretch to length or fill with copies with overlap % and alternate flips; create sharp corners; sweep between spans) and the weave option (Z under %, Z over %, scale shape or add base).
 Acceptance criteria: analytic goldens for straight rails; weave crossings alternate over/under correctly; deterministic.
 
-### T-0290 Turn and Spin   [status: in-progress]
+### T-0290 Turn and Spin   [status: verifying]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0067
 Goal: Turn (revolve a profile about its start-end line) and Spin (revolve about its left end into a circular component); scale to exact height.
 Acceptance criteria: a half-circle profile spun gives a hemisphere within tolerance; turn of a rectangle gives a cylinder; degenerate profile errors cleanly.
