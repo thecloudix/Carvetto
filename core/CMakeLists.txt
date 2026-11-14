@@ -177,6 +177,7 @@ add_library(carvetto_core STATIC
   src/relief/revolve.cpp
   src/relief/modify.cpp
   src/relief/derive.cpp
+  src/relief/extrude.cpp
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp
