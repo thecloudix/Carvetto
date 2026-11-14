@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <functional>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -14,6 +15,7 @@
 #include "carvetto/tooling/machine.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/job_sheet.hpp"
+#include "carvetto/viewmodel/model_io.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
 class QAction;
@@ -164,6 +166,14 @@ class MainWindow : public QMainWindow {
     /// Imports an image as a bitmap object (T-0275): embedded in the document, one undo step, selected.
     bool importBitmapFile(const std::filesystem::path& path);
     bool exportDxfFile(const std::filesystem::path& path, bool selectionOnly);
+    /// Imports an STL or OBJ model as a relief component (T-0301): the Orientate Model dialog is
+    /// shown unless `settings` is given (or the window is quiet, which uses the defaults). One undo
+    /// step. The reason for a failure is in `lastModelIoError()`.
+    bool importMeshFile(const std::filesystem::path& path,
+                        std::optional<viewmodel::MeshImportSettings> settings = std::nullopt);
+    /// Writes the composed model of the active sheet as STL, OBJ or a 16-bit heightmap.
+    bool exportModelFile(const std::filesystem::path& path, const viewmodel::ModelExportSettings& settings);
+    const std::string& lastModelIoError() const { return modelIoError_; }
     /// True when it is fine to drop the open document: it is clean, or the user chose Save (and
     /// it saved) or Discard in the prompt. False on Cancel or a failed save. Always true when
     /// quiet (no prompt can be shown).
@@ -188,6 +198,8 @@ class MainWindow : public QMainWindow {
     void importDxfDialog();
     void importBitmapDialog();
     void exportDxfDialog(bool selectionOnly);
+    void importMeshDialog();
+    void exportModelDialog(viewmodel::ModelExportKind kind);
     void rebuildRecentMenu();
     void storeRecent();
     void showError(const QString& title);
@@ -258,6 +270,7 @@ class MainWindow : public QMainWindow {
     bool persistLayout_{false};
     bool refreshing_{false};
     bool quiet_{false};
+    std::string modelIoError_;
 };
 
 }  // namespace carvetto::app
