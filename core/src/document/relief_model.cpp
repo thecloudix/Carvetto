@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "carvetto/relief/effects.hpp"
+
 namespace carvetto::document {
 
 namespace {
@@ -13,6 +15,14 @@ bool fin(relief::Point p) {
     return fin(p.x) && fin(p.y);
 }
 }  // namespace
+
+std::string reliefEffectsProblem(const relief::LevelEffects& e) {
+    return relief::validateEffects(e) == relief::Status::Ok
+               ? std::string{}
+               : "the level's clipping or mirror settings are invalid (a clip needs at most " +
+                     std::to_string(relief::kMaxClipPolygons) + " polygons of 3 or more finite points and at most " +
+                     std::to_string(relief::kMaxClipVertices) + " vertices, the mirror centre must be finite)";
+}
 
 std::string reliefComponentProblem(const relief::Component& c) {
     if (c.field.empty()) {

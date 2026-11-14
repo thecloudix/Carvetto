@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "carvetto/relief/effects.hpp"
+
 namespace carvetto::relief {
 
 namespace {
@@ -254,11 +256,14 @@ Status compose(const std::vector<Level>& levels, const Grid& grid, HeightField& 
                 acc.set(i, j, combine(c.mode, acc.at(i, j), cf.at(i, j)));
             }
         }
+        for (float& v : acc.mutableData()) {
+            if (opaque(v)) v = static_cast<float>(static_cast<double>(v) + l.baseHeight);
+        }
+        s = applyEffects(l.effects, acc);
+        if (s != Status::Ok) return s;
         for (std::size_t j = 0; j < grid.height; ++j) {
             for (std::size_t i = 0; i < grid.width; ++i) {
-                float v = acc.at(i, j);
-                if (opaque(v)) v = static_cast<float>(static_cast<double>(v) + l.baseHeight);
-                model.set(i, j, combine(l.mode, model.at(i, j), v));
+                model.set(i, j, combine(l.mode, model.at(i, j), acc.at(i, j)));
             }
         }
     }

@@ -24,6 +24,7 @@ struct ReliefLevel {
     relief::CombineMode mode{relief::CombineMode::Add};
     double baseHeight{0.0};
     bool visible{true};
+    relief::LevelEffects effects;  ///< Clipping and mirror mode (T-0295, ADR-0079).
     std::vector<ReliefComponent> components;
 };
 
@@ -41,6 +42,9 @@ std::string reliefPropertiesProblem(const relief::Component& c);
 /// disabled fade or tilt), a usable fade/tilt direction when enabled, a name within the cap and a
 /// non-empty field. Otherwise the reason.
 std::string reliefComponentProblem(const relief::Component& c);
+
+/// Empty when the level's effects are storable (`relief::validateEffects`), otherwise the reason.
+std::string reliefEffectsProblem(const relief::LevelEffects& e);
 
 /// Ordered, duplicate-free selection of components. Not part of the undo history.
 class ComponentSelection {

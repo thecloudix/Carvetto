@@ -60,6 +60,7 @@ public:
     Point origin() const { return grid_.origin; }
     bool empty() const { return data_.empty(); }
     const std::vector<float>& data() const { return data_; }
+    std::vector<float>& mutableData() { return data_; }
 
     float at(std::size_t i, std::size_t j) const { return data_[j * grid_.width + i]; }
     void set(std::size_t i, std::size_t j, float v) { data_[j * grid_.width + i] = v; }
@@ -118,7 +119,42 @@ struct Component {
     bool visible = true;
 };
 
+/// Mirror Mode of a level (T-0295, ADR-0079). Directions are in design space, Y up. For the
+/// half modes the named side is the source and is copied onto the other side; for the quadrant
+/// modes the named quadrant is the source and is copied onto the other three.
+enum class MirrorMode {
+    None,
+    LeftToRight,
+    RightToLeft,
+    TopToBottom,
+    BottomToTop,
+    QuadTopRight,
+    QuadTopLeft,
+    QuadBottomLeft,
+    QuadBottomRight,
+};
+
+/// Clipping of a level: only cells whose centre lies inside the closed polygons (even-odd rule,
+/// so a polygon inside another is a hole) stay opaque. No polygons = not clipped.
+struct Clip {
+    std::vector<std::vector<Point>> polygons;
+};
+
+/// Caps on a clip (also enforced by commands and the file loader).
+inline constexpr std::size_t kMaxClipPolygons = 256;
+inline constexpr std::size_t kMaxClipVertices = 65536;
+
+/// Non-destructive per-level effects, applied at compose time after the level's components are
+/// combined and its base height added: mirror first, then clip (so the clip bounds the result).
+struct LevelEffects {
+    Clip clip;
+    MirrorMode mirror = MirrorMode::None;
+    Point mirrorCenter;  ///< The mirror axes pass through this point (design space).
+    bool any() const { return !clip.polygons.empty() || mirror != MirrorMode::None; }
+};
+
 struct Level {
+    LevelEffects effects;
     std::string name;
     std::vector<Component> components;  ///< Bottom first.
     CombineMode mode = CombineMode::Add;

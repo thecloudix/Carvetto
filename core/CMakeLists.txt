@@ -170,6 +170,7 @@ add_library(carvetto_core STATIC
   src/geometry/span.cpp
   src/geometry/polyline.cpp
   src/relief/relief.cpp
+  src/relief/effects.cpp
   src/relief/shape.cpp
   src/relief/mesh_raster.cpp
   src/relief/bitmap_relief.cpp

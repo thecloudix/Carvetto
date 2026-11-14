@@ -529,6 +529,10 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
             report(Kind::MissingReliefSheet, {}, {},
                    "relief level #" + std::to_string(level.id.value) + " is on a missing sheet");
         }
+        if (const std::string problem = reliefEffectsProblem(level.effects); !problem.empty()) {
+            report(Kind::BadReliefEffects, {}, {},
+                   "relief level #" + std::to_string(level.id.value) + ": " + problem);
+        }
         for (const ReliefComponent& c : level.components) {
             checkId(c.id.value, {}, "relief component");
             if (const std::string problem = reliefComponentProblem(c.data); !problem.empty()) {

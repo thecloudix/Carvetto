@@ -519,6 +519,17 @@ constexpr EnumName<relief::CombineMode> kCombineModes[] = {{relief::CombineMode:
                                                            {relief::CombineMode::MergeLow, "merge_low"},
                                                            {relief::CombineMode::Multiply, "multiply"}};
 
+constexpr EnumName<relief::MirrorMode> kMirrorModes[] = {
+    {relief::MirrorMode::None, "none"},
+    {relief::MirrorMode::LeftToRight, "left_to_right"},
+    {relief::MirrorMode::RightToLeft, "right_to_left"},
+    {relief::MirrorMode::TopToBottom, "top_to_bottom"},
+    {relief::MirrorMode::BottomToTop, "bottom_to_top"},
+    {relief::MirrorMode::QuadTopRight, "quad_top_right"},
+    {relief::MirrorMode::QuadTopLeft, "quad_top_left"},
+    {relief::MirrorMode::QuadBottomLeft, "quad_bottom_left"},
+    {relief::MirrorMode::QuadBottomRight, "quad_bottom_right"}};
+
 json encodeRelief(const Document& doc) {
     json levels = json::array();
     for (const ReliefLevel& l : doc.reliefLevels()) {
@@ -529,6 +540,21 @@ json encodeRelief(const Document& doc) {
         lj["mode"] = nameOf(kCombineModes, l.mode);
         lj["base_height_mm"] = l.baseHeight;
         lj["visible"] = l.visible;
+        if (l.effects.any()) {  // format 1.10 (T-0295)
+            json ej = json::object();
+            ej["mirror"] = nameOf(kMirrorModes, l.effects.mirror);
+            ej["mirror_center"] = json::array({l.effects.mirrorCenter.x, l.effects.mirrorCenter.y});
+            json polys = json::array();
+            for (const auto& poly : l.effects.clip.polygons) {
+                json pj = json::array();
+                for (const relief::Point& pt : poly) {
+                    pj.push_back(json::array({pt.x, pt.y}));
+                }
+                polys.push_back(std::move(pj));
+            }
+            ej["clip"] = std::move(polys);
+            lj["effects"] = std::move(ej);
+        }
         json comps = json::array();
         for (const ReliefComponent& c : l.components) {
             json cj = json::object();
@@ -3376,8 +3402,59 @@ ManifestFile decodeManifest(JsonReader& r) {
 
 // --- relief (format 1.9, T-0282) ---
 
-constexpr std::array<std::string_view, 7> kReliefLevelKeys{"id",   "sheet",          "name",      "mode",
-                                                          "base_height_mm", "visible", "components"};
+constexpr std::array<std::string_view, 8> kReliefLevelKeys{"id",   "sheet",          "name",      "mode",
+                                                          "base_height_mm", "visible", "components", "effects"};
+constexpr std::array<std::string_view, 3> kReliefEffectsKeys{"mirror", "mirror_center", "clip"};
+
+relief::LevelEffects decodeReliefEffects(JsonReader& r, const Path& p) {
+    relief::LevelEffects e;
+    Record rec(r, p, kReliefEffectsKeys);
+    std::size_t vertices = 0;
+    while (rec.next()) {
+        const Path f = rec.field();
+        if (rec.key() == "mirror") {
+            e.mirror = readEnum(r, f, kMirrorModes);
+        } else if (rec.key() == "mirror_center") {
+            const Vec2 v = readFinitePoint(r, f);
+            e.mirrorCenter = {v.x, v.y};
+        } else if (rec.key() == "clip") {
+            if (r.peek() != JKind::Array) {
+                fail(f, "must be a JSON array");
+            }
+            r.beginArray();
+            for (std::size_t i = 0; r.nextElement(); ++i) {
+                if (i >= relief::kMaxClipPolygons) {
+                    fail(f, "more than " + std::to_string(relief::kMaxClipPolygons) + " clip polygons",
+                         CarvError::Code::ResourceLimit);
+                }
+                r.budget().chargeDocument(kCostRecord);
+                const Path pp = f.at(i);
+                if (r.peek() != JKind::Array) {
+                    fail(pp, "must be a JSON array of points");
+                }
+                std::vector<relief::Point> poly;
+                r.beginArray();
+                for (std::size_t k = 0; r.nextElement(); ++k) {
+                    if (++vertices > relief::kMaxClipVertices) {
+                        fail(f, "more than " + std::to_string(relief::kMaxClipVertices) + " clip vertices",
+                             CarvError::Code::ResourceLimit);
+                    }
+                    r.budget().chargeDocument(kCostSpan);
+                    const Vec2 v = readFinitePoint(r, pp.at(k));
+                    poly.push_back({v.x, v.y});
+                }
+                if (poly.size() < 3) {
+                    fail(pp, "a clip polygon needs at least 3 points");
+                }
+                e.clip.polygons.push_back(std::move(poly));
+            }
+        } else {
+            rec.skip();
+        }
+    }
+    rec.requireAll();
+    return e;
+}
 constexpr std::array<std::string_view, 8> kReliefComponentKeys{
     "id", "name", "mode", "shape_height_percent", "base_height_mm", "visible", "fade", "tilt"};
 constexpr std::array<std::string_view, 4> kFadeKeys{"enabled", "anchor", "second", "percent"};
@@ -3491,6 +3568,8 @@ std::vector<ReliefLevel> decodeRelief(JsonReader& r, const Path& p) {
                 l.baseHeight = readFinite(r, f);
             } else if (k == "visible") {
                 l.visible = readBool(r, f);
+            } else if (k == "effects") {
+                l.effects = decodeReliefEffects(r, f);
             } else if (k == "components") {
                 if (r.peek() != JKind::Array) {
                     fail(f, "must be a JSON array");
@@ -3508,7 +3587,11 @@ std::vector<ReliefLevel> decodeRelief(JsonReader& r, const Path& p) {
                 rec.skip();
             }
         }
-        rec.requireAll();
+        for (const std::string_view key : kReliefLevelKeys) {
+            if (key != "effects") {  // optional: added in format 1.10
+                rec.require(key);
+            }
+        }
         levels.push_back(std::move(l));
     }
     return levels;
@@ -4524,10 +4607,11 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             // Checked before any field is encoded, so an over-cap document is refused cheaply.
             std::uint64_t cells = 0;
             for (const ReliefLevel& l : doc.reliefLevels()) {
-                if (l.name.size() > kMaxReliefNameBytes || !std::isfinite(l.baseHeight) || !doc.findSheet(l.sheet)) {
+                if (l.name.size() > kMaxReliefNameBytes || !std::isfinite(l.baseHeight) || !doc.findSheet(l.sheet) ||
+                    !reliefEffectsProblem(l.effects).empty()) {
                     return CarvError{CarvError::Code::InvalidContent,
                                      "relief level #" + std::to_string(l.id.value) +
-                                         " has an over-long name, a non-finite base height or a missing sheet"};
+                                         " has an over-long name, a non-finite base height, invalid effects or a missing sheet"};
                 }
                 for (const ReliefComponent& c : l.components) {
                     if (const std::string problem = reliefComponentProblem(c.data); !problem.empty()) {
@@ -4569,7 +4653,10 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                                [](const auto& kv) { return kv.second.isDimension(); });
         const bool usesExpressions = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(),
                                                  [](const ToolpathRecord& tp) { return !tp.expressions.empty(); });
-        version["minor"] = usesRelief           ? kCarvFormatMinorRelief
+        const bool usesEffects = std::any_of(doc.reliefLevels().begin(), doc.reliefLevels().end(),
+                                             [](const ReliefLevel& l) { return l.effects.any(); });
+        version["minor"] = usesEffects          ? kCarvFormatMinorLevelEffects
+                           : usesRelief           ? kCarvFormatMinorRelief
                            : usesExpressions    ? kCarvFormatMinorExpressions
                            : usesToolpathSheet ? kCarvFormatMinorToolpathSheet
                            : usesBitmaps      ? kCarvFormatMinorBitmap
