@@ -266,6 +266,7 @@ add_library(carvetto_core STATIC
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp
   src/toolpath/rough3d.cpp
+  src/toolpath/finish3d.cpp
   src/text/font.cpp
   src/text/layout_builder.cpp
   src/text/layout.cpp
