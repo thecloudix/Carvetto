@@ -137,11 +137,11 @@ jobs:
             exit 1
           fi
       # T-0014: timing-sensitive tests must hold under parallel load. Runs the suite with 8 jobs and
-      # repeats it, failing as soon as any repetition fails: 5 times on main, 2 times on a PR
+      # repeats it, failing as soon as any repetition fails: 3 times on main (was 5 until the suite passed 2400 tests and a run took about two hours), 2 times on a PR
       # (the full 5x stress is what made PR runs take over an hour).
       - name: Test (parallel stress, -j8)
         env:
-          REPEAT: ${{ github.event_name == 'pull_request' && '2' || '5' }}
+          REPEAT: ${{ github.event_name == 'pull_request' && '2' || '3' }}
         run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:$REPEAT
 
   # T-0159: the Release build runs on both runner images: ubuntu-24.04 (GCC 13) and ubuntu-26.04
