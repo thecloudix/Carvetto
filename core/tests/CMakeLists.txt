@@ -142,6 +142,7 @@ add_executable(carvetto_tests
   toolpath/rough3d_test.cpp
   relief/modify_test.cpp
   relief/derive_test.cpp
+  relief/extrude_test.cpp
   text/font_test.cpp
   text/outline_test.cpp
   text/layout_test.cpp
