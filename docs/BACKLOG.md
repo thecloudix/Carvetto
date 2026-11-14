@@ -1419,7 +1419,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0066
 Goal: Extrude a vector cross section or a component along a rail (stretch to length or fill with copies with overlap % and alternate flips; create sharp corners; sweep between spans) and the weave option (Z under %, Z over %, scale shape or add base).
 Acceptance criteria: analytic goldens for straight rails; weave crossings alternate over/under correctly; deterministic.
 
-### T-0290 Turn and Spin   [status: ready]
+### T-0290 Turn and Spin   [status: in-progress]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0067
 Goal: Turn (revolve a profile about its start-end line) and Spin (revolve about its left end into a circular component); scale to exact height.
 Acceptance criteria: a half-circle profile spun gives a hemisphere within tolerance; turn of a rectangle gives a cylinder; degenerate profile errors cleanly.
@@ -1429,12 +1429,12 @@ Phase: 2   Module: core/relief   Depends on: T-0281, T-0251
 Goal: Tile a seed component inside a closed vector boundary: spacing X/Y % (negative overlaps), X/Y shift % (alternate rows/columns), reflection (none/H/V/both); editable afterwards.
 Acceptance criteria: spacing/shift/reflection goldens on a small seed; clipping to the boundary exact at cell level; tile-count cap with a clear error.
 
-### T-0292 Modify ops 1: bake, replace below, reset inside/outside, offset model, smooth, emboss   [status: ready]
+### T-0292 Modify ops 1: bake, replace below, reset inside/outside, offset model, smooth, emboss   [status: in-progress]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0068
 Goal: Bake components (Ctrl keeps originals), Replace Below (transparent or plane, lower component by value), Reset Inside/Outside selected vectors, Offset Model (+/- distance, clip to zero plane), Smooth selected components (percent, preserve transparency, bake smoothing), Emboss (scale height, detail smoothness).
 Acceptance criteria: each op has analytic or hand goldens; smoothing is deterministic and preserves transparency when asked; offset by d then -d returns near the original on smooth fields (stated tolerance).
 
-### T-0293 Modify ops 2: slice, add draft, split, vector boundary, cross-section vector, distort   [status: ready]
+### T-0293 Modify ops 2: slice, add draft, split, vector boundary, cross-section vector, distort   [status: in-progress]
 Phase: 2   Module: core/relief   Depends on: T-0281   ADR: 0069
 Goal: Slice Model (thickness, from top, count, optional boundary vectors, one component per slice), Add Draft (minimum draft angle, bakes to a new component), Split Component with a vector (A and B), Create Vector Boundary around components (silhouette contours), Create Cross Section Vector (two points to a profile), Distort Selected Component (reuses the 2D distort maths).
 Acceptance criteria: slices reconstruct the model when recombined; draft angle verified on a wall test; silhouette of a cone is a circle within tolerance; cross-section of a ramp is a straight line.
@@ -1464,7 +1464,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0296, T-0281   ADR: 0073
 Goal: Moulding toolpath (profile a moulding cross-section along vectors with the tool shape), Project Toolpath onto 3D (drop 2D toolpath Z by the model surface, with a drop vs project choice), 3D tabs for 3D profiling, and Create Component From Toolpath Preview (heightfield from the simulator result). Split this card if it exceeds one verifier round budget.
 Acceptance criteria: each has analytic goldens; projected paths lie on the surface within tolerance; the component from the preview matches the simulator heightfield.
 
-### T-0299 App: component tree panel and 3D view of the composed model   [status: blocked — waits on T-0282]
+### T-0299 App: component tree panel and 3D view of the composed model   [status: in-progress]
 Phase: 2   Module: app   Depends on: T-0282   ADR: 0074
 Goal: Component Tree panel (levels, components, drag/reorder, show/hide, combine mode, rename, delete, duplicate, move to level), Component Properties form (shape height, base height, fade, tilt, appearance), and a 3D view rendering the composed model (shaded, orbit/zoom/pan per the inventory, material colour). Reuses the existing relief rendering and playback code where it applies. Self-test coverage.
 Acceptance criteria: panel actions go through the undoable commands of T-0282; 3D view draws a known model (pixel-sampled self-test); view stays responsive on a 2000x2000 field (level-of-detail or tile).
