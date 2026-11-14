@@ -1494,7 +1494,7 @@ Acceptance criteria: simulator shows no gouge below model + allowance; offset cl
 Phase: 2   Module: core/document + app   Depends on: T-0299
 Goal: Store an appearance per component and level in the document (needs a .carv minor-version bump, old files still load) and use it in the Model view; T-0299 ships one view-level material instead. Owner to confirm when a decision is needed on defaults; low priority.
 
-### T-0306 App: remaining modelling forms (T-0300 follow-up)   [status: ready]
+### T-0306 App: remaining modelling forms (T-0300 follow-up)   [status: in-progress]
 Phase: 2   Module: app   Depends on: T-0300
 Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, vector boundary, cross section and distort (core ops are in relief/modify.hpp and relief/derive.hpp), each with one preview function and Apply through ReplaceReliefComponentCommand or an add, as one undo step; the Custom shape profile editor; preview merged with the rest of the model if affordable. Follow the T-0300 pattern (viewmodel relief_modelling, ModellingPanel pages, self-test).
 
