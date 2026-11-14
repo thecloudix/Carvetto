@@ -31,6 +31,7 @@
 
 #include "carv_json_reader.hpp"
 #include "carv_moves.hpp"
+#include "carv_relief.hpp"
 #include "carv_zip.hpp"
 #include "carvetto/document/dimension.hpp"
 #include "carvetto/document/document.hpp"
@@ -130,6 +131,9 @@ CarvExtras CarvExtras::withMember(std::string name, std::vector<std::uint8_t> by
     }
     if (name.size() == 28 && name.starts_with("bitmaps/") && name.ends_with(".img")) {
         bad("reserved for embedded bitmaps, which saveCarv writes from the document's bitmap table");
+    }
+    if (detail::isReliefFieldName(name)) {
+        bad("reserved for relief height fields, which saveCarv writes from the document's relief components");
     }
     if (detail::isInterimToolpathName(name)) {
         bad("an interim toolpath member (ADR-0019); toolpaths are stored as toolpath records now");
@@ -507,6 +511,51 @@ const ExtraMap* findExtra(const CarvExtras::Impl* impl,
     const auto& map = impl->*member;
     const auto it = map.find(id);
     return it == map.end() ? nullptr : &it->second;
+}
+
+constexpr EnumName<relief::CombineMode> kCombineModes[] = {{relief::CombineMode::Add, "add"},
+                                                           {relief::CombineMode::Subtract, "subtract"},
+                                                           {relief::CombineMode::MergeHigh, "merge_high"},
+                                                           {relief::CombineMode::MergeLow, "merge_low"},
+                                                           {relief::CombineMode::Multiply, "multiply"}};
+
+json encodeRelief(const Document& doc) {
+    json levels = json::array();
+    for (const ReliefLevel& l : doc.reliefLevels()) {
+        json lj = json::object();
+        lj["id"] = l.id.value;
+        lj["sheet"] = l.sheet.value;
+        lj["name"] = l.name;
+        lj["mode"] = nameOf(kCombineModes, l.mode);
+        lj["base_height_mm"] = l.baseHeight;
+        lj["visible"] = l.visible;
+        json comps = json::array();
+        for (const ReliefComponent& c : l.components) {
+            json cj = json::object();
+            cj["id"] = c.id.value;
+            cj["name"] = c.data.name;
+            cj["mode"] = nameOf(kCombineModes, c.data.mode);
+            cj["shape_height_percent"] = c.data.shapeHeightPercent;
+            cj["base_height_mm"] = c.data.baseHeight;
+            cj["visible"] = c.data.visible;
+            json fade = json::object();
+            fade["enabled"] = c.data.fade.enabled;
+            fade["anchor"] = json::array({c.data.fade.anchor.x, c.data.fade.anchor.y});
+            fade["second"] = json::array({c.data.fade.second.x, c.data.fade.second.y});
+            fade["percent"] = c.data.fade.percent;
+            cj["fade"] = std::move(fade);
+            json tilt = json::object();
+            tilt["enabled"] = c.data.tilt.enabled;
+            tilt["pivot"] = json::array({c.data.tilt.pivot.x, c.data.tilt.pivot.y});
+            tilt["raise"] = json::array({c.data.tilt.raise.x, c.data.tilt.raise.y});
+            tilt["angle_rad"] = c.data.tilt.angleRad;
+            cj["tilt"] = std::move(tilt);
+            comps.push_back(std::move(cj));
+        }
+        lj["components"] = std::move(comps);
+        levels.push_back(std::move(lj));
+    }
+    return levels;
 }
 
 json encodeJob(const Job& job) {
@@ -3325,6 +3374,146 @@ ManifestFile decodeManifest(JsonReader& r) {
     return m;
 }
 
+// --- relief (format 1.9, T-0282) ---
+
+constexpr std::array<std::string_view, 7> kReliefLevelKeys{"id",   "sheet",          "name",      "mode",
+                                                          "base_height_mm", "visible", "components"};
+constexpr std::array<std::string_view, 8> kReliefComponentKeys{
+    "id", "name", "mode", "shape_height_percent", "base_height_mm", "visible", "fade", "tilt"};
+constexpr std::array<std::string_view, 4> kFadeKeys{"enabled", "anchor", "second", "percent"};
+constexpr std::array<std::string_view, 4> kTiltKeys{"enabled", "pivot", "raise", "angle_rad"};
+
+std::string readReliefName(JsonReader& r, const Path& f) {
+    std::string name = readStoredString(r, f);
+    if (name.size() > kMaxReliefNameBytes) {
+        fail(f, "name too long (more than " + std::to_string(kMaxReliefNameBytes) + " bytes)",
+             CarvError::Code::ResourceLimit);
+    }
+    return name;
+}
+
+ReliefComponent decodeReliefComponent(JsonReader& r, const Path& p) {
+    ReliefComponent c;
+    Record rec(r, p, kReliefComponentKeys);
+    while (rec.next()) {
+        const Path f = rec.field();
+        const std::string& k = rec.key();
+        if (k == "id") {
+            c.id = ComponentId{readEntityId(r, f)};
+        } else if (k == "name") {
+            c.data.name = readReliefName(r, f);
+        } else if (k == "mode") {
+            c.data.mode = readEnum(r, f, kCombineModes);
+        } else if (k == "shape_height_percent") {
+            c.data.shapeHeightPercent = readFinite(r, f);
+        } else if (k == "base_height_mm") {
+            c.data.baseHeight = readFinite(r, f);
+        } else if (k == "visible") {
+            c.data.visible = readBool(r, f);
+        } else if (k == "fade") {
+            Record fr(r, f, kFadeKeys);
+            while (fr.next()) {
+                const Path ff = fr.field();
+                if (fr.key() == "enabled") {
+                    c.data.fade.enabled = readBool(r, ff);
+                } else if (fr.key() == "anchor") {
+                    const Vec2 v = readFinitePoint(r, ff);
+                    c.data.fade.anchor = {v.x, v.y};
+                } else if (fr.key() == "second") {
+                    const Vec2 v = readFinitePoint(r, ff);
+                    c.data.fade.second = {v.x, v.y};
+                } else if (fr.key() == "percent") {
+                    c.data.fade.percent = readFinite(r, ff);
+                } else {
+                    fr.skip();
+                }
+            }
+            fr.requireAll();
+        } else if (k == "tilt") {
+            Record tr(r, f, kTiltKeys);
+            while (tr.next()) {
+                const Path tf = tr.field();
+                if (tr.key() == "enabled") {
+                    c.data.tilt.enabled = readBool(r, tf);
+                } else if (tr.key() == "pivot") {
+                    const Vec2 v = readFinitePoint(r, tf);
+                    c.data.tilt.pivot = {v.x, v.y};
+                } else if (tr.key() == "raise") {
+                    const Vec2 v = readFinitePoint(r, tf);
+                    c.data.tilt.raise = {v.x, v.y};
+                } else if (tr.key() == "angle_rad") {
+                    c.data.tilt.angleRad = readFinite(r, tf);
+                } else {
+                    tr.skip();
+                }
+            }
+            tr.requireAll();
+        } else {
+            rec.skip();  // unknown keys of a relief record are dropped (ADR-0061)
+        }
+    }
+    rec.requireAll();
+    if (const std::string problem = reliefPropertiesProblem(c.data); !problem.empty()) {
+        fail(p, problem);
+    }
+    return c;
+}
+
+/// Reads the `relief` array: levels with their components (fields still empty).
+std::vector<ReliefLevel> decodeRelief(JsonReader& r, const Path& p) {
+    if (r.peek() != JKind::Array) {
+        fail(p, "must be a JSON array");
+    }
+    std::vector<ReliefLevel> levels;
+    std::size_t components = 0;
+    r.beginArray();
+    for (std::size_t i = 0; r.nextElement(); ++i) {
+        if (i >= kMaxReliefLevels) {
+            fail(p, "more than " + std::to_string(kMaxReliefLevels) + " relief levels",
+                 CarvError::Code::ResourceLimit);
+        }
+        r.budget().chargeDocument(kCostRecord);
+        const Path lp = p.at(i);
+        ReliefLevel l;
+        Record rec(r, lp, kReliefLevelKeys);
+        while (rec.next()) {
+            const Path f = rec.field();
+            const std::string& k = rec.key();
+            if (k == "id") {
+                l.id = LevelId{readEntityId(r, f)};
+            } else if (k == "sheet") {
+                l.sheet = SheetId{readEntityId(r, f)};
+            } else if (k == "name") {
+                l.name = readReliefName(r, f);
+            } else if (k == "mode") {
+                l.mode = readEnum(r, f, kCombineModes);
+            } else if (k == "base_height_mm") {
+                l.baseHeight = readFinite(r, f);
+            } else if (k == "visible") {
+                l.visible = readBool(r, f);
+            } else if (k == "components") {
+                if (r.peek() != JKind::Array) {
+                    fail(f, "must be a JSON array");
+                }
+                r.beginArray();
+                for (std::size_t j = 0; r.nextElement(); ++j) {
+                    if (++components > kMaxReliefComponents) {
+                        fail(f, "more than " + std::to_string(kMaxReliefComponents) + " relief components",
+                             CarvError::Code::ResourceLimit);
+                    }
+                    r.budget().chargeDocument(kCostRecord);
+                    l.components.push_back(decodeReliefComponent(r, f.at(j)));
+                }
+            } else {
+                rec.skip();
+            }
+        }
+        rec.requireAll();
+        levels.push_back(std::move(l));
+    }
+    return levels;
+}
+
 /// The optional `keepout` record (format 1.4, T-0241).
 struct KeepOutFile {
     bool present{false};
@@ -3337,6 +3526,7 @@ struct KeepOutFile {
 struct JobFile {
     Job job;
     KeepOutFile keepOut;
+    std::vector<ReliefLevel> relief;
     ExtraMap jobUnknown;
     ExtraMap keepOutUnknown;
     ExtraMap rootUnknown;
@@ -3350,10 +3540,10 @@ struct JobFile {
     std::uint64_t activeLayer{0};
 };
 
-constexpr std::array<std::string_view, 10> kRootKeys{"active_layer", "active_sheet", "job",
+constexpr std::array<std::string_view, 11> kRootKeys{"active_layer", "active_sheet", "job",
                                                      "keepout",      "layers",       "next_id",
-                                                     "objects",      "sheets",       "toolpaths",
-                                                     "variables"};
+                                                     "objects",      "relief",       "sheets",
+                                                     "toolpaths",    "variables"};
 
 constexpr std::array<std::string_view, 3> kKeepOutKeys{"clearance_mm", "visible", "zones"};
 constexpr std::array<std::string_view, 2> kKeepOutZoneKeys{"id", "outline"};
@@ -3437,6 +3627,8 @@ JobFile decodeJobFile(JsonReader& r) {
                 fail(f, "must be a JSON object");
             }
             jf.keepOut = decodeKeepOut(r, f, jf.keepOutUnknown);
+        } else if (k == "relief") {
+            jf.relief = decodeRelief(r, f);
         } else if (k == "sheets" || k == "layers") {
             const bool sheets = k == "sheets";
             if (r.peek() != JKind::Array) {
@@ -3508,7 +3700,7 @@ JobFile decodeJobFile(JsonReader& r) {
         }
     }
     for (const std::string_view key : kRootKeys) {
-        if (key != "toolpaths" && key != "keepout") {  // optional: added in format 1.1 / 1.3
+        if (key != "toolpaths" && key != "keepout" && key != "relief") {  // optional: added in format 1.1 / 1.3 / 1.9
             rec.require(key);
         }
     }
@@ -3728,6 +3920,34 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         }
     }
     std::set<std::string> cachesRead;
+    // Relief height fields named by job.json: component id -> (level, component) indices.
+    std::map<std::uint64_t, std::pair<std::size_t, std::size_t>> reliefComponents;
+    for (std::size_t li = 0; li < jf.relief.size(); ++li) {
+        for (std::size_t ci = 0; ci < jf.relief[li].components.size(); ++ci) {
+            const std::uint64_t cid = jf.relief[li].components[ci].id.value;
+            if (!reliefComponents.emplace(cid, std::make_pair(li, ci)).second) {
+                fail(std::string(kJobName) + ".relief[" + std::to_string(li) + "].components[" + std::to_string(ci) + "]",
+                     "duplicate id " + std::to_string(cid));
+            }
+        }
+    }
+    // The declared sizes of the members that will be inflated must fit the cell caps before any
+    // of them is touched: a field takes 4 bytes per cell plus its header.
+    {
+        std::uint64_t declared = 0;
+        for (const detail::ZipEntry& e : zip.entries()) {
+            if (e.reliefField && reliefComponents.contains(detail::reliefFieldIdOfName(e.name))) {
+                declared += e.size;
+            }
+        }
+        const std::uint64_t allowed = kMaxReliefTotalCells * 4 + reliefComponents.size() * detail::kHeightFieldHeaderBytes;
+        if (declared > allowed) {
+            throw LoadFailure{CarvError::Code::ResourceLimit,
+                              "the height fields hold more than " + std::to_string(kMaxReliefTotalCells) +
+                                  " cells in total"};
+        }
+    }
+    std::map<std::uint64_t, relief::HeightField> reliefFields;
     std::map<std::string, InterimToolpath> interim;  // by member name, i.e. creation order
     const auto hold = [&](const detail::ZipEntry& e) {
         held += e.size;
@@ -3777,6 +3997,27 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
             cachesRead.insert(e.name);
             continue;
         }
+        if (e.reliefField) {
+            const std::uint64_t cid = detail::reliefFieldIdOfName(e.name);
+            if (!reliefComponents.contains(cid)) {
+                continue;  // a field no component names: stale, dropped unread
+            }
+            std::string error;
+            auto stream = zip.stream(e, error);
+            if (!stream) {
+                throw LoadFailure{CarvError::Code::InvalidArchive, error};
+            }
+            relief::HeightField field;
+            const std::string defect = detail::decodeHeightField(*stream, e.size, field);
+            if (defect.empty() && !stream->finish(error)) {
+                throw LoadFailure{CarvError::Code::InvalidArchive, error};  // damage, not bad content
+            }
+            if (!defect.empty()) {
+                throw LoadFailure{CarvError::Code::InvalidContent, e.name + ": " + defect};
+            }
+            reliefFields.emplace(cid, std::move(field));
+            continue;
+        }
         if (detail::isInterimToolpathName(e.name)) {
             // carvetto-cli's interim storage before format 1.1 (ADR-0019): becomes a record.
             // Two passes: count the moves under a throwaway copy of the budget, then
@@ -3818,6 +4059,14 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
             throw LoadFailure{CarvError::Code::MissingMember,
                               std::string(kJobName) + ".toolpaths[" + std::to_string(index) + "].moves.member: the archive has no '" +
                                   member + "'"};
+        }
+    }
+
+    for (const auto& [cid, at] : reliefComponents) {
+        if (!reliefFields.contains(cid)) {
+            throw LoadFailure{CarvError::Code::MissingMember,
+                              std::string(kJobName) + ".relief: the archive has no '" +
+                                  detail::reliefFieldMemberName(cid) + "'"};
         }
     }
 
@@ -3889,6 +4138,32 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     }
     for (std::size_t i = 0; i < jf.keepOut.zones.size(); ++i) {
         claimId(jf.keepOut.zones[i].id.value, where + ".keepout.zones[" + std::to_string(i) + "]");
+    }
+    for (std::size_t i = 0; i < jf.relief.size(); ++i) {
+        const std::string lw = where + ".relief[" + std::to_string(i) + "]";
+        ReliefLevel& l = jf.relief[i];
+        claimId(l.id.value, lw);
+        if (!sheetIds.contains(l.sheet.value)) {
+            fail(lw + ".sheet", "sheet " + std::to_string(l.sheet.value) + " does not exist");
+        }
+        for (std::size_t j = 0; j < l.components.size(); ++j) {
+            ReliefComponent& c = l.components[j];
+            claimId(c.id.value, lw + ".components[" + std::to_string(j) + "]");
+            c.data.field = std::move(reliefFields.at(c.id.value));
+        }
+    }
+    {
+        std::uint64_t cells = 0;
+        for (const ReliefLevel& l : jf.relief) {
+            for (const ReliefComponent& c : l.components) {
+                cells += static_cast<std::uint64_t>(c.data.field.width()) * c.data.field.height();
+            }
+        }
+        if (cells > kMaxReliefTotalCells) {
+            throw LoadFailure{CarvError::Code::ResourceLimit,
+                              "the height fields hold more than " + std::to_string(kMaxReliefTotalCells) +
+                                  " cells in total"};
+        }
     }
     checkGroupStructure(jf.objects);
 
@@ -3966,6 +4241,9 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     }
     doc.setKeepOutClearance(jf.keepOut.clearance);
     doc.setKeepOutVisible(jf.keepOut.visible);
+    for (ReliefLevel& l : jf.relief) {
+        doc.insertReliefLevel(std::move(l));
+    }
     // Interim members become records after the file's own, in member-name (creation) order, with
     // fresh ids. Their "layers" names select every layer of that name; names that match no layer
     // select nothing.
@@ -4240,7 +4518,43 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             usesBitmaps = true;
             fontMembers.emplace(bitmapMemberName(b->sourceRef), image->bytes);
         }
-        // The minor is the highest one any used feature requires: toolpath calculation expressions (1.8, T-0271), toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
+        // Relief (format 1.9, T-0282): levels in job.json, one height-field member per component.
+        const bool usesRelief = !doc.reliefLevels().empty();
+        if (usesRelief) {
+            // Checked before any field is encoded, so an over-cap document is refused cheaply.
+            std::uint64_t cells = 0;
+            for (const ReliefLevel& l : doc.reliefLevels()) {
+                if (l.name.size() > kMaxReliefNameBytes || !std::isfinite(l.baseHeight) || !doc.findSheet(l.sheet)) {
+                    return CarvError{CarvError::Code::InvalidContent,
+                                     "relief level #" + std::to_string(l.id.value) +
+                                         " has an over-long name, a non-finite base height or a missing sheet"};
+                }
+                for (const ReliefComponent& c : l.components) {
+                    if (const std::string problem = reliefComponentProblem(c.data); !problem.empty()) {
+                        return CarvError{CarvError::Code::InvalidContent,
+                                         "relief component #" + std::to_string(c.id.value) + ": " + problem};
+                    }
+                    cells += static_cast<std::uint64_t>(c.data.field.width()) * c.data.field.height();
+                }
+            }
+            if (cells > kMaxReliefTotalCells) {
+                return CarvError{CarvError::Code::ResourceLimit,
+                                 "the height fields hold " + std::to_string(cells) + " cells; a .carv file holds at most " +
+                                     std::to_string(kMaxReliefTotalCells)};
+            }
+            for (const ReliefLevel& l : doc.reliefLevels()) {
+                for (const ReliefComponent& c : l.components) {
+                    std::vector<std::uint8_t> bytes;
+                    const std::string error = detail::encodeHeightField(c.data.field, bytes);
+                    if (!error.empty()) {
+                        return CarvError{CarvError::Code::InvalidContent,
+                                         "relief component #" + std::to_string(c.id.value) + ": " + error};
+                    }
+                    fontMembers.emplace(detail::reliefFieldMemberName(c.id.value), std::move(bytes));
+                }
+            }
+        }
+        // The minor is the highest one any used feature requires: relief (1.9, T-0282), toolpath calculation expressions (1.8, T-0271), toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
         // dimension objects (1.3, T-0246), text/fonts (1.2); otherwise the base minor.
         const bool usesKeepOut =
             !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible() ||
@@ -4255,7 +4569,8 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                                [](const auto& kv) { return kv.second.isDimension(); });
         const bool usesExpressions = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(),
                                                  [](const ToolpathRecord& tp) { return !tp.expressions.empty(); });
-        version["minor"] = usesExpressions      ? kCarvFormatMinorExpressions
+        version["minor"] = usesRelief           ? kCarvFormatMinorRelief
+                           : usesExpressions    ? kCarvFormatMinorExpressions
                            : usesToolpathSheet ? kCarvFormatMinorToolpathSheet
                            : usesBitmaps      ? kCarvFormatMinorBitmap
                            : usesDoubleSided  ? kCarvFormatMinorDoubleSided
@@ -4439,6 +4754,10 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             keepOut["zones"] = std::move(zones);
             mergeUnknown(keepOut, ex ? &ex->keepout : nullptr);
             root["keepout"] = std::move(keepOut);
+        }
+
+        if (usesRelief) {
+            root["relief"] = encodeRelief(doc);
         }
 
         json variables = json::object();

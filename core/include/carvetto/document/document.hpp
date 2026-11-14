@@ -14,6 +14,7 @@
 #include "carvetto/document/keepout.hpp"
 #include "carvetto/document/layer.hpp"
 #include "carvetto/document/object.hpp"
+#include "carvetto/document/relief_model.hpp"
 #include "carvetto/document/selection.hpp"
 #include "carvetto/document/sheet.hpp"
 #include "carvetto/document/toolpath_record.hpp"
@@ -48,6 +49,9 @@ struct IntegrityIssue {
         IdKeyMismatch,        ///< An object's stored `id` differs from the key it is stored under.
         MissingFont,          ///< A text object names a font that is not embedded (T-0211).
         MissingBitmap,        ///< A bitmap object's `sourceRef` is an asset key with no embedded image (T-0273).
+        MissingReliefSheet,   ///< A relief level's sheet does not exist (T-0282).
+        StaleComponentSelection,  ///< The component selection holds an id that does not exist.
+        BadReliefComponent,   ///< A relief component has an empty field or unstorable properties.
         BadToolpathSelection, ///< A toolpath's vector selection names an id that was never
                               ///< allocated or belongs to another kind of item, lists an id
                               ///< twice, or combines `all` with explicit layers/objects (ADR-0021).
@@ -211,6 +215,48 @@ class Document {
     /// (deleted items) are skipped.
     std::vector<ObjectId> selectedVectors(const VectorSelection& selection) const;
 
+    // --- Relief (T-0282, ADR-0061) -----------------------------------------------------------
+    /// Where a component sits: its level and its index in that level (bottom first).
+    struct ReliefLocation {
+        LevelId level;
+        std::size_t index{0};
+    };
+    /// Every level of every sheet; the levels of one sheet appear in their order (bottom first).
+    const std::vector<ReliefLevel>& reliefLevels() const { return reliefLevels_; }
+    /// Ids of the levels of `sheet`, bottom first.
+    std::vector<LevelId> reliefLevelsOnSheet(SheetId sheet) const;
+    const ReliefLevel* findReliefLevel(LevelId id) const;
+    ReliefLevel* findReliefLevel(LevelId id);
+    /// Position of a level among its sheet's levels.
+    std::optional<std::size_t> reliefLevelIndex(LevelId id) const;
+    const ReliefComponent* findReliefComponent(ComponentId id) const;
+    ReliefComponent* findReliefComponent(ComponentId id);
+    std::optional<ReliefLocation> locateReliefComponent(ComponentId id) const;
+    std::size_t reliefComponentCount() const;
+    /// Cells of every height field together.
+    std::uint64_t reliefCellCount() const;
+    /// Raw: inserts `level` at `indexOnSheet` among its sheet's levels (default: on top). A null
+    /// level id, and null ids of carried components, are allocated; preset ids reserve the
+    /// generator. Returns a null id when the sheet does not exist or the generator is exhausted.
+    LevelId insertReliefLevel(ReliefLevel level, std::optional<std::size_t> indexOnSheet = std::nullopt);
+    /// Raw: removes a level with its components (which are deselected). Nullopt when absent.
+    std::optional<ReliefLevel> takeReliefLevel(LevelId id);
+    /// Raw: moves a level to `indexOnSheet` among its sheet's levels. False on a bad id/index.
+    bool moveReliefLevel(LevelId id, std::size_t indexOnSheet);
+    /// Raw: inserts a component into `level` at `index` (default: on top); ids as for levels.
+    /// Returns a null id when the level does not exist or the generator is exhausted.
+    ComponentId insertReliefComponent(LevelId level, ReliefComponent component,
+                                      std::optional<std::size_t> index = std::nullopt);
+    /// Raw: removes a component (and deselects it). Nullopt when absent.
+    std::optional<ReliefComponent> takeReliefComponent(ComponentId id);
+    /// The visible-model input of `relief::compose` for `sheet`: its levels, bottom first, with
+    /// every component's field copied.
+    std::vector<relief::Level> reliefModel(SheetId sheet) const;
+    ComponentId allocateComponentId() { return ComponentId{ids_.allocate()}; }
+    LevelId allocateLevelId() { return LevelId{ids_.allocate()}; }
+    ComponentSelection& componentSelection() { return componentSelection_; }
+    const ComponentSelection& componentSelection() const { return componentSelection_; }
+
     // --- Embedded fonts (T-0211) -------------------------------------------------------------
     // --- Keep-out zones (T-0241) -------------------------------------------------------------
     /// Zones in creation order.
@@ -286,6 +332,8 @@ class Document {
     std::map<std::string, FontAsset> fonts_;
     std::map<std::string, BitmapAsset> bitmaps_;
     std::vector<KeepOutZone> keepOutZones_;
+    std::vector<ReliefLevel> reliefLevels_;
+    ComponentSelection componentSelection_;
     double keepOutClearance_{0.0};
     bool keepOutVisible_{true};
     Selection selection_;

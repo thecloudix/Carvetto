@@ -300,6 +300,28 @@ bool isToolpathCacheName(std::string_view name) {
     return isNumberedToolpathName(name, ".bin");
 }
 
+std::uint64_t reliefFieldIdOfName(std::string_view name) {
+    constexpr std::string_view prefix = "components/";
+    constexpr std::string_view suffix = ".hf";
+    if (name.size() <= prefix.size() + suffix.size() || name.substr(0, prefix.size()) != prefix ||
+        name.substr(name.size() - suffix.size()) != suffix) {
+        return 0;
+    }
+    const std::string_view digits = name.substr(prefix.size(), name.size() - prefix.size() - suffix.size());
+    if (digits.size() > 19 || digits.front() == '0') {
+        return 0;
+    }
+    std::uint64_t value = 0;
+    for (const char c : digits) {
+        if (c < '0' || c > '9') {
+            return 0;
+        }
+        value = value * 10 + static_cast<std::uint64_t>(c - '0');  // at most 19 digits: < 1e19 < 2^64
+    }
+    constexpr std::uint64_t kMaxId = std::uint64_t{1} << 62;
+    return value < kMaxId ? value : 0;
+}
+
 bool isInterimToolpathName(std::string_view name) {
     return isNumberedToolpathName(name, ".json");
 }
@@ -355,7 +377,8 @@ bool ZipArchive::open(const ZipLimits& limits, std::string& error, bool& limitEx
         // A toolpath move cache is decoded straight into moves under the loader's move budget,
         // never held as bytes, so the ratio checks (which bound held bytes) do not apply to it:
         // regular toolpaths can compress far better than 20:1.
-        const bool cache = isToolpathCacheName(name);
+        const bool field = isReliefFieldName(name);
+        const bool cache = isToolpathCacheName(name) || field;
         const std::uint64_t ratio = json ? limits.maxJsonRatio : limits.maxBinaryRatio;
         if (!cache && st.m_uncomp_size > limits.ratioFromBytes && st.m_uncomp_size / ratio > st.m_comp_size) {
             error = "zip member '" + name + "' expands " + std::to_string(st.m_comp_size) + " bytes to " +
@@ -405,7 +428,8 @@ bool ZipArchive::open(const ZipLimits& limits, std::string& error, bool& limitEx
         }
         ZipEntry entry{i,    name, st.m_uncomp_size, st.m_comp_size, st.m_crc32,
                        json, lh,   dataOffset,       dataEnd,        st.m_method == 0};
-        entry.toolpathCache = cache;
+        entry.toolpathCache = cache && !field;
+        entry.reliefField = field;
         if (entry.stored && entry.compressedSize != entry.size) {
             error = "zip member '" + name + "' is stored but its sizes differ";
             return false;

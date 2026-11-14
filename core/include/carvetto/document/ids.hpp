@@ -28,6 +28,8 @@ struct LayerTag {};
 struct SheetTag {};
 struct ToolpathTag {};
 struct KeepOutZoneTag {};
+struct ReliefLevelTag {};
+struct ReliefComponentTag {};
 
 /// Identifier of a drawing object (vector, bitmap or group).
 using ObjectId = Id<ObjectTag>;
@@ -39,6 +41,10 @@ using SheetId = Id<SheetTag>;
 using ToolpathId = Id<ToolpathTag>;
 /// Identifier of a keep-out zone (T-0241).
 using KeepOutZoneId = Id<KeepOutZoneTag>;
+/// Identifier of a relief level (T-0282, ADR-0061).
+using LevelId = Id<ReliefLevelTag>;
+/// Identifier of a relief component (T-0282, ADR-0061).
+using ComponentId = Id<ReliefComponentTag>;
 
 /// Monotonic id allocator shared by every id kind in a document. Ids are never handed out twice,
 /// so an object removed by undo and re-created by redo keeps its identity while a pasted copy

@@ -161,6 +161,10 @@ Status checkProps(const Component& c) {
 }
 }  // namespace
 
+Status validateProperties(const Component& c) {
+    return checkProps(c);
+}
+
 float componentValueAt(const Component& c, double x, double y) {
     const float raw = c.field.sample(x, y);
     if (!opaque(raw)) return raw;
