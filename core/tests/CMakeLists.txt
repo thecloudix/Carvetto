@@ -51,6 +51,7 @@ add_executable(carvetto_tests
   document/keepout_test.cpp
   document/relief_document_test.cpp
   document/relief_carv_test.cpp
+  document/relief_effects_test.cpp
   toolpath/time_test.cpp
   toolpath/block_settle_test.cpp
   toolpath/profile_tab_layer_test.cpp
@@ -134,6 +135,7 @@ add_executable(carvetto_tests
   io/svg_import_test.cpp
   io/svg_xml_test.cpp
   relief/relief_test.cpp
+  relief/effects_test.cpp
   relief/shape_test.cpp
   relief/mesh_raster_test.cpp
   relief/bitmap_relief_test.cpp

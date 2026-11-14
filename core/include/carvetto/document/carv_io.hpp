@@ -56,7 +56,11 @@ inline constexpr int kCarvFormatMinorExpressions = 8;
 /// level) and their height fields (`components/<id>.hf` members); written only when the document
 /// has a relief level. The newest minor this build writes and reads.
 inline constexpr int kCarvFormatMinorRelief = 9;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorRelief;
+/// 1.10 (T-0295, ADR-0079) adds per-level effects (`job.json` relief level `effects`: mirror mode,
+/// mirror centre, clip polygons); written only when a level has one. The newest minor this build
+/// writes and reads.
+inline constexpr int kCarvFormatMinorLevelEffects = 10;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorLevelEffects;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

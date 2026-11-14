@@ -172,6 +172,64 @@ class SetReliefLevelPropertiesCommand : public Command {
     Props after_;
 };
 
+/// Sets (Apply or Update) or removes (empty polygons) a level's clipping. The polygons are the
+/// outlines of closed vectors, flattened by the caller, in design space. Does nothing for invalid
+/// polygons (see `relief::validateEffects`) or an unchanged clip.
+class SetReliefLevelClipCommand : public Command {
+   public:
+    SetReliefLevelClipCommand(LevelId id, relief::Clip clip) : id_(id), after_(std::move(clip)) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return after_.polygons.empty() ? "Remove level clipping" : "Set level clipping"; }
+
+   private:
+    LevelId id_;
+    relief::Clip before_;
+    relief::Clip after_;
+};
+
+/// Sets a level's mirror mode and the point the mirror axes pass through. Consecutive edits of one
+/// level coalesce.
+class SetReliefLevelMirrorCommand : public Command {
+   public:
+    SetReliefLevelMirrorCommand(LevelId id, relief::MirrorMode mode, relief::Point center)
+        : id_(id), after_{mode, center} {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Set level mirror mode"; }
+    bool mergeWith(const Command& next) override;
+
+   private:
+    struct Props {
+        relief::MirrorMode mode{relief::MirrorMode::None};
+        relief::Point center;
+    };
+    LevelId id_;
+    Props before_;
+    Props after_;
+};
+
+/// Makes a level's effects permanent: replaces its visible components by one component holding the
+/// composed result (`relief::bakeLevel`), clears clipping and mirror mode, and keeps the level's
+/// own properties. Hidden components are discarded. Refused when the level has no effects, no
+/// visible component, or the result would break the component or cell caps. Undo restores the
+/// original components and effects; the new component's id is kept for redo.
+class BakeReliefLevelEffectsCommand : public Command {
+   public:
+    explicit BakeReliefLevelEffectsCommand(LevelId id) : id_(id) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Bake level effects"; }
+    ComponentId createdId() const { return newId_; }
+
+   private:
+    LevelId id_;
+    ComponentId newId_;
+    relief::LevelEffects effects_;
+    std::vector<ReliefComponent> components_;  ///< The replaced components while baked.
+    std::vector<ComponentId> selection_;
+};
+
 /// Moves a component to `newIndex` within its level (0 is the bottom).
 class ReorderReliefComponentCommand : public Command {
    public:
