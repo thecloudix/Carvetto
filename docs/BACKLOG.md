@@ -1535,6 +1535,6 @@ Goal: T-0311 delivered Moulding, Project Toolpath, 3D Tabs and Create Component 
 Phase: 2   Module: core/io   Depends on: T-0304
 Goal: T-0311's coder observed the 3D rough record codec does not persist the fields added by T-0304 (clearing, profile first/last, order, avoidMachined): they reset to defaults on save/load, silently changing a saved job. Persist them (strict key lists, finite checks, minor-version bump if needed, old files load with the old defaults), byte-identical re-save test, round-trip test for every field, ADR note.
 
-### T-0316 Sculpt preview merged with the other components (T-0309 follow-up)   [status: in-progress]
+### T-0316 Sculpt preview merged with the other components (T-0309 follow-up)   [status: verifying]
 Phase: 2   Module: app/viewmodel   Depends on: T-0309
 Goal: Sculpt preview currently shows the working component alone. Compose the rest of the model once at stroke/session start and combine only the working component per mouse move (see ADR-0090 "Not done"), so the preview matches the merged model without O(model cells) work per move. Operation-counter test for per-move cost.
