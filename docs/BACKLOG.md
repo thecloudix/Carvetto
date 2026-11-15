@@ -1539,6 +1539,6 @@ Goal: T-0311's coder observed the 3D rough record codec does not persist the fie
 Phase: 2   Module: app/viewmodel   Depends on: T-0309
 Goal: Sculpt preview currently shows the working component alone. Compose the rest of the model once at stroke/session start and combine only the working component per mouse move (see ADR-0090 "Not done"), so the preview matches the merged model without O(model cells) work per move. Operation-counter test for per-move cost.
 
-### T-0317 Preview/simulation leftovers from T-0231: cancellable simulation start, first-paint and zoom scan cost, summary cost   [status: verified (PASS), landing]
+### T-0317 Preview/simulation leftovers from T-0231: cancellable simulation start, first-paint and zoom scan cost, summary cost   [status: done — PR #194]
 Phase: 2   Module: core/simulate + app   Depends on: T-0231
 Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancellable (no UI freeze; cancel token honoured before the first step); (2) cut the first-paint and zoom scan cost of the preview (profile first, then fix the hot spot; operation counters, not timing, in tests); (3) cut the cost of the simulation summary. Tests by operation counters; ADR with measurements.
