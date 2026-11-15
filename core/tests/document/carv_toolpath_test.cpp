@@ -1071,9 +1071,8 @@ TEST_CASE("a move cache no record names is dropped; deflate ratio does not apply
     CHECK(save(back.document, back.extras) == good);
 
     // 1,200,000 identical moves (1 byte each in the cache) compress far beyond the 20:1 binary
-    // ratio. With enough other content in the file (random padding) they are within one move per
-    // byte of the file and load; on their own the file is far too small for them and saveCarv
-    // refuses, as the loader would.
+    // ratio (deflate ~1000:1) yet are within kCarvMovesPerFileByte (T-0312): a regular toolpath
+    // saves and loads on its own.
     Document doc;
     ToolpathRecord r;
     r.tool = kValidTool;  // computed moves need a real tool (T-0134)
@@ -1081,25 +1080,43 @@ TEST_CASE("a move cache no record names is dropped; deflate ratio does not apply
     r.selection = VectorSelection::allVectors();
     r.moves = shareMoves(std::vector<Move>(1'200'000, Move::feed({1, 2, 3}, 500.0)));
     doc.insertToolpath(r);
-    const auto alone = saveCarv(doc);
-    REQUIRE_FALSE(alone.ok());
-    CHECK(alone.error().code == Code::ResourceLimit);
-    CHECK(contains(alone.error().message, "move per byte"));
-    std::mt19937 rng(7);
-    Bytes pad(1'250'000);
-    for (auto& b : pad) {
-        b = static_cast<std::uint8_t>(rng());
-    }
-    const Bytes file = save(doc, CarvExtras{}.withMember("pad.bin", pad));
+    const Bytes file = save(doc);
     CHECK(memberBytes(file, "toolpaths/0001.bin").size() > 1'200'000);
+    CHECK(file.size() * kCarvMovesPerFileByte >= 1'200'000);
     LoadedCarv loaded = load(file);
     requireSameToolpaths(doc, loaded.document);
 }
 
+TEST_CASE("a long regular ramp toolpath saves and loads (T-0312)", "[document][toolpath][carv][limits]") {
+    // A plain 3D finish ramp: constant steps, so the cache deflates to almost nothing.
+    std::vector<Move> ramp;
+    ramp.reserve(3'000'000);
+    for (int i = 0; i < 3'000'000; ++i) {
+        ramp.push_back(Move::feed({0.001 * (i % 1000), 0.0, -1.0}, 500.0));
+    }
+    Document doc;
+    ToolpathRecord r;
+    r.tool = kValidTool;
+    r.name = "ramp";
+    r.selection = VectorSelection::allVectors();
+    r.moves = shareMoves(std::move(ramp));
+    doc.insertToolpath(r);
+    const auto saved = saveCarv(doc);
+    REQUIRE(saved.ok());
+    CHECK(saved.value().size() < 3'000'000);  // fewer bytes than moves: the old rule refused this
+    requireSameToolpaths(doc, load(saved.value()).document);
+}
+
 TEST_CASE("moves per byte of the file: the exact boundary, and small crafted files",
           "[document][toolpath][carv][limits]") {
-    // A file of S bytes holds at most S moves (owner decision 2026-11-02). Build a file whose size
-    // equals its move count exactly by padding it, then add one move.
+    // The ratio mechanism, exercised at 1 move per byte (the default is kCarvMovesPerFileByte,
+    // T-0312): a file of S bytes holds at most S moves. Build a file whose size equals its move
+    // count exactly by padding it, then add one move.
+    detail::LoadLimits oneLimit;
+    oneLimit.movesPerArchiveByte = 1;
+    const auto loadOne = [&oneLimit](const Bytes& b) {
+        return detail::loadCarvWithLimits(std::span<const std::uint8_t>(b), oneLimit, detail::ZipLimits{});
+    };
     constexpr std::size_t kMoves = 50'000;
     Document doc;
     ToolpathRecord r;
@@ -1146,40 +1163,52 @@ TEST_CASE("moves per byte of the file: the exact boundary, and small crafted fil
     }
     const Bytes exact = zipWithPad(lo, cache, job);
     REQUIRE(exact.size() == kMoves);
-    CHECK(load(exact).document.toolpaths()[0].moveCount() == kMoves);
+    {
+        const auto ok = loadOne(exact);
+        REQUIRE(ok.ok());
+        CHECK(ok.value().document.toolpaths()[0].moveCount() == kMoves);
+    }
     // The same file one move longer (cache and count) is one move over.
     const Bytes cache1 = cacheOf(std::vector<Move>(kMoves + 1, Move::rapid({0, 0, 5})));
     const std::string job1 =
         replaced(job, "\"count\": " + std::to_string(kMoves), "\"count\": " + std::to_string(kMoves + 1));
     const Bytes over = zipWithPad(lo, cache1, job1);
     REQUIRE(over.size() == kMoves);
-    const CarvError err = loadError(over);
+    const auto overRes = loadOne(over);
+    REQUIRE_FALSE(overRes.ok());
+    const CarvError& err = overRes.error();
     CHECK(err.code == Code::ResourceLimit);
     CHECK(contains(err.message, "more than 50000 toolpath moves"));
     CHECK(contains(err.message, "per byte of its size"));
-    // saveCarv draws the same line: with the padding that gave the exact file it saves kMoves...
-    const CarvExtras atPad = CarvExtras{}.withMember("pad.bin", Bytes(pad.begin(), pad.begin() + static_cast<std::ptrdiff_t>(lo)));
-    CHECK(saveCarv(doc, atPad).ok());
-    // ...and refuses kMoves + 1.
-    Document more;
-    r.moves = shareMoves(std::vector<Move>(kMoves + 1, Move::rapid({0, 0, 5})));
-    more.insertToolpath(r);
-    const auto refused = saveCarv(more, atPad);
-    REQUIRE_FALSE(refused.ok());
-    CHECK(refused.error().code == Code::ResourceLimit);
+    // With the default ratio both files load.
+    CHECK(load(exact).document.toolpaths()[0].moveCount() == kMoves);
+    CHECK(load(over).document.toolpaths()[0].moveCount() == kMoves + 1);
 
     // A small crafted file claiming the whole 8M budget is refused from job.json, before any
     // cache is read (the T-0132 verifier's 9 KB file loaded 8M moves at 581 MiB).
-    const Bytes small = save(makeSample().doc);
-    REQUIRE(small.size() < 20'000);
+    // Under the default ratio a file must be < 8M / kCarvMovesPerFileByte bytes for this; a
+    // one-move toolpath is.
+    Document tiny;
+    ToolpathRecord t1;
+    t1.tool = kValidTool;
+    t1.name = "t";
+    t1.selection = VectorSelection::allVectors();
+    t1.moves = shareMoves({Move::rapid({0, 0, 5})});
+    tiny.insertToolpath(t1);
+    const Bytes small = save(tiny);
+    REQUIRE(small.size() * kCarvMovesPerFileByte < kCarvMaxToolpathMoves);
     const std::string smallJob = memberText(small, "job.json");
     const CarvError claim =
-        loadError(withText(small, "job.json", replaced(smallJob, "\"count\": 11", "\"count\": 8000000")));
+        loadError(withText(small, "job.json", replaced(smallJob, "\"count\": 1", "\"count\": 8000000")));
     CHECK(claim.code == Code::ResourceLimit);
     CHECK(contains(claim.message, "per byte of its size"));
+    // A claim past the absolute cap is refused whatever the file size.
+    const CarvError cap =
+        loadError(withText(small, "job.json", replaced(smallJob, "\"count\": 1", "\"count\": 8000001")));
+    CHECK(cap.code == Code::ResourceLimit);
 #if defined(__linux__)
     // Worst case from a file of S bytes: S moves of 72 bytes, reserved exactly.
-    const std::int64_t peak = childPeakGrowth(exact);
+    const std::int64_t peak = childPeakGrowth(exact); 
     WARN("a " << exact.size() << "-byte file at the move boundary: peak RSS growth " << peak / 1024 << " KiB");
     if (peak >= 0) {
         CHECK(peak < static_cast<std::int64_t>(kMoves) * 72 * 2 + (std::int64_t{16} << 20));
@@ -1764,17 +1793,27 @@ TEST_CASE("consistency: long strings and interim extras (strings, interimextra)"
 }
 
 TEST_CASE("consistency: the move budget sweep (movebudget)", "[document][toolpath][carv][limits]") {
-    int saved = 0;
+    // With the default ratio (T-0312) all of these save and load; a loader limited to one move per
+    // file byte accepts exactly the files that hold no more moves than bytes.
+    int accepted = 0;
     int refused = 0;
+    detail::LoadLimits oneLimit;
+    oneLimit.movesPerArchiveByte = 1;
     for (std::size_t n = 2000; n <= 200'000; n = n * 13 / 10) {
         for (const std::size_t other : {std::size_t{0}, std::size_t{50}, std::size_t{2500}}) {
             Document d;
             d.insertToolpath(plainRecord(std::vector<Move>(n, Move::rapid({1, 2, 3}))));
             d.insertToolpath(plainRecord(randomMoves(other + 1, 3)));
-            (consistent(d) ? saved : refused) += 1;
+            CHECK(consistent(d));
+            const Bytes file = save(d);
+            const bool fits = n + other + 1 <= file.size();
+            const auto limited = detail::loadCarvWithLimits(std::span<const std::uint8_t>(file), oneLimit,
+                                                            detail::ZipLimits{});
+            CHECK(limited.ok() == fits);
+            (limited.ok() ? accepted : refused) += 1;
         }
     }
-    CHECK(saved > 0);
+    CHECK(accepted > 0);
     CHECK(refused > 0);
 }
 

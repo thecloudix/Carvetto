@@ -68,10 +68,13 @@ inline constexpr int kCarvFormatMinorBase = 1;
 /// Most toolpath moves (summed over every toolpath record) a `.carv` file may hold: `loadCarv`
 /// refuses files with more and `saveCarv` refuses to write them (ADR-0021).
 inline constexpr std::uint64_t kCarvMaxToolpathMoves = 8'000'000;
-/// Toolpath moves allowed per byte of the `.carv` file (owner decision 2026-11-02): a file of S
-/// bytes holds at most min(S x this, `kCarvMaxToolpathMoves`) moves. Real files take 6-9 bytes
-/// per move, so only crafted (or degenerate, highly repetitive) toolpaths reach it.
-inline constexpr std::uint64_t kCarvMovesPerFileByte = 1;
+/// Toolpath moves allowed per byte of the `.carv` file: a file of S bytes holds at most
+/// min(S x this, `kCarvMaxToolpathMoves`) moves. Every move takes at least one byte in its cache
+/// and deflate cannot shrink data more than about 1032:1, so 1024 admits every honest file however
+/// regular its toolpath (T-0312, ADR-0088; the owner's 2026-11-02 value of 1 refused a plain 3D
+/// ramp). Hostile files stay bounded by the absolute `kCarvMaxToolpathMoves` cap and the
+/// archive size limits, not by this ratio.
+inline constexpr std::uint64_t kCarvMovesPerFileByte = 1024;
 /// Highest position (1-based) a toolpath with computed moves may have, since caches are named
 /// `toolpaths/0001.bin` .. `toolpaths/9999.bin` by position. The archive's 10,000-member limit
 /// (manifest and job.json included) means at most 9,998 computed toolpaths fit in practice.
@@ -177,8 +180,8 @@ struct LoadedCarv {
 /// computed toolpath past `kCarvMaxCachedToolpaths`, more than 10,000 archive members, member or
 /// archive size caps (ResourceLimit), non-finite move values or toolpath parameters
 /// (InvalidContent); an over-long name is reported as "name too long" with its field. A file that loads
-/// may still be refused on re-save when re-saving makes it smaller (stale caches dropped,
-/// canonical re-encoding) so that it no longer satisfies the move-per-byte rule.
+/// may still be refused on re-save only in the extreme case of a file that shrinks so far that it
+/// no longer satisfies the move-per-byte rule.
 CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvExtras& extras = {});
 
 /// Writes `doc` to `path` (via a temporary file renamed into place).

@@ -970,12 +970,30 @@ TEST_CASE("session: a job that was not made by prepare cannot crash the calculat
     CHECK(calc.items.size() == 1);
 }
 
+namespace {
+/// Fills the document with `n` one-move computed toolpaths. The .carv writer allows 9,998 of them
+/// (manifest, job and one cache each must fit in 10,000 archive members), so 9,998 make the next
+/// large job unsavable (T-0312: the moves-per-byte rule no longer refuses regular toolpaths).
+void fillToolpaths(Document& doc, std::size_t n) {
+    const auto one = std::make_shared<const std::vector<toolpath::Move>>(
+        std::vector<toolpath::Move>{toolpath::Move::rapid({0, 0, 5})});
+    for (std::size_t i = 0; i < n; ++i) {
+        ToolpathRecord t;
+        t.tool = toolpath::ToolSnapshot{"tool", 1, 6.0, 1000.0, 300.0, 18000.0};
+        t.moves = one;
+        doc.insertToolpath(t);
+    }
+}
+}  // namespace
+
 TEST_CASE("session: a toolpath the .carv writer would refuse is refused up front", "[toolpath][session]") {
     Fixture f;
+    fillToolpaths(f.doc, 9998);
+    f.doc.undoStack().clear();
     ToolpathForm form(ToolpathOperation::Profile, document::Units::Millimetres);
     REQUIRE(form.setTool(f.db, source("end-mill-3mm")).ok);
     REQUIRE(form.setField("cutDepth", "12").ok);
-    REQUIRE(form.setField("passDepth", "0.006").ok);  // 2000 identical passes: more moves than bytes
+    REQUIRE(form.setField("passDepth", "0.006").ok);  // 2000 passes: past the threshold of the save trial
     ToolpathDefinition def = form.definition();
     def.selector = VectorSelector::fromObjects({f.big});
     const Snapshot before = snapshot(f.doc);
@@ -986,8 +1004,11 @@ TEST_CASE("session: a toolpath the .carv writer would refuse is refused up front
     CHECK(out.message.find("cannot be saved") != std::string::npos);
     CHECK(snapshot(f.doc) == before);
     CHECK(f.steps() == steps);
-    // The same rule decides what the file writer says: a document that does save is accepted.
-    REQUIRE(f.session.add(f.pocketOnBig()).ok);
+    // The same rule decides what the file writer says: with room left, the job is accepted.
+    (void)f.doc.takeToolpath(f.doc.toolpaths().back().id);
+    f.doc.undoStack().clear();
+    const ToolpathOutcome ok = f.session.add(def);
+    CHECK(ok.ok);
     CHECK(document::saveCarv(f.doc));
 }
 
@@ -1101,14 +1122,6 @@ ToolpathDefinition toolDepthProfile(const tooling::ToolDatabase& db, ObjectId on
     return d;
 }
 
-tooling::ToolDatabase fineDepthDatabase(const tooling::ToolDatabase& db) {
-    tooling::ToolDatabase out = db;
-    tooling::Tool t = *out.findTool("end-mill-3mm");
-    t.defaultCuttingData.passDepth = 0.006;  // 2000 identical passes: more moves than bytes
-    REQUIRE(out.updateTool(t));
-    return out;
-}
-
 }  // namespace
 
 TEST_CASE("session: a refused unsavable edit keeps the redo history", "[toolpath][session]") {
@@ -1121,6 +1134,7 @@ TEST_CASE("session: a refused unsavable edit keeps the redo history", "[toolpath
         REQUIRE(f.session.add(f.pocketOnBig()).ok);
         REQUIRE(f.doc.undo());
         REQUIRE(f.doc.undoStack().canRedo());
+        fillToolpaths(f.doc, 9997);  // P and these: 9,998 computed toolpaths, the most a file holds
         const std::string redoText = f.doc.undoStack().redoText();
         const std::size_t count = f.doc.undoStack().count();
         const Snapshot before = snapshot(f.doc);
@@ -1132,40 +1146,14 @@ TEST_CASE("session: a refused unsavable edit keeps the redo history", "[toolpath
         CHECK(f.doc.undoStack().redoText() == redoText);
         CHECK(f.doc.undoStack().count() == count);
         REQUIRE(f.doc.redo());  // the pocket comes back
-        CHECK(f.doc.toolpaths().size() == 2);
-        CHECK(f.doc.toolpaths()[1].operation() == ToolpathOperation::Pocket);
+        CHECK(f.doc.toolpaths().size() == 9999);
+        CHECK(f.doc.toolpaths().back().operation() == ToolpathOperation::Pocket);
     };
+    // Only an edit that adds a toolpath can become unsavable cheaply now (the .carv writer's
+    // moves-per-byte rule no longer refuses regular toolpaths, T-0312): the document sits at the
+    // archive's member limit, so one more computed toolpath cannot be saved.
     scenario("add", [](Fixture& f, ToolpathId) {
-        ToolpathDefinition d = toolDepthProfile(f.db, f.big);
-        std::get<toolpath::ProfileParams>(d.params).passes.passDepth = 0.006;
-        return f.session.add(d);
-    });
-    scenario("update", [](Fixture& f, ToolpathId p) {
-        ToolpathDefinition d = *f.session.definition(p);
-        std::get<toolpath::ProfileParams>(d.params).passes.passDepth = 0.006;
-        return f.session.update(p, d);
-    });
-    scenario("recalculate", [](Fixture& f, ToolpathId p) {
-        f.session.setToolDatabase(fineDepthDatabase(f.db));
-        return f.session.recalculate(p);
-    });
-    scenario("applyAll", [](Fixture& f, ToolpathId p) {
-        f.session.setToolDatabase(fineDepthDatabase(f.db));
-        const ToolpathCalculation calc = f.session.prepare(*f.session.definition(p), p).run();
-        const BatchOutcome b = f.session.applyAll({calc});
-        ToolpathOutcome o = b.items.front();
-        return o;
-    });
-    scenario("recalculateAll", [](Fixture& f, ToolpathId) {
-        f.session.setToolDatabase(fineDepthDatabase(f.db));
-        const BatchOutcome b = f.session.recalculateAll(false);
-        ToolpathOutcome o;
-        for (const ToolpathOutcome& i : b.items) {
-            if (!i.ok) {
-                o = i;
-            }
-        }
-        return o;
+        return f.session.add(toolDepthProfile(f.db, f.big));
     });
 }
 
@@ -1242,12 +1230,16 @@ TEST_CASE("session: a large job (the save trial) consumes exactly the ids the to
     CHECK(out.ids[0].value == next);                    // the id the CLI would give
     CHECK(f.doc.idGenerator().peek() == next + 1);
     CHECK(f.steps() == 1);
-    // A refused large edit consumes none.
-    ToolpathDefinition bad = toolDepthProfile(f.db, f.big);
-    std::get<toolpath::ProfileParams>(bad.params).passes.passDepth = 0.006;
-    const ToolpathOutcome refused = f.session.add(bad);
+    // A refused large edit consumes none (the unsavable trial runs on a scratch copy).
+    fillToolpaths(f.doc, 9997);  // 9,998 computed toolpaths with the new one: the limit
+    f.doc.undoStack().clear();
+    const std::uint64_t afterFill = f.doc.idGenerator().peek();
+    const ToolpathOutcome refused = f.session.add(def);
     CHECK_FALSE(refused.ok);
-    CHECK(f.doc.idGenerator().peek() == next + 1);
+    CHECK(f.doc.idGenerator().peek() == afterFill);
+    while (f.doc.toolpaths().size() > 1) {
+        (void)f.doc.takeToolpath(f.doc.toolpaths().back().id);
+    }
     // With one id left a large job still fits (no ids are held back for the trial).
     document::Object top = document::Object::vector(square(500, 0, 5), f.doc.defaultLayer(), f.doc.activeSheet());
     top.id = ObjectId{document::IdGenerator::kMaxId - 2};
