@@ -49,6 +49,10 @@ qt_add_executable(carvetto
   src/relief_panels.hpp
   src/relief_panels_self_test.cpp
   src/relief_view.cpp
+  src/model_io_dialogs.cpp
+  src/model_io_dialogs.hpp
+  src/model_io_self_test.cpp
+  src/main_window_model_io.cpp
   src/relief_view.hpp
   src/tool_panel.cpp
   src/tool_panel.hpp

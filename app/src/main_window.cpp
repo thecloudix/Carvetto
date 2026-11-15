@@ -335,6 +335,19 @@ void MainWindow::buildMenus() {
     QAction* importBitmapAction = file->addAction(QStringLiteral("Import &Bitmap..."));
     importBitmapAction->setObjectName(QStringLiteral("importBitmapAction"));
     connect(importBitmapAction, &QAction::triggered, this, [this]() { importBitmapDialog(); });
+    QAction* importModelAction = file->addAction(QStringLiteral("Import 3D &Model..."));
+    importModelAction->setObjectName(QStringLiteral("importModelAction"));
+    connect(importModelAction, &QAction::triggered, this, [this]() { importMeshDialog(); });
+    QMenu* exportModel = file->addMenu(QStringLiteral("Export 3D Mo&del"));
+    exportModel->setObjectName(QStringLiteral("exportModelMenu"));
+    const std::pair<const char*, viewmodel::ModelExportKind> exports[] = {
+        {"as &STL...", viewmodel::ModelExportKind::Stl},
+        {"as &OBJ...", viewmodel::ModelExportKind::Obj},
+        {"as 16-bit &Heightmap...", viewmodel::ModelExportKind::Heightmap}};
+    for (const auto& [label, kind] : exports) {
+        QAction* a = exportModel->addAction(QString::fromUtf8(label));
+        connect(a, &QAction::triggered, this, [this, kind]() { exportModelDialog(kind); });
+    }
     QAction* exportSheet = file->addAction(QStringLiteral("&Export Sheet as DXF..."));
     connect(exportSheet, &QAction::triggered, this, [this]() { exportDxfDialog(false); });
     QAction* exportSelection = file->addAction(QStringLiteral("Export &Selection as DXF..."));
