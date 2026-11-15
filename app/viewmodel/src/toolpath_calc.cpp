@@ -15,6 +15,8 @@
 #include "carvetto/relief/relief.hpp"
 #include "carvetto/toolpath/drill.hpp"
 #include "carvetto/toolpath/finish3d.hpp"
+#include "carvetto/toolpath/moulding.hpp"
+#include "carvetto/toolpath/project3d.hpp"
 #include "carvetto/toolpath/rough3d.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/fluting.hpp"
@@ -231,6 +233,13 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
         case ToolpathOperation::Rough3d: def.params = toolpath::Rough3dParams{}; break;
         case ToolpathOperation::Finish3d: def.params = toolpath::Finish3dParams{}; break;
+        case ToolpathOperation::Moulding: def.params = toolpath::MouldingParams{}; break;
+        case ToolpathOperation::Project3d: {
+            toolpath::Project3dParams p;
+            p.name = "Project to Model";  // the core's empty name would be refused as a toolpath name
+            def.params = std::move(p);
+            break;
+        }
     }
     return def;
 }
@@ -308,6 +317,8 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::VCarveInlay: return "v_carve_inlay";
         case ToolpathOperation::Rough3d: return "rough_3d";
         case ToolpathOperation::Finish3d: return "finish_3d";
+        case ToolpathOperation::Moulding: return "moulding";
+        case ToolpathOperation::Project3d: return "project_3d";
     }
     return "?";
 }
@@ -326,6 +337,8 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::ImageEngrave: return toolpath::imageEngraveToolAllowed(type);
         case ToolpathOperation::Rough3d:
         case ToolpathOperation::Finish3d:
+        case ToolpathOperation::Moulding:
+        case ToolpathOperation::Project3d:
             // Every tool with a cutting profile the drop-tool surface understands.
             return type != tooling::ToolType::DiamondDrag && type != tooling::ToolType::Drill &&
                    type != tooling::ToolType::ThreadMill;
@@ -342,7 +355,8 @@ bool hasClearanceTools(ToolpathOperation operation) {
 }
 
 bool usesModel(ToolpathOperation operation) {
-    return operation == ToolpathOperation::Rough3d || operation == ToolpathOperation::Finish3d;
+    return operation == ToolpathOperation::Rough3d || operation == ToolpathOperation::Finish3d ||
+           operation == ToolpathOperation::Project3d;
 }
 
 namespace {
@@ -452,6 +466,39 @@ void attachModel(ToolpathJob& job, const document::Document& doc) {
         return;
     }
     job.model = std::move(field);
+}
+
+void attachSource(ToolpathJob& job, const document::Document& doc) {
+    const auto* params = std::get_if<toolpath::Project3dParams>(&job.definition.params);
+    if (params == nullptr) {
+        return;
+    }
+    const document::ToolpathRecord* rec =
+        params->sourceToolpath == 0 ? nullptr : doc.findToolpath(document::ToolpathId{params->sourceToolpath});
+    if (rec == nullptr) {
+        if (job.refusal.empty()) {
+            job.refusal = "choose the toolpath to project: the source toolpath does not exist";
+        }
+        return;
+    }
+    if (!rec->hasMoves() || rec->moves->empty()) {
+        if (job.refusal.empty()) {
+            job.refusal = "the source toolpath '" + rec->name + "' has no moves to project";
+        }
+        return;
+    }
+    if (rec->operation() == document::ToolpathOperation::Project3d && rec->id == job.target) {
+        if (job.refusal.empty()) {
+            job.refusal = "a toolpath cannot be projected onto the model from itself";
+        }
+        return;
+    }
+    ProjectSource src;
+    src.id = rec->id;
+    src.name = rec->name;
+    src.tool = rec->tool;
+    src.moves = rec->moves;
+    job.source = std::move(src);
 }
 
 ModelDefaults modelDefaults(const document::Document& doc) {
@@ -779,11 +826,34 @@ void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const Res
     job.photo = std::move(in);
 }
 
+std::uint64_t sourceFingerprint(const document::Document& doc, std::uint64_t sourceToolpath) {
+    const document::ToolpathRecord* rec = sourceToolpath == 0 ? nullptr : doc.findToolpath(document::ToolpathId{sourceToolpath});
+    Fingerprint fp;
+    if (rec == nullptr || !rec->hasMoves()) {
+        fp.add(std::uint64_t{0});
+        return fp.value();
+    }
+    fp.add(std::uint64_t{1});
+    fp.add(static_cast<std::uint64_t>(rec->moves->size()));
+    for (const toolpath::Move& mv : *rec->moves) {
+        fp.add(static_cast<std::uint64_t>(mv.kind));
+        fp.add(mv.to.x);
+        fp.add(mv.to.y);
+        fp.add(mv.to.z);
+        fp.add(mv.centre.x);
+        fp.add(mv.centre.y);
+    }
+    return fp.value();
+}
+
 std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
                                 const document::ToolpathParams& params) {
     if (const ToolpathOperation op = static_cast<ToolpathOperation>(params.index()); usesModel(op)) {
         Fingerprint m;
         m.add(modelFingerprint(doc, doc.activeSheet()));
+        if (const auto* project = std::get_if<toolpath::Project3dParams>(&params)) {
+            m.add(sourceFingerprint(doc, project->sourceToolpath));
+        }
         if (boundaryUsesVectors(params)) {
             m.add(fingerprint(resolveVectors(doc, selector)));
         }
@@ -843,11 +913,12 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
     }
     const auto* photoParams = std::get_if<toolpath::ImageEngraveParams>(&definition.params);
     const bool modelOp = usesModel(definition.operation());
+    const bool projectOp = definition.operation() == ToolpathOperation::Project3d;
     const bool needsContours = modelOp ? boundaryUsesVectors(definition.params)
                                        : photoParams == nullptr ||
                                              photoParams->strategy == toolpath::PhotoStrategy::SelectedVectors;
     if (!tool.has_value() || (needsContours && contours.empty()) || (photoParams != nullptr && !photo.has_value()) ||
-        (modelOp && model == nullptr)) {
+        (modelOp && model == nullptr) || (projectOp && !source.has_value())) {
         // a job not made by makeToolpathJob
         out.messages.push_back(note(MessageSeverity::Error, "the job has no tool or no vectors"));
         return out;
@@ -976,6 +1047,65 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
                 if (!tp.isEmpty()) {
                     items.push_back({-1, makeRecord(*this, std::move(tp), definition.tool)});
                 }
+            }
+        } else if (op == ToolpathOperation::Moulding) {
+            toolpath::MouldingParams params = std::get<toolpath::MouldingParams>(definition.params);
+            std::vector<geometry::Polyline> lines;
+            lines.reserve(contours.size());
+            for (const geometry::Contour& c : contours) {
+                lines.push_back(c.polygonise(geometry::Tolerance{}));
+            }
+            std::size_t profile = lines.size();
+            for (std::size_t i = 0; i < lines.size() && profile == lines.size(); ++i) {
+                const bool named = params.profileObject != 0 && i < owners.size() && owners[i].value == params.profileObject;
+                if ((params.profileObject != 0 && named) || (params.profileObject == 0 && !lines[i].closed)) {
+                    profile = i;
+                }
+            }
+            if (profile == lines.size()) {
+                out.messages.push_back(note(MessageSeverity::Error, params.profileObject != 0
+                                                                        ? "the moulding's profile vector is not among the selected vectors"
+                                                                        : "the moulding needs a profile: select an open vector (the section)"));
+                return out;
+            }
+            if (lines[profile].closed) {
+                out.messages.push_back(note(MessageSeverity::Error, "the moulding's profile must be an open vector"));
+                return out;
+            }
+            params.profile = std::move(lines[profile]);
+            params.rails.clear();
+            for (std::size_t i = 0; i < lines.size(); ++i) {
+                if (i != profile) {
+                    params.rails.push_back(std::move(lines[i]));
+                }
+            }
+            if (params.rails.empty()) {
+                out.messages.push_back(note(MessageSeverity::Error, "the moulding needs at least one rail: select another vector besides the profile"));
+                return out;
+            }
+            params.clearTool.reset();
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            const toolpath::Rough3dTool mouldingTool{tool->tool, tool->data, std::nullopt};
+            toolpath::MouldingResult r = toolpath::mouldingToolpath(mouldingTool, params, control);
+            diagnostics = r.diagnostics;
+            for (toolpath::Toolpath& tp : r.toolpaths) {
+                if (!tp.isEmpty()) {
+                    items.push_back({-1, makeRecord(*this, std::move(tp), definition.tool)});
+                }
+            }
+        } else if (op == ToolpathOperation::Project3d) {
+            toolpath::Toolpath input;
+            input.name = source->name;
+            input.tool = source->tool;
+            input.moves = *source->moves;
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            toolpath::Project3dResult r = toolpath::projectToolpath(
+                input, *model, tool->tool, std::get<toolpath::Project3dParams>(definition.params), control);
+            diagnostics = r.diagnostics;
+            if (!r.path.isEmpty()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.path), definition.tool)});
             }
         } else if (op == ToolpathOperation::VCarveInlay) {
             std::vector<toolpath::PocketTool> clearanceTools;

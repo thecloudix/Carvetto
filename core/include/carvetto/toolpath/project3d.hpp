@@ -50,6 +50,9 @@ struct Project3dParams {
     /// 3D tabs (`TabOptions::enabled`; length, thickness, spacing, count, distance, avoidCorners; `threeD`
     /// ramps the tab at 45 degrees). Thickness is measured above the lowest depth of the input toolpath.
     TabOptions tabs;
+    /// Id of the source toolpath record in the document (app level: the core ignores it; 0 = none). It lets a
+    /// recalculation find the toolpath it projects (T-0311, ADR-0091).
+    std::uint64_t sourceToolpath{0};
 
     bool operator==(const Project3dParams&) const = default;
 };

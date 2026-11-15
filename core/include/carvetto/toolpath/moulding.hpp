@@ -94,6 +94,10 @@ struct MouldingParams {
     /// Chordal tolerance of the offset curves (> 0).
     double tolerance{0.01};
 
+    /// Id of the drawing object that is the profile (app level: the core ignores it; 0 = the first open vector of
+    /// the selection). The other selected vectors are the rails (T-0311, ADR-0091).
+    std::uint64_t profileObject{0};
+
     bool operator==(const MouldingParams&) const = default;
 };
 

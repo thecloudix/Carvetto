@@ -60,6 +60,10 @@ const char* operationLabel(ToolpathOperation op) {
             return "3D Rough";
         case ToolpathOperation::Finish3d:
             return "3D Finish";
+        case ToolpathOperation::Moulding:
+            return "Moulding";
+        case ToolpathOperation::Project3d:
+            return "Project onto Model";
     }
     return "?";
 }
@@ -419,6 +423,8 @@ void ToolpathFormDialog::refreshVectors() {
                         .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
         }
         countLabel_->setText(text);
+    } else if (form_.operation() == document::ToolpathOperation::Project3d) {
+        countLabel_->setText(QStringLiteral("Re-heights the chosen toolpath onto the relief model of the active sheet."));
     } else if (isModel()) {
         QString text = QStringLiteral("Machines the relief model of the active sheet.");
         if (info_.countVectors) {
@@ -428,7 +434,11 @@ void ToolpathFormDialog::refreshVectors() {
         countLabel_->setText(text);
     } else if (info_.countVectors) {
         const std::size_t n = info_.countVectors(form_.selector());
-        countLabel_->setText(QStringLiteral("%1 vector(s) selected now").arg(static_cast<qulonglong>(n)));
+        QString text = QStringLiteral("%1 vector(s) selected now").arg(static_cast<qulonglong>(n));
+        if (form_.operation() == document::ToolpathOperation::Moulding) {
+            text += QStringLiteral(" (the profile is the section, an open vector; the others are the rails)");
+        }
+        countLabel_->setText(text);
     }
     refreshStatus();
 }
@@ -672,6 +682,9 @@ std::string ToolpathFormDialog::sourceProblem() const {
                 return bad;
             }
         }
+        if (form_.operation() == document::ToolpathOperation::Project3d) {
+            return {};  // the vectors are not used; the form reports a missing source
+        }
         const auto boundary = std::visit(
             [](const auto& p) -> toolpath::Rough3dBoundary {
                 using P = std::decay_t<decltype(p)>;
@@ -687,6 +700,10 @@ std::string ToolpathFormDialog::sourceProblem() const {
             return "the Selected vectors boundary needs closed vectors: select some";
         }
         return {};
+    }
+    if (form_.operation() == document::ToolpathOperation::Moulding && info_.countVectors &&
+        info_.countVectors(form_.selector()) < 2) {
+        return "a moulding needs a profile and at least one rail: select two or more vectors";
     }
     if (info_.countVectors && info_.countVectors(form_.selector()) == 0) {
         return "no vectors are selected";

@@ -1,9 +1,11 @@
 #include "carvetto/document/toolpath_record.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <initializer_list>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -11,7 +13,27 @@
 namespace carvetto::document {
 
 double ToolpathRecord::safeZ() const {
-    return std::visit([](const auto& p) { return p.safeZ; }, params);
+    if (std::holds_alternative<toolpath::Project3dParams>(params)) {
+        // A projected toolpath keeps the retract heights of its source: the highest point it reaches.
+        double top = 0.0;
+        bool any = false;
+        if (moves) {
+            for (const toolpath::Move& m : *moves) {
+                top = any ? std::max(top, m.to.z) : m.to.z;
+                any = true;
+            }
+        }
+        return top;
+    }
+    return std::visit(
+        [](const auto& p) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, toolpath::Project3dParams>) {
+                return 0.0;
+            } else {
+                return p.safeZ;
+            }
+        },
+        params);
 }
 
 toolpath::Toolpath ToolpathRecord::toolpath() const {
@@ -208,6 +230,29 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                {"raster_angle_rad", r->rasterAngle},
                                {"tolerance", r->tolerance},
                                {"rest_tolerance", r->restTolerance}});
+    }
+    if (const auto* r = std::get_if<toolpath::MouldingParams>(&params)) {
+        return firstNonFinite({{"z_offset", r->zOffset},
+                               {"stock_top", r->stockTop},
+                               {"stock_bottom", r->stockBottom},
+                               {"safe_z", r->safeZ},
+                               {"allowance", r->allowance},
+                               {"boundary_offset", r->boundaryOffset},
+                               {"flat_angle_rad", r->flatAngle},
+                               {"ramp_angle_rad", r->rampAngle},
+                               {"rest_tolerance", r->restTolerance},
+                               {"tolerance", r->tolerance}});
+    }
+    if (const auto* r = std::get_if<toolpath::Project3dParams>(&params)) {
+        return firstNonFinite({{"z_offset", r->zOffset},
+                               {"allowance", r->allowance},
+                               {"outside_surface", r->outsideSurface},
+                               {"stock_bottom", r->stockBottom},
+                               {"tolerance", r->tolerance},
+                               {"max_segment", r->maxSegment},
+                               {"tabs.length", r->tabs.length},
+                               {"tabs.thickness", r->tabs.thickness},
+                               {"tabs.distance", r->tabs.distance}});
     }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},

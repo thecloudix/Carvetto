@@ -405,22 +405,45 @@ std::vector<ToolpathId> ToolpathSession::enabledToolpaths() {
 
 ToolpathForm ToolpathSession::newForm(ToolpathOperation operation) {
     ToolpathForm form(operation, doc_ != nullptr ? doc_->job().displayUnits : document::Units::Millimetres);
-    if (doc_ != nullptr && usesModel(operation)) {
+    if (doc_ != nullptr && (usesModel(operation) || operation == ToolpathOperation::Moulding)) {
         // Stock and model placement come from the job and the model (the form's own fields can change them).
         const ModelDefaults d = modelDefaults(*doc_);
         const auto set = [&](const char* id, double mm) {
             form.setField(id, std::to_string(document::toDisplay(mm, form.units())));
         };
-        set("zOffset", d.zOffset);
-        set("stockTop", d.stockTop);
-        set("stockBottom", d.stockBottom);
-        set("safeZ", d.safeZ);
+        if (operation == ToolpathOperation::Project3d) {
+            set("zOffset", d.zOffset);
+            set("outsideSurface", d.stockTop);
+            set("stockBottom", d.stockBottom);
+        } else {
+            if (operation != ToolpathOperation::Moulding) {
+                set("zOffset", d.zOffset);  // a moulding's heights are the section's own: its offset stays 0
+            }
+            set("stockTop", d.stockTop);
+            set("stockBottom", d.stockBottom);
+            set("safeZ", d.safeZ);
+        }
     }
     if (doc_ != nullptr) {
         VectorSelector current = VectorSelector::fromSelection(*doc_);
         if (!current.base.objects.empty()) {
             form.setSelector(std::move(current));
         }
+    }
+    return form;
+}
+
+ToolpathForm ToolpathSession::newProjectForm(ToolpathId source, bool tabs) {
+    ToolpathForm form = newForm(ToolpathOperation::Project3d);
+    const ToolpathRecord* rec = doc_ != nullptr ? doc_->findToolpath(source) : nullptr;
+    if (rec != nullptr) {
+        form.setField("sourceToolpath", std::to_string(rec->id.value));
+        form.setName(rec->name + (tabs ? " (3D tabs)" : " (3D)"));
+        form.setTool(db_, rec->toolSource);  // refused (and ignored) when the tool does not suit
+    }
+    if (tabs) {
+        form.setChoice("tabsEnabled", 1);
+        form.setChoice("tab3D", 1);
     }
     return form;
 }
@@ -497,6 +520,7 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     if (model) {
         job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);
         attachModel(job, *doc_);
+        attachSource(job, *doc_);
     }
     job.target = target.value_or(ToolpathId{});
     if (doc_->job().type == document::JobType::DoubleSided) {

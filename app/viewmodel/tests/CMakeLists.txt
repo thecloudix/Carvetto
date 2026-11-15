@@ -20,6 +20,7 @@ add_executable(carvetto_viewmodel_tests
   relief_build_test.cpp
   model_view_test.cpp
   model_io_test.cpp
+  preview_component_test.cpp
   vector_ops_test.cpp
   keepout_test.cpp
   vector_validator_test.cpp
@@ -57,6 +58,7 @@ add_executable(carvetto_viewmodel_tests
   toolpath_prism_test.cpp
   toolpath_photo_test.cpp
   toolpath_3d_test.cpp
+  toolpath_moulding_project_test.cpp
   toolpath_preview_test.cpp
   simulation_test.cpp
   toolpath_robustness_test.cpp

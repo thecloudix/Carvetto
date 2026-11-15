@@ -460,7 +460,16 @@ constexpr EnumName<toolpath::Rough3dTipMode> kRough3dTips[] = {{toolpath::Rough3
                                                                {toolpath::Rough3dTipMode::Project, "project"}};
 constexpr EnumName<toolpath::Finish3dStrategy> kFinish3dStrategies[] = {{toolpath::Finish3dStrategy::Raster, "raster"},
                                                                        {toolpath::Finish3dStrategy::Offset, "offset"}};
-constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Rough3d, "rough_3d"},
+constexpr EnumName<toolpath::MouldingMode> kMouldingModes[] = {{toolpath::MouldingMode::Finish, "finish"},
+                                                              {toolpath::MouldingMode::Rough, "rough"}};
+constexpr EnumName<toolpath::MouldingPosition> kMouldingPositions[] = {{toolpath::MouldingPosition::AsDrawn, "as_drawn"},
+                                                                      {toolpath::MouldingPosition::Start, "start"},
+                                                                      {toolpath::MouldingPosition::Centre, "centre"},
+                                                                      {toolpath::MouldingPosition::End, "end"}};
+constexpr EnumName<toolpath::ProjectTipMode> kProjectTips[] = {{toolpath::ProjectTipMode::DropTool, "drop_tool"},
+                                                              {toolpath::ProjectTipMode::Project, "project"}};
+constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Moulding, "moulding"},
+                                                      {ToolpathOperation::Project3d, "project_3d"},{ToolpathOperation::Rough3d, "rough_3d"},
                                                       {ToolpathOperation::Finish3d, "finish_3d"},{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
@@ -1101,6 +1110,64 @@ json encodeFinish3dParams(const toolpath::Finish3dParams& p) {
     return j;
 }
 
+json encodeMouldingParams(const toolpath::MouldingParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["mode"] = nameOf(kMouldingModes, p.mode);
+    j["position"] = nameOf(kMouldingPositions, p.position);
+    j["reverse_profile"] = p.reverseProfile;
+    j["reverse_rails"] = p.reverseRails;
+    j["z_offset"] = p.zOffset;
+    j["stock_top"] = p.stockTop;
+    j["stock_bottom"] = p.stockBottom;
+    j["safe_z"] = p.safeZ;
+    j["allowance"] = p.allowance;
+    j["boundary_offset"] = p.boundaryOffset;
+    j["auto_boundary_offset"] = p.autoBoundaryOffset;
+    j["travel"] = nameOf(kRasterTravels, p.travel);
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["reverse_steps"] = p.reverseSteps;
+    j["vary_stepover"] = p.varyStepover;
+    j["skip_flat_regions"] = p.skipFlatRegions;
+    j["machine_flat_regions"] = p.machineFlatRegions;
+    j["flat_angle_rad"] = p.flatAngle;
+    j["sharp_corners"] = p.sharpCorners;
+    j["ramp_plunge"] = p.rampPlunge;
+    j["ramp_angle_rad"] = p.rampAngle;
+    j["rest_tolerance"] = p.restTolerance;
+    j["tolerance"] = p.tolerance;
+    if (p.profileObject != 0) {  // absent = the first open vector
+        j["profile_object"] = p.profileObject;
+    }
+    return j;
+}
+
+json encodeProject3dParams(const toolpath::Project3dParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["mode"] = nameOf(kProjectTips, p.mode);
+    j["z_offset"] = p.zOffset;
+    j["allowance"] = p.allowance;
+    j["outside_surface"] = p.outsideSurface;
+    j["stock_bottom"] = p.stockBottom;
+    j["tolerance"] = p.tolerance;
+    j["max_segment"] = p.maxSegment;
+    json tabs = json::object();
+    tabs["enabled"] = p.tabs.enabled;
+    tabs["length"] = p.tabs.length;
+    tabs["thickness"] = p.tabs.thickness;
+    tabs["spacing"] = nameOf(kTabSpacings, p.tabs.spacing);
+    tabs["count"] = p.tabs.count;
+    tabs["distance"] = p.tabs.distance;
+    tabs["avoid_corners"] = p.tabs.avoidCorners;
+    tabs["three_d"] = p.tabs.threeD;
+    j["tabs"] = std::move(tabs);
+    if (p.sourceToolpath != 0) {  // absent = none
+        j["source_toolpath"] = p.sourceToolpath;
+    }
+    return j;
+}
+
 json encodeFlutingParams(const toolpath::FlutingParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -1202,6 +1269,10 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeRough3dParams(*rough);
     } else if (const auto* finish = std::get_if<toolpath::Finish3dParams>(&tp.params)) {
         j["params"] = encodeFinish3dParams(*finish);
+    } else if (const auto* moulding = std::get_if<toolpath::MouldingParams>(&tp.params)) {
+        j["params"] = encodeMouldingParams(*moulding);
+    } else if (const auto* project = std::get_if<toolpath::Project3dParams>(&tp.params)) {
+        j["params"] = encodeProject3dParams(*project);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2421,6 +2492,17 @@ constexpr std::array<std::string_view, 15> kFinish3dKeys{
     "safe_z",    "boundary",  "boundary_offset", "raster_angle_rad", "travel", "direction",
     "reverse_steps", "tolerance", "rest_tolerance"};
 
+// Moulding and projected toolpath records exist only in job.json (ADR-0091).
+constexpr std::array<std::string_view, 25> kMouldingKeys{
+    "name",         "mode",          "position",     "reverse_profile", "reverse_rails",      "z_offset",
+    "stock_top",    "stock_bottom",  "safe_z",       "allowance",       "boundary_offset",    "auto_boundary_offset",
+    "travel",       "direction",     "reverse_steps", "vary_stepover",  "skip_flat_regions",  "machine_flat_regions",
+    "flat_angle_rad", "sharp_corners", "ramp_plunge", "ramp_angle_rad", "rest_tolerance",     "tolerance",
+    "profile_object"};
+constexpr std::array<std::string_view, 10> kProject3dKeys{
+    "name", "mode", "z_offset", "allowance", "outside_surface", "stock_bottom", "tolerance", "max_segment", "tabs",
+    "source_toolpath"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2970,6 +3052,120 @@ toolpath::Rough3dParams decodeRough3dParams(JsonReader& r, const Path& p, Params
     return out;
 }
 
+toolpath::MouldingParams decodeMouldingParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::MouldingParams out;
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kMouldingKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "mode") {
+            out.mode = rec.choice(kMouldingModes);
+        } else if (k == "position") {
+            out.position = rec.choice(kMouldingPositions);
+        } else if (k == "reverse_profile") {
+            out.reverseProfile = rec.boolean();
+        } else if (k == "reverse_rails") {
+            out.reverseRails = rec.boolean();
+        } else if (k == "z_offset") {
+            out.zOffset = rec.number();
+        } else if (k == "stock_top") {
+            out.stockTop = rec.number();
+        } else if (k == "stock_bottom") {
+            out.stockBottom = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "boundary_offset") {
+            out.boundaryOffset = rec.number();
+        } else if (k == "auto_boundary_offset") {
+            out.autoBoundaryOffset = rec.boolean();
+        } else if (k == "travel") {
+            out.travel = rec.choice(kRasterTravels);
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "reverse_steps") {
+            out.reverseSteps = rec.boolean();
+        } else if (k == "vary_stepover") {
+            out.varyStepover = rec.boolean();
+        } else if (k == "skip_flat_regions") {
+            out.skipFlatRegions = rec.boolean();
+        } else if (k == "machine_flat_regions") {
+            out.machineFlatRegions = rec.boolean();
+        } else if (rec.isAngle("flat_angle")) {
+            out.flatAngle = rec.angle();
+        } else if (k == "sharp_corners") {
+            out.sharpCorners = rec.boolean();
+        } else if (k == "ramp_plunge") {
+            out.rampPlunge = rec.boolean();
+        } else if (rec.isAngle("ramp_angle")) {
+            out.rampAngle = rec.angle();
+        } else if (k == "rest_tolerance") {
+            out.restTolerance = rec.number();
+        } else if (k == "tolerance") {
+            out.tolerance = rec.number();
+        } else if (k == "profile_object") {
+            out.profileObject = rec.entityId();
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
+toolpath::Project3dParams decodeProject3dParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::Project3dParams out;
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kProject3dKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "mode") {
+            out.mode = rec.choice(kProjectTips);
+        } else if (k == "z_offset") {
+            out.zOffset = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "outside_surface") {
+            out.outsideSurface = rec.number();
+        } else if (k == "stock_bottom") {
+            out.stockBottom = rec.number();
+        } else if (k == "tolerance") {
+            out.tolerance = rec.number();
+        } else if (k == "max_segment") {
+            out.maxSegment = rec.number();
+        } else if (k == "source_toolpath") {
+            out.sourceToolpath = rec.entityId();
+        } else if (k == "tabs") {
+            ParamsRecord g(r, rec.field(), kTabKeys, d);
+            while (g.next()) {
+                const std::string& gk = g.key();
+                if (gk == "enabled") {
+                    out.tabs.enabled = g.boolean();
+                } else if (gk == "length") {
+                    out.tabs.length = g.number();
+                } else if (gk == "thickness") {
+                    out.tabs.thickness = g.number();
+                } else if (gk == "spacing") {
+                    out.tabs.spacing = g.choice(kTabSpacings);
+                } else if (gk == "count") {
+                    out.tabs.count = g.integer();
+                } else if (gk == "distance") {
+                    out.tabs.distance = g.number();
+                } else if (gk == "avoid_corners") {
+                    out.tabs.avoidCorners = g.boolean();
+                } else {
+                    out.tabs.threeD = g.boolean();
+                }
+            }
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::Finish3dParams decodeFinish3dParams(JsonReader& r, const Path& p, ParamsDialect d) {
     toolpath::Finish3dParams out;
     ParamsRecord rec(r, p, std::span<const std::string_view>(kFinish3dKeys), d);
@@ -3160,6 +3356,12 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::Finish3d) {
         return decodeFinish3dParams(r, p, d);
+    }
+    if (operation == ToolpathOperation::Moulding) {
+        return decodeMouldingParams(r, p, d);
+    }
+    if (operation == ToolpathOperation::Project3d) {
+        return decodeProject3dParams(r, p, d);
     }
     return decodePocketParams(r, p, d, legacy);
 }

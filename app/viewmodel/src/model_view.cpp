@@ -444,6 +444,8 @@ std::vector<ModelPath> modelPathsFromToolpaths(const std::vector<document::Toolp
             zOffset = rough->zOffset;
         } else if (const auto* finish = std::get_if<toolpath::Finish3dParams>(&rec.params)) {
             zOffset = finish->zOffset;
+        } else if (const auto* project = std::get_if<toolpath::Project3dParams>(&rec.params)) {
+            zOffset = project->zOffset;
         } else {
             continue;
         }

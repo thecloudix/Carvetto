@@ -12,6 +12,8 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/finish3d.hpp"
+#include "carvetto/toolpath/moulding.hpp"
+#include "carvetto/toolpath/project3d.hpp"
 #include "carvetto/toolpath/rough3d.hpp"
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/v_carve_inlay.hpp"
@@ -685,8 +687,118 @@ Table<toolpath::Finish3dParams> makeFinish3dTable() {
     return t;
 }
 
+Table<toolpath::MouldingParams> makeMouldingTable() {
+    using P = toolpath::MouldingParams;
+    const auto rough = [](const P& p) { return p.mode == toolpath::MouldingMode::Rough; };
+    const auto finish = [](const P& p) { return p.mode == toolpath::MouldingMode::Finish; };
+    Table<P> t;
+    t.num("zOffset", "Section Z offset", "Material", Kind::Length, true, true, [](P& p) -> double& { return p.zOffset; });
+    t.num("stockTop", "Stock top Z", "Material", Kind::Length, true, true, [](P& p) -> double& { return p.stockTop; });
+    t.num("stockBottom", "Stock bottom Z", "Material", Kind::Length, true, true,
+          [](P& p) -> double& { return p.stockBottom; });
+    t.num("safeZ", "Safe Z", "Material", Kind::Length, true, true, [](P& p) -> double& { return p.safeZ; });
+    t.num("allowance", "Allowance", "Cut", Kind::Length, false, true, [](P& p) -> double& { return p.allowance; }, rough);
+    bound(t, "allowance", 0.0, kMaxOffsetMm);
+    t.num("boundaryOffset", "Boundary offset", "Boundary", Kind::Length, false, true,
+          [](P& p) -> double& { return p.boundaryOffset; }, [](const P& p) { return !p.autoBoundaryOffset; });
+    bound(t, "boundaryOffset", 0.0, kMaxOffsetMm);
+    t.num("flatAngle", "Flat region angle", "Cut", Kind::Angle, false, false, [](P& p) -> double& { return p.flatAngle; },
+          [](const P& p) { return p.mode == toolpath::MouldingMode::Finish ? p.skipFlatRegions : !p.machineFlatRegions; });
+    bound(t, "flatAngle", 0.01, 45.0);
+    t.num("rampAngle", "Ramp angle", "Cut", Kind::Angle, false, false, [](P& p) -> double& { return p.rampAngle; },
+          [](const P& p) { return p.mode == toolpath::MouldingMode::Rough && p.rampPlunge; });
+    bound(t, "rampAngle", 0.1, 89.0);
+    t.num("tolerance", "Tolerance", "Cut", Kind::Length, false, false, [](P& p) -> double& { return p.tolerance; });
+    bound(t, "tolerance", 1e-4, 10.0);
+    t.derived(
+        "profileObject", "Profile vector (object id, 0 = first open vector)", "Section", Kind::Count,
+        [](const P& p) { return static_cast<double>(p.profileObject); },
+        [](P& p, double v) {
+            p.profileObject = static_cast<std::uint64_t>(v);
+            return std::string();
+        },
+        [](P& p) { p.profileObject = 0; })
+        .zero = true;
+    t.option<toolpath::MouldingMode>("mode", "Toolpath type", "Cut", {"Finish", "Rough"},
+                                     [](P& p) -> toolpath::MouldingMode& { return p.mode; });
+    t.option<toolpath::MouldingPosition>("position", "Toolpath position", "Section",
+                                         {"As drawn", "Start of profile", "Centre of profile", "End of profile"},
+                                         [](P& p) -> toolpath::MouldingPosition& { return p.position; });
+    t.flag("reverseProfile", "Reverse profile", "Section", [](P& p) -> bool& { return p.reverseProfile; });
+    t.flag("reverseRails", "Reverse rails", "Section", [](P& p) -> bool& { return p.reverseRails; });
+    t.flag("autoBoundaryOffset", "Automatic boundary offset (tool radius)", "Boundary",
+           [](P& p) -> bool& { return p.autoBoundaryOffset; });
+    t.option<toolpath::RasterTravel>("travel", "Pass travel", "Cut", {"Zig-zag", "One way"},
+                                     [](P& p) -> toolpath::RasterTravel& { return p.travel; });
+    t.option<CutDirection>("direction", "Cut direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; });
+    t.flag("reverseSteps", "Reverse step direction", "Cut", [](P& p) -> bool& { return p.reverseSteps; });
+    t.flag("varyStepover", "Vary stepover", "Cut", [](P& p) -> bool& { return p.varyStepover; }, finish);
+    t.flag("skipFlatRegions", "Skip flat regions", "Cut", [](P& p) -> bool& { return p.skipFlatRegions; }, finish);
+    t.flag("machineFlatRegions", "Machine flat regions", "Cut", [](P& p) -> bool& { return p.machineFlatRegions; }, rough);
+    t.flag("sharpCorners", "Create sharp corners", "Cut", [](P& p) -> bool& { return p.sharpCorners; });
+    t.flag("rampPlunge", "Ramp plunge moves", "Cut", [](P& p) -> bool& { return p.rampPlunge; }, rough);
+    return t;
+}
+
+Table<toolpath::Project3dParams> makeProject3dTable() {
+    using P = toolpath::Project3dParams;
+    const auto tabs = [](const P& p) { return p.tabs.enabled; };
+    Table<P> t;
+    t.num("zOffset", "Model Z offset", "Material", Kind::Length, true, true, [](P& p) -> double& { return p.zOffset; });
+    t.num("outsideSurface", "Surface outside the model (stock top Z)", "Material", Kind::Length, true, true,
+          [](P& p) -> double& { return p.outsideSurface; });
+    t.num("stockBottom", "Stock bottom Z", "Material", Kind::Length, true, true,
+          [](P& p) -> double& { return p.stockBottom; });
+    t.num("allowance", "Allowance above the model", "Cut", Kind::Length, false, true,
+          [](P& p) -> double& { return p.allowance; });
+    bound(t, "allowance", 0.0, kMaxOffsetMm);
+    t.num("tolerance", "Tolerance", "Cut", Kind::Length, false, false, [](P& p) -> double& { return p.tolerance; });
+    bound(t, "tolerance", 1e-4, 10.0);
+    t.num("maxSegment", "Longest piece (0 = the model's cell size)", "Cut", Kind::Length, false, true,
+          [](P& p) -> double& { return p.maxSegment; });
+    bound(t, "maxSegment", 0.0, kMaxOffsetMm);
+    t.num("tabLength", "Tab length", "Tabs", Kind::Length, false, false, [](P& p) -> double& { return p.tabs.length; }, tabs);
+    t.num("tabThickness", "Tab thickness", "Tabs", Kind::Length, false, false,
+          [](P& p) -> double& { return p.tabs.thickness; }, tabs);
+    t.count("tabCount", "Number of tabs", "Tabs", 1, 1000, [](P& p) -> int& { return p.tabs.count; },
+            [](const P& p) { return p.tabs.enabled && p.tabs.spacing == toolpath::TabSpacing::ConstantNumber; });
+    t.num("tabDistance", "Distance between tabs", "Tabs", Kind::Length, false, false,
+          [](P& p) -> double& { return p.tabs.distance; },
+          [](const P& p) { return p.tabs.enabled && p.tabs.spacing == toolpath::TabSpacing::ConstantDistance; });
+    bound(t, "tabLength", 0.0, kMaxOffsetMm);
+    bound(t, "tabDistance", 0.0, kMaxOffsetMm);
+    t.derived(
+        "sourceToolpath", "Toolpath to project (id)", "Source", Kind::Count,
+        [](const P& p) { return static_cast<double>(p.sourceToolpath); },
+        [](P& p, double v) {
+            p.sourceToolpath = static_cast<std::uint64_t>(v);
+            return std::string();
+        },
+        [](P& p) { p.sourceToolpath = 0; })
+        .zero = true;
+    t.option<toolpath::ProjectTipMode>("mode", "Tool tip on the model", "Cut", {"Drop tool (never gouges)", "Project"},
+                                       [](P& p) -> toolpath::ProjectTipMode& { return p.mode; });
+    t.flag("tabsEnabled", "Add 3D tabs", "Tabs", [](P& p) -> bool& { return p.tabs.enabled; });
+    t.option<toolpath::TabSpacing>("tabSpacing", "Tab spacing", "Tabs", {"Constant number", "Constant distance"},
+                                   [](P& p) -> toolpath::TabSpacing& { return p.tabs.spacing; }, tabs);
+    t.flag("tabAvoidCorners", "Avoid corners and curves", "Tabs", [](P& p) -> bool& { return p.tabs.avoidCorners; }, tabs);
+    t.flag("tab3D", "Ramp the tabs (3D tabs)", "Tabs", [](P& p) -> bool& { return p.tabs.threeD; }, tabs);
+    return t;
+}
+
 template <class P>
 const Table<P>& tableOf();
+template <>
+const Table<toolpath::MouldingParams>& tableOf() {
+    static const Table<toolpath::MouldingParams> t = makeMouldingTable();
+    return t;
+}
+template <>
+const Table<toolpath::Project3dParams>& tableOf() {
+    static const Table<toolpath::Project3dParams> t = makeProject3dTable();
+    return t;
+}
 template <>
 const Table<toolpath::Rough3dParams>& tableOf() {
     static const Table<toolpath::Rough3dParams> t = makeRough3dTable();
@@ -1048,7 +1160,8 @@ std::string checkParams(const P& p) {
             return "option '" + c.id + "' is not valid";
         }
     }
-    if constexpr (!std::is_same_v<P, toolpath::Rough3dParams> && !std::is_same_v<P, toolpath::Finish3dParams>) {
+    if constexpr (!std::is_same_v<P, toolpath::Rough3dParams> && !std::is_same_v<P, toolpath::Finish3dParams> &&
+                  !std::is_same_v<P, toolpath::MouldingParams> && !std::is_same_v<P, toolpath::Project3dParams>) {
         // The tolerances not offered as fields: the core's own ranges (distance <= chordal <= 1 mm).
         const geometry::Tolerance& tol = p.tolerance;
         if (!(tol.distance >= 1e-6 && tol.distance <= 1.0)) {
@@ -1358,12 +1471,21 @@ std::vector<std::string> ToolpathForm::problems() const {
     std::visit(
         [&](const auto& p) {
             using P = std::decay_t<decltype(p)>;
-            if constexpr (std::is_same_v<P, toolpath::Rough3dParams> || std::is_same_v<P, toolpath::Finish3dParams>) {
+            if constexpr (std::is_same_v<P, toolpath::Rough3dParams> || std::is_same_v<P, toolpath::Finish3dParams> ||
+                          std::is_same_v<P, toolpath::MouldingParams>) {
                 if (!(p.stockTop > p.stockBottom)) {
                     out.emplace_back("the stock top must be above the stock bottom");
                 }
                 if (!(p.safeZ > p.stockTop)) {
                     out.emplace_back("the safe Z must be above the stock top");
+                }
+            }
+            if constexpr (std::is_same_v<P, toolpath::Project3dParams>) {
+                if (p.sourceToolpath == 0) {
+                    out.emplace_back("choose the toolpath to project");
+                }
+                if (!(p.outsideSurface > p.stockBottom)) {
+                    out.emplace_back("the surface outside the model must be above the stock bottom");
                 }
             }
         },
