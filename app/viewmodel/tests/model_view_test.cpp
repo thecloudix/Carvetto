@@ -273,3 +273,183 @@ TEST_CASE("overlay placement fits the image's aspect inside the model", "[viewmo
     CHECK(clampedOverlayOpacity(-1.0) == 0.0);
     CHECK(clampedOverlayOpacity(std::nan("")) == 0.5);
 }
+
+// --- T-0305: appearance in the Model view ----------------------------------------------------
+
+namespace {
+
+relief::Appearance solidApp(std::uint32_t rgb) {
+    relief::Appearance a;
+    a.kind = relief::AppearanceKind::SolidColour;
+    a.rgb = rgb;
+    return a;
+}
+
+ComponentId addBlock(Document& doc, LevelId level, double x0, std::size_t n, float value, relief::Appearance app,
+                     relief::CombineMode mode = relief::CombineMode::Add) {
+    relief::Component c;
+    c.name = "C";
+    c.mode = mode;
+    c.appearance = app;
+    REQUIRE(relief::HeightField::create(relief::Grid{n, n, 1.0, {x0, 0.0}}, value, c.field) == relief::Status::Ok);
+    auto cmd = std::make_unique<AddReliefComponentCommand>(level, std::move(c));
+    const AddReliefComponentCommand* raw = cmd.get();
+    REQUIRE(doc.execute(std::move(cmd)));
+    return raw->createdId();
+}
+
+std::uint32_t colourAt(const ModelSurface& s, double x, double y) {
+    const auto& g = s.field.grid();
+    const std::size_t i = static_cast<std::size_t>((x - g.origin.x) / g.cellSize + 0.5);
+    const std::size_t j = static_cast<std::size_t>((y - g.origin.y) / g.cellSize + 0.5);
+    return s.colours.at(j * g.width + i);
+}
+
+}  // namespace
+
+TEST_CASE("appearance: nothing set leaves the colour map empty and the picture unchanged", "[viewmodel][model_view][appearance]") {
+    Document doc;
+    addBlock(doc, addLevel(doc), 0.0, 21, 5.0f, relief::Appearance{});
+    const ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    REQUIRE(s.ok());
+    CHECK(s.colours.empty());
+}
+
+TEST_CASE("appearance: own colour, same as parent through the level, level colour", "[viewmodel][model_view][appearance]") {
+    Document doc;
+    const LevelId lv = addLevel(doc);
+    addBlock(doc, lv, 0.0, 11, 1.0f, solidApp(0xFF0000));    // x 0..10 red
+    const ComponentId plain = addBlock(doc, lv, 20.0, 11, 1.0f, relief::Appearance{});  // x 20..30 no appearance
+    relief::Appearance metal;
+    metal.kind = relief::AppearanceKind::Material;
+    metal.material = relief::AppearanceMaterial::Metal;
+    addBlock(doc, lv, 10.0, 11, 1.0f, metal, relief::CombineMode::MergeHigh);  // x 10..20, overlaps x=10 and 20
+    ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    REQUIRE(s.ok());
+    REQUIRE(!s.colours.empty());
+    CHECK(colourAt(s, 5.0, 5.0) == 0xFFFF0000u);
+    CHECK(colourAt(s, 15.0, 5.0) == appearanceMaterialColour(relief::AppearanceMaterial::Metal));
+    CHECK(colourAt(s, 25.0, 5.0) == 0u);  // same as parent, parent is the view material
+    // The level gives its colour to the component that has none.
+    relief::Appearance level = solidApp(0x00FF00);
+    REQUIRE(setReliefLevelAppearance(doc, lv, level).changed);
+    s = composeModelSurface(doc, doc.activeSheet());
+    CHECK(colourAt(s, 25.0, 5.0) == 0xFF00FF00u);
+    CHECK(colourAt(s, 5.0, 5.0) == 0xFFFF0000u);  // an own colour wins over the level's
+    (void)plain;
+    // Rendering: the red block's pixel is red tinted, the plain one green tinted, never swapped.
+    ModelRenderOptions opt;
+    opt.width = 300;
+    opt.height = 100;
+    const Raster r = renderModel(s, top(), opt);
+    const auto px = [&](double x) {
+        const auto p = projectModelPoint(s, top(), opt, x, 5.0, 1.0);
+        REQUIRE(p.has_value());
+        return at(r, static_cast<std::size_t>(p->x), static_cast<std::size_t>(p->y));
+    };
+    const std::uint32_t redPx = px(5.0), greenPx = px(25.0);
+    CHECK(((redPx >> 16) & 0xFF) > 0x20);
+    CHECK(((redPx >> 8) & 0xFF) == 0);
+    CHECK(((greenPx >> 8) & 0xFF) > 0x20);
+    CHECK(((greenPx >> 16) & 0xFF) == 0);
+    // Switching the appearance off shows the view material everywhere.
+    opt.useAppearance = false;
+    const Raster plainView = renderModel(s, top(), opt);
+    CHECK(at(plainView, static_cast<std::size_t>(projectModelPoint(s, top(), opt, 5.0, 5.0, 1.0)->x),
+             static_cast<std::size_t>(projectModelPoint(s, top(), opt, 5.0, 5.0, 1.0)->y)) !=
+          redPx);
+}
+
+TEST_CASE("appearance: Color from Children is the mean of the children's own colours", "[viewmodel][model_view][appearance]") {
+    Document doc;
+    const LevelId lv = addLevel(doc);
+    addBlock(doc, lv, 0.0, 11, 1.0f, solidApp(0x200000));
+    addBlock(doc, lv, 20.0, 11, 1.0f, solidApp(0x600000));
+    addBlock(doc, lv, 40.0, 11, 1.0f, relief::Appearance{});  // no own colour: takes the mean
+    relief::Appearance kids;
+    kids.kind = relief::AppearanceKind::ColourFromChildren;
+    REQUIRE(setReliefLevelAppearance(doc, lv, kids).changed);
+    const ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    REQUIRE(!s.colours.empty());
+    CHECK(colourAt(s, 5.0, 5.0) == 0xFF200000u);
+    CHECK(colourAt(s, 25.0, 5.0) == 0xFF600000u);
+    CHECK(colourAt(s, 45.0, 5.0) == 0xFF400000u);
+    // A hidden child does not count.
+    const auto rows = buildReliefTree(doc, doc.activeSheet());
+    for (const ReliefTreeRow& row : rows) {
+        if (!row.isLevel && row.appearance.rgb == 0x600000u) {
+            REQUIRE(setReliefComponentVisible(doc, row.component, false).changed);
+        }
+    }
+    const ModelSurface hidden = composeModelSurface(doc, doc.activeSheet());
+    CHECK(colourAt(hidden, 45.0, 5.0) == 0xFF200000u);
+}
+
+TEST_CASE("appearance: the colour follows the component that supplies the surface", "[viewmodel][model_view][appearance]") {
+    Document doc;
+    const LevelId lv = addLevel(doc);
+    addBlock(doc, lv, 0.0, 11, 5.0f, solidApp(0xFF0000));
+    // Add: the top component covers the one below.
+    ComponentId top1 = addBlock(doc, lv, 0.0, 6, 1.0f, solidApp(0x0000FF));
+    ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    CHECK(colourAt(s, 2.0, 2.0) == 0xFF0000FFu);
+    CHECK(colourAt(s, 8.0, 8.0) == 0xFFFF0000u);
+    // Subtract: the surface is still the one below.
+    REQUIRE(setReliefComponentMode(doc, top1, relief::CombineMode::Subtract).changed);
+    s = composeModelSurface(doc, doc.activeSheet());
+    CHECK(colourAt(s, 2.0, 2.0) == 0xFFFF0000u);
+    // Merge High: the lower top component loses, a higher one wins.
+    REQUIRE(setReliefComponentMode(doc, top1, relief::CombineMode::MergeHigh).changed);
+    s = composeModelSurface(doc, doc.activeSheet());
+    CHECK(colourAt(s, 2.0, 2.0) == 0xFFFF0000u);  // 1 < 5
+    REQUIRE(setReliefComponentMode(doc, top1, relief::CombineMode::MergeLow).changed);
+    s = composeModelSurface(doc, doc.activeSheet());
+    CHECK(colourAt(s, 2.0, 2.0) == 0xFF0000FFu);  // 1 < 5 wins
+    CHECK(colourAt(s, 8.0, 8.0) == 0xFFFF0000u);
+    // A hidden-level and a transparent cell have no colour.
+    CHECK(colourAt(s, 0.0, 0.0) != 0u);
+}
+
+TEST_CASE("appearance: Color from Children rounds the mean to nearest", "[viewmodel][model_view][appearance]") {
+    Document doc;
+    const LevelId lv = addLevel(doc);
+    addBlock(doc, lv, 0.0, 11, 1.0f, solidApp(0x010203));
+    addBlock(doc, lv, 20.0, 11, 1.0f, solidApp(0x020405));
+    addBlock(doc, lv, 40.0, 11, 1.0f, relief::Appearance{});
+    relief::Appearance kids;
+    kids.kind = relief::AppearanceKind::ColourFromChildren;
+    REQUIRE(setReliefLevelAppearance(doc, lv, kids).changed);
+    const ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    REQUIRE(!s.colours.empty());
+    // Channel means 1.5, 3, 4: a half rounds up (2), exact means stay, 4 stays.
+    CHECK(colourAt(s, 45.0, 5.0) == 0xFF020304u);
+}
+
+TEST_CASE("appearance: at equal heights Merge High and Merge Low keep the lower component's colour", "[viewmodel][model_view][appearance]") {
+    for (const relief::CombineMode mode : {relief::CombineMode::MergeHigh, relief::CombineMode::MergeLow}) {
+        Document doc;
+        const LevelId lv = addLevel(doc);
+        addBlock(doc, lv, 0.0, 11, 3.0f, solidApp(0xFF0000));
+        addBlock(doc, lv, 0.0, 11, 3.0f, solidApp(0x0000FF), mode);
+        const ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+        REQUIRE(!s.colours.empty());
+        CHECK(colourAt(s, 5.0, 5.0) == 0xFFFF0000u);
+    }
+}
+
+TEST_CASE("appearance: levels stack: the upper level's component colours its cells", "[viewmodel][model_view][appearance]") {
+    Document doc;
+    const LevelId low = addLevel(doc);
+    const LevelId high = addLevel(doc);
+    addBlock(doc, low, 0.0, 11, 1.0f, relief::Appearance{});
+    addBlock(doc, high, 0.0, 6, 1.0f, relief::Appearance{});
+    REQUIRE(setReliefLevelAppearance(doc, low, solidApp(0x112233)).changed);
+    ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    REQUIRE(!s.colours.empty());
+    CHECK(colourAt(s, 8.0, 8.0) == 0xFF112233u);
+    CHECK(colourAt(s, 2.0, 2.0) == 0u);  // the upper level covers it and is "same as parent" = view
+    REQUIRE(setReliefLevelAppearance(doc, high, solidApp(0x445566)).changed);
+    s = composeModelSurface(doc, doc.activeSheet());
+    CHECK(colourAt(s, 2.0, 2.0) == 0xFF445566u);
+    CHECK(colourAt(s, 8.0, 8.0) == 0xFF112233u);
+}

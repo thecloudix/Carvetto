@@ -313,6 +313,56 @@ void SetReliefLevelClipCommand::revert(Document& doc) {
     }
 }
 
+bool SetReliefComponentAppearanceCommand::apply(Document& doc) {
+    ReliefComponent* c = doc.findReliefComponent(id_);
+    if (!c || !reliefAppearanceProblem(after_, false).empty() || c->data.appearance == after_) {
+        return false;
+    }
+    before_ = c->data.appearance;
+    c->data.appearance = after_;
+    return true;
+}
+
+void SetReliefComponentAppearanceCommand::revert(Document& doc) {
+    if (ReliefComponent* c = doc.findReliefComponent(id_)) {
+        c->data.appearance = before_;
+    }
+}
+
+bool SetReliefComponentAppearanceCommand::mergeWith(const Command& next) {
+    const auto* n = dynamic_cast<const SetReliefComponentAppearanceCommand*>(&next);
+    if (!n || n->id_ != id_) {
+        return false;
+    }
+    after_ = n->after_;
+    return true;
+}
+
+bool SetReliefLevelAppearanceCommand::apply(Document& doc) {
+    ReliefLevel* l = doc.findReliefLevel(id_);
+    if (!l || !reliefAppearanceProblem(after_, true).empty() || l->appearance == after_) {
+        return false;
+    }
+    before_ = l->appearance;
+    l->appearance = after_;
+    return true;
+}
+
+void SetReliefLevelAppearanceCommand::revert(Document& doc) {
+    if (ReliefLevel* l = doc.findReliefLevel(id_)) {
+        l->appearance = before_;
+    }
+}
+
+bool SetReliefLevelAppearanceCommand::mergeWith(const Command& next) {
+    const auto* n = dynamic_cast<const SetReliefLevelAppearanceCommand*>(&next);
+    if (!n || n->id_ != id_) {
+        return false;
+    }
+    after_ = n->after_;
+    return true;
+}
+
 bool SetReliefLevelMirrorCommand::apply(Document& doc) {
     ReliefLevel* l = doc.findReliefLevel(id_);
     if (!l || !std::isfinite(after_.center.x) || !std::isfinite(after_.center.y)) {

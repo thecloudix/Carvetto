@@ -114,6 +114,43 @@ std::string reliefPanelsSelfTest(MainWindow& window) {
                "a bad number was applied");
     RT_REQUIRE(window.undo() && doc->findReliefComponent(block)->data.baseHeight == 0.0, "undo of apply failed");
 
+    // --- Appearance (T-0305): the form, the undo step and the picture --------------------------
+    tree->selectComponents({block});
+    RT_REQUIRE(props->showingComponent() && props->appearanceBox()->count() == 3,
+               "a component's appearance menu should have three entries (no Color from Children)");
+    steps = doc->undoStack().index();
+    props->appearanceBox()->setCurrentIndex(props->appearanceBox()->findData(
+        static_cast<int>(relief::AppearanceKind::SolidColour)));
+    props->colourEdit()->setText(QStringLiteral("#FF0000"));
+    RT_REQUIRE(props->apply(), "applying the appearance failed");
+    RT_REQUIRE(doc->findReliefComponent(block)->data.appearance.kind == relief::AppearanceKind::SolidColour &&
+                   doc->findReliefComponent(block)->data.appearance.rgb == 0xFF0000u,
+               "the appearance did not reach the document");
+    RT_REQUIRE(doc->undoStack().index() == steps + 1, "applying the appearance is not one undo step");
+    props->colourEdit()->setText(QStringLiteral("nope"));
+    RT_REQUIRE(!props->apply(), "a bad colour was applied");
+    props->colourEdit()->setText(QStringLiteral("#FF0000"));
+    view->resize(320, 240);
+    window.documentChanged();
+    view->camera().viewTop();
+    view->cameraChanged();
+    {
+        const QRgb red = view->image().pixel(160, 120);
+        RT_REQUIRE(qRed(red) > 0x20 && qGreen(red) == 0 && qBlue(red) == 0, "the red component is not drawn red");
+    }
+    // A level offers Color from Children.
+    props->setLevel(base);
+    tree->selectComponents({});
+    props->refresh();
+    RT_REQUIRE(!props->showingComponent() && props->appearanceBox()->count() == 4, "a level's appearance menu is wrong");
+    props->appearanceBox()->setCurrentIndex(props->appearanceBox()->findData(
+        static_cast<int>(relief::AppearanceKind::ColourFromChildren)));
+    RT_REQUIRE(props->apply() &&
+                   doc->findReliefLevel(base)->appearance.kind == relief::AppearanceKind::ColourFromChildren,
+               "setting a level's appearance failed");
+    RT_REQUIRE(window.undo() && window.undo(), "undoing the appearance edits failed");
+    window.documentChanged();
+
     // --- 3D view: a known model -----------------------------------------------------------------
     view->resize(320, 240);
     window.documentChanged();

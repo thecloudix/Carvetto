@@ -97,6 +97,10 @@ class ComponentPropertiesPanel : public PanelBase {
     QCheckBox* fadeEnabled() const { return fadeOn_; }
     QCheckBox* tiltEnabled() const { return tiltOn_; }
     QComboBox* modeBox() const { return mode_; }
+    /// Appearance controls (T-0305), for the self-test.
+    QComboBox* appearanceBox() const { return appearance_; }
+    QComboBox* materialBox() const { return appearanceMaterial_; }
+    QLineEdit* colourEdit() const { return appearanceColour_; }
     bool showingComponent() const { return showing_; }
 
    private:
@@ -104,6 +108,9 @@ class ComponentPropertiesPanel : public PanelBase {
 
     QLineEdit* name_;
     QComboBox* mode_;
+    QComboBox* appearance_;
+    QComboBox* appearanceMaterial_;
+    QLineEdit* appearanceColour_;
     QLineEdit *shape_, *base_, *fadePct_, *fadeAx_, *fadeAy_, *fadeBx_, *fadeBy_;
     QLineEdit *tiltAngle_, *tiltPx_, *tiltPy_, *tiltRx_, *tiltRy_;
     QCheckBox* fadeOn_;

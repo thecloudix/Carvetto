@@ -217,6 +217,7 @@ std::vector<relief::Level> Document::reliefModel(SheetId sheet) const {
         r.baseHeight = l.baseHeight;
         r.visible = l.visible;
         r.effects = l.effects;
+        r.appearance = l.appearance;
         for (const ReliefComponent& c : l.components) {
             r.components.push_back(c.data);
         }

@@ -8,6 +8,8 @@
 #include <variant>
 #include <vector>
 
+#include "carvetto/relief/effects.hpp"
+
 namespace carvetto::viewmodel {
 
 namespace {
@@ -50,6 +52,73 @@ std::uint32_t shadeColour(std::uint32_t base, double intensity) {
         return static_cast<std::uint32_t>(std::clamp(std::lround(v), 0L, 255L));
     };
     return 0xFF000000u | (ch(16) << 16) | (ch(8) << 8) | ch(0);
+}
+
+bool anyAppearance(const std::vector<relief::Level>& levels) {
+    for (const relief::Level& l : levels) {
+        if (l.appearance.kind != relief::AppearanceKind::SameAsParent) {
+            return true;
+        }
+        for (const relief::Component& c : l.components) {
+            if (c.appearance.kind != relief::AppearanceKind::SameAsParent) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/// 0 = the view's material.
+std::uint32_t explicitColour(const relief::Appearance& a) {
+    switch (a.kind) {
+        case relief::AppearanceKind::SolidColour: return appearanceSolidColour(a.rgb);
+        case relief::AppearanceKind::Material: return appearanceMaterialColour(a.material);
+        default: return 0;
+    }
+}
+
+/// The colour a level gives its "same as parent" components; 0 = the view's material.
+std::uint32_t levelColour(const relief::Level& l) {
+    if (l.appearance.kind != relief::AppearanceKind::ColourFromChildren) {
+        return explicitColour(l.appearance);
+    }
+    std::uint64_t r = 0, g = 0, b = 0, n = 0;
+    for (const relief::Component& c : l.components) {
+        if (!c.visible) {
+            continue;
+        }
+        const std::uint32_t k = explicitColour(c.appearance);
+        if (k != 0) {
+            r += (k >> 16) & 0xFFu;
+            g += (k >> 8) & 0xFFu;
+            b += k & 0xFFu;
+            ++n;
+        }
+    }
+    if (n == 0) {
+        return 0;
+    }
+    return 0xFF000000u | (static_cast<std::uint32_t>((r + n / 2) / n) << 16) |
+           (static_cast<std::uint32_t>((g + n / 2) / n) << 8) | static_cast<std::uint32_t>((b + n / 2) / n);
+}
+
+/// The colour of the operand that decides the result of `combine(mode, below, above)` (see relief.hpp).
+std::uint32_t winnerColour(relief::CombineMode mode, float below, std::uint32_t belowColour, float above,
+                           std::uint32_t aboveColour) {
+    if (std::isnan(above)) {
+        return belowColour;
+    }
+    if (std::isnan(below)) {
+        return aboveColour;
+    }
+    switch (mode) {
+        case relief::CombineMode::Add: return aboveColour;
+        case relief::CombineMode::MergeHigh: return above > below ? aboveColour : belowColour;
+        case relief::CombineMode::MergeLow: return above < below ? aboveColour : belowColour;
+        case relief::CombineMode::Subtract:
+        case relief::CombineMode::Multiply: return belowColour;
+    }
+    return belowColour;
 }
 
 double intensityOf(double lightFactor) {
@@ -237,6 +306,96 @@ double modelLightFactor(const OrbitCamera& camera, double nx, double ny, double 
     return std::clamp((l.x * nx + l.y * ny + l.z * nz) / len, 0.0, 1.0);
 }
 
+std::uint32_t appearanceMaterialColour(relief::AppearanceMaterial m) {
+    switch (m) {
+        case relief::AppearanceMaterial::Wood: return modelMaterialColour(ModelMaterial::Wood);
+        case relief::AppearanceMaterial::Metal: return modelMaterialColour(ModelMaterial::Metal);
+        case relief::AppearanceMaterial::Stone: return modelMaterialColour(ModelMaterial::Stone);
+        case relief::AppearanceMaterial::Plastic: return modelMaterialColour(ModelMaterial::Plastic);
+    }
+    return 0;
+}
+
+std::uint32_t appearanceSolidColour(std::uint32_t rgb) {
+    return 0xFF000000u | (rgb & 0xFFFFFFu);
+}
+
+std::vector<std::uint32_t> composeModelColours(const std::vector<relief::Level>& levels, const relief::Grid& grid,
+                                               const relief::HeightField& composed) {
+    std::vector<std::uint32_t> out;
+    if (!anyAppearance(levels) || composed.empty() || composed.width() != grid.width || composed.height() != grid.height) {
+        return out;
+    }
+    const std::size_t cells = grid.width * grid.height;
+    std::uint64_t visible = 0;
+    for (const relief::Level& l : levels) {
+        if (l.visible) {
+            for (const relief::Component& c : l.components) {
+                visible += c.visible ? 1 : 0;
+            }
+        }
+    }
+    if (visible * cells > kMaxColourWork) {
+        return out;
+    }
+    constexpr float kNone = std::numeric_limits<float>::quiet_NaN();
+    std::vector<float> modelValue(cells, kNone);
+    std::vector<std::uint32_t> modelColour(cells, 0u);
+    for (const relief::Level& l : levels) {
+        if (!l.visible) {
+            continue;
+        }
+        const std::uint32_t lc = levelColour(l);
+        relief::HeightField acc;
+        if (relief::HeightField::create(grid, kNone, acc) != relief::Status::Ok) {
+            return {};
+        }
+        std::vector<std::uint32_t> accColour(cells, 0u);
+        for (const relief::Component& c : l.components) {
+            if (!c.visible) {
+                continue;
+            }
+            const std::uint32_t cc = c.appearance.kind == relief::AppearanceKind::SameAsParent
+                                         ? lc
+                                         : explicitColour(c.appearance);
+            for (std::size_t j = 0; j < grid.height; ++j) {
+                const double y = grid.origin.y + static_cast<double>(j) * grid.cellSize;
+                for (std::size_t i = 0; i < grid.width; ++i) {
+                    const float v = relief::componentValueAt(c, grid.origin.x + static_cast<double>(i) * grid.cellSize, y);
+                    const std::size_t k = j * grid.width + i;
+                    const float below = acc.at(i, j);
+                    accColour[k] = winnerColour(c.mode, below, accColour[k], v, cc);
+                    acc.set(i, j, relief::combine(c.mode, below, v));
+                }
+            }
+        }
+        // The level's effects clip the map (a mirror copies values, not colours: see the header).
+        for (float& v : acc.mutableData()) {
+            if (!std::isnan(v)) {
+                v += static_cast<float>(l.baseHeight);
+            }
+        }
+        if (relief::applyEffects(l.effects, acc) != relief::Status::Ok) {
+            return {};
+        }
+        for (std::size_t j = 0; j < grid.height; ++j) {
+            for (std::size_t i = 0; i < grid.width; ++i) {
+                const std::size_t k = j * grid.width + i;
+                const float v = acc.at(i, j);
+                modelColour[k] = winnerColour(l.mode, modelValue[k], modelColour[k], v, accColour[k]);
+                modelValue[k] = relief::combine(l.mode, modelValue[k], v);
+            }
+        }
+    }
+    out = std::move(modelColour);
+    for (std::size_t k = 0; k < cells; ++k) {
+        if (std::isnan(composed.data()[k])) {
+            out[k] = 0;
+        }
+    }
+    return out;
+}
+
 ModelSurface composeModelSurface(const document::Document& doc, document::SheetId sheet, std::size_t maxDimension) {
     ModelSurface out;
     const std::vector<relief::Level> levels = doc.reliefModel(sheet);
@@ -262,6 +421,8 @@ ModelSurface composeModelSurface(const document::Document& doc, document::SheetI
     if (const relief::Status s = relief::compose(levels, grid, out.field); s != relief::Status::Ok) {
         out.problem = relief::statusMessage(s);
         out.field = relief::HeightField{};
+    } else {
+        out.colours = composeModelColours(levels, grid, out.field);
     }
     return out;
 }
@@ -340,6 +501,8 @@ Raster renderModel(const ModelSurface& surface, const OrbitCamera& camera, const
     const std::uint32_t base = modelMaterialColour(options.material);
     std::vector<float> zbuf(r.pixels.size(), -std::numeric_limits<float>::infinity());
 
+    const bool coloured = options.useAppearance && surface.colours.size() == w * h;
+    std::uint32_t quadBase = base;
     auto triangle = [&](const Vertex& a, const Vertex& b, const Vertex& c) {
         const double area = (b.sx - a.sx) * (c.sy - a.sy) - (b.sy - a.sy) * (c.sx - a.sx);
         if (std::fabs(area) < 1e-12) {
@@ -366,7 +529,7 @@ Raster renderModel(const ModelSurface& surface, const OrbitCamera& camera, const
                 const std::size_t idx = static_cast<std::size_t>(y) * r.width + static_cast<std::size_t>(x);
                 if (depth > zbuf[idx]) {
                     zbuf[idx] = depth;
-                    r.pixels[idx] = shadeColour(base, w0 * a.shade + w1 * b.shade + w2 * c.shade);
+                    r.pixels[idx] = shadeColour(quadBase, w0 * a.shade + w1 * b.shade + w2 * c.shade);
                 }
             }
         }
@@ -384,6 +547,10 @@ Raster renderModel(const ModelSurface& surface, const OrbitCamera& camera, const
             const Vertex &v00 = prev[i], &v10 = prev[i + 1], &v01 = cur[i], &v11 = cur[i + 1];
             if (!(v00.valid && v10.valid && v01.valid && v11.valid)) {
                 continue;
+            }
+            if (coloured) {
+                const std::uint32_t own = surface.colours[(j - 1) * w + i];
+                quadBase = own != 0 ? own : base;
             }
             triangle(v00, v10, v11);
             triangle(v00, v11, v01);

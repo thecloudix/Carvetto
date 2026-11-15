@@ -25,6 +25,7 @@ struct ReliefLevel {
     double baseHeight{0.0};
     bool visible{true};
     relief::LevelEffects effects;  ///< Clipping and mirror mode (T-0295, ADR-0079).
+    relief::Appearance appearance;  ///< Model view colour (T-0305, ADR-0095).
     std::vector<ReliefComponent> components;
 };
 
@@ -45,6 +46,10 @@ std::string reliefComponentProblem(const relief::Component& c);
 
 /// Empty when the level's effects are storable (`relief::validateEffects`), otherwise the reason.
 std::string reliefEffectsProblem(const relief::LevelEffects& e);
+
+/// Empty when `a` is storable as the appearance of a component (`isLevel` false: ColourFromChildren is
+/// refused) or of a level: known kind and material, colour within 0xRRGGBB. Otherwise the reason (T-0305).
+std::string reliefAppearanceProblem(const relief::Appearance& a, bool isLevel);
 
 /// Ordered, duplicate-free selection of components. Not part of the undo history.
 class ComponentSelection {
