@@ -45,6 +45,20 @@ enum class RasterAxis { AlongX, AlongY };
 /// Whether neighbouring rows are cut back and forth or all in the same direction.
 enum class RasterTravel { ZigZag, OneWay };
 
+/// How a Z-level region is cleared (ignored by `Rough3dStrategy::Raster`).
+enum class Rough3dClearing {
+    Raster,  ///< Parallel rows (pocket-style raster).
+    Offset,  ///< Contour-parallel: rings of nodes inward from the region boundary (ADR-0082).
+};
+
+/// Z-level profile pass: a ring along the boundary of each level's region (ADR-0082). With offset clearing
+/// the boundary ring is part of the clearing: None and First cut it first, Last cuts it after the inner rings.
+enum class Rough3dProfile { None, First, Last };
+
+/// Z-level order: every level over the whole region, or each separate region down through the levels
+/// before the next one (depth-first).
+enum class Rough3dOrder { LevelByLevel, DepthFirst };
+
 /// Drop the tool onto the model (never gouges) or project the tip straight onto the surface.
 enum class Rough3dTipMode { DropTool, Project };
 
@@ -90,6 +104,13 @@ struct Rough3dParams {
     /// Climb: the uncut material stays on the right of the travel direction (rows step towards -Y
     /// for AlongX, towards +X for AlongY); Conventional steps the other way.
     CutDirection direction{CutDirection::Climb};
+    /// Z-level only (T-0304): region clearing style, profile pass and level order.
+    Rough3dClearing clearing{Rough3dClearing::Raster};
+    Rough3dProfile profile{Rough3dProfile::None};
+    Rough3dOrder order{Rough3dOrder::LevelByLevel};
+    /// Z-level only: links between runs/rings only cross nodes of the region being cut at this level, never
+    /// already machined ones (retract instead).
+    bool avoidMachined{false};
     /// Reverses the order of the rows (the inventory's "Reverse Step Direction").
     bool reverseSteps{false};
 

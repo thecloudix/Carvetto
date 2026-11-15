@@ -600,3 +600,451 @@ TEST_CASE("rough3d: invalid input is refused", "[rough3d]") {
     REQUIRE(HeightField::create(g, 3.0f, hi) == relief::Status::Ok);
     CHECK(hasIssue(rough3dToolpath(hi, tools, p).diagnostics, ToolpathIssue::NoRegion));
 }
+
+// ---- T-0304: offset clearing, profile first/last, depth-first ordering, avoid machined areas ----
+
+namespace {
+
+std::vector<Vec3> chainStarts(const Toolpath& tp) {
+    std::vector<Vec3> s;
+    for (const Move& mv : tp.moves) {
+        if (mv.kind == MoveKind::Plunge) {
+            s.push_back(mv.to);
+        }
+    }
+    return s;
+}
+
+std::vector<Vec3> feedsOf(const Toolpath& tp) {
+    std::vector<Vec3> s;
+    for (const Move& mv : tp.moves) {
+        if (mv.kind == MoveKind::Feed) {
+            s.push_back(mv.to);
+        }
+    }
+    return s;
+}
+
+double sumHeights(const simulate::Heightfield& hf, std::size_t w, std::size_t h) {
+    double s = 0.0;
+    for (std::size_t j = 0; j < h; ++j) {
+        for (std::size_t i = 0; i < w; ++i) {
+            s += static_cast<double>(hf.height(i, j));
+        }
+    }
+    return s;
+}
+
+}  // namespace
+
+TEST_CASE("rough3d: offset clearing never gouges in any clearing/profile/order combination", "[rough3d][t0304]") {
+    const HeightField m = makeModel(40, 32, 0.5, true);
+    for (auto type : {tooling::ToolType::EndMill, tooling::ToolType::BallNose}) {
+        for (auto prof : {Rough3dProfile::None, Rough3dProfile::First, Rough3dProfile::Last}) {
+            for (auto order : {Rough3dOrder::LevelByLevel, Rough3dOrder::DepthFirst}) {
+                for (auto clearing : {Rough3dClearing::Raster, Rough3dClearing::Offset}) {
+                    for (bool avoid : {false, true}) {
+                        Rough3dParams p = baseParams();
+                        p.allowance = 0.3;
+                        p.profile = prof;
+                        p.order = order;
+                        p.clearing = clearing;
+                        p.avoidMachined = avoid;
+                        p.rampPlunge = (prof == Rough3dProfile::Last);
+                        const double sd = 1.5;
+                        const std::vector<Rough3dTool> tools{makeTool(type, 3.0, 0.5, sd)};
+                        const Rough3dResult r = rough3dToolpath(m, tools, p);
+                        INFO("type " << static_cast<int>(type) << " prof " << static_cast<int>(prof) << " order "
+                                     << static_cast<int>(order) << " clearing " << static_cast<int>(clearing)
+                                     << " avoid " << avoid);
+                        REQUIRE(r.diagnostics.empty());
+                        REQUIRE(!r.toolpaths[0].moves.empty());
+                        const auto hf = simulateAll(m, p, r, tools);
+                        const auto bound = dropOf(m, tools[0], p);
+                        const Check c = checkResult(m, hf, p, bound, sd + 1e-4);
+                        CHECK(c.worstGouge <= 1e-4);
+                        CHECK(c.worstExcess <= 0.0);
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("rough3d: offset clearing leaves no more stock than raster clearing", "[rough3d][t0304]") {
+    const HeightField m = makeModel(40, 32, 0.5);
+    for (double stepover : {0.5, 1.5}) {
+        Rough3dParams p = baseParams();
+        p.allowance = 0.2;
+        const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 3.0, stepover, 1.5)};
+        Rough3dParams pr = p;
+        pr.clearing = Rough3dClearing::Raster;
+        Rough3dParams po = p;
+        po.clearing = Rough3dClearing::Offset;
+        const auto rr = rough3dToolpath(m, tools, pr);
+        const auto ro = rough3dToolpath(m, tools, po);
+        REQUIRE(rr.diagnostics.empty());
+        REQUIRE(ro.diagnostics.empty());
+        const auto hr = simulateAll(m, pr, rr, tools);
+        const auto ho = simulateAll(m, po, ro, tools);
+        const double sr = sumHeights(hr, 40, 32);
+        const double so = sumHeights(ho, 40, 32);
+        INFO("stepover " << stepover << " raster sum " << sr << " offset sum " << so);
+        CHECK(so <= sr + 1e-3);
+        // Cell by cell no more than a stepdown above raster would leave.
+        for (std::size_t j = 0; j < 32; ++j) {
+            for (std::size_t i = 0; i < 40; ++i) {
+                CHECK(static_cast<double>(ho.height(i, j)) <= static_cast<double>(hr.height(i, j)) + 1.5 + 1e-4);
+            }
+        }
+    }
+}
+
+TEST_CASE("rough3d: offset rings run wall-following inward, climb counter-clockwise", "[rough3d][t0304]") {
+    relief::Grid g{9, 7, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -3.0f, m) == relief::Status::Ok);
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 1.0, 1.0, 5.0)};
+    Rough3dParams p = baseParams();
+    p.clearing = Rough3dClearing::Offset;
+    auto xy = [](const Vec3& v) { return std::vector<double>{v.x, v.y}; };
+    {
+        const auto r = rough3dToolpath(m, tools, p);
+        REQUIRE(r.diagnostics.empty());
+        const auto st = chainStarts(r.toolpaths[0]);
+        REQUIRE(st.size() == 1);  // the rings are linked into one continuous cut
+        CHECK(xy(st[0]) == std::vector<double>{0.0, 0.0});
+        CHECK(st[0].z == -3.0);
+        const auto f = feedsOf(r.toolpaths[0]);
+        REQUIRE(f.size() > 8);
+        // Outer ring: bottom edge east, right edge north, top edge west, left edge south ...
+        CHECK(xy(f[0]) == std::vector<double>{8.0, 0.0});
+        CHECK(xy(f[1]) == std::vector<double>{8.0, 6.0});
+        CHECK(xy(f[2]) == std::vector<double>{0.0, 6.0});
+        CHECK(xy(f[3]) == std::vector<double>{0.0, 1.0});
+        // ... then the next ring one cell in, same sense.
+        // (collinear feeds are merged, so the link (0,1) -> (1,1) and the ring's first edge are one move)
+        CHECK(xy(f[4]) == std::vector<double>{7.0, 1.0});
+        CHECK(xy(f[5]) == std::vector<double>{7.0, 5.0});
+        CHECK(xy(f[6]) == std::vector<double>{1.0, 5.0});
+        CHECK(xy(f[7]) == std::vector<double>{1.0, 2.0});
+        CHECK(xy(f[8]) == std::vector<double>{6.0, 2.0});
+    }
+    {
+        Rough3dParams q = p;
+        q.direction = CutDirection::Conventional;
+        const auto r = rough3dToolpath(m, tools, q);
+        const auto f = feedsOf(r.toolpaths[0]);
+        REQUIRE(f.size() > 4);
+        CHECK(xy(f[0]) == std::vector<double>{0.0, 6.0});  // clockwise: left edge first
+        CHECK(xy(f[1]) == std::vector<double>{8.0, 6.0});
+        CHECK(xy(f[2]) == std::vector<double>{8.0, 0.0});
+        CHECK(xy(f[3]) == std::vector<double>{1.0, 0.0});
+    }
+    {
+        // Profile Last cuts the outer ring after the inner ones: the cut starts one ring in and ends on the boundary.
+        Rough3dParams q = p;
+        q.profile = Rough3dProfile::Last;
+        const auto r = rough3dToolpath(m, tools, q);
+        const auto st = chainStarts(r.toolpaths[0]);
+        REQUIRE(!st.empty());
+        CHECK(xy(st[0]) == std::vector<double>{1.0, 1.0});
+        const auto f = feedsOf(r.toolpaths[0]);
+        const Vec3 last = f.back();
+        CHECK((last.x == 0.0 || last.x == 8.0 || last.y == 0.0 || last.y == 6.0));
+        for (const Vec3& v : f) {
+            CHECK(v.z == -3.0);
+        }
+    }
+    {
+        // Profile First is the default order of offset clearing.
+        Rough3dParams q = p;
+        q.profile = Rough3dProfile::First;
+        CHECK(rough3dToolpath(m, tools, q).toolpaths[0] == rough3dToolpath(m, tools, p).toolpaths[0]);
+    }
+}
+
+TEST_CASE("rough3d: offset clearing circles an island and covers every node", "[rough3d][t0304]") {
+    // A pillar in the middle: the ring around it is cut with the pillar on the right (climb).
+    relief::Grid g{11, 11, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -3.0f, m) == relief::Status::Ok);
+    for (std::size_t j = 4; j <= 6; ++j) {
+        for (std::size_t i = 4; i <= 6; ++i) {
+            m.set(i, j, 0.0f);
+        }
+    }
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 1.0, 1.0, 5.0)};
+    Rough3dParams p = baseParams();
+    p.clearing = Rough3dClearing::Offset;
+    const auto r = rough3dToolpath(m, tools, p);
+    REQUIRE(r.diagnostics.empty());
+    const auto hf = simulateAll(m, p, r, tools);
+    const auto bound = dropOf(m, tools[0], p);
+    const Check c = checkResult(m, hf, p, bound, 1e-4);
+    CHECK(c.worstGouge <= 1e-4);
+    CHECK(c.worstExcess <= 0.0);
+    // The pillar (T = 0 on it) is untouched; its surroundings are cut to -3.
+    CHECK(hf.height(5, 5) > -1e-4);
+    CHECK(hf.height(3, 5) < -2.99);
+    // Around the pillar the cut runs clockwise (pillar on the right): the island ring starts at its lowest
+    // node (3,3), goes north along x = 3, then east along y = 7, south along x = 7 and back west along y = 3.
+    const auto& mv = r.toolpaths[0].moves;
+    std::size_t at = mv.size();
+    for (std::size_t k = 0; k < mv.size(); ++k) {
+        if (mv[k].kind == MoveKind::Plunge && mv[k].to.x == 3.0 && mv[k].to.y == 3.0) {
+            at = k;
+            break;
+        }
+    }
+    REQUIRE(at + 4 < mv.size());
+    CHECK(mv[at + 1].to.x == 3.0);
+    CHECK(mv[at + 1].to.y == 7.0);
+    CHECK(mv[at + 2].to.x == 7.0);
+    CHECK(mv[at + 2].to.y == 7.0);
+    CHECK(mv[at + 3].to.x == 7.0);
+    CHECK(mv[at + 3].to.y == 3.0);
+    CHECK(mv[at + 4].to.x == 4.0);
+    CHECK(mv[at + 4].to.y == 3.0);
+}
+
+TEST_CASE("rough3d: raster clearing with a profile pass adds a boundary ring first or last", "[rough3d][t0304]") {
+    relief::Grid g{9, 7, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -3.0f, m) == relief::Status::Ok);
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 1.0, 1.0, 5.0)};
+    Rough3dParams p = baseParams();
+    const auto base = chainStarts(rough3dToolpath(m, tools, p).toolpaths[0]);
+    REQUIRE(base.size() == 1);
+    CHECK(base[0].y == 6.0);  // raster climb along X starts on the top row
+    p.profile = Rough3dProfile::First;
+    const auto first = chainStarts(rough3dToolpath(m, tools, p).toolpaths[0]);
+    REQUIRE(first.size() == 2);
+    CHECK(first[0].x == 0.0);
+    CHECK(first[0].y == 0.0);  // the ring starts at the lowest node
+    CHECK(first[1].y == 6.0);
+    p.profile = Rough3dProfile::Last;
+    const auto last = chainStarts(rough3dToolpath(m, tools, p).toolpaths[0]);
+    REQUIRE(last.size() == 2);
+    CHECK(last[0].y == 6.0);
+    CHECK(last[1].y == 0.0);
+    CHECK(last[1].x == 0.0);
+}
+
+TEST_CASE("rough3d: depth-first cuts each pocket to the bottom before the next", "[rough3d][t0304]") {
+    // Two pockets (-9) separated by a wall column at the stock top.
+    relief::Grid g{21, 9, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -9.0f, m) == relief::Status::Ok);
+    for (std::size_t j = 0; j < 9; ++j) {
+        m.set(10, j, 0.0f);
+    }
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 1.0, 1.0, 3.0)};
+    for (auto clearing : {Rough3dClearing::Raster, Rough3dClearing::Offset}) {
+        Rough3dParams p = baseParams();
+        p.clearing = clearing;
+        const auto lbl = rough3dToolpath(m, tools, p);
+        REQUIRE(lbl.diagnostics.empty());
+        const auto a = chainStarts(lbl.toolpaths[0]);
+        // Level by level: the depths never go up.
+        for (std::size_t k = 1; k < a.size(); ++k) {
+            CHECK(a[k].z <= a[k - 1].z);
+        }
+        p.order = Rough3dOrder::DepthFirst;
+        const auto dfo = rough3dToolpath(m, tools, p);
+        REQUIRE(dfo.diagnostics.empty());
+        const auto b = chainStarts(dfo.toolpaths[0]);
+        // Depth-first: every chain of the first pocket (x < 10) comes before any chain of the second.
+        bool second = false;
+        bool wentUp = false;
+        double firstPocketMin = 0.0;
+        for (std::size_t k = 0; k < b.size(); ++k) {
+            if (b[k].x > 10.0) {
+                second = true;
+            } else {
+                CHECK(!second);
+                firstPocketMin = std::min(firstPocketMin, b[k].z);
+            }
+            if (k > 0 && b[k].z > b[k - 1].z) {
+                wentUp = true;
+            }
+        }
+        CHECK(second);
+        CHECK(wentUp);
+        CHECK(firstPocketMin == -9.0);
+        // The first chain is at the first level, in the first pocket (lowest node index).
+        CHECK(b[0].z == -3.0);
+        CHECK(b[0].x < 10.0);
+        // Same result in the simulator, nothing gouged.
+        const auto h1 = simulateAll(m, p, lbl, tools);
+        const auto h2 = simulateAll(m, p, dfo, tools);
+        const auto bound = dropOf(m, tools[0], p);
+        CHECK(checkResult(m, h2, p, bound, 1e-4).worstGouge <= 1e-4);
+        CHECK(checkResult(m, h2, p, bound, 1e-4).worstExcess <= 0.0);
+        for (std::size_t j = 0; j < 9; ++j) {
+            for (std::size_t i = 0; i < 21; ++i) {
+                CHECK(h1.height(i, j) == h2.height(i, j));
+            }
+        }
+    }
+}
+
+TEST_CASE("rough3d: depth-first on nested pockets visits the deep part inside its parent first", "[rough3d][t0304]") {
+    // Pocket A is shallow (-4) with a deeper pit (-9) inside; pocket B is at -9 on the other side of a wall.
+    relief::Grid g{23, 9, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -4.0f, m) == relief::Status::Ok);
+    for (std::size_t j = 0; j < 9; ++j) {
+        m.set(10, j, 0.0f);
+        for (std::size_t i = 12; i < 23; ++i) {
+            m.set(i, j, -9.0f);
+        }
+    }
+    for (std::size_t j = 3; j <= 5; ++j) {
+        for (std::size_t i = 3; i <= 5; ++i) {
+            m.set(i, j, -9.0f);
+        }
+    }
+    m.set(11, 4, 0.0f);
+    for (std::size_t j = 0; j < 9; ++j) {
+        m.set(11, j, 0.0f);
+    }
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 1.0, 1.0, 3.0)};
+    Rough3dParams p = baseParams();
+    p.order = Rough3dOrder::DepthFirst;
+    const auto r = rough3dToolpath(m, tools, p);
+    REQUIRE(r.diagnostics.empty());
+    const auto st = chainStarts(r.toolpaths[0]);
+    // Pocket A first (all chains with x < 10), then B.
+    bool second = false;
+    for (const Vec3& v : st) {
+        if (v.x > 11.0) {
+            second = true;
+        } else {
+            CHECK(!second);
+        }
+    }
+    CHECK(second);
+    const auto hf = simulateAll(m, p, r, tools);
+    const auto bound = dropOf(m, tools[0], p);
+    const Check c = checkResult(m, hf, p, bound, 3.0 + 1e-4);
+    CHECK(c.worstGouge <= 1e-4);
+    CHECK(c.worstExcess <= 0.0);
+    CHECK(hf.height(4, 4) < -8.99);
+    CHECK(hf.height(16, 4) < -8.99);
+}
+
+TEST_CASE("rough3d: avoid machined areas retracts instead of linking across them", "[rough3d][t0304]") {
+    // Three pillars in a row with one-cell gaps: the 1.5 mm-radius first tool cannot reach the two gap cells;
+    // the rest tool cuts them, linking across the already machined nodes between them unless avoided.
+    relief::Grid g{15, 7, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -3.0f, m) == relief::Status::Ok);
+    m.set(4, 3, 0.0f);
+    m.set(6, 3, 0.0f);
+    m.set(8, 3, 0.0f);
+    std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 3.0, 1.0, 5.0, "big"),
+                                   makeTool(tooling::ToolType::EndMill, 0.5, 1.0, 5.0, "small")};
+    Rough3dParams p = baseParams();
+    p.clearing = Rough3dClearing::Offset;
+    const auto a = rough3dToolpath(m, tools, p);
+    std::string msgs;
+    for (const auto& d : a.diagnostics) {
+        msgs += d.message + "; ";
+    }
+    INFO(msgs);
+    REQUIRE(a.diagnostics.empty());
+    REQUIRE(a.toolpaths.size() == 2);
+    const auto sa = chainStarts(a.toolpaths[1]);
+    p.avoidMachined = true;
+    const auto b = rough3dToolpath(m, tools, p);
+    REQUIRE(b.diagnostics.empty());
+    const auto sb = chainStarts(b.toolpaths[1]);
+    CHECK(sa.size() == 1);
+    CHECK(sb.size() == 2);
+    // Both cut the same nodes: identical simulated result.
+    const auto ha = simulateAll(m, p, a, tools);
+    const auto hb = simulateAll(m, p, b, tools);
+    for (std::size_t j = 0; j < 7; ++j) {
+        for (std::size_t i = 0; i < 15; ++i) {
+            CHECK(ha.height(i, j) == hb.height(i, j));
+        }
+    }
+    CHECK(ha.height(5, 3) < -2.99);
+    CHECK(ha.height(7, 3) < -2.99);
+    CHECK(ha.height(6, 3) > -1e-4);
+}
+
+TEST_CASE("rough3d: transparent cells are ignored and cut to the floor under the material boundary", "[rough3d][t0304]") {
+    // Left half opaque at -3, right half transparent: far from the opaque cells the tool goes to the floor.
+    relief::Grid g{20, 6, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -3.0f, m) == relief::Status::Ok);
+    for (std::size_t j = 0; j < 6; ++j) {
+        for (std::size_t i = 10; i < 20; ++i) {
+            m.set(i, j, kNaN);
+        }
+    }
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 1.0, 1.0, 1.0)};
+    for (auto clearing : {Rough3dClearing::Raster, Rough3dClearing::Offset}) {
+        Rough3dParams p = baseParams();
+        p.clearing = clearing;
+        const auto r = rough3dToolpath(m, tools, p);
+        REQUIRE(r.diagnostics.empty());
+        const auto hf = simulateAll(m, p, r, tools);
+        CHECK(hf.height(15, 3) < -9.99);  // floor: stockBottom = -10
+        CHECK(hf.height(2, 3) < -2.99);
+        CHECK(hf.height(2, 3) > -3.0 - 1e-4);  // the opaque side is not gouged
+    }
+}
+
+TEST_CASE("rough3d: new z-level modes are deterministic, cancellable and bounded", "[rough3d][t0304]") {
+    const HeightField m = makeModel(40, 32, 0.5, true);
+    Rough3dParams p = baseParams();
+    p.clearing = Rough3dClearing::Offset;
+    p.order = Rough3dOrder::DepthFirst;
+    p.profile = Rough3dProfile::Last;
+    p.avoidMachined = true;
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::BallNose, 3.0, 0.5, 2.0)};
+    const auto a = rough3dToolpath(m, tools, p);
+    const auto b = rough3dToolpath(m, tools, p);
+    REQUIRE(!a.toolpaths[0].moves.empty());
+    CHECK(a.toolpaths[0] == b.toolpaths[0]);
+    std::atomic<bool> stop{true};
+    ToolpathRunControl rc;
+    rc.cancel = &stop;
+    const auto c = rough3dToolpath(m, tools, p, rc);
+    CHECK(hasIssue(c.diagnostics, ToolpathIssue::Cancelled));
+    CHECK(c.toolpaths[0].moves.empty());
+    rc.cancel = nullptr;
+    rc.moveLimit = 50;
+    const auto d = rough3dToolpath(m, tools, p, rc);
+    CHECK(hasIssue(d.diagnostics, ToolpathIssue::WorkLimitExceeded));
+    CHECK(d.toolpaths[0].moves.empty());
+    // Cancel arriving mid-run (polled per unit/ring).
+    p.order = Rough3dOrder::LevelByLevel;
+    rc.moveLimit = 0;
+    rc.workLimit = 2000;
+    CHECK(hasIssue(rough3dToolpath(m, tools, p, rc).diagnostics, ToolpathIssue::WorkLimitExceeded));
+}
+
+TEST_CASE("rough3d: offset stepover skips rings but always cuts the innermost one", "[rough3d][t0304]") {
+    // 9x7 flat grid: Chebyshev rings 0..3. A two-cell stepover cuts rings 0 and 2 and the innermost ring 3,
+    // like raster rows skip rows but keep the last; ring 1 is left alone (the 1 mm tool does not reach it).
+    relief::Grid g{9, 7, 1.0, {0.0, 0.0}};
+    HeightField m;
+    REQUIRE(HeightField::create(g, -3.0f, m) == relief::Status::Ok);
+    const std::vector<Rough3dTool> tools{makeTool(tooling::ToolType::EndMill, 1.0, 2.0, 5.0)};
+    Rough3dParams p = baseParams();
+    p.clearing = Rough3dClearing::Offset;
+    const auto r = rough3dToolpath(m, tools, p);
+    REQUIRE(r.diagnostics.empty());
+    const auto hf = simulateAll(m, p, r, tools);
+    CHECK(hf.height(0, 0) < -2.99);   // ring 0
+    CHECK(hf.height(4, 0) < -2.99);   // ring 0
+    CHECK(hf.height(4, 1) > -1e-4);   // ring 1: skipped (only the short link between rings crosses it)
+    CHECK(hf.height(7, 4) > -1e-4);
+    CHECK(hf.height(2, 2) < -2.99);   // ring 2
+    CHECK(hf.height(4, 3) < -2.99);   // ring 3, the innermost (not on the stepover)
+    CHECK(hf.height(3, 3) < -2.99);
+}
