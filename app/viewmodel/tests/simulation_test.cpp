@@ -666,3 +666,92 @@ TEST_CASE("relief: cut shows darker, through-cut shows the table, passes get col
     CHECK(s.stride > 1);
     CHECK(renderRelief(simulate::Heightfield{}).pixels.empty());
 }
+
+// --- T-0317: cancellable start, summary cost --------------------------------------------------
+
+TEST_CASE("simulation controller: preparation in slices gives the same simulation", "[simulation][t0317]") {
+    document::Document doc;
+    ToolpathSession session(&doc);
+    REQUIRE(doc.execute(std::make_unique<document::AddToolpathCommand>(zigzagRecord(40000, -1.0))));
+    SimulationRequest req;
+    req.quality = simulate::Quality::Coarse;
+    const SimulationSetup setup = makeSimulationSetup(session, req);
+    REQUIRE(setup.ok);
+    REQUIRE(setup.totalMoves > 2 * 32768);  // more than two slices
+
+    SimulationController c;
+    REQUIRE(c.start(setup));
+    REQUIRE(waitReadyAt(c, 0));
+    const SimulationController::Counters prep = c.counters();
+    CHECK(prep.movesQueued == setup.totalMoves);
+    CHECK(prep.queueSlices == (setup.totalMoves + 32767) / 32768);
+    CHECK(prep.cutChunks == 0);
+    c.seek(setup.totalMoves);
+    REQUIRE(waitReadyAt(c, setup.totalMoves));
+    CHECK(c.frame()->relief->pixels == directRelief(setup, setup.totalMoves).pixels);
+    CHECK(c.meta()->moveCount == setup.totalMoves);
+    // The timeline is the one of a single-call queueing.
+    simulate::Simulator direct(setup.stock, setup.options);
+    REQUIRE(direct.ok());
+    toolpath::Toolpath whole;
+    whole.tool = setup.toolpaths.front().tool;
+    whole.moves = *setup.toolpaths.front().moves;
+    REQUIRE(direct.addToolpath(whole, setup.toolpaths.front().shape, 1));
+    CHECK(*c.meta()->moveEndTimes == direct.moveEndTimes());
+}
+
+TEST_CASE("simulation controller: stop and restart during preparation are prompt", "[simulation][t0317]") {
+    document::Document doc;
+    ToolpathSession session(&doc);
+    REQUIRE(doc.execute(std::make_unique<document::AddToolpathCommand>(zigzagRecord(100000, -1.0))));
+    SimulationRequest req;
+    req.quality = simulate::Quality::Coarse;
+    const SimulationSetup setup = makeSimulationSetup(session, req);
+    REQUIRE(setup.ok);
+    const std::size_t slices = (setup.totalMoves + 32767) / 32768;
+    REQUIRE(slices >= 6);
+
+    SimulationController c;
+    c.setPrepareDelayForTest(300);  // every slice is followed by a pause: preparation cannot finish early
+    REQUIRE(c.start(setup));
+    REQUIRE(waitFor([&] { return c.counters().queueSlices >= 1; }));
+    CHECK(c.progress().state == SimState::Preparing);
+    c.stop();
+    CHECK_FALSE(c.active());
+    const SimulationController::Counters stopped = c.counters();
+    CHECK(stopped.queueSlices < slices);  // the queueing stopped at the next slice boundary
+    CHECK(stopped.movesQueued < setup.totalMoves);
+    CHECK(stopped.cutChunks == 0);
+
+    // Starting again replaces a preparing run the same way and then prepares fully.
+    REQUIRE(c.start(setup));
+    REQUIRE(waitFor([&] { return c.counters().queueSlices >= 1; }));
+    c.setPrepareDelayForTest(0);
+    REQUIRE(c.start(setup));  // the first run is stopped at a slice boundary, then the new one starts
+    REQUIRE(waitReadyAt(c, 0));
+    CHECK(c.counters().movesQueued == setup.totalMoves);
+    CHECK(c.counters().queueSlices == slices);
+}
+
+TEST_CASE("simulation controller: a cancel while preparing is honoured before the first step", "[simulation][t0317]") {
+    document::Document doc;
+    ToolpathSession session(&doc);
+    REQUIRE(doc.execute(std::make_unique<document::AddToolpathCommand>(zigzagRecord(40000, -1.0))));
+    SimulationRequest req;
+    req.quality = simulate::Quality::Coarse;
+    const SimulationSetup setup = makeSimulationSetup(session, req);
+    REQUIRE(setup.ok);
+
+    SimulationController c;
+    c.setPrepareDelayForTest(60);
+    REQUIRE(c.start(setup));
+    c.seek(setup.totalMoves);
+    c.cancel();  // still preparing: the first slice is followed by a pause
+    CHECK(c.progress().state == SimState::Preparing);
+    REQUIRE(waitFor([&] { return c.progress().state == SimState::Ready && c.frame(); }));
+    CHECK(c.progress().cancelled);
+    CHECK(c.progress().movesDone == 0);
+    CHECK(c.frame()->move == 0);
+    CHECK(c.counters().cutChunks == 0);  // not one cutting step ran
+    CHECK(c.frame()->relief->pixels == directRelief(setup, 0).pixels);
+}

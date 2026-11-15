@@ -107,11 +107,25 @@ class SimulationController {
     /// Test hook: the worker waits this long (ms) after every chunk and limits chunks to 16 moves (to
     /// make runs long enough to cancel or replace under test).
     void setChunkDelayForTest(int milliseconds);
+    /// Test hook: the worker waits this long (ms) after queueing each slice of moves while preparing.
+    /// Set before `start()`; it applies to the next simulation started.
+    void setPrepareDelayForTest(int milliseconds);
+
+    /// Operation counters of the worker (monotonic; for tests and measurements, not timing).
+    struct Counters {
+        std::size_t movesQueued{0};  ///< Moves handed to the simulator so far.
+        std::size_t queueSlices{0};  ///< `addToolpath` calls made while preparing.
+        std::size_t cutChunks{0};    ///< `advanceToMove` calls made (cut steps).
+    };
+    /// Of the running simulation, or of the last one after `stop()`.
+    Counters counters() const;
 
    private:
     SimulationSetup setup_;
     std::shared_ptr<SimulationShared> shared_;
     std::thread worker_;
+    int prepareDelayMs_{0};
+    Counters lastCounters_;
 };
 
 }  // namespace carvetto::viewmodel

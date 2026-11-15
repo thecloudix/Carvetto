@@ -13,6 +13,7 @@
 #include <string>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/toolpath/time.hpp"
 #include "toolpath_test_support.hpp"
 
 using namespace carvetto;
@@ -1260,4 +1261,40 @@ TEST_CASE("session: apply accepts a target whose moves were replaced by an equal
     r->moves = std::make_shared<const std::vector<toolpath::Move>>(*r->moves);  // same content, other identity
     f.session.invalidate();
     CHECK(f.session.apply(calc).ok);
+}
+
+TEST_CASE("session summary: one pass over the moves, cached by identity", "[toolpath-session][t0317]") {
+    std::vector<toolpath::Move> moves;
+    moves.push_back(toolpath::Move::rapid({0, 0, 5}));
+    for (int i = 0; i < 1000; ++i) {
+        moves.push_back(toolpath::Move::feed({i % 2 == 0 ? 80.0 : 0.0, i * 0.1, -1.0}));
+        moves.push_back(toolpath::Move::retract({i % 2 == 0 ? 80.0 : 0.0, i * 0.1, 5.0}));
+    }
+    document::ToolpathRecord rec;
+    rec.name = "many";
+    rec.tool.diameter = 3.0;
+    rec.tool.feedRate = 1200.0;
+    rec.tool.plungeRate = 300.0;
+    rec.moves = document::shareMoves(std::move(moves));
+    const toolpath::Toolpath expected = rec.toolpath();
+    document::Document doc;
+    ToolpathSession session(&doc);
+    REQUIRE(doc.execute(std::make_unique<document::AddToolpathCommand>(rec)));
+    MachineSetup setup;
+    setup.rapidRateMmPerMin = 4000.0;
+    REQUIRE(session.setMachineSetup(setup));
+
+    const std::size_t before = toolpath::summarizeMovesVisited();
+    const JobSummary s = session.summary();
+    CHECK(toolpath::summarizeMovesVisited() - before == expected.moves.size());  // one visit per move
+    REQUIRE(s.entries.size() == 1);
+    CHECK(s.moves == expected.moves.size());
+    CHECK(s.entries[0].bounds == expected.bounds());
+    CHECK(s.entries[0].lengthMm == expected.length());
+    CHECK(s.entries[0].minZ == expected.minZ());
+    CHECK(s.entries[0].maxZ == expected.maxZ());
+    CHECK(s.entries[0].time == toolpath::estimateTime(expected, toolpath::MachineRates{4000.0, 1200.0, 300.0, setup.accelerationMmPerS2}));
+    const std::size_t mid = toolpath::summarizeMovesVisited();
+    (void)session.summary();
+    CHECK(toolpath::summarizeMovesVisited() == mid);  // cached: no pass at all
 }
