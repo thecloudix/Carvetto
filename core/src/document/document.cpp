@@ -538,6 +538,10 @@ std::vector<IntegrityIssue> Document::checkIntegrity(std::size_t* work) const {
             report(Kind::BadReliefEffects, {}, {},
                    "relief level #" + std::to_string(level.id.value) + ": " + problem);
         }
+        if (const std::string problem = reliefAppearanceProblem(level.appearance, true); !problem.empty()) {
+            report(Kind::BadReliefAppearance, {}, {},
+                   "relief level #" + std::to_string(level.id.value) + ": " + problem);
+        }
         for (const ReliefComponent& c : level.components) {
             checkId(c.id.value, {}, "relief component");
             if (const std::string problem = reliefComponentProblem(c.data); !problem.empty()) {

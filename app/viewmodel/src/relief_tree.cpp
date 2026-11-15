@@ -93,6 +93,96 @@ constexpr double kRadPerDeg = std::numbers::pi / 180.0;
 
 }  // namespace
 
+const char* appearanceKindName(relief::AppearanceKind kind) {
+    switch (kind) {
+        case relief::AppearanceKind::SameAsParent: return "Same as Parent";
+        case relief::AppearanceKind::SolidColour: return "Solid Color";
+        case relief::AppearanceKind::Material: return "Material";
+        case relief::AppearanceKind::ColourFromChildren: return "Color from Children";
+    }
+    return "Same as Parent";
+}
+
+const char* appearanceMaterialName(relief::AppearanceMaterial material) {
+    switch (material) {
+        case relief::AppearanceMaterial::Wood: return "Wood";
+        case relief::AppearanceMaterial::Metal: return "Metal";
+        case relief::AppearanceMaterial::Stone: return "Stone";
+        case relief::AppearanceMaterial::Plastic: return "Plastic";
+    }
+    return "Wood";
+}
+
+std::vector<relief::AppearanceKind> appearanceKinds(bool forLevel) {
+    std::vector<relief::AppearanceKind> k{relief::AppearanceKind::SameAsParent, relief::AppearanceKind::SolidColour,
+                                          relief::AppearanceKind::Material};
+    if (forLevel) {
+        k.push_back(relief::AppearanceKind::ColourFromChildren);
+    }
+    return k;
+}
+
+std::vector<relief::AppearanceMaterial> appearanceMaterials() {
+    return {relief::AppearanceMaterial::Wood, relief::AppearanceMaterial::Metal, relief::AppearanceMaterial::Stone,
+            relief::AppearanceMaterial::Plastic};
+}
+
+std::string appearanceColourText(std::uint32_t rgb) {
+    static const char* kHex = "0123456789ABCDEF";
+    std::string s = "#";
+    for (int shift = 20; shift >= 0; shift -= 4) {
+        s += kHex[(rgb >> shift) & 0xFu];
+    }
+    return s;
+}
+
+std::string appearanceText(const relief::Appearance& a) {
+    switch (a.kind) {
+        case relief::AppearanceKind::SolidColour: return std::string("Solid Color ") + appearanceColourText(a.rgb);
+        case relief::AppearanceKind::Material: return std::string("Material: ") + appearanceMaterialName(a.material);
+        default: return appearanceKindName(a.kind);
+    }
+}
+
+bool parseAppearanceColour(const std::string& text, std::uint32_t& rgb) {
+    std::size_t b = 0, e = text.size();
+    while (b < e && (text[b] == ' ' || text[b] == '\t')) ++b;
+    while (e > b && (text[e - 1] == ' ' || text[e - 1] == '\t')) --e;
+    if (b < e && text[b] == '#') ++b;
+    if (e - b != 6) {
+        return false;
+    }
+    std::uint32_t v = 0;
+    for (std::size_t i = b; i < e; ++i) {
+        const char ch = text[i];
+        std::uint32_t d = 0;
+        if (ch >= '0' && ch <= '9') d = static_cast<std::uint32_t>(ch - '0');
+        else if (ch >= 'a' && ch <= 'f') d = static_cast<std::uint32_t>(ch - 'a' + 10);
+        else if (ch >= 'A' && ch <= 'F') d = static_cast<std::uint32_t>(ch - 'A' + 10);
+        else return false;
+        v = v * 16u + d;
+    }
+    rgb = v;
+    return true;
+}
+
+std::string appearanceFromForm(const ReliefPropertiesForm& form, bool forLevel, relief::Appearance& out) {
+    relief::Appearance a;
+    a.kind = form.appearanceKind;
+    if (a.kind == relief::AppearanceKind::Material) {
+        a.material = form.appearanceMaterial;
+    } else if (a.kind == relief::AppearanceKind::SolidColour) {
+        if (!parseAppearanceColour(form.appearanceColour, a.rgb)) {
+            return "Color must be six hex digits like #336699";
+        }
+    }
+    if (const std::string why = document::reliefAppearanceProblem(a, forLevel); !why.empty()) {
+        return why;
+    }
+    out = a;
+    return {};
+}
+
 const char* combineModeName(relief::CombineMode mode) {
     switch (mode) {
         case relief::CombineMode::Add: return "Add";
@@ -125,6 +215,7 @@ std::vector<ReliefTreeRow> buildReliefTree(const Document& doc, document::SheetI
         row.name = level->name;
         row.mode = level->mode;
         row.visible = level->visible;
+        row.appearance = level->appearance;
         row.index = li;
         rows.push_back(row);
         for (std::size_t ci = level->components.size(); ci-- > 0;) {
@@ -135,12 +226,41 @@ std::vector<ReliefTreeRow> buildReliefTree(const Document& doc, document::SheetI
             cr.name = c.data.name;
             cr.mode = c.data.mode;
             cr.visible = c.data.visible;
+            cr.appearance = c.data.appearance;
             cr.selected = doc.componentSelection().contains(c.id);
             cr.index = ci;
             rows.push_back(cr);
         }
     }
     return rows;
+}
+
+EditResult setReliefComponentAppearance(Document& doc, ComponentId id, const relief::Appearance& appearance) {
+    if (doc.findReliefComponent(id) == nullptr) {
+        return refused("the component no longer exists");
+    }
+    if (const std::string why = document::reliefAppearanceProblem(appearance, false); !why.empty()) {
+        return refused(why);
+    }
+    if (doc.findReliefComponent(id)->data.appearance == appearance) {
+        return {};
+    }
+    return run(doc, std::make_unique<document::SetReliefComponentAppearanceCommand>(id, appearance),
+               "the appearance cannot be applied");
+}
+
+EditResult setReliefLevelAppearance(Document& doc, LevelId id, const relief::Appearance& appearance) {
+    if (doc.findReliefLevel(id) == nullptr) {
+        return refused("the level no longer exists");
+    }
+    if (const std::string why = document::reliefAppearanceProblem(appearance, true); !why.empty()) {
+        return refused(why);
+    }
+    if (doc.findReliefLevel(id)->appearance == appearance) {
+        return {};
+    }
+    return run(doc, std::make_unique<document::SetReliefLevelAppearanceCommand>(id, appearance),
+               "the appearance cannot be applied");
 }
 
 EditResult addReliefLevel(Document& doc, document::SheetId sheet, const std::string& name, LevelId* created) {
@@ -451,6 +571,9 @@ bool describeReliefComponent(const Document& doc, ComponentId id, ReliefProperti
     out.tiltPivotY = fmt(d.tilt.pivot.y);
     out.tiltRaiseX = fmt(d.tilt.raise.x);
     out.tiltRaiseY = fmt(d.tilt.raise.y);
+    out.appearanceKind = d.appearance.kind;
+    out.appearanceMaterial = d.appearance.material;
+    out.appearanceColour = appearanceColourText(d.appearance.rgb);
     out.fieldInfo = std::to_string(d.field.width()) + " x " + std::to_string(d.field.height()) + " cells, " +
                     fmt(d.field.cellSize()) + " mm";
     return true;
@@ -504,6 +627,10 @@ EditResult applyReliefProperties(Document& doc, ComponentId id, const ReliefProp
     tilt.angleRad = angleDeg * kRadPerDeg;
     p.fade = fade;
     p.tilt = tilt;
+    relief::Appearance appearance;
+    if (const std::string why = appearanceFromForm(form, false, appearance); !why.empty()) {
+        return refused(why);
+    }
     // Dry-run the properties so a refusal leaves the document alone.
     relief::Component probe;
     probe.shapeHeightPercent = p.shapeHeightPercent;
@@ -521,6 +648,11 @@ EditResult applyReliefProperties(Document& doc, ComponentId id, const ReliefProp
         result.changed = result.changed || r.changed;
     }
     if (EditResult r = setReliefComponentMode(doc, id, form.mode); !r.ok) {
+        return r;
+    } else {
+        result.changed = result.changed || r.changed;
+    }
+    if (EditResult r = setReliefComponentAppearance(doc, id, appearance); !r.ok) {
         return r;
     } else {
         result.changed = result.changed || r.changed;
@@ -545,10 +677,15 @@ EditResult applyReliefProperties(Document& doc, ComponentId id, const ReliefProp
 }
 
 EditResult applyReliefLevelProperties(Document& doc, LevelId id, const std::string& name, relief::CombineMode mode,
-                                      const std::string& baseHeight) {
+                                      const std::string& baseHeight, const relief::Appearance* appearance) {
     const document::ReliefLevel* l = doc.findReliefLevel(id);
     if (l == nullptr) {
         return refused("the level no longer exists");
+    }
+    if (appearance != nullptr) {
+        if (const std::string why = document::reliefAppearanceProblem(*appearance, true); !why.empty()) {
+            return refused(why);
+        }
     }
     double base = 0.0;
     if (!parseFinite(baseHeight, base)) {
@@ -564,6 +701,13 @@ EditResult applyReliefLevelProperties(Document& doc, LevelId id, const std::stri
     } else {
         result.changed = result.changed || r.changed;
     }
+    if (appearance != nullptr) {
+        if (EditResult r = setReliefLevelAppearance(doc, id, *appearance); !r.ok) {
+            return r;
+        } else {
+            result.changed = result.changed || r.changed;
+        }
+    }
     if (l->mode != mode || l->baseHeight != base) {
         EditResult r = run(doc, std::make_unique<document::SetReliefLevelPropertiesCommand>(id, mode, base, l->visible),
                            "the level properties cannot be applied");
@@ -573,6 +717,17 @@ EditResult applyReliefLevelProperties(Document& doc, LevelId id, const std::stri
         result.changed = true;
     }
     return result;
+}
+
+bool describeReliefLevelAppearance(const Document& doc, LevelId id, ReliefPropertiesForm& out) {
+    const document::ReliefLevel* l = doc.findReliefLevel(id);
+    if (l == nullptr) {
+        return false;
+    }
+    out.appearanceKind = l->appearance.kind;
+    out.appearanceMaterial = l->appearance.material;
+    out.appearanceColour = appearanceColourText(l->appearance.rgb);
+    return true;
 }
 
 }  // namespace carvetto::viewmodel

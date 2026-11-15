@@ -199,3 +199,97 @@ TEST_CASE("level properties form", "[viewmodel][relief_tree]") {
     CHECK_FALSE(applyReliefLevelProperties(f.doc, f.l1, "Base", relief::CombineMode::MergeLow, "x").ok);
     CHECK_FALSE(applyReliefLevelProperties(f.doc, LevelId{}, "Base", relief::CombineMode::Add, "1").ok);
 }
+
+// --- T-0305: appearance ----------------------------------------------------------------------
+
+namespace {
+relief::Appearance solidOf(std::uint32_t rgb) {
+    relief::Appearance a;
+    a.kind = relief::AppearanceKind::SolidColour;
+    a.rgb = rgb;
+    return a;
+}
+}  // namespace
+
+TEST_CASE("appearance: set per component and level, one undo step each, refusals leave history alone",
+          "[viewmodel][relief_tree][appearance]") {
+    Fixture f;
+    const std::size_t before = f.doc.undoStack().count();
+    CHECK(setReliefComponentAppearance(f.doc, f.a, solidOf(0x336699)).changed);
+    CHECK(f.doc.findReliefComponent(f.a)->data.appearance == solidOf(0x336699));
+    CHECK(f.doc.undoStack().count() == before + 1);
+    CHECK_FALSE(setReliefComponentAppearance(f.doc, f.a, solidOf(0x336699)).changed);  // unchanged: no step
+    CHECK(f.doc.undoStack().count() == before + 1);
+    relief::Appearance kids;
+    kids.kind = relief::AppearanceKind::ColourFromChildren;
+    CHECK_FALSE(setReliefComponentAppearance(f.doc, f.a, kids).ok);  // components have no children
+    CHECK_FALSE(setReliefComponentAppearance(f.doc, ComponentId{}, solidOf(1)).ok);
+    CHECK(setReliefLevelAppearance(f.doc, f.l1, kids).changed);
+    CHECK_FALSE(setReliefLevelAppearance(f.doc, LevelId{}, kids).ok);
+    CHECK(f.doc.undoStack().count() == before + 2);
+    const auto rows = buildReliefTree(f.doc, f.doc.activeSheet());
+    for (const ReliefTreeRow& r : rows) {
+        if (r.isLevel && r.level == f.l1) CHECK(r.appearance.kind == relief::AppearanceKind::ColourFromChildren);
+        if (!r.isLevel && r.component == f.a) CHECK(r.appearance == solidOf(0x336699));
+        if (!r.isLevel && r.component == f.b) CHECK(r.appearance.kind == relief::AppearanceKind::SameAsParent);
+    }
+    REQUIRE(f.doc.undo());
+    CHECK(f.doc.findReliefLevel(f.l1)->appearance.kind == relief::AppearanceKind::SameAsParent);
+}
+
+TEST_CASE("appearance: the properties form applies it with the other fields in one step",
+          "[viewmodel][relief_tree][appearance]") {
+    Fixture f;
+    ReliefPropertiesForm form;
+    REQUIRE(describeReliefComponent(f.doc, f.a, form));
+    CHECK(form.appearanceKind == relief::AppearanceKind::SameAsParent);
+    form.appearanceKind = relief::AppearanceKind::SolidColour;
+    form.appearanceColour = "#10ff80";
+    form.baseHeight = "2";
+    const std::size_t before = f.doc.undoStack().count();
+    CHECK(applyReliefProperties(f.doc, f.a, form).changed);
+    CHECK(f.doc.findReliefComponent(f.a)->data.appearance == solidOf(0x10FF80));
+    CHECK(f.doc.undoStack().count() == before + 1);
+    REQUIRE(f.doc.undo());
+    CHECK(f.doc.findReliefComponent(f.a)->data.appearance.kind == relief::AppearanceKind::SameAsParent);
+    CHECK(f.doc.findReliefComponent(f.a)->data.baseHeight == 0.0);
+    REQUIRE(f.doc.redo());
+    ReliefPropertiesForm again;
+    REQUIRE(describeReliefComponent(f.doc, f.a, again));
+    CHECK(again.appearanceKind == relief::AppearanceKind::SolidColour);
+    CHECK(again.appearanceColour == "#10FF80");
+    // A bad colour or Color from Children refuses everything.
+    form.appearanceColour = "red";
+    CHECK_FALSE(applyReliefProperties(f.doc, f.a, form).ok);
+    form.appearanceKind = relief::AppearanceKind::ColourFromChildren;
+    CHECK_FALSE(applyReliefProperties(f.doc, f.a, form).ok);
+    CHECK(f.doc.undoStack().count() == before + 1);
+
+    // A level: through the level form.
+    relief::Appearance mat;
+    mat.kind = relief::AppearanceKind::Material;
+    mat.material = relief::AppearanceMaterial::Stone;
+    CHECK(applyReliefLevelProperties(f.doc, f.l1, "Low", relief::CombineMode::Add, "0", &mat).changed);
+    CHECK(f.doc.findReliefLevel(f.l1)->appearance == mat);
+    ReliefPropertiesForm lf;
+    REQUIRE(describeReliefLevelAppearance(f.doc, f.l1, lf));
+    CHECK(lf.appearanceKind == relief::AppearanceKind::Material);
+    CHECK(lf.appearanceMaterial == relief::AppearanceMaterial::Stone);
+}
+
+TEST_CASE("appearance: colour text parsing and menu", "[viewmodel][relief_tree][appearance]") {
+    std::uint32_t rgb = 0;
+    CHECK(parseAppearanceColour("#336699", rgb));
+    CHECK(rgb == 0x336699u);
+    CHECK(parseAppearanceColour(" aBcDeF ", rgb));
+    CHECK(rgb == 0xABCDEFu);
+    CHECK_FALSE(parseAppearanceColour("#33669", rgb));
+    CHECK_FALSE(parseAppearanceColour("#3366999", rgb));
+    CHECK_FALSE(parseAppearanceColour("#33669g", rgb));
+    CHECK_FALSE(parseAppearanceColour("", rgb));
+    CHECK(appearanceColourText(0x00AB09) == "#00AB09");
+    CHECK(appearanceKinds(false).size() == 3);
+    CHECK(appearanceKinds(true).size() == 4);
+    CHECK(appearanceKinds(true).back() == relief::AppearanceKind::ColourFromChildren);
+    CHECK(appearanceText(solidOf(0x336699)) == "Solid Color #336699");
+}

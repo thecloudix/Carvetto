@@ -108,6 +108,24 @@ struct Tilt {
     double angleRad = 0.0;
 };
 
+/// How a component or level is coloured in the Model view (T-0305, ADR-0095). Composition ignores it.
+/// SameAsParent: the level's (for a component) or the view's (for a level) appearance. SolidColour uses
+/// `rgb` (0xRRGGBB). Material uses `material`. ColourFromChildren (levels only) shows the level's
+/// components that have an appearance of their own in their own colours and lets the others take the mean
+/// of those colours.
+enum class AppearanceKind { SameAsParent, SolidColour, Material, ColourFromChildren };
+enum class AppearanceMaterial { Wood, Metal, Stone, Plastic };
+struct Appearance {
+    AppearanceKind kind = AppearanceKind::SameAsParent;
+    AppearanceMaterial material = AppearanceMaterial::Wood;  ///< Used by Material.
+    std::uint32_t rgb = 0xC8C8D2u;                           ///< Used by SolidColour, 0xRRGGBB.
+    bool operator==(const Appearance& o) const {
+        return kind == o.kind && (kind != AppearanceKind::Material || material == o.material) &&
+               (kind != AppearanceKind::SolidColour || rgb == o.rgb);
+    }
+    bool operator!=(const Appearance& o) const { return !(*this == o); }
+};
+
 struct Component {
     std::string name;
     HeightField field;
@@ -117,6 +135,7 @@ struct Component {
     Fade fade;
     Tilt tilt;
     bool visible = true;
+    Appearance appearance;  ///< Model view colour (T-0305); a component cannot use ColourFromChildren.
 };
 
 /// Mirror Mode of a level (T-0295, ADR-0079). Directions are in design space, Y up. For the
@@ -160,6 +179,7 @@ struct Level {
     CombineMode mode = CombineMode::Add;
     double baseHeight = 0.0;
     bool visible = true;
+    Appearance appearance;  ///< Model view colour (T-0305).
 };
 
 /// Checks the dynamic properties (finite numbers, non-degenerate fade/tilt direction when enabled).

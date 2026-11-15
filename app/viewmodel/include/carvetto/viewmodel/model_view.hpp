@@ -51,12 +51,32 @@ struct ModelSurface {
     relief::HeightField field;
     /// Cells per surface cell along each axis (1 = full resolution of the finest component).
     std::size_t stride{1};
+    /// Colour (0xFFRRGGBB) of each surface cell from the components' and levels' appearance (T-0305,
+    /// ADR-0095), row by row like `field`; 0 means "the view's material". Empty when no appearance is
+    /// used on the sheet (or the work would be too large), so the view's material colours everything.
+    std::vector<std::uint32_t> colours;
     /// Why there is nothing to show (no levels, nothing visible, too large); empty when ok.
     std::string problem;
     bool ok() const { return problem.empty() && !field.empty(); }
 };
 
 inline constexpr std::size_t kMaxSurfaceDimension = 512;
+/// Cells x visible components above which `composeModelSurface` skips the colour map.
+inline constexpr std::uint64_t kMaxColourWork = std::uint64_t{1} << 27;
+
+/// 0xFFRRGGBB of an appearance material at full light.
+std::uint32_t appearanceMaterialColour(relief::AppearanceMaterial m);
+/// 0xFFRRGGBB of a solid colour 0xRRGGBB.
+std::uint32_t appearanceSolidColour(std::uint32_t rgb);
+
+/// The colour map of `levels` on `grid` (cell values `surface` of the same grid): per cell the colour of the
+/// component that supplies the surface there, found by replaying the composition's combine rules (the
+/// topmost component for Add, the winner for Merge High/Low, the one below for Subtract/Multiply), with
+/// "Same as Parent" resolved through the level (Colour from Children = mean of the colours of the level's
+/// components that have their own). 0 where the view's material applies. Empty when no appearance is used.
+/// Level effects clip the map but a mirrored copy keeps the colour of the cell it came from.
+std::vector<std::uint32_t> composeModelColours(const std::vector<relief::Level>& levels, const relief::Grid& grid,
+                                               const relief::HeightField& composed);
 
 /// Composes the visible relief model of `sheet` onto a grid of at most `maxDimension` cells along
 /// the longer side (cell size multiplied by an integer stride; coarse cells are exact samples of
@@ -80,6 +100,8 @@ struct ModelRenderOptions {
     std::size_t width{640};
     std::size_t height{480};
     ModelMaterial material{ModelMaterial::Wood};
+    /// Use `ModelSurface::colours` where they are set (turn off to see the view material alone).
+    bool useAppearance{true};
     /// Vertical exaggeration.
     double zScale{1.0};
     std::uint32_t background{0xFFE2E4E8u};

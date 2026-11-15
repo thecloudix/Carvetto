@@ -560,6 +560,31 @@ constexpr EnumName<relief::MirrorMode> kMirrorModes[] = {
     {relief::MirrorMode::QuadBottomLeft, "quad_bottom_left"},
     {relief::MirrorMode::QuadBottomRight, "quad_bottom_right"}};
 
+constexpr EnumName<relief::AppearanceKind> kAppearanceKinds[] = {
+    {relief::AppearanceKind::SameAsParent, "same_as_parent"},
+    {relief::AppearanceKind::SolidColour, "solid"},
+    {relief::AppearanceKind::Material, "material"},
+    {relief::AppearanceKind::ColourFromChildren, "children"}};
+
+constexpr EnumName<relief::AppearanceMaterial> kAppearanceMaterials[] = {
+    {relief::AppearanceMaterial::Wood, "wood"},
+    {relief::AppearanceMaterial::Metal, "metal"},
+    {relief::AppearanceMaterial::Stone, "stone"},
+    {relief::AppearanceMaterial::Plastic, "plastic"}};
+
+/// The `appearance` object of a level or component (format 1.12, T-0305); only written when not
+/// "same as parent", and only the fields its kind uses.
+json encodeAppearance(const relief::Appearance& a) {
+    json j = json::object();
+    j["kind"] = nameOf(kAppearanceKinds, a.kind);
+    if (a.kind == relief::AppearanceKind::SolidColour) {
+        j["rgb"] = a.rgb;
+    } else if (a.kind == relief::AppearanceKind::Material) {
+        j["material"] = nameOf(kAppearanceMaterials, a.material);
+    }
+    return j;
+}
+
 json encodeRelief(const Document& doc) {
     json levels = json::array();
     for (const ReliefLevel& l : doc.reliefLevels()) {
@@ -570,6 +595,9 @@ json encodeRelief(const Document& doc) {
         lj["mode"] = nameOf(kCombineModes, l.mode);
         lj["base_height_mm"] = l.baseHeight;
         lj["visible"] = l.visible;
+        if (l.appearance.kind != relief::AppearanceKind::SameAsParent) {  // format 1.12 (T-0305)
+            lj["appearance"] = encodeAppearance(l.appearance);
+        }
         if (l.effects.any()) {  // format 1.10 (T-0295)
             json ej = json::object();
             ej["mirror"] = nameOf(kMirrorModes, l.effects.mirror);
@@ -594,6 +622,9 @@ json encodeRelief(const Document& doc) {
             cj["shape_height_percent"] = c.data.shapeHeightPercent;
             cj["base_height_mm"] = c.data.baseHeight;
             cj["visible"] = c.data.visible;
+            if (c.data.appearance.kind != relief::AppearanceKind::SameAsParent) {  // format 1.12 (T-0305)
+                cj["appearance"] = encodeAppearance(c.data.appearance);
+            }
             json fade = json::object();
             fade["enabled"] = c.data.fade.enabled;
             fade["anchor"] = json::array({c.data.fade.anchor.x, c.data.fade.anchor.y});
@@ -3875,8 +3906,43 @@ ManifestFile decodeManifest(JsonReader& r) {
 
 // --- relief (format 1.9, T-0282) ---
 
-constexpr std::array<std::string_view, 8> kReliefLevelKeys{"id",   "sheet",          "name",      "mode",
-                                                          "base_height_mm", "visible", "components", "effects"};
+constexpr std::array<std::string_view, 9> kReliefLevelKeys{
+    "id", "sheet", "name", "mode", "base_height_mm", "visible", "components", "effects", "appearance"};
+constexpr std::array<std::string_view, 3> kAppearanceKeys{"kind", "material", "rgb"};
+
+/// Reads an `appearance` record. Strict: the kind decides which of `material`/`rgb` must be there and
+/// the other must be absent, so one appearance has one spelling (byte-identical re-save).
+relief::Appearance decodeAppearance(JsonReader& r, const Path& p, bool isLevel) {
+    relief::Appearance a;
+    bool hasMaterial = false, hasRgb = false;
+    Record rec(r, p, kAppearanceKeys);
+    while (rec.next()) {
+        const Path f = rec.field();
+        if (rec.key() == "kind") {
+            a.kind = readEnum(r, f, kAppearanceKinds);
+        } else if (rec.key() == "material") {
+            a.material = readEnum(r, f, kAppearanceMaterials);
+            hasMaterial = true;
+        } else if (rec.key() == "rgb") {
+            a.rgb = static_cast<std::uint32_t>(readInt(r, f, 0, 0xFFFFFF));
+            hasRgb = true;
+        } else {
+            rec.skip();
+        }
+    }
+    rec.require("kind");
+    if (a.kind == relief::AppearanceKind::SameAsParent) {
+        fail(p, "an appearance of kind same_as_parent is not stored");
+    }
+    if (a.kind == relief::AppearanceKind::ColourFromChildren && !isLevel) {
+        fail(p, "a component cannot take its colour from children");
+    }
+    if (hasRgb != (a.kind == relief::AppearanceKind::SolidColour) ||
+        hasMaterial != (a.kind == relief::AppearanceKind::Material)) {
+        fail(p, "appearance needs rgb for solid, material for material, and neither otherwise");
+    }
+    return a;
+}
 constexpr std::array<std::string_view, 3> kReliefEffectsKeys{"mirror", "mirror_center", "clip"};
 
 relief::LevelEffects decodeReliefEffects(JsonReader& r, const Path& p) {
@@ -3928,8 +3994,8 @@ relief::LevelEffects decodeReliefEffects(JsonReader& r, const Path& p) {
     rec.requireAll();
     return e;
 }
-constexpr std::array<std::string_view, 8> kReliefComponentKeys{
-    "id", "name", "mode", "shape_height_percent", "base_height_mm", "visible", "fade", "tilt"};
+constexpr std::array<std::string_view, 9> kReliefComponentKeys{
+    "id", "name", "mode", "shape_height_percent", "base_height_mm", "visible", "fade", "tilt", "appearance"};
 constexpr std::array<std::string_view, 4> kFadeKeys{"enabled", "anchor", "second", "percent"};
 constexpr std::array<std::string_view, 4> kTiltKeys{"enabled", "pivot", "raise", "angle_rad"};
 
@@ -3960,6 +4026,8 @@ ReliefComponent decodeReliefComponent(JsonReader& r, const Path& p) {
             c.data.baseHeight = readFinite(r, f);
         } else if (k == "visible") {
             c.data.visible = readBool(r, f);
+        } else if (k == "appearance") {
+            c.data.appearance = decodeAppearance(r, f, false);
         } else if (k == "fade") {
             Record fr(r, f, kFadeKeys);
             while (fr.next()) {
@@ -4002,7 +4070,11 @@ ReliefComponent decodeReliefComponent(JsonReader& r, const Path& p) {
             rec.skip();  // unknown keys of a relief record are dropped (ADR-0061)
         }
     }
-    rec.requireAll();
+    for (const std::string_view key : kReliefComponentKeys) {
+        if (key != "appearance") {  // optional: added in format 1.12
+            rec.require(key);
+        }
+    }
     if (const std::string problem = reliefPropertiesProblem(c.data); !problem.empty()) {
         fail(p, problem);
     }
@@ -4043,6 +4115,8 @@ std::vector<ReliefLevel> decodeRelief(JsonReader& r, const Path& p) {
                 l.visible = readBool(r, f);
             } else if (k == "effects") {
                 l.effects = decodeReliefEffects(r, f);
+            } else if (k == "appearance") {
+                l.appearance = decodeAppearance(r, f, true);
             } else if (k == "components") {
                 if (r.peek() != JKind::Array) {
                     fail(f, "must be a JSON array");
@@ -4061,7 +4135,7 @@ std::vector<ReliefLevel> decodeRelief(JsonReader& r, const Path& p) {
             }
         }
         for (const std::string_view key : kReliefLevelKeys) {
-            if (key != "effects") {  // optional: added in format 1.10
+            if (key != "effects" && key != "appearance") {  // optional: added in 1.10 and 1.12
                 rec.require(key);
             }
         }
@@ -5081,10 +5155,10 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             std::uint64_t cells = 0;
             for (const ReliefLevel& l : doc.reliefLevels()) {
                 if (l.name.size() > kMaxReliefNameBytes || !std::isfinite(l.baseHeight) || !doc.findSheet(l.sheet) ||
-                    !reliefEffectsProblem(l.effects).empty()) {
+                    !reliefEffectsProblem(l.effects).empty() || !reliefAppearanceProblem(l.appearance, true).empty()) {
                     return CarvError{CarvError::Code::InvalidContent,
                                      "relief level #" + std::to_string(l.id.value) +
-                                         " has an over-long name, a non-finite base height, invalid effects or a missing sheet"};
+                                         " has an over-long name, a non-finite base height, invalid effects or appearance or a missing sheet"};
                 }
                 for (const ReliefComponent& c : l.components) {
                     if (const std::string problem = reliefComponentProblem(c.data); !problem.empty()) {
@@ -5128,13 +5202,20 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                                  [](const ToolpathRecord& tp) { return !tp.expressions.empty(); });
         const bool usesEffects = std::any_of(doc.reliefLevels().begin(), doc.reliefLevels().end(),
                                              [](const ReliefLevel& l) { return l.effects.any(); });
+        const bool usesAppearance = std::any_of(doc.reliefLevels().begin(), doc.reliefLevels().end(), [](const ReliefLevel& l) {
+            return l.appearance.kind != relief::AppearanceKind::SameAsParent ||
+                   std::any_of(l.components.begin(), l.components.end(), [](const ReliefComponent& c) {
+                       return c.data.appearance.kind != relief::AppearanceKind::SameAsParent;
+                   });
+        });
         const bool usesGroups = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(),
                                             [](const ToolpathRecord& tp) { return tp.group.id != 0; });
         const bool usesPriors = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
             const auto* f = std::get_if<toolpath::Finish3dParams>(&tp.params);
             return f != nullptr && !f->priorToolpaths.empty();
         });
-        version["minor"] = (usesGroups || usesPriors) ? kCarvFormatMinorToolGroups
+        version["minor"] = usesAppearance ? kCarvFormatMinorAppearance
+                           : (usesGroups || usesPriors) ? kCarvFormatMinorToolGroups
                            : usesEffects          ? kCarvFormatMinorLevelEffects
                            : usesRelief           ? kCarvFormatMinorRelief
                            : usesExpressions    ? kCarvFormatMinorExpressions

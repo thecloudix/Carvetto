@@ -64,7 +64,11 @@ inline constexpr int kCarvFormatMinorLevelEffects = 10;
 /// a calculation that makes several toolpaths) and a 3D finish's `prior_toolpaths`; written only when a record
 /// has one. The newest minor this build writes and reads.
 inline constexpr int kCarvFormatMinorToolGroups = 11;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorToolGroups;
+/// 1.12 (T-0305, ADR-0095) adds Model view appearance (`appearance` on relief levels and components:
+/// kind, material or rgb); written only when one is not "same as parent". The newest minor this build
+/// writes and reads.
+inline constexpr int kCarvFormatMinorAppearance = 12;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorAppearance;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

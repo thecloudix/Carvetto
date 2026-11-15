@@ -42,6 +42,27 @@ std::string reliefPropertiesProblem(const relief::Component& c) {
     if (relief::validateProperties(c) != relief::Status::Ok) {
         return "the fade or tilt direction is degenerate";
     }
+    return reliefAppearanceProblem(c.appearance, false);
+}
+
+std::string reliefAppearanceProblem(const relief::Appearance& a, bool isLevel) {
+    using relief::AppearanceKind;
+    using relief::AppearanceMaterial;
+    if (a.kind != AppearanceKind::SameAsParent && a.kind != AppearanceKind::SolidColour &&
+        a.kind != AppearanceKind::Material && a.kind != AppearanceKind::ColourFromChildren) {
+        return "the appearance kind is unknown";
+    }
+    if (a.kind == AppearanceKind::ColourFromChildren && !isLevel) {
+        return "a component has no children: Colour from Children is for levels";
+    }
+    if (a.kind == AppearanceKind::SolidColour && a.rgb > 0xFFFFFFu) {
+        return "the colour must be 0xRRGGBB";
+    }
+    if (a.kind == AppearanceKind::Material && a.material != AppearanceMaterial::Wood &&
+        a.material != AppearanceMaterial::Metal && a.material != AppearanceMaterial::Stone &&
+        a.material != AppearanceMaterial::Plastic) {
+        return "the appearance material is unknown";
+    }
     return {};
 }
 

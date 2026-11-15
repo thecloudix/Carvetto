@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@ struct ReliefTreeRow {
     relief::CombineMode mode{relief::CombineMode::Add};
     bool visible{true};
     bool selected{false};
+    relief::Appearance appearance;  ///< Own appearance (T-0305); "same as parent" unless set.
     /// Index among the level's components (components) or among the sheet's levels (levels),
     /// bottom first, as the reorder commands take it.
     std::size_t index{0};
@@ -33,6 +35,19 @@ struct ReliefTreeRow {
 
 /// The tree of `sheet`.
 std::vector<ReliefTreeRow> buildReliefTree(const document::Document& doc, document::SheetId sheet);
+
+/// Appearance menu (T-0305, ADR-0095): "Same as Parent", "Solid Color", "Material" and, for levels
+/// only, "Color from Children".
+const char* appearanceKindName(relief::AppearanceKind kind);
+const char* appearanceMaterialName(relief::AppearanceMaterial material);
+/// The kinds in menu order; a component's menu has no Color from Children.
+std::vector<relief::AppearanceKind> appearanceKinds(bool forLevel);
+std::vector<relief::AppearanceMaterial> appearanceMaterials();
+/// One-line text of an appearance, "Solid Color #336699", "Material: Wood", ...
+std::string appearanceText(const relief::Appearance& a);
+/// "#RRGGBB" (or "RRGGBB") to 0xRRGGBB; false for anything else.
+bool parseAppearanceColour(const std::string& text, std::uint32_t& rgb);
+std::string appearanceColourText(std::uint32_t rgb);
 
 const char* combineModeName(relief::CombineMode mode);
 /// Every mode in menu order.
@@ -48,6 +63,11 @@ EditResult renameReliefComponent(document::Document& doc, document::ComponentId 
 EditResult renameReliefLevel(document::Document& doc, document::LevelId id, const std::string& name);
 EditResult setReliefComponentMode(document::Document& doc, document::ComponentId id, relief::CombineMode mode);
 EditResult setReliefLevelMode(document::Document& doc, document::LevelId id, relief::CombineMode mode);
+/// Sets the appearance of a component (Color from Children is refused) or a level; one undo step.
+EditResult setReliefComponentAppearance(document::Document& doc, document::ComponentId id,
+                                        const relief::Appearance& appearance);
+EditResult setReliefLevelAppearance(document::Document& doc, document::LevelId id,
+                                    const relief::Appearance& appearance);
 EditResult setReliefComponentVisible(document::Document& doc, document::ComponentId id, bool visible);
 EditResult setReliefLevelVisible(document::Document& doc, document::LevelId id, bool visible);
 /// Show (This / Only This / All But This / All) and Hide (This / All) of the component menu are
@@ -87,6 +107,10 @@ struct ReliefPropertiesForm {
     bool tiltEnabled{false};
     std::string tiltAngleDeg;
     std::string tiltPivotX, tiltPivotY, tiltRaiseX, tiltRaiseY;
+    /// Appearance (T-0305): kind, material and the colour as typed ("#RRGGBB").
+    relief::AppearanceKind appearanceKind{relief::AppearanceKind::SameAsParent};
+    relief::AppearanceMaterial appearanceMaterial{relief::AppearanceMaterial::Wood};
+    std::string appearanceColour{"#C8C8D2"};
     /// Cell grid of the field, for the read-only size line ("120 x 80 cells, 0.5 mm").
     std::string fieldInfo;
 };
@@ -99,8 +123,16 @@ bool describeReliefComponent(const document::Document& doc, document::ComponentI
 /// with the reason and nothing changes.
 EditResult applyReliefProperties(document::Document& doc, document::ComponentId id, const ReliefPropertiesForm& form);
 
-/// The level's Base Height, Combine Mode and name (levels expose only these).
+/// The level's Base Height, Combine Mode, name and (when `appearance` is given, with the colour text
+/// used for a solid colour) Appearance: levels expose only these.
 EditResult applyReliefLevelProperties(document::Document& doc, document::LevelId id, const std::string& name,
-                                      relief::CombineMode mode, const std::string& baseHeight);
+                                      relief::CombineMode mode, const std::string& baseHeight,
+                                      const relief::Appearance* appearance = nullptr);
+
+/// The level's current appearance as form fields; false when it does not exist.
+bool describeReliefLevelAppearance(const document::Document& doc, document::LevelId id, ReliefPropertiesForm& out);
+
+/// Builds the appearance the form describes; empty string on success, else the reason.
+std::string appearanceFromForm(const ReliefPropertiesForm& form, bool forLevel, relief::Appearance& out);
 
 }  // namespace carvetto::viewmodel

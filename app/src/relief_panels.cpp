@@ -245,6 +245,7 @@ void ComponentTreePanel::refresh() {
         }
         item->setText(kColName, qs(row.name));
         item->setText(kColMode, QString::fromUtf8(viewmodel::combineModeName(row.mode)));
+        item->setToolTip(kColName, QString::fromUtf8(("Appearance: " + viewmodel::appearanceText(row.appearance)).c_str()));
         item->setCheckState(kColShow, row.visible ? Qt::Checked : Qt::Unchecked);
         item->setSelected(!row.isLevel && row.selected);
         QFont f = item->font(kColName);
@@ -450,6 +451,17 @@ ComponentPropertiesPanel::ComponentPropertiesPanel(DocumentGetter getter, QWidge
     mode_->setObjectName(QStringLiteral("Combine mode"));
     fillModeBox(mode_);
     form->addRow(QStringLiteral("Combine mode"), mode_);
+    appearance_ = new QComboBox(this);
+    appearance_->setObjectName(QStringLiteral("Appearance"));
+    appearance_->setToolTip(QStringLiteral("How the Model view colours this item; Color from Children is for levels"));
+    form->addRow(QStringLiteral("Appearance"), appearance_);
+    appearanceMaterial_ = new QComboBox(this);
+    appearanceMaterial_->setObjectName(QStringLiteral("Appearance material"));
+    for (const relief::AppearanceMaterial m : viewmodel::appearanceMaterials()) {
+        appearanceMaterial_->addItem(QString::fromUtf8(viewmodel::appearanceMaterialName(m)), static_cast<int>(m));
+    }
+    form->addRow(QStringLiteral("Material"), appearanceMaterial_);
+    appearanceColour_ = edit("Appearance color", "Solid color as #RRGGBB");
     shape_ = edit("Shape height %", "Scale of the stored height, 0 to 1000 %");
     base_ = edit("Base height", "Z offset added after the shape height, in mm");
     fadeOn_ = new QCheckBox(QStringLiteral("Fade"), this);
@@ -508,8 +520,23 @@ void ComponentPropertiesPanel::fill() {
                                                       tiltPx_, tiltPy_, tiltRx_, tiltRy_, fadeOn_, tiltOn_}) {
         w->setEnabled(detail);
     }
-    for (QWidget* w : std::initializer_list<QWidget*>{name_, mode_, base_, apply_}) {
+    for (QWidget* w : std::initializer_list<QWidget*>{name_, mode_, base_, apply_, appearance_, appearanceMaterial_,
+                                                      appearanceColour_}) {
         w->setEnabled(showing_ || levelMode);
+    }
+    // The appearance menu: a component has no children, so no Color from Children for it.
+    appearance_->clear();
+    for (const relief::AppearanceKind k : viewmodel::appearanceKinds(levelMode)) {
+        appearance_->addItem(QString::fromUtf8(viewmodel::appearanceKindName(k)), static_cast<int>(k));
+    }
+    if (levelMode || showing_) {
+        viewmodel::ReliefPropertiesForm shown = form;
+        if (levelMode) {
+            viewmodel::describeReliefLevelAppearance(*d, level_, shown);
+        }
+        appearance_->setCurrentIndex(appearance_->findData(static_cast<int>(shown.appearanceKind)));
+        appearanceMaterial_->setCurrentIndex(appearanceMaterial_->findData(static_cast<int>(shown.appearanceMaterial)));
+        appearanceColour_->setText(qs(shown.appearanceColour));
     }
     if (levelMode) {
         const document::ReliefLevel* l = d->findReliefLevel(level_);
@@ -572,6 +599,9 @@ bool ComponentPropertiesPanel::apply() {
         f.tiltPivotY = tiltPy_->text().toStdString();
         f.tiltRaiseX = tiltRx_->text().toStdString();
         f.tiltRaiseY = tiltRy_->text().toStdString();
+        f.appearanceKind = static_cast<relief::AppearanceKind>(appearance_->currentData().toInt());
+        f.appearanceMaterial = static_cast<relief::AppearanceMaterial>(appearanceMaterial_->currentData().toInt());
+        f.appearanceColour = appearanceColour_->text().toStdString();
         const bool ok = finish(viewmodel::applyReliefProperties(*d, component_, f));
         if (!ok) {
             return false;
@@ -579,8 +609,19 @@ bool ComponentPropertiesPanel::apply() {
         return true;
     }
     if (level_ && d->findReliefLevel(level_) != nullptr) {
+        viewmodel::ReliefPropertiesForm f;
+        f.appearanceKind = static_cast<relief::AppearanceKind>(appearance_->currentData().toInt());
+        f.appearanceMaterial = static_cast<relief::AppearanceMaterial>(appearanceMaterial_->currentData().toInt());
+        f.appearanceColour = appearanceColour_->text().toStdString();
+        relief::Appearance appearance;
+        if (const std::string why = viewmodel::appearanceFromForm(f, true, appearance); !why.empty()) {
+            viewmodel::EditResult refused;
+            refused.ok = false;
+            refused.message = why;
+            return finish(refused);
+        }
         return finish(viewmodel::applyReliefLevelProperties(*d, level_, name_->text().toStdString(), mode,
-                                                            base_->text().toStdString()));
+                                                            base_->text().toStdString(), &appearance));
     }
     return false;
 }

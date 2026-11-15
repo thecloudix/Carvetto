@@ -172,6 +172,39 @@ class SetReliefLevelPropertiesCommand : public Command {
     Props after_;
 };
 
+/// Sets a component's Model view appearance (T-0305). A no-op for an unknown id, an unchanged value or
+/// Colour from Children (components have no children). Consecutive edits of one component coalesce.
+class SetReliefComponentAppearanceCommand : public Command {
+   public:
+    SetReliefComponentAppearanceCommand(ComponentId id, relief::Appearance appearance)
+        : id_(id), after_(appearance) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Set component appearance"; }
+    bool mergeWith(const Command& next) override;
+
+   private:
+    ComponentId id_;
+    relief::Appearance before_;
+    relief::Appearance after_;
+};
+
+/// Sets a level's Model view appearance (T-0305). A no-op for an unknown id or an unchanged value.
+/// Consecutive edits of one level coalesce.
+class SetReliefLevelAppearanceCommand : public Command {
+   public:
+    SetReliefLevelAppearanceCommand(LevelId id, relief::Appearance appearance) : id_(id), after_(appearance) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Set level appearance"; }
+    bool mergeWith(const Command& next) override;
+
+   private:
+    LevelId id_;
+    relief::Appearance before_;
+    relief::Appearance after_;
+};
+
 /// Sets (Apply or Update) or removes (empty polygons) a level's clipping. The polygons are the
 /// outlines of closed vectors, flattened by the caller, in design space. Does nothing for invalid
 /// polygons (see `relief::validateEffects`) or an unchanged clip.
