@@ -1502,11 +1502,11 @@ Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, sli
 Phase: 2   Module: core/toolpath   Depends on: T-0298, T-0296
 Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a moulding cross-section along drive rails with the tool shape; Toolpath Position, Z from the cross-section height; drive rails (reverse/clear) and an open profile vector (reverse profile); finishing (stepover, vary stepover, skip flat regions, sharp corners) and roughing (larger-area clearance tool, machine flat regions, ramp plunge, allowance); boundary offset. Position semantics and flat-region handling are product readings: the coder records its readings in the ADR (section of ADR-0073) and the director lists them for owner review; do not stop for them.
 
-### T-0308 App: Two Rail Sweep, Extrude and Weave, Turn and Spin, Textured Area forms (T-0301 follow-up)   [status: verifying]
+### T-0308 App: Two Rail Sweep, Extrude and Weave, Turn and Spin, Textured Area forms (T-0301 follow-up)   [status: done — PR #187]
 Phase: 2   Module: app   Depends on: T-0301
 Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the cores in relief/sweep.hpp, extrude.hpp, revolve.hpp and textured_area.hpp: pick rails/profiles/boundaries from the selection, preview, Apply as one undo step through AddReliefComponentCommand, self-test coverage. Optional: both-sides mesh import and a draggable zero plane in the Model view.
 
-### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: verifying]
+### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: verified (PASS), landing]
 Phase: 2   Module: app   Depends on: T-0302
 Goal: The items T-0302 left out (ADR-0084): overlay reference image over the model with opacity, custom brush stamps from an image (the core already supports CustomBrush), brush ring cursor in the Model view, presets persisted across sessions, sculpt preview merged with the other components, cheaper long strokes. Low priority.
 
@@ -1519,7 +1519,7 @@ Acceptance criteria: the test cannot fail from scheduler noise (justify in the A
 Phase: 2   Module: app + core/document   Depends on: T-0303, T-0307
 Goal: The items T-0303 left out (ADR-0085 "Remaining"): toolpath entries/dialogs for Project Toolpath onto Model and 3D Tabs (core/toolpath/project3d.hpp), the Model-menu action Create Component From Toolpath Preview (core/simulate/preview_component.hpp), rest-tool lists and prior toolpaths for 3D rough/finish, and the Moulding toolpath entry once T-0307 lands (follow the extension point in ADR-0085). Follow the T-0303 pattern; self-test coverage.
 
-### T-0312 .carv writer refuses toolpaths with more than one move per file byte (regular models hit it)   [status: verifying]
+### T-0312 .carv writer refuses toolpaths with more than one move per file byte (regular models hit it)   [status: done — PR #186 (ratio 1024, owner approved)]
 Phase: 2   Module: core/io   Depends on: T-0303
 Goal: T-0303's coder observed that the writer's "more than 1 move per byte of file size" guard (a zip-bomb style ratio check) refuses saving a long 3D finish toolpath over a very regular model (a plain ramp compresses to almost nothing). Re-derive the guard so legitimate regular jobs save and load, while hostile files stay bounded (absolute caps instead of ratio, or measure uncompressed size). Keep the hostile-input tests; ADR note.
 
