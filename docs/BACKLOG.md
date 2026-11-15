@@ -1473,7 +1473,7 @@ Acceptance criteria: panel actions go through the undoable commands of T-0282; 3
 Phase: 2   Module: app   Depends on: T-0299, T-0283, T-0284, T-0292, T-0293
 Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, boundary and cross-section tools, each with preview and the common Apply / Reset / Start New Component buttons.
 
-### T-0301 App: 3D import/export dialogs (orientation, zero plane, undercuts) and sweeps/turn/textured dialogs   [status: verifying (PR open; sweep, extrude, turn, textured forms -> T-0308)]
+### T-0301 App: 3D import/export dialogs (orientation, zero plane, undercuts) and sweeps/turn/textured dialogs   [status: done — PR #179 (first subset; rest -> T-0308)]
 Phase: 2   Module: app   Depends on: T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291
 Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, centre), zero-plane positioning with undercut highlight, export actions, and the sweep, extrude/weave, turn/spin and textured-area forms. Split into two cards when picked up if the coder judges it too large.
 
@@ -1481,11 +1481,11 @@ Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, c
 Phase: 2   Module: app   Depends on: T-0299, T-0294, T-0295
 Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, presets, Keep/Discard), plus Clipping and Mirror Mode level actions.
 
-### T-0303 App: 3D toolpath dialogs, preview and simulation   [status: verifying (first subset: 3D Rough + 3D Finish; rest -> T-0311)]
+### T-0303 App: 3D toolpath dialogs, preview and simulation   [status: done — PR #182 (first subset; rest -> T-0311)]
 Phase: 2   Module: app   Depends on: T-0299, T-0296, T-0297, T-0298
 Goal: Toolpath panel entries and dialogs for 3D rough, 3D finish, moulding, project-onto-model and 3D tabs; preview in the 3D view; simulation of 3D toolpaths with the existing simulator; save/post output uses the existing pipeline.
 
-### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: verifying]
+### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: done — PR #181]
 Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
@@ -1510,7 +1510,7 @@ Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the
 Phase: 2   Module: app   Depends on: T-0302
 Goal: The items T-0302 left out (ADR-0084): overlay reference image over the model with opacity, custom brush stamps from an image (the core already supports CustomBrush), brush ring cursor in the Model view, presets persisted across sessions, sculpt preview merged with the other components, cheaper long strokes. Low priority.
 
-### T-0310 Flaky timing test: 'selection removal scales near-linearly in every order' failed again on main (ubuntu-24.04)   [status: verifying (re-scoped, siblings -> T-0313)]
+### T-0310 Flaky timing test: 'selection removal scales near-linearly in every order' failed again on main (ubuntu-24.04)   [status: done — PR #183 (siblings -> T-0313)]
 Phase: 2   Module: core/tests   Depends on: T-0270
 Goal: CI run 43649513980 (main, T-0300 merge, linux-app ubuntu-24.04, 2026-11-14) failed only this test (ctest #981) after T-0270 added the CPU-time retry helper. Find why it still flakes under load (wall-clock leak, thread contention, ratio on tiny absolute times, retry count too low) and make it deterministic: prefer counting operations over timing; if a timing assertion must stay, derive the bound from measured CPU time with a floor that makes noise irrelevant. (Re-scoped by director 2026-11-15 after verifier round 1: the sibling-test audit moved to T-0313; this card covers the one failing test.)
 Acceptance criteria: the test cannot fail from scheduler noise (justify in the ADR or the test comment); 200 consecutive runs under `stress`-style load (e.g. ctest -j16 --repeat until-fail:50 on this test plus a CPU burner) show no failure; mutants of the asserted complexity (quadratic removal) are still killed; one changelog fragment.
