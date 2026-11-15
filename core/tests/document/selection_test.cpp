@@ -216,7 +216,7 @@ TEST_CASE("selection removal scales near-linearly in every order", "[document][s
         for (const std::uint64_t n : {std::uint64_t{50'000}, std::uint64_t{100'000}}) {
             const std::size_t work = removeAll(n, order);
             INFO("order " << static_cast<int>(order) << " n " << n << " work " << work);
-            CHECK(work <= 4 * n);
+            REQUIRE(work <= 4 * n);  // fail fast: a quadratic mutant would run for minutes otherwise
         }
     }
 }

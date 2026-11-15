@@ -2,19 +2,16 @@
 // depth or width, because file loading (T-0012) runs it on untrusted input. Documents are built with
 // the raw mutators (they do not maintain group links, so the tests set both sides explicitly).
 //
-// Timing method, as for the AC4 undo/redo test in commands_test.cpp: process CPU time
-// (`processCpuSeconds`, cpu_time.hpp; unaffected by other processes under parallel ctest), with
-// the N and 2N checks alternating (`interleavedCpuSeconds`, cpu_scaling.hpp, T-0145). Each shape
-// gets an absolute bound on the least 2N time (1 s with NDEBUG; 10 s in Debug, where the Debug
-// standard library is several times slower) and a machine-independent scaling check,
-// time(2N) < 3 x time(N): N log N work gives a ratio slightly above 2, while the quadratic
-// behaviour this replaces gave >= 4.
+// T-0313: the tests count work instead of timing it. checkIntegrity() reports the elementary steps
+// of its object, link and parent-chain passes (one per object, per listed child, per parent-chain
+// object walked or marked), so the check cannot be affected by scheduler load. Linear work is
+// about 5 steps per object (a chain: 1 object + 1 child + 1 listed pair + walk + mark); the
+// quadratic behaviour this replaced (walking every chain to its end) takes ~N^2/2 steps.
 
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -22,19 +19,15 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/object.hpp"
-// Last: on Windows it includes <windows.h> (macros such as near/far).
-#include "../geometry/cpu_scaling.hpp"
 
 using namespace carvetto::document;
 using Kind = IntegrityIssue::Kind;
 
 namespace {
 
-#ifdef NDEBUG
-constexpr double kBoundSeconds = 1.0;
-#else
-constexpr double kBoundSeconds = 10.0;
-#endif
+/// Most steps per object the checks may take (linear work is ~5; quadratic is >= N/2).
+constexpr std::size_t kStepsPerObject = 8;
+
 std::size_t countKind(const std::vector<IntegrityIssue>& issues, Kind kind) {
     return static_cast<std::size_t>(std::count_if(
         issues.begin(), issues.end(), [kind](const IntegrityIssue& i) { return i.kind == kind; }));
@@ -99,55 +92,35 @@ ObjectId buildWide(Document& doc, std::size_t width) {
     return groupId;
 }
 
-/// Best-of-two process CPU seconds for one checkIntegrity() call; `issues` receives the result.
-double timeCheck(const Document& doc, std::vector<IntegrityIssue>& issues) {
-    double best = std::numeric_limits<double>::infinity();
-    for (int run = 0; run < 2; ++run) {
-        const double start = carvetto::test::processCpuSeconds();
-        issues = doc.checkIntegrity();
-        best = std::min(best, carvetto::test::processCpuSeconds() - start);
-    }
-    return best;
-}
-
-/// Interleaved checkIntegrity() timings of `small` and `big` (three pairs; the small time is
-/// floored above the Windows process-clock tick). Both must report no issues.
-carvetto::test::ScalingTimes timeScaling(const Document& small, const Document& big) {
-    std::vector<IntegrityIssue> smallIssues;
-    std::vector<IntegrityIssue> bigIssues;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(3.0,
-        3, [&] { smallIssues = small.checkIntegrity(); }, [&] { bigIssues = big.checkIntegrity(); });
-    INFO(firstMessages(smallIssues));
-    REQUIRE(smallIssues.empty());
-    INFO(firstMessages(bigIssues));
-    REQUIRE(bigIssues.empty());
-    return t;
+/// checkIntegrity() steps for `doc`, which must report no issues.
+std::size_t checkSteps(const Document& doc) {
+    std::size_t steps = 0;
+    const std::vector<IntegrityIssue> issues = doc.checkIntegrity(&steps);
+    INFO(firstMessages(issues));
+    REQUIRE(issues.empty());
+    return steps;
 }
 
 }  // namespace
 
 TEST_CASE("checkIntegrity is fast on a 60 000-deep chain of nested groups", "[document][integrity][perf]") {
-    Document small;
-    buildChain(small, 30000);
-    Document big;
-    buildChain(big, 60000);
-    const carvetto::test::ScalingTimes t = timeScaling(small, big);
-    INFO("CPU seconds: 30k = " << t.smallSeconds << ", 60k = " << t.largeSeconds
-                        << ", ratio " << t.ratio());
-    CHECK(t.largeSeconds < kBoundSeconds);
-    CHECK(t.ratio() < 3.0);
+    for (const std::size_t depth : {std::size_t{30000}, std::size_t{60000}}) {
+        Document doc;
+        buildChain(doc, depth);
+        const std::size_t steps = checkSteps(doc);
+        INFO("depth " << depth << " steps " << steps);
+        CHECK(steps <= kStepsPerObject * depth);
+    }
 }
 
 TEST_CASE("checkIntegrity is fast on one group with 200 000 children", "[document][integrity][perf]") {
-    Document small;
-    buildWide(small, 100000);
-    Document big;
-    buildWide(big, 200000);
-    const carvetto::test::ScalingTimes t = timeScaling(small, big);
-    INFO("CPU seconds: 100k = " << t.smallSeconds << ", 200k = " << t.largeSeconds
-                        << ", ratio " << t.ratio());
-    CHECK(t.largeSeconds < kBoundSeconds);
-    CHECK(t.ratio() < 3.0);
+    for (const std::size_t width : {std::size_t{100000}, std::size_t{200000}}) {
+        Document doc;
+        buildWide(doc, width);
+        const std::size_t steps = checkSteps(doc);
+        INFO("width " << width << " steps " << steps);
+        CHECK(steps <= kStepsPerObject * width);
+    }
 }
 
 TEST_CASE("checkIntegrity finds a cycle closed at depth 50 000 of a 60 000-deep chain",
@@ -160,10 +133,10 @@ TEST_CASE("checkIntegrity finds a cycle closed at depth 50 000 of a 60 000-deep 
     doc.findObject(ids[0])->parent = ids[kDepth];
     doc.findObject(ids[kDepth])->asGroup()->children.push_back(ids[0]);
 
-    std::vector<IntegrityIssue> issues;
-    const double t = timeCheck(doc, issues);
-    INFO("CPU seconds: " << t << "; " << firstMessages(issues));
-    CHECK(t < kBoundSeconds);
+    std::size_t steps = 0;
+    const std::vector<IntegrityIssue> issues = doc.checkIntegrity(&steps);
+    INFO("steps " << steps << "; " << firstMessages(issues));
+    CHECK(steps <= kStepsPerObject * ids.size());
     // Every object's parent chain ends in the loop, so each one is reported once, in id order, and
     // nothing else is.
     REQUIRE(countKind(issues, Kind::Cycle) == ids.size());
