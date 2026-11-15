@@ -54,6 +54,7 @@ void Selection::compact() const {
     if (dead_ == 0) {
         return;
     }
+    compactionWork_ += order_.size();
     std::size_t out = 0;
     for (std::size_t i = 0; i < order_.size(); ++i) {
         if (!order_[i].isNull()) {
