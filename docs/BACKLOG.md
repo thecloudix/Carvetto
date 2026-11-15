@@ -1481,7 +1481,7 @@ Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, c
 Phase: 2   Module: app   Depends on: T-0299, T-0294, T-0295
 Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, presets, Keep/Discard), plus Clipping and Mirror Mode level actions.
 
-### T-0303 App: 3D toolpath dialogs, preview and simulation   [status: in-progress]
+### T-0303 App: 3D toolpath dialogs, preview and simulation   [status: verifying (first subset: 3D Rough + 3D Finish; rest -> T-0311)]
 Phase: 2   Module: app   Depends on: T-0299, T-0296, T-0297, T-0298
 Goal: Toolpath panel entries and dialogs for 3D rough, 3D finish, moulding, project-onto-model and 3D tabs; preview in the 3D view; simulation of 3D toolpaths with the existing simulator; save/post output uses the existing pipeline.
 
@@ -1514,3 +1514,11 @@ Goal: The items T-0302 left out (ADR-0084): overlay reference image over the mod
 Phase: 2   Module: core/tests   Depends on: T-0270
 Goal: CI run 43649513980 (main, T-0300 merge, linux-app ubuntu-24.04, 2026-11-14) failed only this test (ctest #981) after T-0270 added the CPU-time retry helper. Find why it still flakes under load (wall-clock leak, thread contention, ratio on tiny absolute times, retry count too low) and make it deterministic: prefer counting operations over timing; if a timing assertion must stay, derive the bound from measured CPU time with a floor that makes noise irrelevant. Same audit for the sibling ratio/CPU-time tests that use the helper.
 Acceptance criteria: the test cannot fail from scheduler noise (justify in the ADR or the test comment); 200 consecutive runs under `stress`-style load (e.g. ctest -j16 --repeat until-fail:50 on this test plus a CPU burner) show no failure; mutants of the asserted complexity (quadratic removal) are still killed; one changelog fragment.
+
+### T-0311 App: Project Toolpath onto Model, 3D Tabs, Create Component From Toolpath Preview, rest-tool lists, Moulding entry (T-0303 follow-up)   [status: blocked — waits on T-0303, T-0307]
+Phase: 2   Module: app + core/document   Depends on: T-0303, T-0307
+Goal: The items T-0303 left out (ADR-0085 "Remaining"): toolpath entries/dialogs for Project Toolpath onto Model and 3D Tabs (core/toolpath/project3d.hpp), the Model-menu action Create Component From Toolpath Preview (core/simulate/preview_component.hpp), rest-tool lists and prior toolpaths for 3D rough/finish, and the Moulding toolpath entry once T-0307 lands (follow the extension point in ADR-0085). Follow the T-0303 pattern; self-test coverage.
+
+### T-0312 .carv writer refuses toolpaths with more than one move per file byte (regular models hit it)   [status: ready — LOW]
+Phase: 2   Module: core/io   Depends on: T-0303
+Goal: T-0303's coder observed that the writer's "more than 1 move per byte of file size" guard (a zip-bomb style ratio check) refuses saving a long 3D finish toolpath over a very regular model (a plain ramp compresses to almost nothing). Re-derive the guard so legitimate regular jobs save and load, while hostile files stay bounded (absolute caps instead of ratio, or measure uncompressed size). Keep the hostile-input tests; ADR note.
