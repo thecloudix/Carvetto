@@ -211,6 +211,7 @@ add_library(carvetto_core STATIC
   src/simulate/sweep.cpp
   src/simulate/simulator.cpp
   src/simulate/tool_shape.cpp
+  src/simulate/preview_component.cpp
   src/document/job.cpp
   src/document/double_sided.cpp
   src/document/node_edit_command.cpp
@@ -269,6 +270,7 @@ add_library(carvetto_core STATIC
   src/toolpath/v_carve_corners.cpp
   src/toolpath/rough3d.cpp
   src/toolpath/finish3d.cpp
+  src/toolpath/project3d.cpp
   src/text/font.cpp
   src/text/layout_builder.cpp
   src/text/layout.cpp
