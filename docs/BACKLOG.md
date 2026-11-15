@@ -1519,7 +1519,7 @@ Acceptance criteria: the test cannot fail from scheduler noise (justify in the A
 Phase: 2   Module: app + core/document   Depends on: T-0303, T-0307
 Goal: The items T-0303 left out (ADR-0085 "Remaining"): toolpath entries/dialogs for Project Toolpath onto Model and 3D Tabs (core/toolpath/project3d.hpp), the Model-menu action Create Component From Toolpath Preview (core/simulate/preview_component.hpp), rest-tool lists and prior toolpaths for 3D rough/finish, and the Moulding toolpath entry once T-0307 lands (follow the extension point in ADR-0085). Follow the T-0303 pattern; self-test coverage.
 
-### T-0312 .carv writer refuses toolpaths with more than one move per file byte (regular models hit it)   [status: in-progress]
+### T-0312 .carv writer refuses toolpaths with more than one move per file byte (regular models hit it)   [status: verifying]
 Phase: 2   Module: core/io   Depends on: T-0303
 Goal: T-0303's coder observed that the writer's "more than 1 move per byte of file size" guard (a zip-bomb style ratio check) refuses saving a long 3D finish toolpath over a very regular model (a plain ramp compresses to almost nothing). Re-derive the guard so legitimate regular jobs save and load, while hostile files stay bounded (absolute caps instead of ratio, or measure uncompressed size). Keep the hostile-input tests; ADR note.
 
