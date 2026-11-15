@@ -178,6 +178,7 @@ schema, the cache format and its budget open; they are decided here.
   cache names, since `saveCarv` owns them.
 
 ### 4. Loader budget for moves (owner decision 2026-11-02: tied to file size)
+- Amended by ADR-0088 (T-0312): the per-byte factor is now 1024 instead of 1.
 - A file of S bytes may hold at most **min(S × 1, 8,000,000) toolpath moves**
   (`kCarvMovesPerFileByte` = 1, `kCarvMaxToolpathMoves` = 8,000,000; `LoadLimits::maxMoves` and
   `movesPerArchiveByte`), counting all records, caches and migrated interim members together.

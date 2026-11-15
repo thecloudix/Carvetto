@@ -4118,7 +4118,7 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
                           "the archive has no manifest.json (not a .carv file?)"};
     }
     LoadBudget budget(limits);  // one budget for every member of the archive
-    budget.setArchiveBytes(bytes.size());  // toolpath moves: at most one per byte of the file
+    budget.setArchiveBytes(bytes.size());  // toolpath moves: at most kCarvMovesPerFileByte per file byte
     auto extras = std::make_shared<CarvExtras::Impl>();
     LoadedCarv out{};
 
@@ -5071,14 +5071,14 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         members.clear();
         members.shrink_to_fit();
         caches.clear();
-        // At most kCarvMovesPerFileByte moves per byte of the file (owner decision 2026-11-02);
+        // At most kCarvMovesPerFileByte moves per byte of the file (ADR-0088);
         // only known now that the file is compressed.
         if (totalMoves > zip.bytes.size() * kCarvMovesPerFileByte) {
             return CarvError{CarvError::Code::ResourceLimit,
                              "the toolpaths hold " + std::to_string(totalMoves) + " moves but the file would be only " +
                                  std::to_string(zip.bytes.size()) + " bytes; a .carv file holds at most " +
                                  std::to_string(kCarvMovesPerFileByte) +
-                                 " move per byte of its size (are the toolpaths highly repetitive?)"};
+                                 " moves per byte of its size (are the toolpaths highly repetitive?)"};
         }
         // The promise "saveCarv never writes a file loadCarv refuses" is made structurally true:
         // the finished archive goes through the real load path, with the loader's own limits.

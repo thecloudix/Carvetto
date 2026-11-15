@@ -52,8 +52,7 @@ struct LoadLimits {
     int maxDepth{64};
     /// Toolpath moves across all toolpath records, from move caches and migrated interim members
     /// (ADR-0021); about 72 bytes each once decoded. The limit for one archive is the smaller of
-    /// this cap and `movesPerArchiveByte` x the archive's size (owner decision 2026-11-02), so a
-    /// small file can only claim a few moves. `saveCarv` refuses to write more.
+    /// this cap and `movesPerArchiveByte` x the archive's size (ADR-0088: 1024, the deflate ceiling). `saveCarv` refuses to write more.
     std::uint64_t maxMoves{kCarvMaxToolpathMoves};
     std::uint64_t movesPerArchiveByte{kCarvMovesPerFileByte};
 };
