@@ -1515,7 +1515,7 @@ Phase: 2   Module: core/tests   Depends on: T-0270
 Goal: CI run 43649513980 (main, T-0300 merge, linux-app ubuntu-24.04, 2026-11-14) failed only this test (ctest #981) after T-0270 added the CPU-time retry helper. Find why it still flakes under load (wall-clock leak, thread contention, ratio on tiny absolute times, retry count too low) and make it deterministic: prefer counting operations over timing; if a timing assertion must stay, derive the bound from measured CPU time with a floor that makes noise irrelevant. (Re-scoped by director 2026-11-15 after verifier round 1: the sibling-test audit moved to T-0313; this card covers the one failing test.)
 Acceptance criteria: the test cannot fail from scheduler noise (justify in the ADR or the test comment); 200 consecutive runs under `stress`-style load (e.g. ctest -j16 --repeat until-fail:50 on this test plus a CPU burner) show no failure; mutants of the asserted complexity (quadratic removal) are still killed; one changelog fragment.
 
-### T-0311 App: Project Toolpath onto Model, 3D Tabs, Create Component From Toolpath Preview, rest-tool lists, Moulding entry (T-0303 follow-up)   [status: verifying (partial; rest -> T-0314)]
+### T-0311 App: Project Toolpath onto Model, 3D Tabs, Create Component From Toolpath Preview, rest-tool lists, Moulding entry (T-0303 follow-up)   [status: done — PR #189 (rest tools -> T-0314)]
 Phase: 2   Module: app + core/document   Depends on: T-0303, T-0307
 Goal: The items T-0303 left out (ADR-0085 "Remaining"): toolpath entries/dialogs for Project Toolpath onto Model and 3D Tabs (core/toolpath/project3d.hpp), the Model-menu action Create Component From Toolpath Preview (core/simulate/preview_component.hpp), rest-tool lists and prior toolpaths for 3D rough/finish, and the Moulding toolpath entry once T-0307 lands (follow the extension point in ADR-0085). Follow the T-0303 pattern; self-test coverage.
 
@@ -1527,11 +1527,11 @@ Goal: T-0303's coder observed that the writer's "more than 1 move per byte of fi
 Phase: 2   Module: core/tests   Depends on: T-0310
 Goal: About 30 tests still assert complexity by CPU-time ratios (perf_test, toolpath_scale_test, toolpath_residual_scale_test, v_carve_test, offset_unnested_hole_test, boolean_batch_test, edit_ops_fuzz_test, medial_axis_robustness_test, bezier_intersect_bounds_test, offset_narrow_loops_test, open_offset_chains_test, document/commands_test:196, document/integrity_scale_test:118). Start with the two document-module ones, then the rest: convert each to a deterministic operation counter where the algorithm allows it (as T-0310 did for selection), otherwise record in a short ADR why the timing bound is safe (floor, minimum window, retries) and keep it. Also make the T-0310 selection test fail fast (REQUIRE or smaller n for the mutant-sensitive check) and consider counting slot moves/probes as well as compaction scans. Mutants of the asserted complexity stay killed.
 
-### T-0314 3D rough/finish rest-tool lists, prior toolpaths and Moulding larger-area clearance tool (T-0311 follow-up)   [status: ready]
+### T-0314 3D rough/finish rest-tool lists, prior toolpaths and Moulding larger-area clearance tool (T-0311 follow-up)   [status: in-progress]
 Phase: 2   Module: core/io + app   Depends on: T-0311
 Goal: T-0311 delivered Moulding, Project Toolpath, 3D Tabs and Create Component From Toolpath Preview but not rest-tool lists and prior toolpaths for 3D rough/finish, nor the Moulding larger-area clearance tool. The session infers V-carve groups by tool type, which cannot distinguish a 3D rest group from separate toolpaths on reload, so store the group (priors, clearTool) explicitly in the .carv record (minor-version bump, ADR) and wire the forms, rest-machining use in simulation, and tests including old-file load.
 
-### T-0315 .carv 3D rough record drops the T-0304 fields (clearing, profile, order, avoidMachined)   [status: ready]
+### T-0315 .carv 3D rough record drops the T-0304 fields (clearing, profile, order, avoidMachined)   [status: in-progress]
 Phase: 2   Module: core/io   Depends on: T-0304
 Goal: T-0311's coder observed the 3D rough record codec does not persist the fields added by T-0304 (clearing, profile first/last, order, avoidMachined): they reset to defaults on save/load, silently changing a saved job. Persist them (strict key lists, finite checks, minor-version bump if needed, old files load with the old defaults), byte-identical re-save test, round-trip test for every field, ADR note.
 
