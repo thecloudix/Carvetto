@@ -1485,7 +1485,7 @@ Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, p
 Phase: 2   Module: app   Depends on: T-0299, T-0296, T-0297, T-0298
 Goal: Toolpath panel entries and dialogs for 3D rough, 3D finish, moulding, project-onto-model and 3D tabs; preview in the 3D view; simulation of 3D toolpaths with the existing simulator; save/post output uses the existing pipeline.
 
-### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: in-progress]
+### T-0304 3D rough: offset (contour-parallel) clearing, profile first/last, depth-first ordering (T-0296 follow-up)   [status: verifying]
 Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
