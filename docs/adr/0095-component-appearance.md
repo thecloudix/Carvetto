@@ -23,7 +23,7 @@ Status: accepted (T-0305; follows ADR-0077 "Appearance is a view setting", which
 - **Rendering.** `ModelSurface::colours` (per surface cell, 0xFFRRGGBB, 0 = the view's material) is filled by
   `composeModelSurface` through `composeModelColours`, which replays the composition per cell with the same
   `relief::combine` rules and tracks which operand supplies the surface: Add the upper operand, Merge High/Low the
-  winner, Subtract and Multiply the one below. It runs only when some appearance on the sheet is not Same as Parent
+  winner (at equal heights the one below, since the comparison is strict), Subtract and Multiply the one below. It runs only when some appearance on the sheet is not Same as Parent
   (otherwise `colours` is empty and nothing changes) and is skipped when cells x visible components exceeds
   `kMaxColourWork` (2^27; the view then falls back to the view material). The renderer colours each surface quad with
   the colour of its lower-left cell (flat per quad, lighting as before); `ModelRenderOptions::useAppearance=false`

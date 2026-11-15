@@ -410,6 +410,33 @@ TEST_CASE("appearance: the colour follows the component that supplies the surfac
     CHECK(colourAt(s, 0.0, 0.0) != 0u);
 }
 
+TEST_CASE("appearance: Color from Children rounds the mean to nearest", "[viewmodel][model_view][appearance]") {
+    Document doc;
+    const LevelId lv = addLevel(doc);
+    addBlock(doc, lv, 0.0, 11, 1.0f, solidApp(0x010203));
+    addBlock(doc, lv, 20.0, 11, 1.0f, solidApp(0x020405));
+    addBlock(doc, lv, 40.0, 11, 1.0f, relief::Appearance{});
+    relief::Appearance kids;
+    kids.kind = relief::AppearanceKind::ColourFromChildren;
+    REQUIRE(setReliefLevelAppearance(doc, lv, kids).changed);
+    const ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    REQUIRE(!s.colours.empty());
+    // Channel means 1.5, 3, 4: a half rounds up (2), exact means stay, 4 stays.
+    CHECK(colourAt(s, 45.0, 5.0) == 0xFF020304u);
+}
+
+TEST_CASE("appearance: at equal heights Merge High and Merge Low keep the lower component's colour", "[viewmodel][model_view][appearance]") {
+    for (const relief::CombineMode mode : {relief::CombineMode::MergeHigh, relief::CombineMode::MergeLow}) {
+        Document doc;
+        const LevelId lv = addLevel(doc);
+        addBlock(doc, lv, 0.0, 11, 3.0f, solidApp(0xFF0000));
+        addBlock(doc, lv, 0.0, 11, 3.0f, solidApp(0x0000FF), mode);
+        const ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+        REQUIRE(!s.colours.empty());
+        CHECK(colourAt(s, 5.0, 5.0) == 0xFFFF0000u);
+    }
+}
+
 TEST_CASE("appearance: levels stack: the upper level's component colours its cells", "[viewmodel][model_view][appearance]") {
     Document doc;
     const LevelId low = addLevel(doc);
