@@ -45,6 +45,9 @@ qt_add_executable(carvetto
   src/modelling_panel.cpp
   src/modelling_panel.hpp
   src/modelling_self_test.cpp
+  src/sculpt_panel.cpp
+  src/sculpt_panel.hpp
+  src/sculpt_self_test.cpp
   src/relief_panels.cpp
   src/relief_panels.hpp
   src/relief_panels_self_test.cpp

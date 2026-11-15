@@ -62,6 +62,7 @@
 #include "preview_panel.hpp"
 #include "properties_panel.hpp"
 #include "modelling_panel.hpp"
+#include "sculpt_panel.hpp"
 #include "relief_panels.hpp"
 #include "relief_view.hpp"
 #include "ruler_widget.hpp"
@@ -215,12 +216,21 @@ void MainWindow::buildDocks() {
     componentsLayout->setContentsMargins(0, 0, 0, 0);
     componentsLayout->addWidget(componentTree_, 3);
     componentsLayout->addWidget(componentProps_, 2);
-    for (PanelBase* panel : {static_cast<PanelBase*>(componentTree_), static_cast<PanelBase*>(componentProps_)}) {
+    levelEffects_ = new LevelEffectsPanel(currentDoc, this);
+    componentsLayout->addWidget(levelEffects_, 0);
+    for (PanelBase* panel : {static_cast<PanelBase*>(componentTree_), static_cast<PanelBase*>(componentProps_),
+                             static_cast<PanelBase*>(levelEffects_)}) {
         panel->onEdited = [this]() { documentChanged(); };
         panel->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
     }
-    componentTree_->onLevelPicked = [this](document::LevelId level) { componentProps_->setLevel(level); };
-    componentTree_->onSelectionChanged = [this]() { componentProps_->refresh(); };
+    componentTree_->onLevelPicked = [this](document::LevelId level) {
+        componentProps_->setLevel(level);
+        levelEffects_->setLevel(level);
+    };
+    componentTree_->onSelectionChanged = [this]() {
+        componentProps_->refresh();
+        levelEffects_->refresh();
+    };
     componentsDock_ = makeDock("Components", "componentsDock", componentsPage);
     modelling_ = new ModellingPanel(currentDoc, this);
     modelling_->onEdited = [this]() { documentChanged(); };
@@ -230,11 +240,38 @@ void MainWindow::buildDocks() {
         if (field != nullptr) {
             modelView_->setPreview(*field);
             views_->setCurrentWidget(modelView_);
+        } else if (sculpt_ != nullptr && sculpt_->controller().working() != nullptr) {
+            modelView_->setPreview(*sculpt_->controller().working());  // sculpting owns the Model view
         } else {
             modelView_->clearPreview();
         }
     };
     modellingDock_ = makeDock("Modelling", "modellingDock", modelling_);
+    sculpt_ = new SculptPanel(currentDoc, this);
+    sculpt_->onEdited = [this]() { documentChanged(); };
+    sculpt_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
+    sculpt_->onPreview = [this](const relief::HeightField* field) {
+        if (field != nullptr) {
+            modelView_->setPreview(*field);
+        } else {
+            modelView_->clearPreview();
+        }
+    };
+    sculpt_->onActiveChanged = [this](bool on) {
+        if (on) {
+            views_->setCurrentWidget(modelView_);
+            modelView_->onBrush = [this](std::optional<relief::Point> at, ModelView3D::BrushPhase phase) {
+                switch (phase) {
+                    case ModelView3D::BrushPhase::Press: sculpt_->paintPress(*at); break;
+                    case ModelView3D::BrushPhase::Move: sculpt_->paintMove(*at); break;
+                    case ModelView3D::BrushPhase::Release: sculpt_->paintRelease(); break;
+                }
+            };
+        } else {
+            modelView_->onBrush = nullptr;
+        }
+    };
+    sculptDock_ = makeDock("Sculpt", "sculptDock", sculpt_);
     libraryDock_ = makeDock("Library", "libraryDock", placeholder("Clipart and project library.", this));
     toolpaths_ = new ToolpathsPanel(&session_.document(), this);
     toolpaths_->onDocumentEdited = [this]() { documentChanged(); };
@@ -292,7 +329,9 @@ void MainWindow::buildDocks() {
     tabifyDockWidget(layersDock_, componentsDock_);
     addDockWidget(Qt::LeftDockWidgetArea, modellingDock_);
     tabifyDockWidget(componentsDock_, modellingDock_);
-    tabifyDockWidget(modellingDock_, libraryDock_);
+    addDockWidget(Qt::LeftDockWidgetArea, sculptDock_);
+    tabifyDockWidget(modellingDock_, sculptDock_);
+    tabifyDockWidget(sculptDock_, libraryDock_);
     designDock_->raise();
     addDockWidget(Qt::LeftDockWidgetArea, propertiesDock_);
     addDockWidget(Qt::LeftDockWidgetArea, historyDock_);
@@ -397,7 +436,7 @@ void MainWindow::buildMenus() {
     view->addSeparator();
     QMenu* panels = view->addMenu(QStringLiteral("&Panels"));
     for (QDockWidget* dock :
-         {designDock_, sheetsDock_, layersDock_, propertiesDock_, historyDock_, componentsDock_, modellingDock_, libraryDock_,
+         {designDock_, sheetsDock_, layersDock_, propertiesDock_, historyDock_, componentsDock_, modellingDock_, sculptDock_, libraryDock_,
           toolpathsDock_, previewDock_, keepOutDock_}) {
         panels->addAction(dock->toggleViewAction());
     }
@@ -601,6 +640,8 @@ void MainWindow::documentChanged() {
     if (componentTree_ != nullptr) {
         componentTree_->refresh();
         componentProps_->refresh();
+        levelEffects_->refresh();
+        sculpt_->refresh();
         modelView_->refresh();
     }
     if (toolpaths_ != nullptr) {
