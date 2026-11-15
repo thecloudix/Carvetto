@@ -351,6 +351,30 @@ std::string toolpaths3dSelfTest(MainWindow& window) {
     // One undo step removes the finish, the model stays.
     ST_REQUIRE(window.undo() && doc.toolpaths().size() == 1 && !doc.reliefLevels().empty(), "3D: undo did not remove the finish");
 
+    // Rest tools and prior toolpaths (T-0314): a 3D Finish with an earlier 6 mm tool and the rough as its prior.
+    {
+        const document::ToolpathId roughId = doc.toolpaths().front().id;
+        panel->addAction(document::ToolpathOperation::Finish3d)->trigger();
+        dlg = panel->formDialog();
+        ST_REQUIRE(dlg != nullptr && dlg->pickTool("end-mill-3mm") && dlg->typeField("tolerance", "0.05"),
+                   "3D: no finish form for the rest tools");
+        ST_REQUIRE(dlg->addClearanceTool("end-mill-6mm") && !dlg->addClearanceTool("drill-3mm") &&
+                       dlg->form().clearanceTools().size() == 1,
+                   "3D: the earlier-tool list of the finish form does not take a 6 mm end mill only");
+        ST_REQUIRE(!dlg->typePriors("a, b") && !dlg->okButton()->isEnabled(), "3D: a malformed prior list was accepted");
+        ST_REQUIRE(dlg->typePriors(std::to_string(roughId.value)) && dlg->okButton()->isEnabled(),
+                   "3D: the prior toolpath id was not accepted");
+        ST_REQUIRE(accept(panel) && panel->waitIdle(300000), "3D: the rest-tool finish did not finish");
+        ST_REQUIRE(doc.toolpaths().size() >= 2, "3D: the rest-tool finish failed: " + panel->statusText().toStdString());
+        const document::ToolpathRecord& last = doc.toolpaths().back();
+        ST_REQUIRE(last.operation() == document::ToolpathOperation::Finish3d && last.group.id != 0 &&
+                       last.group.tools.size() == 2 && last.group.tools[0].toolId == "end-mill-6mm" &&
+                       std::get<toolpath::Finish3dParams>(last.params).priorToolpaths ==
+                           std::vector<std::uint64_t>{roughId.value},
+                   "3D: the finish records do not hold their tool group and prior toolpath");
+        ST_REQUIRE(window.undo() && doc.toolpaths().size() == 1, "3D: undo did not remove the rest-tool finish as one step");
+    }
+
     // Moulding (T-0311): the selected open vectors are the profile (first) and the rail.
     const auto addOpen = [&](double x0, double y0, double x1, double y1) {
         geometry::Polyline pl;

@@ -62,6 +62,22 @@ struct ToolSource {
     bool operator==(const ToolSource&) const = default;
 };
 
+/// The toolpaths of one calculation that makes several (T-0314, ADR-0094): a V-carve with clearance tools, a 3D
+/// rough or finish with a rest-tool list, a moulding with a larger-area clearance tool. `tools` is the whole
+/// tool list in machining order (the operation's own tool last); `role` is the index of this record's tool in it
+/// (an earlier tool's toolpath may have had nothing to cut and has no record). `id` is shared by the records of
+/// the group; it only needs to be unique within the document. Empty (`id` 0) for a toolpath on its own.
+struct ToolGroup {
+    std::uint64_t id{0};
+    std::uint32_t role{0};
+    std::vector<ToolSource> tools;
+
+    bool operator==(const ToolGroup&) const = default;
+};
+
+/// Most tools one group lists (the loader refuses more).
+inline constexpr std::size_t kMaxGroupTools = 64;
+
 /// The operation of a toolpath and its parameters. `cuttingData` inside `ProfileParams` is input
 /// from the tool database and is not part of a saved record (it loads empty); the feeds the
 /// toolpath was computed with are in `ToolpathRecord::tool`. Drilling (T-0150) and quick engraving
@@ -107,6 +123,8 @@ struct ToolpathRecord {
     /// Calculation edit boxes (T-0257, T-0271): form field id -> the `=...` text typed there, so the
     /// toolpath can be recalculated when a document variable changes. Empty for most records.
     std::map<std::string, std::string> expressions;
+    /// The group of toolpaths made by one calculation (T-0314); empty for a single toolpath.
+    ToolGroup group;
 
     ToolpathOperation operation() const { return static_cast<ToolpathOperation>(params.index()); }
     /// Absolute safe Z of the operation's parameters (mm).
@@ -145,6 +163,11 @@ std::string nonFiniteParam(const ToolpathParams& params);
 /// them, the loader refuses them, and the post refuses a spindle-off toolpath whose snapshot is
 /// not a diamond drag tool's.
 std::string spindleOffProblem(const ToolpathRecord& record);
+
+/// Why the record's group (T-0314) or prior list cannot be stored, or "" when it can: a group needs a nonzero id,
+/// 1..`kMaxGroupTools` tools and a role naming one of them; a 3D finish lists at most 256 priors. Refused by
+/// `AddToolpathCommand`/`SetToolpathCommand` and `saveCarv`; the loader enforces the same limits.
+std::string groupProblem(const ToolpathRecord& record);
 
 /// True when `spindleOffProblem(record)` is empty.
 bool spindleOffAllowed(const ToolpathRecord& record);

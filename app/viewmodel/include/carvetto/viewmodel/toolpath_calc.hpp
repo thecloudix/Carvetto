@@ -170,6 +170,12 @@ struct ProjectSource {
     document::SharedMoves moves;
 };
 
+/// A prior toolpath of a 3D finish (T-0314): the record's moves with the tool it was cut with.
+struct PriorInput {
+    ProjectSource source;
+    ResolvedTool tool;
+};
+
 /// Everything one calculation needs, copied from the document and the tool database. Independent
 /// of both: it may be run on another thread, and run more than once with the same result.
 struct ToolpathJob {
@@ -182,6 +188,8 @@ struct ToolpathJob {
     std::shared_ptr<const relief::HeightField> model;
     /// Project Toolpath onto Model / 3D Tabs only (T-0311): the toolpath to project (`attachSource`).
     std::optional<ProjectSource> source;
+    /// 3D finish only (T-0314): the toolpaths whose result is the starting stock (`attachPriors`).
+    std::vector<PriorInput> priors;
     std::vector<geometry::Contour> contours;
     /// The drawing object of each contour.
     std::vector<document::ObjectId> owners;
@@ -246,6 +254,12 @@ void attachModel(ToolpathJob& job, const document::Document& doc);
 /// the record named by `Project3dParams::sourceToolpath`. Refuses when it does not exist or has no moves.
 void attachSource(ToolpathJob& job, const document::Document& doc);
 
+/// Gives `job` the prior toolpaths of a 3D finish (a no-op for other operations): the records
+/// `Finish3dParams::priorToolpaths` names, each with its tool resolved in `db`. Refuses when one does not
+/// exist, is not calculated, has no tool, is listed twice or is one of `own` (the toolpaths the job replaces).
+void attachPriors(ToolpathJob& job, const document::Document& doc, const tooling::ToolDatabase& db,
+                  const std::vector<document::ToolpathId>& own);
+
 /// Hash of the moves of the toolpath record `sourceToolpath` (a fixed value when it does not exist).
 std::uint64_t sourceFingerprint(const document::Document& doc, std::uint64_t sourceToolpath);
 
@@ -281,8 +295,13 @@ std::uint64_t toolsFingerprintOf(const ToolpathDefinition& definition, const too
 /// Profile and Pocket accept any type (the core refuses unusable geometry).
 bool toolAllowedFor(document::ToolpathOperation operation, tooling::ToolType type, bool clearance = false);
 
-/// True for the operations whose toolpath takes clearance tools (V-carve, V-carve inlay).
+/// True for the operations whose calculation takes a list of earlier tools (V-carve and V-carve inlay: clearance
+/// tools; 3D rough and 3D finish: rest tools; moulding: one larger-area clearance tool). Each tool's toolpath is
+/// its own record and the records of one calculation form a group (T-0314, ADR-0094).
 bool hasClearanceTools(document::ToolpathOperation operation);
+
+/// True for the 3D operations whose tool list is a rest-tool list (3D rough, 3D finish, moulding).
+bool hasRestTools(document::ToolpathOperation operation);
 
 /// Name of an operation for messages: "profile", "pocket", "drill", "engrave", "v_carve", "image_engrave".
 const char* operationName(document::ToolpathOperation operation);

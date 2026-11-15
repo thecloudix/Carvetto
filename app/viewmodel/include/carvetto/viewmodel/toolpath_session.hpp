@@ -290,6 +290,8 @@ class ToolpathSession {
         /// -1 the operation's own (carving) tool, i >= 0 clearance tool i, -2 a clearance
         /// toolpath whose carving toolpath is missing.
         int role{-1};
+        /// The group came from the record (T-0314), not from tool types: it can lack its own-tool record.
+        bool stored{false};
     };
 
     struct Staleness {

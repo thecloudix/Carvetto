@@ -121,6 +121,7 @@ add_executable(carvetto_tests
   document/carv_photo_record_test.cpp
   document/carv_3d_record_test.cpp
   document/carv_moulding_project_record_test.cpp
+  document/carv_tool_group_test.cpp
   document/carv_fluting_record_test.cpp
   document/carv_prism_record_test.cpp
   document/carv_engrave_record_test.cpp

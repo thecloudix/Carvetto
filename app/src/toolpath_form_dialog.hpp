@@ -73,6 +73,10 @@ class ToolpathFormDialog : public QDialog {
     bool typeField(const std::string& id, const std::string& text);
     bool chooseOption(const std::string& id, int option);
     bool pickTool(const std::string& toolId);
+    /// Appends `toolId` to the earlier-tool list (clearance / rest tools) as the Add button does; false when the
+    /// form refuses it. `typePriors`: types the 3D finish's comma separated prior toolpath ids.
+    bool addClearanceTool(const std::string& toolId);
+    bool typePriors(const std::string& text);
     QLineEdit* fieldEdit(const std::string& id) const;
     /// "Insert New Document Variable" on the box of field `id`: creates the variable through
     /// `FormDocumentInfo::createVariable` and inserts `{name}` at the cursor (a leading `=` is added
@@ -90,6 +94,7 @@ class ToolpathFormDialog : public QDialog {
     void applySelectorFromWidgets();
     void applyTool();
     void applyClearance();
+    bool applyPriorsText(const QString& text);
     void setMessage(const std::string& text, bool error);
     bool isModel() const { return viewmodel::usesModel(form_.operation()); }
     bool isPhoto() const { return form_.operation() == document::ToolpathOperation::ImageEngrave; }
@@ -112,6 +117,8 @@ class ToolpathFormDialog : public QDialog {
     QListWidget* clearanceList_{nullptr};
     QComboBox* clearanceCombo_{nullptr};
     QWidget* clearanceBox_{nullptr};
+    QWidget* priorsBox_{nullptr};
+    QLineEdit* priorsEdit_{nullptr};
     QComboBox* baseCombo_{nullptr};
     QListWidget* layerList_{nullptr};
     QCheckBox* openCheck_{nullptr};

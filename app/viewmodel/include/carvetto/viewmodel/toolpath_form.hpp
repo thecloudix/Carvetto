@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -151,8 +152,14 @@ class ToolpathForm {
     /// Picks the tool from `db`: it must exist, suit the operation (`toolAllowedFor`) and its
     /// machine/material must exist (both or neither). A bad pick changes nothing.
     FieldResult setTool(const tooling::ToolDatabase& db, const document::ToolSource& source);
-    /// V-carve: the clearance end mills, in order (each checked like `setTool`; all or nothing).
+    /// The earlier tools, in order: a V-carve's clearance end mills, a 3D rough/finish's rest tools (the tool above is
+    /// the last and finest), a moulding's one larger-area clearance tool (T-0314). Each is checked like `setTool`;
+    /// all or nothing.
     FieldResult setClearanceTools(const tooling::ToolDatabase& db, const std::vector<document::ToolSource>& sources);
+    /// 3D finish only: the toolpaths (ids) whose result is the starting stock (T-0314); `problems` reports a
+    /// repeated or null id. A different operation refuses.
+    FieldResult setPriorToolpaths(const std::vector<std::uint64_t>& ids);
+    std::vector<std::uint64_t> priorToolpaths() const;
     const document::ToolSource& tool() const { return definition_.tool; }
     const std::vector<document::ToolSource>& clearanceTools() const { return definition_.clearanceTools; }
     /// The chosen tool and the cutting data it brings (feed, plunge, spindle, pass depth, stepover).

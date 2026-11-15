@@ -45,3 +45,5 @@ Status: accepted (T-0311; follows ADR-0085 "Remaining", ADR-0086 and ADR-0073)
   (a .carv minor-version bump) and is its own card. The core already supports them (`Rough3dTool` lists,
   `Finish3dParams::priors`, `MouldingParams::clearTool`); the records keep `restTolerance` and never store `priors`.
 - A moulding's profile from a closed vector or a section that overhangs are the core's limits (ADR-0086).
+
+Update (T-0314, ADR-0094): rest-tool lists, prior toolpaths and the Moulding clearance tool are done; the group is stored in the record.

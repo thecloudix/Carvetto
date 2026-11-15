@@ -351,7 +351,13 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
 }
 
 bool hasClearanceTools(ToolpathOperation operation) {
-    return operation == ToolpathOperation::VCarving || operation == ToolpathOperation::VCarveInlay;
+    return operation == ToolpathOperation::VCarving || operation == ToolpathOperation::VCarveInlay ||
+           hasRestTools(operation);
+}
+
+bool hasRestTools(ToolpathOperation operation) {
+    return operation == ToolpathOperation::Rough3d || operation == ToolpathOperation::Finish3d ||
+           operation == ToolpathOperation::Moulding;
 }
 
 bool usesModel(ToolpathOperation operation) {
@@ -680,6 +686,9 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
                                                                 "material; its default cutting data is used"));
         }
     }
+    if (job.definition.operation() == ToolpathOperation::Moulding && job.definition.clearanceTools.size() > 1) {
+        refuse("a moulding takes at most one larger-area clearance tool");
+    }
     for (std::size_t i = 0; i < job.definition.clearanceTools.size(); ++i) {
         const ToolLookup l = resolveTool(db, job.definition.clearanceTools[i]);
         if (!l.tool.has_value()) {
@@ -826,6 +835,51 @@ void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const Res
     job.photo = std::move(in);
 }
 
+void attachPriors(ToolpathJob& job, const document::Document& doc, const tooling::ToolDatabase& db,
+                  const std::vector<document::ToolpathId>& own) {
+    const auto* params = std::get_if<toolpath::Finish3dParams>(&job.definition.params);
+    if (params == nullptr || params->priorToolpaths.empty()) {
+        return;
+    }
+    const auto refuse = [&](std::string why) {
+        if (job.refusal.empty()) {
+            job.refusal = std::move(why);
+        }
+    };
+    std::set<std::uint64_t> seen;
+    for (const std::uint64_t id : params->priorToolpaths) {
+        const std::string label = "prior toolpath #" + std::to_string(id);
+        const document::ToolpathRecord* rec = id == 0 ? nullptr : doc.findToolpath(document::ToolpathId{id});
+        if (rec == nullptr) {
+            refuse(label + " does not exist");
+            return;
+        }
+        if (!seen.insert(id).second) {
+            refuse(label + " is listed twice");
+            return;
+        }
+        if (std::find(own.begin(), own.end(), rec->id) != own.end()) {
+            refuse("a 3D finish cannot use its own toolpath as a prior");
+            return;
+        }
+        if (!rec->hasMoves()) {
+            refuse("prior toolpath '" + rec->name + "' is not calculated");
+            return;
+        }
+        const ToolLookup l = resolveTool(db, rec->toolSource);
+        if (!l.tool.has_value()) {
+            refuse("prior toolpath '" + rec->name + "': tool: " + l.error);
+            return;
+        }
+        ProjectSource src;
+        src.id = rec->id;
+        src.name = rec->name;
+        src.tool = rec->tool;
+        src.moves = rec->moves;
+        job.priors.push_back(PriorInput{std::move(src), *l.tool});
+    }
+}
+
 std::uint64_t sourceFingerprint(const document::Document& doc, std::uint64_t sourceToolpath) {
     const document::ToolpathRecord* rec = sourceToolpath == 0 ? nullptr : doc.findToolpath(document::ToolpathId{sourceToolpath});
     Fingerprint fp;
@@ -853,6 +907,11 @@ std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelec
         m.add(modelFingerprint(doc, doc.activeSheet()));
         if (const auto* project = std::get_if<toolpath::Project3dParams>(&params)) {
             m.add(sourceFingerprint(doc, project->sourceToolpath));
+        }
+        if (const auto* finish = std::get_if<toolpath::Finish3dParams>(&params)) {
+            for (const std::uint64_t prior : finish->priorToolpaths) {
+                m.add(sourceFingerprint(doc, prior));
+            }
         }
         if (boundaryUsesVectors(params)) {
             m.add(fingerprint(resolveVectors(doc, selector)));
@@ -918,7 +977,10 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
                                        : photoParams == nullptr ||
                                              photoParams->strategy == toolpath::PhotoStrategy::SelectedVectors;
     if (!tool.has_value() || (needsContours && contours.empty()) || (photoParams != nullptr && !photo.has_value()) ||
-        (modelOp && model == nullptr) || (projectOp && !source.has_value())) {
+        (modelOp && model == nullptr) || (projectOp && !source.has_value()) ||
+        (std::holds_alternative<toolpath::Finish3dParams>(definition.params) &&
+         std::get<toolpath::Finish3dParams>(definition.params).priorToolpaths.size() != priors.size()) ||
+        (hasRestTools(definition.operation()) && clearance.size() != definition.clearanceTools.size())) {
         // a job not made by makeToolpathJob
         out.messages.push_back(note(MessageSeverity::Error, "the job has no tool or no vectors"));
         return out;
@@ -1031,7 +1093,12 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
             }
             toolpath::ToolpathRunControl control;
             control.cancel = cancel;
-            const std::vector<toolpath::Rough3dTool> tools{toolpath::Rough3dTool{tool->tool, tool->data, std::nullopt}};
+            // The tool list: the earlier (rest) tools first, the operation's own tool last (T-0314).
+            std::vector<toolpath::Rough3dTool> tools;
+            for (const ResolvedTool& c : clearance) {
+                tools.push_back(toolpath::Rough3dTool{c.tool, c.data, std::nullopt});
+            }
+            tools.push_back(toolpath::Rough3dTool{tool->tool, tool->data, std::nullopt});
             toolpath::Rough3dResult r;
             if (op == ToolpathOperation::Rough3d) {
                 toolpath::Rough3dParams params = std::get<toolpath::Rough3dParams>(definition.params);
@@ -1040,13 +1107,28 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
             } else {
                 toolpath::Finish3dParams params = std::get<toolpath::Finish3dParams>(definition.params);
                 params.vectors = std::move(vectors);
+                params.priors.clear();
+                for (const PriorInput& prior : priors) {
+                    toolpath::Finish3dPrior p;
+                    p.toolpath.name = prior.source.name;
+                    p.toolpath.tool = prior.source.tool;
+                    p.toolpath.moves = *prior.source.moves;
+                    p.tool = toolpath::Rough3dTool{prior.tool.tool, prior.tool.data, std::nullopt};
+                    params.priors.push_back(std::move(p));
+                }
                 r = toolpath::finish3dToolpath(*model, tools, params, control);
             }
             diagnostics = r.diagnostics;
-            for (toolpath::Toolpath& tp : r.toolpaths) {
-                if (!tp.isEmpty()) {
-                    items.push_back({-1, makeRecord(*this, std::move(tp), definition.tool)});
+            for (std::size_t i = 0; i < r.toolpaths.size(); ++i) {
+                toolpath::Toolpath& tp = r.toolpaths[i];
+                if (tp.isEmpty()) {
+                    continue;
                 }
+                const bool last = i + 1 == r.toolpaths.size();
+                const std::size_t rest = clearance.size();
+                items.push_back({last ? -1 : static_cast<int>(i),
+                                 makeRecord(*this, std::move(tp),
+                                            last || i >= rest ? definition.tool : definition.clearanceTools[i])});
             }
         } else if (op == ToolpathOperation::Moulding) {
             toolpath::MouldingParams params = std::get<toolpath::MouldingParams>(definition.params);
@@ -1084,15 +1166,23 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
                 return out;
             }
             params.clearTool.reset();
+            if (!clearance.empty()) {
+                params.clearTool = toolpath::Rough3dTool{clearance.front().tool, clearance.front().data, std::nullopt};
+            }
             toolpath::ToolpathRunControl control;
             control.cancel = cancel;
             const toolpath::Rough3dTool mouldingTool{tool->tool, tool->data, std::nullopt};
             toolpath::MouldingResult r = toolpath::mouldingToolpath(mouldingTool, params, control);
             diagnostics = r.diagnostics;
-            for (toolpath::Toolpath& tp : r.toolpaths) {
-                if (!tp.isEmpty()) {
-                    items.push_back({-1, makeRecord(*this, std::move(tp), definition.tool)});
+            // With a clearance tool the result is [Clear, main] (T-0314); otherwise just the main one.
+            for (std::size_t i = 0; i < r.toolpaths.size(); ++i) {
+                toolpath::Toolpath& tp = r.toolpaths[i];
+                if (tp.isEmpty()) {
+                    continue;
                 }
+                const bool last = i + 1 == r.toolpaths.size();
+                items.push_back({last ? -1 : static_cast<int>(i),
+                                 makeRecord(*this, std::move(tp), last ? definition.tool : definition.clearanceTools[0])});
             }
         } else if (op == ToolpathOperation::Project3d) {
             toolpath::Toolpath input;
