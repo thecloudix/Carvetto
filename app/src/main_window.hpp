@@ -16,6 +16,7 @@
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/job_sheet.hpp"
 #include "carvetto/viewmodel/model_io.hpp"
+#include "carvetto/viewmodel/preview_component.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
 class QAction;
@@ -178,6 +179,9 @@ class MainWindow : public QMainWindow {
     /// Writes the composed model of the active sheet as STL, OBJ or a 16-bit heightmap.
     bool exportModelFile(const std::filesystem::path& path, const viewmodel::ModelExportSettings& settings);
     const std::string& lastModelIoError() const { return modelIoError_; }
+    /// Model > Create Component From Toolpath Preview (T-0311): simulates the enabled toolpaths and adds the carved
+    /// stock as a component of the active sheet (one undo step). The message is in `lastModelIoError()` on failure.
+    bool createComponentFromPreview(const viewmodel::PreviewComponentRequest& request = {});
     /// True when it is fine to drop the open document: it is clean, or the user chose Save (and
     /// it saved) or Discard in the prompt. False on Cancel or a failed save. Always true when
     /// quiet (no prompt can be shown).
@@ -204,6 +208,7 @@ class MainWindow : public QMainWindow {
     void exportDxfDialog(bool selectionOnly);
     void importMeshDialog();
     void exportModelDialog(viewmodel::ModelExportKind kind);
+    void createComponentFromPreviewDialog();
     void rebuildRecentMenu();
     void storeRecent();
     void showError(const QString& title);

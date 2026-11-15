@@ -1,4 +1,5 @@
 // 3D import and export (T-0301): the MainWindow side of File > Import 3D Model and Export 3D Model.
+#include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include "carvetto/viewmodel/model_view.hpp"
 #include "main_window.hpp"
 #include "model_io_dialogs.hpp"
+#include "toolpaths_panel.hpp"
 
 namespace carvetto::app {
 
@@ -53,6 +55,41 @@ bool MainWindow::importMeshFile(const std::filesystem::path& path, std::optional
         return finish(dialog.mesh(), use, name);
     }
     return finish(mesh.value(), use, name);
+}
+
+bool MainWindow::createComponentFromPreview(const viewmodel::PreviewComponentRequest& request) {
+    modelIoError_.clear();
+    if (toolpaths_ == nullptr) {
+        modelIoError_ = "there are no toolpaths";
+        return false;
+    }
+    const viewmodel::PreviewComponentOutcome out =
+        viewmodel::createComponentFromToolpathPreview(currentDocument(), toolpaths_->session(), request);
+    if (!out.ok) {
+        modelIoError_ = out.message;
+        return false;
+    }
+    documentChanged();
+    return true;
+}
+
+void MainWindow::createComponentFromPreviewDialog() {
+    // Shift keeps only the cells the tool cut (the rest is transparent); Ctrl subtracts the result instead of adding
+    // it (readings of "Shift or Ctrl changes the result", ADR-0091).
+    const Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
+    viewmodel::PreviewComponentRequest request;
+    if (mods.testFlag(Qt::ShiftModifier)) {
+        request.cells = simulate::PreviewCells::CutOnly;
+    }
+    if (mods.testFlag(Qt::ControlModifier)) {
+        request.mode = relief::CombineMode::Subtract;
+    }
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    const bool ok = createComponentFromPreview(request);
+    QApplication::restoreOverrideCursor();
+    if (!ok && !quiet_) {
+        QMessageBox::warning(this, QStringLiteral("Create component from toolpath preview"), qs(modelIoError_));
+    }
 }
 
 bool MainWindow::exportModelFile(const std::filesystem::path& path, const viewmodel::ModelExportSettings& settings) {

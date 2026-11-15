@@ -161,6 +161,15 @@ struct PhotoInput {
     document::BitmapDecoder decoder;
 };
 
+/// The toolpath a projection onto the model re-heights (T-0311, ADR-0091), copied from the document: the moves
+/// are shared and immutable.
+struct ProjectSource {
+    document::ToolpathId id;
+    std::string name;
+    toolpath::ToolSnapshot tool;
+    document::SharedMoves moves;
+};
+
 /// Everything one calculation needs, copied from the document and the tool database. Independent
 /// of both: it may be run on another thread, and run more than once with the same result.
 struct ToolpathJob {
@@ -171,6 +180,8 @@ struct ToolpathJob {
     /// 3D rough and 3D finish only (T-0303, ADR-0085): the composed relief model of the sheet at the
     /// finest cell size, shared and immutable. The contours are then the Vectors boundary (if used).
     std::shared_ptr<const relief::HeightField> model;
+    /// Project Toolpath onto Model / 3D Tabs only (T-0311): the toolpath to project (`attachSource`).
+    std::optional<ProjectSource> source;
     std::vector<geometry::Contour> contours;
     /// The drawing object of each contour.
     std::vector<document::ObjectId> owners;
@@ -223,12 +234,20 @@ void attachPlugSheet(ToolpathJob& job, const document::Document& doc);
 void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
                       const document::BitmapDecoder& decoder);
 
-/// True for the operations that machine the composed relief model (3D rough, 3D finish).
+/// True for the operations that machine the composed relief model (3D rough, 3D finish, and the projection
+/// of a toolpath onto it).
 bool usesModel(document::ToolpathOperation operation);
 
 /// Gives `job` the composed relief model of the document's active sheet (a no-op for other
 /// operations), or sets the job's refusal when there is none or it is too large to compose.
 void attachModel(ToolpathJob& job, const document::Document& doc);
+
+/// Gives `job` the toolpath a Project Toolpath onto Model / 3D Tabs job projects (a no-op for other operations):
+/// the record named by `Project3dParams::sourceToolpath`. Refuses when it does not exist or has no moves.
+void attachSource(ToolpathJob& job, const document::Document& doc);
+
+/// Hash of the moves of the toolpath record `sourceToolpath` (a fixed value when it does not exist).
+std::uint64_t sourceFingerprint(const document::Document& doc, std::uint64_t sourceToolpath);
 
 /// Why the active sheet's relief model cannot be machined (no levels, nothing visible, too large);
 /// empty when it can.

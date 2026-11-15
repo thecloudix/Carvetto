@@ -86,6 +86,8 @@ class ToolpathsPanel : public QWidget {
 
     // --- Actions (also reachable by name for the self-test) ---------------------------------------
     QAction* addAction(document::ToolpathOperation operation) const;
+    /// "3D Tabs": a projection of the current toolpath with ramped tabs (T-0311).
+    QAction* addTabsAction() const { return addTabs_; }
     QAction* editAction() const { return edit_; }
     QAction* duplicateAction() const { return duplicate_; }
     QAction* deleteAction() const { return delete_; }
@@ -106,6 +108,8 @@ class ToolpathsPanel : public QWidget {
 
     /// Opens the form to add a toolpath of `operation` / to edit toolpath `id`.
     void openAddForm(document::ToolpathOperation operation);
+    /// 3D Tabs for the current toolpath (the Project onto Model form with ramped tabs on).
+    void openAddTabsForm();
     void openEditForm(document::ToolpathId id);
 
     /// Recalculates, in the background, the toolpaths whose calculation boxes name document variables
@@ -166,6 +170,7 @@ class ToolpathsPanel : public QWidget {
     QProgressBar* progress_{nullptr};
     QPushButton* cancelButton_{nullptr};
     std::map<int, QAction*> addActions_;
+    QAction* addTabs_{nullptr};
     QAction* edit_{nullptr};
     QAction* duplicate_{nullptr};
     QAction* delete_{nullptr};

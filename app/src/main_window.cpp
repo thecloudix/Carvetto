@@ -387,6 +387,12 @@ void MainWindow::buildMenus() {
     QAction* importModelAction = file->addAction(QStringLiteral("Import 3D &Model..."));
     importModelAction->setObjectName(QStringLiteral("importModelAction"));
     connect(importModelAction, &QAction::triggered, this, [this]() { importMeshDialog(); });
+    QAction* previewComponentAction = file->addAction(QStringLiteral("Create Component From Toolpath &Preview"));
+    previewComponentAction->setObjectName(QStringLiteral("createPreviewComponentAction"));
+    previewComponentAction->setToolTip(QStringLiteral(
+        "Simulate the enabled toolpaths and add the carved stock as a component. Shift keeps only the cut cells; "
+        "Ctrl subtracts it."));
+    connect(previewComponentAction, &QAction::triggered, this, [this]() { createComponentFromPreviewDialog(); });
     QMenu* exportModel = file->addMenu(QStringLiteral("Export 3D Mo&del"));
     exportModel->setObjectName(QStringLiteral("exportModelMenu"));
     const std::pair<const char*, viewmodel::ModelExportKind> exports[] = {

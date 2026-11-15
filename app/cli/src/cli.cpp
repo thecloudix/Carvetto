@@ -491,6 +491,8 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::VCarveInlay: return "v_carve_inlay";
         case document::ToolpathOperation::Rough3d: return "rough_3d";
         case document::ToolpathOperation::Finish3d: return "finish_3d";
+        case document::ToolpathOperation::Moulding: return "moulding";
+        case document::ToolpathOperation::Project3d: return "project_3d";
     }
     return "?";
 }

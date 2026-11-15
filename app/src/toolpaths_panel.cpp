@@ -166,13 +166,18 @@ void ToolpathsPanel::build() {
                                  ToolpathOperation::Engrave, ToolpathOperation::VCarving, ToolpathOperation::Chamfer,
                                  ToolpathOperation::ThreadMill, ToolpathOperation::Prism, ToolpathOperation::Fluting,
                                  ToolpathOperation::Inlay, ToolpathOperation::ImageEngrave, ToolpathOperation::VCarveInlay,
-                                 ToolpathOperation::Rough3d, ToolpathOperation::Finish3d}) {
+                                 ToolpathOperation::Rough3d, ToolpathOperation::Finish3d, ToolpathOperation::Moulding,
+                                 ToolpathOperation::Project3d}) {
         QAction* a = addMenu->addAction(QString::fromUtf8(operationLabel(op)));
         a->setObjectName(QStringLiteral("add%1").arg(QString::fromUtf8(operationLabel(op))));
         a->setToolTip(QStringLiteral("Add a %1 toolpath").arg(QString::fromUtf8(operationLabel(op))));
         addActions_[static_cast<int>(op)] = a;
         connect(a, &QAction::triggered, this, [this, op]() { openAddForm(op); });
     }
+    addTabs_ = addMenu->addAction(QStringLiteral("3D Tabs"));
+    addTabs_->setObjectName(QStringLiteral("add3D Tabs"));
+    addTabs_->setToolTip(QStringLiteral("Add ramped tabs to the selected toolpath, re-heighted onto the model"));
+    connect(addTabs_, &QAction::triggered, this, [this]() { openAddTabsForm(); });
     auto* addButton = new QToolButton(bar_);
     addButton->setText(QStringLiteral("Add"));
     addButton->setObjectName(QStringLiteral("toolpathAddButton"));
@@ -483,6 +488,9 @@ void ToolpathsPanel::updateActions() {
     for (auto& [op, a] : addActions_) {
         a->setEnabled(idle);
     }
+    if (addTabs_ != nullptr) {
+        addTabs_->setEnabled(hasCurrent);
+    }
     for (QAction* a : {edit_, duplicate_, up_, down_, recalculate_}) {
         a->setEnabled(hasCurrent);
     }
@@ -567,7 +575,18 @@ void ToolpathsPanel::openAddForm(ToolpathOperation operation) {
     if (busy_ || doc_ == nullptr) {
         return;
     }
+    if (operation == ToolpathOperation::Project3d) {
+        openForm(session_.newProjectForm(currentToolpath(), false), false, ToolpathId{});
+        return;
+    }
     openForm(session_.newForm(operation), false, ToolpathId{});
+}
+
+void ToolpathsPanel::openAddTabsForm() {
+    if (busy_ || doc_ == nullptr || currentToolpath().isNull()) {
+        return;
+    }
+    openForm(session_.newProjectForm(currentToolpath(), true), false, ToolpathId{});
 }
 
 void ToolpathsPanel::openEditForm(ToolpathId id) {

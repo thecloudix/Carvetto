@@ -350,6 +350,74 @@ std::string toolpaths3dSelfTest(MainWindow& window) {
 
     // One undo step removes the finish, the model stays.
     ST_REQUIRE(window.undo() && doc.toolpaths().size() == 1 && !doc.reliefLevels().empty(), "3D: undo did not remove the finish");
+
+    // Moulding (T-0311): the selected open vectors are the profile (first) and the rail.
+    const auto addOpen = [&](double x0, double y0, double x1, double y1) {
+        geometry::Polyline pl;
+        pl.points = {{x0, y0}, {x1, y1}};
+        const bool ok = doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+            geometry::Contour::fromPolyline(pl), doc.activeLayer(), doc.activeSheet())));
+        return ok ? doc.objectIds().back() : document::ObjectId{};
+    };
+    const document::ObjectId profileId = addOpen(-4.0, 0.0, 4.0, 3.0);
+    const document::ObjectId railId = addOpen(10.0, 10.0, 50.0, 10.0);
+    ST_REQUIRE(!profileId.isNull() && !railId.isNull(), "3D: could not draw the moulding vectors");
+    doc.selection().assign({profileId, railId});
+    window.documentChanged();
+    ST_REQUIRE(panel->addAction(document::ToolpathOperation::Moulding) != nullptr, "3D: the Add menu has no Moulding entry");
+    panel->addAction(document::ToolpathOperation::Moulding)->trigger();
+    dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr && dlg->pickTool("end-mill-3mm"), "3D: no moulding form or tool");
+    ST_REQUIRE(dlg->typeField("zOffset", "-3") && dlg->okButton()->isEnabled(), "3D: the moulding form cannot be accepted");
+    ST_REQUIRE(accept(panel) && panel->waitIdle(300000), "3D: the moulding calculation did not finish");
+    ST_REQUIRE(doc.toolpaths().size() == 2 && doc.toolpaths()[1].operation() == document::ToolpathOperation::Moulding &&
+                   doc.toolpaths()[1].moveCount() > 4,
+               "3D: adding a Moulding failed: " + panel->statusText().toStdString());
+
+    // Project Toolpath onto Model of the moulding, then 3D Tabs of it.
+    const document::ToolpathId sourceId = doc.toolpaths()[1].id;
+    panel->selectToolpath(sourceId);
+    ST_REQUIRE(panel->addAction(document::ToolpathOperation::Project3d) != nullptr && panel->addTabsAction() != nullptr,
+               "3D: the Add menu has no Project / 3D Tabs entry");
+    panel->addAction(document::ToolpathOperation::Project3d)->trigger();
+    dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr, "3D: Project onto Model opened no form");
+    {
+        const auto& pp = std::get<toolpath::Project3dParams>(dlg->form().definition().params);
+        ST_REQUIRE(pp.sourceToolpath == sourceId.value && !pp.tabs.enabled,
+                   "3D: the projection form does not start from the selected toolpath");
+    }
+    ST_REQUIRE(dlg->okButton()->isEnabled(), "3D: the projection form cannot be accepted");
+    ST_REQUIRE(accept(panel) && panel->waitIdle(300000), "3D: the projection did not finish");
+    ST_REQUIRE(doc.toolpaths().size() == 3 && doc.toolpaths()[2].operation() == document::ToolpathOperation::Project3d,
+               "3D: projecting a toolpath failed: " + panel->statusText().toStdString());
+    panel->selectToolpath(sourceId);
+    panel->addTabsAction()->trigger();
+    dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr, "3D: 3D Tabs opened no form");
+    {
+        const auto& pp = std::get<toolpath::Project3dParams>(dlg->form().definition().params);
+        ST_REQUIRE(pp.tabs.enabled && pp.tabs.threeD, "3D: the 3D Tabs form does not start with ramped tabs on");
+    }
+    ST_REQUIRE(dlg->typeField("tabLength", "4") && dlg->typeField("tabCount", "2") && accept(panel) &&
+                   panel->waitIdle(300000),
+               "3D: the 3D tabs calculation did not finish");
+    ST_REQUIRE(doc.toolpaths().size() == 4 && std::get<toolpath::Project3dParams>(doc.toolpaths()[3].params).tabs.enabled,
+               "3D: adding 3D Tabs failed: " + panel->statusText().toStdString());
+
+    // Create Component From Toolpath Preview: the carved stock becomes a component, in one undo step.
+    QAction* previewAction = window.findChild<QAction*>(QStringLiteral("createPreviewComponentAction"));
+    ST_REQUIRE(previewAction != nullptr, "3D: the File menu has no Create Component From Toolpath Preview entry");
+    const std::size_t components = doc.reliefModel(doc.activeSheet()).front().components.size();
+    const std::size_t before = doc.undoStack().index();
+    viewmodel::PreviewComponentRequest request;
+    request.quality = simulate::Quality::Coarse;
+    ST_REQUIRE(window.createComponentFromPreview(request), "3D: the preview component was refused: " + window.lastModelIoError());
+    ST_REQUIRE(doc.reliefModel(doc.activeSheet()).front().components.size() == components + 1 &&
+                   doc.undoStack().index() == before + 1,
+               "3D: the preview component was not one undo step");
+    ST_REQUIRE(window.undo() && doc.reliefModel(doc.activeSheet()).front().components.size() == components,
+               "3D: undo did not remove the preview component");
     return std::string();
 }
 

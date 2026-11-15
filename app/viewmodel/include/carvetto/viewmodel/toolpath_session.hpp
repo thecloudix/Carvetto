@@ -188,6 +188,10 @@ class ToolpathSession {
     /// tool is NOT chosen (the user picks), the selector is the current selection when something
     /// is selected, else every vector.
     ToolpathForm newForm(document::ToolpathOperation operation);
+    /// A form for Project Toolpath onto Model (`tabs` false) or 3D Tabs (`tabs` true: tabs on, ramped) of toolpath
+    /// `source` (T-0311): the tool is the source's when it suits, the name derives from the source's. A source that
+    /// does not exist leaves the source field unset (the form then reports it).
+    ToolpathForm newProjectForm(document::ToolpathId source, bool tabs);
     /// The definition of toolpath `id` (a clearance toolpath of a V-carve gives its V-carve's).
     std::optional<ToolpathDefinition> definition(document::ToolpathId id);
     std::optional<ToolpathForm> form(document::ToolpathId id);
