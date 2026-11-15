@@ -1477,7 +1477,7 @@ Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, re
 Phase: 2   Module: app   Depends on: T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291
 Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, centre), zero-plane positioning with undercut highlight, export actions, and the sweep, extrude/weave, turn/spin and textured-area forms. Split into two cards when picked up if the coder judges it too large.
 
-### T-0302 App: sculpting tool UI and level effects UI   [status: verifying (first subset; polish -> T-0309)]
+### T-0302 App: sculpting tool UI and level effects UI   [status: done — PR #180 (polish -> T-0309)]
 Phase: 2   Module: app   Depends on: T-0299, T-0294, T-0295
 Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, presets, Keep/Discard), plus Clipping and Mirror Mode level actions.
 
@@ -1498,7 +1498,7 @@ Goal: Store an appearance per component and level in the document (needs a .carv
 Phase: 2   Module: app   Depends on: T-0300
 Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, vector boundary, cross section and distort (core ops are in relief/modify.hpp and relief/derive.hpp), each with one preview function and Apply through ReplaceReliefComponentCommand or an add, as one undo step; the Custom shape profile editor; preview merged with the rest of the model if affordable. Follow the T-0300 pattern (viewmodel relief_modelling, ModellingPanel pages, self-test).
 
-### T-0307 Moulding toolpath (T-0298 follow-up)   [status: verifying (PR open)]
+### T-0307 Moulding toolpath (T-0298 follow-up)   [status: done — PR #184]
 Phase: 2   Module: core/toolpath   Depends on: T-0298, T-0296
 Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a moulding cross-section along drive rails with the tool shape; Toolpath Position, Z from the cross-section height; drive rails (reverse/clear) and an open profile vector (reverse profile); finishing (stepover, vary stepover, skip flat regions, sharp corners) and roughing (larger-area clearance tool, machine flat regions, ramp plunge, allowance); boundary offset. Position semantics and flat-region handling are product readings: the coder records its readings in the ADR (section of ADR-0073) and the director lists them for owner review; do not stop for them.
 
@@ -1506,7 +1506,7 @@ Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a m
 Phase: 2   Module: app   Depends on: T-0301
 Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the cores in relief/sweep.hpp, extrude.hpp, revolve.hpp and textured_area.hpp: pick rails/profiles/boundaries from the selection, preview, Apply as one undo step through AddReliefComponentCommand, self-test coverage. Optional: both-sides mesh import and a draggable zero plane in the Model view.
 
-### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: blocked — waits on T-0302]
+### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: ready]
 Phase: 2   Module: app   Depends on: T-0302
 Goal: The items T-0302 left out (ADR-0084): overlay reference image over the model with opacity, custom brush stamps from an image (the core already supports CustomBrush), brush ring cursor in the Model view, presets persisted across sessions, sculpt preview merged with the other components, cheaper long strokes. Low priority.
 
@@ -1515,7 +1515,7 @@ Phase: 2   Module: core/tests   Depends on: T-0270
 Goal: CI run 43649513980 (main, T-0300 merge, linux-app ubuntu-24.04, 2026-11-14) failed only this test (ctest #981) after T-0270 added the CPU-time retry helper. Find why it still flakes under load (wall-clock leak, thread contention, ratio on tiny absolute times, retry count too low) and make it deterministic: prefer counting operations over timing; if a timing assertion must stay, derive the bound from measured CPU time with a floor that makes noise irrelevant. (Re-scoped by director 2026-11-15 after verifier round 1: the sibling-test audit moved to T-0313; this card covers the one failing test.)
 Acceptance criteria: the test cannot fail from scheduler noise (justify in the ADR or the test comment); 200 consecutive runs under `stress`-style load (e.g. ctest -j16 --repeat until-fail:50 on this test plus a CPU burner) show no failure; mutants of the asserted complexity (quadratic removal) are still killed; one changelog fragment.
 
-### T-0311 App: Project Toolpath onto Model, 3D Tabs, Create Component From Toolpath Preview, rest-tool lists, Moulding entry (T-0303 follow-up)   [status: blocked — waits on T-0303, T-0307]
+### T-0311 App: Project Toolpath onto Model, 3D Tabs, Create Component From Toolpath Preview, rest-tool lists, Moulding entry (T-0303 follow-up)   [status: ready]
 Phase: 2   Module: app + core/document   Depends on: T-0303, T-0307
 Goal: The items T-0303 left out (ADR-0085 "Remaining"): toolpath entries/dialogs for Project Toolpath onto Model and 3D Tabs (core/toolpath/project3d.hpp), the Model-menu action Create Component From Toolpath Preview (core/simulate/preview_component.hpp), rest-tool lists and prior toolpaths for 3D rough/finish, and the Moulding toolpath entry once T-0307 lands (follow the extension point in ADR-0085). Follow the T-0303 pattern; self-test coverage.
 
@@ -1523,6 +1523,6 @@ Goal: The items T-0303 left out (ADR-0085 "Remaining"): toolpath entries/dialogs
 Phase: 2   Module: core/io   Depends on: T-0303
 Goal: T-0303's coder observed that the writer's "more than 1 move per byte of file size" guard (a zip-bomb style ratio check) refuses saving a long 3D finish toolpath over a very regular model (a plain ramp compresses to almost nothing). Re-derive the guard so legitimate regular jobs save and load, while hostile files stay bounded (absolute caps instead of ratio, or measure uncompressed size). Keep the hostile-input tests; ADR note.
 
-### T-0313 Audit the remaining interleavedCpuSecondsRetry timing tests; convert to operation counts where possible (T-0310 follow-up)   [status: verifying]
+### T-0313 Audit the remaining interleavedCpuSecondsRetry timing tests; convert to operation counts where possible (T-0310 follow-up)   [status: done — PR #185 (remaining timed tests kept, ADR-0089)]
 Phase: 2   Module: core/tests   Depends on: T-0310
 Goal: About 30 tests still assert complexity by CPU-time ratios (perf_test, toolpath_scale_test, toolpath_residual_scale_test, v_carve_test, offset_unnested_hole_test, boolean_batch_test, edit_ops_fuzz_test, medial_axis_robustness_test, bezier_intersect_bounds_test, offset_narrow_loops_test, open_offset_chains_test, document/commands_test:196, document/integrity_scale_test:118). Start with the two document-module ones, then the rest: convert each to a deterministic operation counter where the algorithm allows it (as T-0310 did for selection), otherwise record in a short ADR why the timing bound is safe (floor, minimum window, retries) and keep it. Also make the T-0310 selection test fail fast (REQUIRE or smaller n for the mutant-sensitive check) and consider counting slot moves/probes as well as compaction scans. Mutants of the asserted complexity stay killed.
