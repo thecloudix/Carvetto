@@ -10,6 +10,7 @@
 
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
+#include "carvetto/toolpath/time.hpp"
 #include "carvetto/toolpath/v_carve.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
 
@@ -1343,22 +1344,21 @@ ToolpathSession::Stats ToolpathSession::statsOf(const ToolpathRecord& record, co
     if (it != stats_.end() && it->second.rates == rates && it->second.rapidSet == (setup_.rapidRateMmPerMin > 0.0)) {
         return it->second;
     }
-    toolpath::Toolpath tp = record.toolpath();
-    if (moves != nullptr && *moves != nullptr) {
-        tp.moves = **moves;
-    }
+    // One pass over the shared moves, no copy of the list (T-0317, ADR-0097).
+    static const std::vector<toolpath::Move> noMoves;
+    const std::vector<toolpath::Move>& list = key != nullptr ? *key : noMoves;
+    const toolpath::MoveSummary sum = toolpath::summarizeMoves(list, rates);
     Stats s;
     s.rates = rates;
     s.rapidSet = setup_.rapidRateMmPerMin > 0.0;
-    s.moves = tp.moveCount();
-    s.bounds = tp.bounds();
-    const toolpath::LengthByKind len = tp.lengthByKind();
-    s.length = len.total();
-    s.minZ = tp.minZ();
-    s.maxZ = tp.maxZ();
-    s.time = toolpath::estimateTime(tp, rates);
+    s.moves = sum.moves;
+    s.bounds = sum.bounds;
+    s.length = sum.length.total();
+    s.minZ = sum.minZ;
+    s.maxZ = sum.maxZ;
+    s.time = sum.time;
     if (setup_.rapidRateMmPerMin <= 0.0) {
-        s.rapidMissing = len.rapid > 0.0;
+        s.rapidMissing = sum.length.rapid > 0.0;
         s.time.rapid = 0.0;
     }
     if (key != nullptr) {

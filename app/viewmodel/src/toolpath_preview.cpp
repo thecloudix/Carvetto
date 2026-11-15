@@ -4,6 +4,7 @@
 #include <cmath>
 #include <map>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 
 namespace carvetto::viewmodel {
@@ -365,6 +366,13 @@ PreviewDrawList PreviewModel::draw(const ViewTransform& view, const PreviewDrawO
     const Box2 visible = view.visibleWorld().inflated(2.0 / std::max(view.scale(), 1e-9));
     std::map<PreviewStyle, std::size_t> batchOf;
     const double spacing = std::max(options.minPointSpacingPx, 0.0);
+    // Over the point budget, strokes of one style whose end points fall on the same pixel cells
+    // (quantum = the point spacing, at least 1 px) are the same picture: only the first is emitted.
+    const double quantum = std::max(spacing, 1.0);
+    std::unordered_set<std::uint64_t> coarseSeen;
+    auto cell = [quantum](double v) {
+        return static_cast<std::uint64_t>(static_cast<std::int64_t>(std::floor(std::clamp(v, -1e9, 1e9) / quantum)));
+    };
     for (const PreviewToolpath& tp : scene_.toolpaths) {
         if (!drawn(tp)) {
             continue;
@@ -397,8 +405,21 @@ PreviewDrawList PreviewModel::draw(const ViewTransform& view, const PreviewDrawO
                 // (Over the point budget the rest of the job is drawn as one stroke per chunk.)
                 out.stats.chunksCoarse += overBudget ? 1 : 0;
                 // Smaller than a pixel: one short stroke across its extent keeps the density.
-                batch.points.push_back(view.worldToScreen(chunk.points.front()));
-                batch.points.push_back(view.worldToScreen(chunk.points.back()));
+                const Vec2 a = view.worldToScreen(chunk.points.front());
+                const Vec2 b = view.worldToScreen(chunk.points.back());
+                if (overBudget) {
+                    std::uint64_t h = 1469598103934665603ull + found->second;
+                    for (const std::uint64_t part : {cell(a.x), cell(a.y), cell(b.x), cell(b.y)}) {
+                        h = (h ^ part) * 1099511628211ull;
+                        h ^= h >> 29;
+                    }
+                    if (!coarseSeen.insert(h).second) {
+                        ++out.stats.chunksMerged;
+                        continue;  // the same stroke is already in the batch
+                    }
+                }
+                batch.points.push_back(a);
+                batch.points.push_back(b);
             } else {
                 Vec2 last = view.worldToScreen(chunk.points.front());
                 batch.points.push_back(last);

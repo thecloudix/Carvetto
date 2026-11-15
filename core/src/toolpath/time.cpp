@@ -1,6 +1,7 @@
 #include "carvetto/toolpath/time.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 
 namespace carvetto::toolpath {
@@ -54,6 +55,57 @@ TimeEstimate estimateTime(const Toolpath& toolpath, const MachineRates& rates, s
 
 TimeEstimate estimateTime(const Toolpath& toolpath, double rapidRate, double feed, double acceleration) {
     return estimateTime(toolpath, MachineRates{rapidRate, feed, feed, acceleration});
+}
+
+namespace {
+std::atomic<std::size_t> g_summarized{0};
+}
+
+std::size_t summarizeMovesVisited() {
+    return g_summarized.load(std::memory_order_relaxed);
+}
+
+MoveSummary summarizeMoves(std::span<const Move> moves, const MachineRates& rates, std::optional<Vec3> from) {
+    MoveSummary out;
+    out.moves = moves.size();
+    g_summarized.fetch_add(moves.size(), std::memory_order_relaxed);
+    Vec3 prev = from.value_or(moves.empty() ? Vec3{} : moves.front().to);
+    for (std::size_t i = 0; i < moves.size(); ++i) {
+        const Move& m = moves[i];
+        const Vec3 start = i == 0 ? prev : moves[i - 1].to;
+        const double len = moveLength(m, start);
+        out.bounds.expand(moveBounds(m, start));
+        if (!out.minZ || m.to.z < *out.minZ) {
+            out.minZ = m.to.z;
+        }
+        if (!out.maxZ || *out.maxZ < m.to.z) {
+            out.maxZ = m.to.z;
+        }
+        switch (m.kind) {
+            case MoveKind::Rapid:
+                out.length.rapid += len;
+                out.time.rapid += moveTime(len, rates.rapidRate, rates.acceleration);
+                break;
+            case MoveKind::Feed:
+            case MoveKind::ArcCW:
+            case MoveKind::ArcCCW:
+                out.length.feed += len;
+                out.time.feed += moveTime(len, m.feedOverride.value_or(rates.feedRate), rates.acceleration);
+                break;
+            case MoveKind::Plunge:
+                out.length.plunge += len;
+                out.time.plunge += moveTime(len, m.feedOverride.value_or(rates.plungeRate), rates.acceleration);
+                break;
+            case MoveKind::Retract:
+                out.length.retract += len;
+                out.time.retract += moveTime(len, m.feedOverride.value_or(rates.plungeRate), rates.acceleration);
+                break;
+            case MoveKind::Dwell:
+                out.time.dwell += std::max(m.dwellSeconds, 0.0);
+                break;
+        }
+    }
+    return out;
 }
 
 }  // namespace carvetto::toolpath

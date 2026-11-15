@@ -1,7 +1,9 @@
 #pragma once
 
 #include <limits>
+#include <cstddef>
 #include <optional>
+#include <span>
 
 #include "carvetto/toolpath/toolpath.hpp"
 
@@ -60,5 +62,21 @@ TimeEstimate estimateTime(const Toolpath& toolpath, const MachineRates& rates, s
 /// included); `acceleration` in mm/s², infinity for instantaneous.
 TimeEstimate estimateTime(const Toolpath& toolpath, double rapidRate, double feed,
                           double acceleration = std::numeric_limits<double>::infinity());
+
+/// Everything the job summary needs about one move list, from a single pass (T-0317). Equal, value
+/// for value, to `Toolpath::bounds()`, `lengthByKind().total()`, `minZ()`, `maxZ()` and `estimateTime()`.
+struct MoveSummary {
+    std::size_t moves{0};
+    Box2 bounds;
+    LengthByKind length;
+    std::optional<double> minZ;
+    std::optional<double> maxZ;
+    TimeEstimate time;
+};
+MoveSummary summarizeMoves(std::span<const Move> moves, const MachineRates& rates, std::optional<Vec3> from = {});
+
+/// Operation counter: total moves visited by `summarizeMoves` in this process (monotonic; tests
+/// compare deltas to prove a summary costs one pass over the moves, not several).
+std::size_t summarizeMovesVisited();
 
 }  // namespace carvetto::toolpath

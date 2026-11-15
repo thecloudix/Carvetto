@@ -145,3 +145,40 @@ TEST_CASE("Estimate is deterministic", "[toolpath][time]") {
     const TimeEstimate b = estimateTime(tp, 3000.0, 1000.0, 250.0);
     CHECK(a == b);
 }
+
+TEST_CASE("summarizeMoves equals the separate queries in one pass", "[toolpath][time][t0317]") {
+    Toolpath tp;
+    tp.append(Move::rapid({0, 0, 5}));
+    tp.append(Move::plunge({0, 0, -2}));
+    tp.append(Move::feed({30, 0, -2}));
+    Move arc = Move::feed({30, 20, -2});
+    arc.kind = MoveKind::ArcCCW;
+    arc.centre = {30, 10};
+    tp.append(arc);
+    Move slow = Move::feed({0, 20, -3});
+    slow.feedOverride = 300.0;
+    tp.append(slow);
+    tp.append(Move::retract({0, 20, 5}));
+    Move dwell;
+    dwell.kind = MoveKind::Dwell;
+    dwell.to = {0, 20, 5};
+    dwell.dwellSeconds = 1.5;
+    tp.append(dwell);
+    const MachineRates rates{4000.0, 1000.0, 200.0, 50.0};
+    for (const std::optional<Vec3> from : {std::optional<Vec3>{}, std::optional<Vec3>{Vec3{-5, -5, 9}}}) {
+        const std::size_t before = summarizeMovesVisited();
+        const MoveSummary s = summarizeMoves(tp.moves, rates, from);
+        CHECK(summarizeMovesVisited() - before == tp.moves.size());  // one visit per move, whatever it computes
+        CHECK(s.moves == tp.moves.size());
+        CHECK(s.bounds == tp.bounds(from));
+        CHECK(s.length == tp.lengthByKind(from));
+        CHECK(s.minZ == tp.minZ());
+        CHECK(s.maxZ == tp.maxZ());
+        CHECK(s.time == estimateTime(tp, rates, from));
+    }
+    const MoveSummary none = summarizeMoves({}, rates);
+    CHECK(none.moves == 0);
+    CHECK_FALSE(none.minZ.has_value());
+    CHECK_FALSE(none.maxZ.has_value());
+    CHECK(none.bounds.isEmpty());
+}

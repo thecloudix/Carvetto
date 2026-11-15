@@ -32,6 +32,10 @@ struct SimulationShared {
     bool quit{false};
     std::atomic<bool> cancelRun{false};
     std::atomic<int> chunkDelayMs{0};
+    std::atomic<int> prepareDelayMs{0};
+    std::atomic<std::size_t> movesQueued{0};
+    std::atomic<std::size_t> queueSlices{0};
+    std::atomic<std::size_t> cutChunks{0};
 
     SimState state{SimState::Preparing};
     std::size_t movesDone{0};
@@ -47,6 +51,9 @@ struct SimulationShared {
 namespace {
 
 using Clock = std::chrono::steady_clock;
+
+/// Moves queued per `addToolpath` call (about 5 ms of queueing work; bounds how long stop() waits).
+constexpr std::size_t kQueueSlice = 1 << 15;
 
 double secondsSince(Clock::time_point t0) {
     return std::chrono::duration<double>(Clock::now() - t0).count();
@@ -66,21 +73,41 @@ void worker(std::shared_ptr<SimulationShared> shp) {
             fail(sh, sim.error().message);
             return;
         }
+        // Queue each toolpath in slices (the simulator continues from the end of the previous slice, so
+        // the result is the same as one call) and look at `quit` between them: stop() and start() on the
+        // UI thread join this worker, and a million-move toolpath would otherwise be one long call.
         for (std::size_t i = 0; i < sh.setup.toolpaths.size(); ++i) {
             const SimulationToolpath& tp = sh.setup.toolpaths[i];
-            {
-                std::lock_guard<std::mutex> lock(sh.m);
-                if (sh.quit) {
+            const std::vector<toolpath::Move>& all = *tp.moves;
+            for (std::size_t at = 0; at < all.size(); at += kQueueSlice) {
+                {
+                    std::lock_guard<std::mutex> lock(sh.m);
+                    if (sh.quit) {
+                        return;
+                    }
+                }
+                const std::size_t n = std::min(kQueueSlice, all.size() - at);
+                toolpath::Toolpath path;
+                path.name = tp.name;
+                path.tool = tp.tool;
+                path.moves.assign(all.begin() + static_cast<std::ptrdiff_t>(at),
+                                  all.begin() + static_cast<std::ptrdiff_t>(at + n));  // transient copy of one slice
+                if (!sim.addToolpath(path, tp.shape, static_cast<std::uint32_t>(i + 1))) {
+                    fail(sh, sim.error().message.empty() ? std::string("The simulator refused toolpath \"") + tp.name + "\"."
+                                                          : sim.error().message);
                     return;
                 }
+                sh.movesQueued.store(sim.moveCount());
+                sh.queueSlices.fetch_add(1);
+                const int pause = sh.prepareDelayMs.load();
+                if (pause > 0) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(pause));
+                }
             }
-            toolpath::Toolpath path;
-            path.name = tp.name;
-            path.tool = tp.tool;
-            path.moves = *tp.moves;  // transient copy: the simulator keeps its own queue
-            if (!sim.addToolpath(path, tp.shape, static_cast<std::uint32_t>(i + 1))) {
-                fail(sh, sim.error().message.empty() ? std::string("The simulator refused toolpath \"") + tp.name + "\"."
-                                                      : sim.error().message);
+        }
+        {
+            std::lock_guard<std::mutex> lock(sh.m);
+            if (sh.quit) {
                 return;
             }
         }
@@ -131,8 +158,26 @@ void worker(std::shared_ptr<SimulationShared> shp) {
             bool superseded = false;
             bool aborted = false;
             while (sim.movesDone() < target) {
+                {
+                    // A cancel that arrived while preparing (or between runs) is honoured before the first step.
+                    std::lock_guard<std::mutex> lock(sh.m);
+                    if (sh.quit) {
+                        return;
+                    }
+                    if (sh.targetPending) {
+                        superseded = true;
+                        break;
+                    }
+                    if (sh.cancelRun.load()) {
+                        aborted = true;
+                        sh.cancelled = true;
+                        sh.target = sim.movesDone();
+                        break;
+                    }
+                }
                 const auto c0 = Clock::now();
                 const std::size_t step = std::min(target, sim.movesDone() + chunk);
+                sh.cutChunks.fetch_add(1);
                 if (!sim.advanceToMove(step)) {
                     fail(sh, sim.error().message.empty() ? std::string("The simulation failed.") : sim.error().message);
                     return;
@@ -205,6 +250,7 @@ SimulationController::~SimulationController() {
 
 bool SimulationController::start(SimulationSetup setup, const ReliefOptions& options) {
     stop();
+    lastCounters_ = Counters{};
     if (!setup.ok) {
         return false;
     }
@@ -212,6 +258,7 @@ bool SimulationController::start(SimulationSetup setup, const ReliefOptions& opt
     auto sh = std::make_shared<SimulationShared>();
     sh->setup = std::move(setup);
     sh->relief = options;
+    sh->prepareDelayMs.store(prepareDelayMs_);
     shared_ = sh;
     worker_ = std::thread(worker, sh);
     return true;
@@ -229,6 +276,7 @@ void SimulationController::stop() {
     if (worker_.joinable()) {
         worker_.join();
     }
+    lastCounters_ = counters();
     shared_.reset();
     setup_ = SimulationSetup{};
 }
@@ -317,6 +365,20 @@ std::shared_ptr<const SimulationFrame> SimulationController::frame() const {
     }
     std::lock_guard<std::mutex> lock(shared_->m);
     return shared_->frame;
+}
+
+void SimulationController::setPrepareDelayForTest(int milliseconds) {
+    prepareDelayMs_ = milliseconds;
+}
+
+SimulationController::Counters SimulationController::counters() const {
+    Counters c = lastCounters_;
+    if (shared_) {
+        c.movesQueued = shared_->movesQueued.load();
+        c.queueSlices = shared_->queueSlices.load();
+        c.cutChunks = shared_->cutChunks.load();
+    }
+    return c;
 }
 
 void SimulationController::setChunkDelayForTest(int milliseconds) {

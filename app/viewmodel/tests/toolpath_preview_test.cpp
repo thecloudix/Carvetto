@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include <set>
 #include <string>
 
 #include "carvetto/viewmodel/time_readout.hpp"
@@ -567,4 +568,52 @@ TEST_CASE("time readout: from the job summary", "[readout]") {
     r = makeTimeReadout(bad);
     CHECK(r.headline == "Estimated machining time: unknown");
     CHECK(r.incomplete);
+}
+
+TEST_CASE("preview: over the budget identical coarse strokes are emitted once", "[preview][lod][t0317]") {
+    // 20000 full-width passes over only 100 distinct rows: a rapid and a feed per pass (separate
+    // chunks), alternating direction, so there are about 20000 chunks and a few hundred distinct strokes.
+    std::vector<Move> moves;
+    for (int i = 0; i < 20000; ++i) {
+        const double y = (i % 100) * 0.5;
+        const bool even = i % 2 == 0;
+        moves.push_back(Move::rapid({even ? 0.0 : 280.0, y, -1}));
+        moves.push_back(Move::feed({even ? 280.0 : 0.0, y, -1}));
+    }
+    document::Document doc;
+    ToolpathSession session(&doc);
+    document::ToolpathRecord rec;
+    rec.name = "dense passes";
+    rec.tool.diameter = 3;
+    rec.moves = document::shareMoves(std::move(moves));
+    REQUIRE(doc.execute(std::make_unique<document::AddToolpathCommand>(rec)));
+    PreviewModel model;
+    model.setEnabled(true);
+    model.sync(session);
+    const ViewTransform view = viewOf(1200, 900, 3.0, {-10, 100});
+
+    PreviewDrawOptions opt;
+    const PreviewDrawList full = model.draw(view, opt);
+    CHECK(full.stats.chunksMerged == 0);  // no budget: nothing is merged
+    opt.maxPointsOut = 1000;
+    const PreviewDrawList lod = model.draw(view, opt);
+    CHECK(lod.stats.chunksCoarse > 15000);
+    CHECK(lod.stats.chunksMerged > 15000);
+    CHECK(lod.stats.chunksDrawn == full.stats.chunksDrawn);  // all represented
+    std::size_t runs = 0;
+    for (const PreviewBatch& b : lod.batches) {
+        runs += b.runLengths.size();
+    }
+    // Emitted strokes = represented chunks minus merged ones; bounded by the distinct strokes, not the chunk count.
+    CHECK(runs == lod.stats.chunksDrawn - lod.stats.chunksMerged);
+    CHECK(runs < 1000 + 2 * 100 * 2);
+    CHECK(lod.stats.pointsOut <= opt.maxPointsOut + 256 + 2 * (lod.stats.chunksCoarse - lod.stats.chunksMerged));
+    // The picture keeps the rows: the feed strokes still cover most of the 100 distinct screen rows.
+    const PreviewBatch* feed = batchOf(lod, MoveClass::Feed);
+    REQUIRE(feed != nullptr);
+    std::set<long> rows;
+    for (const geometry::Vec2& p : feed->points) {
+        rows.insert(std::lround(p.y));
+    }
+    CHECK(rows.size() >= 60);  // 100 rows 1.5 px apart: nearly all stay distinct pixel rows
 }

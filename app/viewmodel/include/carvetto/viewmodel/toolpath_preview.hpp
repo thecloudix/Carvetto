@@ -141,6 +141,10 @@ struct PreviewDrawStats {
     std::size_t pointsOut{0};
     /// Chunks drawn as a single stroke because the point budget was used up (level of detail).
     std::size_t chunksCoarse{0};
+    /// Coarse chunks (a subset of `chunksCoarse`) not emitted because an identical stroke (same style,
+    /// end points on the same pixel cells) was already in the list (T-0317, ADR-0097). Still counted
+    /// in `chunksDrawn`: they are represented.
+    std::size_t chunksMerged{0};
 };
 
 struct PreviewDrawList {
