@@ -452,6 +452,13 @@ constexpr EnumName<toolpath::Rough3dStrategy> kRough3dStrategies[] = {{toolpath:
 constexpr EnumName<toolpath::Rough3dBoundary> kRough3dBoundaries[] = {{toolpath::Rough3dBoundary::Material, "material"},
                                                                      {toolpath::Rough3dBoundary::Model, "model"},
                                                                      {toolpath::Rough3dBoundary::Vectors, "vectors"}};
+constexpr EnumName<toolpath::Rough3dClearing> kRough3dClearings[] = {{toolpath::Rough3dClearing::Raster, "raster"},
+                                                                    {toolpath::Rough3dClearing::Offset, "offset"}};
+constexpr EnumName<toolpath::Rough3dProfile> kRough3dProfiles[] = {{toolpath::Rough3dProfile::None, "none"},
+                                                                  {toolpath::Rough3dProfile::First, "first"},
+                                                                  {toolpath::Rough3dProfile::Last, "last"}};
+constexpr EnumName<toolpath::Rough3dOrder> kRough3dOrders[] = {{toolpath::Rough3dOrder::LevelByLevel, "level_by_level"},
+                                                              {toolpath::Rough3dOrder::DepthFirst, "depth_first"}};
 constexpr EnumName<toolpath::RasterAxis> kRasterAxes[] = {{toolpath::RasterAxis::AlongX, "along_x"},
                                                           {toolpath::RasterAxis::AlongY, "along_y"}};
 constexpr EnumName<toolpath::RasterTravel> kRasterTravels[] = {{toolpath::RasterTravel::ZigZag, "zigzag"},
@@ -1082,6 +1089,10 @@ json encodeRough3dParams(const toolpath::Rough3dParams& p) {
     j["axis"] = nameOf(kRasterAxes, p.axis);
     j["travel"] = nameOf(kRasterTravels, p.travel);
     j["direction"] = nameOf(kCutDirections, p.direction);
+    j["clearing"] = nameOf(kRough3dClearings, p.clearing);
+    j["profile"] = nameOf(kRough3dProfiles, p.profile);
+    j["order"] = nameOf(kRough3dOrders, p.order);
+    j["avoid_machined"] = p.avoidMachined;
     j["reverse_steps"] = p.reverseSteps;
     j["ramp_plunge"] = p.rampPlunge;
     j["ramp_angle_rad"] = p.rampAngle;
@@ -2505,10 +2516,10 @@ constexpr std::array<std::string_view, 12> kImageEngraveKeys{
     "strategy", "safe_z",  "depth_tolerance", "tolerance",   "tool",              "layers"};
 
 // 3D rough and finish records exist only in job.json (ADR-0085).
-constexpr std::array<std::string_view, 18> kRough3dKeys{
+constexpr std::array<std::string_view, 22> kRough3dKeys{
     "name",     "strategy", "tip",           "z_offset",     "stock_top",      "stock_bottom",
     "allowance", "safe_z",  "boundary",      "boundary_offset", "axis",        "travel",
-    "direction", "reverse_steps", "ramp_plunge", "ramp_angle_rad", "tolerance", "rest_tolerance"};
+    "direction", "clearing", "profile", "order", "avoid_machined", "reverse_steps", "ramp_plunge", "ramp_angle_rad", "tolerance", "rest_tolerance"};
 constexpr std::array<std::string_view, 16> kFinish3dKeys{
     "name",      "strategy",  "z_offset",  "stock_top", "stock_bottom", "allowance",
     "safe_z",    "boundary",  "boundary_offset", "raster_angle_rad", "travel", "direction",
@@ -3059,6 +3070,14 @@ toolpath::Rough3dParams decodeRough3dParams(JsonReader& r, const Path& p, Params
             out.travel = rec.choice(kRasterTravels);
         } else if (k == "direction") {
             out.direction = rec.choice(kCutDirections);
+        } else if (k == "clearing") {
+            out.clearing = rec.choice(kRough3dClearings);
+        } else if (k == "profile") {
+            out.profile = rec.choice(kRough3dProfiles);
+        } else if (k == "order") {
+            out.order = rec.choice(kRough3dOrders);
+        } else if (k == "avoid_machined") {
+            out.avoidMachined = rec.boolean();
         } else if (k == "reverse_steps") {
             out.reverseSteps = rec.boolean();
         } else if (k == "ramp_plunge") {
