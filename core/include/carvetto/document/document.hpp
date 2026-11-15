@@ -191,8 +191,10 @@ class Document {
     /// active layer/sheet or selection, ids outside `[1, IdGenerator::kMaxId)` or not below the
     /// generator's next id, one id value used by several sheets/layers/objects/toolpaths, toolpath
     /// selections naming unallocated ids or items of another kind). Empty for a consistent
-    /// document; every command keeps it so.
-    std::vector<IntegrityIssue> checkIntegrity() const;
+    /// document; every command keeps it so. When `work` is given it receives the number of
+    /// elementary steps taken in the object, link and parent-chain passes (diagnostic; lets tests
+    /// assert the O(N) step count by counting work instead of timing it, T-0313).
+    std::vector<IntegrityIssue> checkIntegrity(std::size_t* work = nullptr) const;
 
     // --- Toolpaths (T-0132, ADR-0021) ------------------------------------------------------
     /// Toolpath records in job order (the order they are cut and posted).

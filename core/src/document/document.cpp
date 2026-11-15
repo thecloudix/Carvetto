@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <set>
@@ -413,7 +414,7 @@ std::string idText(ObjectId id) {
 }
 
 /// For each object whose parent chain loops, the first object on the loop that the chain reaches.
-std::map<ObjectId, ObjectId> findParentCycles(const std::map<ObjectId, Object>& objects) {
+std::map<ObjectId, ObjectId> findParentCycles(const std::map<ObjectId, Object>& objects, std::size_t& work) {
     // Parent links form a functional graph (at most one parent per object). Each object is walked
     // at most once: the walk from an unvisited object follows parent links, pushing objects on an
     // explicit path (no recursion, so very deep chains cannot overflow the stack), until it hits
@@ -436,6 +437,7 @@ std::map<ObjectId, ObjectId> findParentCycles(const std::map<ObjectId, Object>& 
         for (ObjectId cur = start;;) {
             marks[cur] = Mark::OnPath;
             path.push_back(cur);
+            ++work;
             const Object& obj = objects.at(cur);
             if (!obj.parent || objects.count(*obj.parent) == 0) {
                 break;
@@ -449,6 +451,7 @@ std::map<ObjectId, ObjectId> findParentCycles(const std::map<ObjectId, Object>& 
             if (mark->second == Mark::OnPath) {
                 // Loop: the path from `next` to the end. Those objects enter the loop at themselves.
                 const auto loopBegin = std::find(path.begin(), path.end(), next);
+                work += static_cast<std::size_t>(std::distance(loopBegin, path.end()));
                 for (auto it = loopBegin; it != path.end(); ++it) {
                     entry[*it] = *it;
                     marks[*it] = Mark::Done;
@@ -460,6 +463,7 @@ std::map<ObjectId, ObjectId> findParentCycles(const std::map<ObjectId, Object>& 
             }
             break;
         }
+        work += path.size();
         for (ObjectId id : path) {
             marks[id] = Mark::Done;
             if (inherited) {
@@ -472,8 +476,9 @@ std::map<ObjectId, ObjectId> findParentCycles(const std::map<ObjectId, Object>& 
 
 }  // namespace
 
-std::vector<IntegrityIssue> Document::checkIntegrity() const {
+std::vector<IntegrityIssue> Document::checkIntegrity(std::size_t* work) const {
     using Kind = IntegrityIssue::Kind;
+    std::size_t steps = 0;  // reported through `work`; see the declaration
     std::vector<IntegrityIssue> issues;
     const auto report = [&issues](Kind kind, ObjectId object, ObjectId related, std::string message) {
         issues.push_back(IntegrityIssue{kind, object, related, std::move(message)});
@@ -623,14 +628,16 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     for (const auto& [id, obj] : objects_) {
         if (const auto* g = obj.asGroup()) {
             for (ObjectId child : g->children) {
+                ++steps;
                 listedPairs.emplace(id, child);
             }
         }
     }
-    const std::map<ObjectId, ObjectId> cycleEntry = findParentCycles(objects_);
+    const std::map<ObjectId, ObjectId> cycleEntry = findParentCycles(objects_, steps);
 
     std::map<ObjectId, ObjectId> listedBy;  // child -> group listing it
     for (const auto& [id, obj] : objects_) {
+        ++steps;
         if (!findLayer(obj.layer)) {
             report(Kind::MissingLayer, id, {}, idText(id) + " is on a missing layer");
         }
@@ -639,6 +646,7 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
         }
         if (const auto* g = obj.asGroup()) {
             for (ObjectId child : g->children) {
+                ++steps;
                 const Object* c = findObject(child);
                 if (!c) {
                     report(Kind::DanglingChild, id, child,
@@ -728,6 +736,9 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
         if (problem) {
             report(Kind::BadToolpathSelection, {}, {}, *problem);
         }
+    }
+    if (work) {
+        *work = steps;
     }
     return issues;
 }
