@@ -214,3 +214,62 @@ TEST_CASE("picking a pixel finds the model point the renderer drew there", "[vie
     CHECK(t->x <= 40.0);
     CHECK_FALSE(pickModelPoint(ModelSurface{}, cam, opt, 100.0, 100.0).has_value());
 }
+
+TEST_CASE("projectModelPoint inverts pickModelPoint and the brush ring drapes on the surface", "[viewmodel][model_view]") {
+    ModelSurface s;
+    REQUIRE(relief::HeightField::create(relief::Grid{41, 41, 1.0, {0.0, 0.0}}, 3.0F, s.field) == relief::Status::Ok);
+    OrbitCamera cam;
+    cam.viewTop();
+    ModelRenderOptions opt;
+    opt.width = 400;
+    opt.height = 300;
+    const auto p = projectModelPoint(s, cam, opt, 10.0, 25.0, 3.0);
+    REQUIRE(p.has_value());
+    const auto back = pickModelPoint(s, cam, opt, p->x, p->y);
+    REQUIRE(back.has_value());
+    CHECK(std::fabs(back->x - 10.0) < 0.1);
+    CHECK(std::fabs(back->y - 25.0) < 0.1);
+    // A tilted camera too.
+    OrbitCamera tilt;
+    const auto q = projectModelPoint(s, tilt, opt, 30.0, 12.0, 3.0);
+    REQUIRE(q.has_value());
+    const auto qb = pickModelPoint(s, tilt, opt, q->x, q->y);
+    REQUIRE(qb.has_value());
+    CHECK(std::fabs(qb->x - 30.0) < 0.15);
+    CHECK(std::fabs(qb->y - 12.0) < 0.15);
+
+    const auto ring = brushRingOutline(s, cam, opt, {20.0, 20.0}, 10.0, 32);
+    REQUIRE(ring.size() == 32);
+    const auto c = projectModelPoint(s, cam, opt, 20.0, 20.0, 3.0);
+    const auto edge = projectModelPoint(s, cam, opt, 25.0, 20.0, 3.0);
+    REQUIRE(c.has_value());
+    REQUIRE(edge.has_value());
+    const double radiusPx = std::hypot(edge->x - c->x, edge->y - c->y);
+    for (const ScreenPoint& pt : ring) {
+        CHECK(std::fabs(std::hypot(pt.x - c->x, pt.y - c->y) - radiusPx) < 1e-6);
+    }
+    CHECK(brushRingOutline(s, cam, opt, {20.0, 20.0}, 0.0).empty());
+    CHECK(brushRingOutline(ModelSurface{}, cam, opt, {20.0, 20.0}, 10.0).empty());
+    CHECK_FALSE(projectModelPoint(ModelSurface{}, cam, opt, 0.0, 0.0, 0.0).has_value());
+    CHECK_FALSE(projectModelPoint(s, cam, opt, std::nan(""), 0.0, 0.0).has_value());
+}
+
+TEST_CASE("overlay placement fits the image's aspect inside the model", "[viewmodel][model_view]") {
+    ModelSurface s;
+    REQUIRE(relief::HeightField::create(relief::Grid{101, 51, 1.0, {10.0, 20.0}}, 1.0F, s.field) == relief::Status::Ok);
+    const OverlayPlacement wide = overlayPlacement(s, 400, 100);  // 4:1 in a 100 x 50 model
+    CHECK(wide.width == 100.0);
+    CHECK(wide.height == 25.0);
+    CHECK(wide.x == 10.0);
+    CHECK(wide.y == 20.0 + 12.5);
+    const OverlayPlacement tall = overlayPlacement(s, 100, 400);
+    CHECK(tall.height == 50.0);
+    CHECK(tall.width == 12.5);
+    CHECK(tall.x == 10.0 + 43.75);
+    const OverlayPlacement none = overlayPlacement(s, 0, 10);
+    CHECK(none.width == 0.0);
+    CHECK(overlayPlacement(ModelSurface{}, 10, 10).width == 0.0);
+    CHECK(clampedOverlayOpacity(2.0) == 1.0);
+    CHECK(clampedOverlayOpacity(-1.0) == 0.0);
+    CHECK(clampedOverlayOpacity(std::nan("")) == 0.5);
+}

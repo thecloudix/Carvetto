@@ -2,6 +2,7 @@
 
 #include <QButtonGroup>
 #include <QCheckBox>
+#include <QFileDialog>
 #include <QComboBox>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -10,7 +11,10 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QVBoxLayout>
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include "carvetto/viewmodel/model_view.hpp"
 
 namespace carvetto::app {
 
@@ -18,6 +22,14 @@ namespace {
 
 QString qs(const std::string& s) {
     return QString::fromStdString(s);
+}
+
+// Pictures far beyond any sensible reference image are refused before they are converted.
+constexpr int kMaxImageSide = 8192;
+
+QImage loadImageFile(const QString& path) {
+    QImage img(path);
+    return img.isNull() || img.width() > kMaxImageSide || img.height() > kMaxImageSide ? QImage() : img;
 }
 
 constexpr int kSliderSteps = 1000;
@@ -115,6 +127,77 @@ SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
         }
     });
 
+    auto* delBtn = new QPushButton(QStringLiteral("Delete Preset"), this);
+    delBtn->setObjectName(QStringLiteral("Sculpt: Delete Preset"));
+    outer->addWidget(delBtn);
+    connect(delBtn, &QPushButton::clicked, this, [this]() {
+        if (presetBox_->currentIndex() >= 0) {
+            removePreset(presetBox_->currentText().toStdString());
+        }
+    });
+
+    // Custom brush from an image.
+    auto* stampRow = new QHBoxLayout();
+    auto* stampBtn = new QPushButton(QStringLiteral("Brush Image..."), this);
+    stampBtn->setObjectName(QStringLiteral("Sculpt: Brush Image"));
+    stampBtn->setToolTip(QStringLiteral("Use a picture as the brush shape: light is high, transparent is no effect"));
+    auto* stampClear = new QPushButton(QStringLiteral("Round Brush"), this);
+    stampClear->setObjectName(QStringLiteral("Sculpt: Round Brush"));
+    stampRow->addWidget(stampBtn);
+    stampRow->addWidget(stampClear);
+    outer->addLayout(stampRow);
+    auto* invert = new QCheckBox(QStringLiteral("Invert image"), this);
+    invert->setObjectName(QStringLiteral("Sculpt: Invert image"));
+    auto* rotate = new QCheckBox(QStringLiteral("Rotate with stroke"), this);
+    rotate->setObjectName(QStringLiteral("Sculpt: Rotate with stroke"));
+    outer->addWidget(invert);
+    outer->addWidget(rotate);
+    connect(stampBtn, &QPushButton::clicked, this, [this]() {
+        const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Brush image"), {},
+                                                          QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
+        if (!path.isEmpty() && !setBrushImage(loadImageFile(path))) {
+            message("That picture could not be used as a brush", true);
+        }
+    });
+    connect(stampClear, &QPushButton::clicked, this, [this]() { clearBrushImage(); });
+    connect(invert, &QCheckBox::toggled, this, [this]() {
+        setBrushImageOptions(check(QStringLiteral("Sculpt: Invert image"))->isChecked(),
+                             check(QStringLiteral("Sculpt: Rotate with stroke"))->isChecked());
+    });
+    connect(rotate, &QCheckBox::toggled, this, [this]() {
+        setBrushImageOptions(check(QStringLiteral("Sculpt: Invert image"))->isChecked(),
+                             check(QStringLiteral("Sculpt: Rotate with stroke"))->isChecked());
+    });
+
+    // Reference (overlay) image over the model.
+    auto* overlayRow = new QHBoxLayout();
+    auto* overlayBtn = new QPushButton(QStringLiteral("Overlay Image..."), this);
+    overlayBtn->setObjectName(QStringLiteral("Sculpt: Overlay Image"));
+    overlayBtn->setToolTip(QStringLiteral("Lay a reference picture over the model in the Model view"));
+    auto* overlayClear = new QPushButton(QStringLiteral("Clear Overlay"), this);
+    overlayClear->setObjectName(QStringLiteral("Sculpt: Clear Overlay"));
+    overlayRow->addWidget(overlayBtn);
+    overlayRow->addWidget(overlayClear);
+    outer->addLayout(overlayRow);
+    auto* opacityRow = new QHBoxLayout();
+    opacityRow->addWidget(new QLabel(QStringLiteral("Overlay opacity"), this));
+    auto* opacity = new QSlider(Qt::Horizontal, this);
+    opacity->setRange(0, kSliderSteps);
+    opacity->setValue(kSliderSteps / 2);
+    opacity->setObjectName(QStringLiteral("Sculpt: Overlay opacity"));
+    opacityRow->addWidget(opacity, 1);
+    outer->addLayout(opacityRow);
+    connect(overlayBtn, &QPushButton::clicked, this, [this]() {
+        const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Overlay image"), {},
+                                                          QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
+        if (!path.isEmpty() && !setOverlayImage(loadImageFile(path))) {
+            message("That picture could not be used as an overlay", true);
+        }
+    });
+    connect(overlayClear, &QPushButton::clicked, this, [this]() { clearOverlayImage(); });
+    connect(opacity, &QSlider::valueChanged, this,
+            [this](int v) { setOverlayOpacity(static_cast<double>(v) / kSliderSteps); });
+
     auto* row = new QHBoxLayout();
     undoButton_ = new QPushButton(QStringLiteral("Undo Stroke"), this);
     undoButton_->setObjectName(QStringLiteral("Sculpt: Undo Stroke"));
@@ -178,7 +261,10 @@ void SculptPanel::fillPresets() {
 
 void SculptPanel::writeWidgets(const viewmodel::BrushSettings& s) {
     writing_ = true;
-    const viewmodel::BrushSettings c = viewmodel::clampedBrush(s);
+    viewmodel::BrushSettings c = viewmodel::clampedBrush(s);
+    if (!c.custom) {
+        c.custom = brush_.custom;  // a preset or a slider never drops the picture brush
+    }
     brush_ = c;
     for (const relief::BrushKind k : viewmodel::allBrushKinds()) {
         brushButton(k)->setChecked(k == c.kind);
@@ -236,8 +322,118 @@ bool SculptPanel::savePreset(const std::string& name) {
     }
     fillPresets();
     presetBox_->setCurrentIndex(presetBox_->findText(qs(name)));
-    message("Preset \"" + name + "\" saved for this session.", false);
+    message("Preset \"" + name + "\" saved.", false);
+    persistPresets();
     return true;
+}
+
+bool SculptPanel::removePreset(const std::string& name) {
+    if (!presets_.remove(name)) {
+        message("\"" + name + "\" is a built-in preset or does not exist", true);
+        return false;
+    }
+    fillPresets();
+    message("Preset \"" + name + "\" deleted.", false);
+    persistPresets();
+    return true;
+}
+
+std::size_t SculptPanel::loadPresets(const std::string& text) {
+    const std::size_t n = presets_.loadUser(text);
+    fillPresets();
+    return n;
+}
+
+void SculptPanel::persistPresets() {
+    if (onPresetsChanged) {
+        onPresetsChanged(presets_.serialiseUser());
+    }
+}
+
+void SculptPanel::rebuildStamp() {
+    if (brushImage_.isNull()) {
+        brush_.custom.reset();
+        return;
+    }
+    const QImage rgba = brushImage_.convertToFormat(QImage::Format_RGBA8888);
+    viewmodel::RgbaImage img;
+    img.width = static_cast<std::size_t>(rgba.width());
+    img.height = static_cast<std::size_t>(rgba.height());
+    img.rgba.resize(img.width * img.height * 4);
+    for (int y = 0; y < rgba.height(); ++y) {
+        const uchar* line = rgba.constScanLine(y);
+        std::copy(line, line + static_cast<std::size_t>(rgba.width()) * 4, img.rgba.begin() + static_cast<std::ptrdiff_t>(y) * rgba.width() * 4);
+    }
+    std::string problem;
+    brush_.custom = viewmodel::customBrushFromImage(img, brushInvert_, 0.0, brushRotate_, problem);
+    if (!brush_.custom) {
+        brushImage_ = QImage();
+        message(problem, true);
+    }
+}
+
+bool SculptPanel::setBrushImage(const QImage& image) {
+    if (image.isNull()) {
+        return false;
+    }
+    brushImage_ = image;
+    rebuildStamp();
+    if (brushImage_.isNull()) {
+        return false;
+    }
+    message("Brush shape taken from the picture (" + std::to_string(image.width()) + " x " +
+                std::to_string(image.height()) + ").",
+            false);
+    return true;
+}
+
+void SculptPanel::clearBrushImage() {
+    brushImage_ = QImage();
+    brush_.custom.reset();
+    message("Round brush.", false);
+}
+
+void SculptPanel::setBrushImageOptions(bool invert, bool rotateWithStroke) {
+    brushInvert_ = invert;
+    brushRotate_ = rotateWithStroke;
+    if (check(QStringLiteral("Sculpt: Invert image"))->isChecked() != invert) {
+        check(QStringLiteral("Sculpt: Invert image"))->setChecked(invert);
+    }
+    if (check(QStringLiteral("Sculpt: Rotate with stroke"))->isChecked() != rotateWithStroke) {
+        check(QStringLiteral("Sculpt: Rotate with stroke"))->setChecked(rotateWithStroke);
+    }
+    rebuildStamp();
+}
+
+bool SculptPanel::setOverlayImage(const QImage& image) {
+    if (image.isNull()) {
+        return false;
+    }
+    overlayImage_ = image;
+    overlayChanged();
+    return true;
+}
+
+void SculptPanel::clearOverlayImage() {
+    overlayImage_ = QImage();
+    overlayChanged();
+}
+
+void SculptPanel::setOverlayOpacity(double opacity) {
+    overlayOpacity_ = viewmodel::clampedOverlayOpacity(opacity);
+    QSlider* s = slider(QStringLiteral("Sculpt: Overlay opacity"));
+    const int v = static_cast<int>(std::lround(overlayOpacity_ * kSliderSteps));
+    if (s->value() != v) {
+        s->setValue(v);  // comes back here with the same value
+        return;
+    }
+    overlayChanged();
+}
+
+void SculptPanel::overlayChanged() {
+    if (onOverlay) {
+        onOverlay(overlayImage_, overlayOpacity_);
+    }
 }
 
 void SculptPanel::updateButtons() {

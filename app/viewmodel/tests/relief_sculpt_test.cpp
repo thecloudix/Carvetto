@@ -2,6 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
+#include <cstdint>
 #include <memory>
 
 #include "carvetto/document/document.hpp"
@@ -212,4 +213,163 @@ TEST_CASE("Keep refuses when the component is gone or was resized", "[viewmodel]
     const EditResult r = sc.keep(doc);
     CHECK_FALSE(r.ok);
     CHECK_FALSE(r.message.empty());
+}
+
+TEST_CASE("a custom brush stamp comes from an image's luminance and alpha", "[viewmodel][sculpt]") {
+    RgbaImage img;
+    img.width = 4;
+    img.height = 2;
+    img.rgba.assign(4 * 2 * 4, 255);
+    // Left half black, right half white; the last column transparent.
+    for (std::size_t y = 0; y < 2; ++y) {
+        for (std::size_t x = 0; x < 4; ++x) {
+            std::uint8_t* px = &img.rgba[(y * 4 + x) * 4];
+            px[0] = px[1] = px[2] = x < 2 ? 0 : 255;
+            px[3] = x == 3 ? 0 : 255;
+        }
+    }
+    std::string problem;
+    const auto cb = customBrushFromImage(img, false, 0.5, true, problem);
+    REQUIRE(cb != nullptr);
+    CHECK(problem.empty());
+    CHECK(cb->stamp.width() == 4);
+    CHECK(cb->stamp.at(0, 0) == 0.0F);
+    CHECK(cb->stamp.at(2, 1) == 1.0F);
+    CHECK(std::isnan(cb->stamp.at(3, 0)));
+    CHECK(cb->angleRad == 0.5);
+    CHECK(cb->dynamicRotation);
+    const auto inv = customBrushFromImage(img, true, 0.0, false, problem);
+    REQUIRE(inv != nullptr);
+    CHECK(inv->stamp.at(0, 0) == 1.0F);
+    CHECK(std::fabs(inv->stamp.at(2, 0)) < 1e-6F);
+
+    // Large images are averaged down; bad ones refused with a reason.
+    RgbaImage big;
+    big.width = 1000;
+    big.height = 500;
+    big.rgba.assign(big.width * big.height * 4, 200);
+    const auto small = customBrushFromImage(big, false, 0.0, false, problem);
+    REQUIRE(small != nullptr);
+    CHECK(small->stamp.width() <= kMaxStampDimension);
+    CHECK(small->stamp.height() <= kMaxStampDimension);
+    RgbaImage bad = img;
+    bad.rgba.pop_back();
+    CHECK(customBrushFromImage(bad, false, 0.0, false, problem) == nullptr);
+    CHECK_FALSE(problem.empty());
+    RgbaImage clear = img;
+    for (std::size_t i = 3; i < clear.rgba.size(); i += 4) {
+        clear.rgba[i] = 0;
+    }
+    CHECK(customBrushFromImage(clear, false, 0.0, false, problem) == nullptr);
+    CHECK(customBrushFromImage(RgbaImage{}, false, 0.0, false, problem) == nullptr);
+    CHECK(customBrushFromImage(img, false, std::nan(""), false, problem) == nullptr);
+}
+
+TEST_CASE("a custom stamp paints in the shape of the image", "[viewmodel][sculpt]") {
+    Document doc;
+    const ComponentId id = addFlat(doc, addLevel(doc), 0.0F);
+    RgbaImage img;  // an 8 x 8 stamp: left half black (no effect), right half white (full)
+    img.width = 8;
+    img.height = 8;
+    img.rgba.assign(8 * 8 * 4, 255);
+    for (std::size_t y = 0; y < 8; ++y) {
+        for (std::size_t x = 0; x < 4; ++x) {
+            img.rgba[(y * 8 + x) * 4] = img.rgba[(y * 8 + x) * 4 + 1] = img.rgba[(y * 8 + x) * 4 + 2] = 0;
+        }
+    }
+    std::string problem;
+    BrushSettings brush;
+    brush.diameter = 20.0;
+    brush.strength = 1.0;
+    brush.smoothness = 0.0;
+    brush.custom = customBrushFromImage(img, false, 0.0, false, problem);
+    REQUIRE(brush.custom != nullptr);
+    SculptController sc;
+    REQUIRE(sc.begin(doc, id).ok);
+    REQUIRE(sc.stroke(brush, {{20.0, 20.0}}).ok);
+    // The white half (right of the centre) is raised, the black half (left) is not.
+    CHECK(sc.working()->at(26, 20) > sc.working()->at(14, 20));
+    CHECK(sc.working()->at(14, 20) == 0.0F);
+}
+
+TEST_CASE("user presets round-trip through text; hostile text is skipped", "[viewmodel][sculpt]") {
+    BrushPresets a;
+    BrushSettings b;
+    b.kind = relief::BrushKind::Smooth;
+    b.diameter = 33.25;
+    b.strength = 0.125;
+    b.smoothness = 0.75;
+    b.mode = relief::SculptMode::Lower;
+    b.preserveTransparency = false;
+    REQUIRE(a.save("Mine", b).empty());
+    REQUIRE(a.save("Other", BrushSettings{}).empty());
+    CHECK(a.save("bad\tname", b).size() > 0);
+    CHECK(a.save("bad\nname", b).size() > 0);
+    const std::string text = a.serialiseUser();
+    BrushPresets c;
+    CHECK(c.loadUser(text) == 2);
+    REQUIRE(c.find("Mine") != nullptr);
+    CHECK(c.find("Mine")->brush == b);
+    CHECK_FALSE(c.find("Mine")->builtin);
+    CHECK(c.all().size() == a.all().size());
+    // Loading again replaces rather than duplicates.
+    CHECK(c.loadUser(text) == 2);
+    CHECK(c.all().size() == a.all().size());
+    // Garbage: wrong header, short lines, bad numbers, out of range, built-in name, huge counts.
+    BrushPresets d;
+    const std::size_t builtins = d.all().size();
+    CHECK(d.loadUser("") == 0);
+    CHECK(d.loadUser("nonsense\nA\t1\t2\n") == 0);
+    CHECK(d.loadUser("carvetto-brush-presets 1\nA\t1\t2\n") == 0);
+    CHECK(d.loadUser("carvetto-brush-presets 1\nA\t9\t10\t0.5\t0.5\t0\t1\n") == 0);
+    CHECK(d.loadUser("carvetto-brush-presets 1\nA\t1\tnan\t0.5\t0.5\t0\t1\n") == 0);
+    CHECK(d.loadUser("carvetto-brush-presets 1\nA\t1\t500\t0.5\t0.5\t0\t1\n") == 0);
+    CHECK(d.loadUser("carvetto-brush-presets 1\nA\t1\t10x\t0.5\t0.5\t0\t1\n") == 0);
+    CHECK(d.loadUser("carvetto-brush-presets 1\nSmudge\t1\t10\t0.5\t0.5\t0\t1\n") == 0);  // built-in name
+    CHECK(d.all().size() == builtins);
+    std::string many = "carvetto-brush-presets 1\n";
+    for (int i = 0; i < 400; ++i) {
+        many += "P" + std::to_string(i) + "\t2\t10\t0.5\t0.5\t0\t1\n";
+    }
+    CHECK(d.loadUser(many) == 256);
+    CHECK(d.all().size() == builtins + 256);
+}
+
+TEST_CASE("a long stroke is chunked: bounded work per move, one undo step, same total", "[viewmodel][sculpt]") {
+    Document doc;
+    const ComponentId id = addFlat(doc, addLevel(doc), 0.0F);
+    BrushSettings brush;
+    brush.diameter = 0.5;  // the path below is 80 diameters long: several 30-diameter chunks
+    brush.strength = 0.1;
+    SculptController sc;
+    REQUIRE(sc.begin(doc, id).ok);
+    REQUIRE(sc.beginStroke(brush, {0.0, 20.0}).ok);
+    for (int k = 1; k <= 400; ++k) {
+        REQUIRE(sc.extendStroke({static_cast<double>(k) * 0.1, 20.0}).ok);
+    }
+    CHECK(sc.openStrokeSteps() >= 3);       // chunked into several session steps
+    sc.endStroke();
+    const float mid = sc.working()->at(20, 20);
+    CHECK(mid > 0.0F);
+    // Same stroke as one piece: the deposit per cell agrees to within the dab phase at chunk joins.
+    SculptController whole;
+    REQUIRE(whole.begin(doc, id).ok);
+    REQUIRE(whole.stroke(brush, {{0.0, 20.0}, {40.0, 20.0}}).ok);
+    for (std::size_t i = 2; i < 38; ++i) {
+        CHECK(std::fabs(sc.working()->at(i, 20) - whole.working()->at(i, 20)) < 0.1F * mid + 1e-4F);
+    }
+    // The whole chunked stroke is ONE undo step.
+    CHECK(sc.canUndoStroke());
+    CHECK(sc.undoStroke());
+    CHECK_FALSE(sc.dirty());
+    CHECK_FALSE(sc.canUndoStroke());
+    CHECK(sc.working()->at(20, 20) == 0.0F);
+    // Two strokes undo one at a time.
+    REQUIRE(sc.stroke(brush, {{0.0, 10.0}, {40.0, 10.0}}).ok);
+    REQUIRE(sc.stroke(brush, {{0.0, 30.0}, {40.0, 30.0}}).ok);
+    CHECK(sc.undoStroke());
+    CHECK(sc.working()->at(20, 30) == 0.0F);
+    CHECK(sc.working()->at(20, 10) > 0.0F);
+    CHECK(sc.undoStroke());
+    CHECK(sc.working()->at(20, 10) == 0.0F);
 }

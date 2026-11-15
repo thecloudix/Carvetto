@@ -11,6 +11,9 @@
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QPen>
+#include <QPolygonF>
+#include <QTransform>
 #include <QPushButton>
 #include <QSignalBlocker>
 #include <QVBoxLayout>
@@ -586,7 +589,7 @@ bool ComponentPropertiesPanel::apply() {
 
 ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(parent), getter_(std::move(getter)) {
     setMinimumSize(200, 150);
-    setMouseTracking(false);
+    setMouseTracking(true);  // the brush ring follows the pointer
     setFocusPolicy(Qt::StrongFocus);
     setToolTip(QStringLiteral("Right-drag orbits, the wheel zooms, middle-drag or Ctrl+right-drag pans"));
     auto* bar = new QHBoxLayout(this);
@@ -700,13 +703,93 @@ const QImage& ModelView3D::image() {
     return image_;
 }
 
+void ModelView3D::setOverlay(const QImage& image, double opacity) {
+    overlay_ = image;
+    overlayOpacity_ = viewmodel::clampedOverlayOpacity(opacity);
+    update();
+}
+
+void ModelView3D::clearOverlay() {
+    overlay_ = QImage();
+    update();
+}
+
+std::optional<viewmodel::ScreenPoint> ModelView3D::overlayCorner(int index) {
+    if (overlay_.isNull() || !surface_.ok()) {
+        return std::nullopt;
+    }
+    options_.width = static_cast<std::size_t>(std::max(width(), 1));
+    options_.height = static_cast<std::size_t>(std::max(height(), 1));
+    float lo = 0.0F, hi = 0.0F;
+    if (!surface_.field.minMax(lo, hi)) {
+        return std::nullopt;
+    }
+    const viewmodel::OverlayPlacement o = viewmodel::overlayPlacement(
+        surface_, static_cast<std::size_t>(overlay_.width()), static_cast<std::size_t>(overlay_.height()));
+    if (!(o.width > 0.0)) {
+        return std::nullopt;
+    }
+    const double x = index == 1 ? o.x + o.width : o.x;
+    const double y = index == 2 ? o.y : o.y + o.height;  // image top is the +Y side
+    return viewmodel::projectModelPoint(surface_, camera_, options_, x, y, static_cast<double>(hi));
+}
+
+std::vector<viewmodel::ScreenPoint> ModelView3D::ringOutline() {
+    const std::optional<double> d = brushDiameter ? brushDiameter() : std::nullopt;
+    if (!d || !ringCentre_) {
+        return {};
+    }
+    options_.width = static_cast<std::size_t>(std::max(width(), 1));
+    options_.height = static_cast<std::size_t>(std::max(height(), 1));
+    return viewmodel::brushRingOutline(surface_, camera_, options_, *ringCentre_, *d);
+}
+
+void ModelView3D::setRingCentre(std::optional<relief::Point> at) {
+    ringCentre_ = at;
+    update();
+}
+
 void ModelView3D::paintEvent(QPaintEvent*) {
     QPainter p(this);
     p.drawImage(0, 0, image());
+    if (!overlay_.isNull()) {
+        const auto tl = overlayCorner(0);
+        const auto tr = overlayCorner(1);
+        const auto bl = overlayCorner(2);
+        if (tl && tr && bl) {
+            const double iw = overlay_.width(), ih = overlay_.height();
+            p.save();
+            p.setOpacity(overlayOpacity_);
+            p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+            p.setTransform(QTransform((tr->x - tl->x) / iw, (tr->y - tl->y) / iw, (bl->x - tl->x) / ih,
+                                      (bl->y - tl->y) / ih, tl->x, tl->y));
+            p.drawImage(0, 0, overlay_);
+            p.restore();
+        }
+    }
+    const std::vector<viewmodel::ScreenPoint> ring = ringOutline();
+    if (ring.size() >= 3) {
+        QPolygonF poly;
+        for (const viewmodel::ScreenPoint& q : ring) {
+            poly << QPointF(q.x, q.y);
+        }
+        p.setRenderHint(QPainter::Antialiasing, true);
+        p.setPen(QPen(QColor(255, 255, 255), 3.0));
+        p.drawPolygon(poly);
+        p.setPen(QPen(QColor(20, 20, 20), 1.0));
+        p.drawPolygon(poly);
+    }
     if (!surface_.ok()) {
         p.setPen(QColor(90, 90, 90));
         p.drawText(rect(), Qt::AlignCenter | Qt::TextWordWrap,
                    surface_.problem.empty() ? QStringLiteral("No model") : qs(surface_.problem));
+    }
+}
+
+void ModelView3D::leaveEvent(QEvent* event) {
+    QWidget::leaveEvent(event);
+    if (ringCentre_) {
+        setRingCentre(std::nullopt);
     }
 }
 
@@ -747,8 +830,15 @@ void ModelView3D::mouseMoveEvent(QMouseEvent* event) {
     if (painting_) {
         if (event->buttons() == Qt::LeftButton && onBrush) {
             if (const auto hit = pickAt(event->pos())) {
+                setRingCentre(hit);
                 onBrush(hit, BrushPhase::Move);
             }
+        }
+        return;
+    }
+    if (event->buttons() == Qt::NoButton) {
+        if (brushDiameter && brushDiameter()) {
+            setRingCentre(pickAt(event->pos()));
         }
         return;
     }

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <locale>
+#include <sstream>
 #include <memory>
 #include <utility>
 
@@ -113,7 +116,68 @@ relief::BrushParams toBrushParams(const BrushSettings& s) {
     p.smoothness = s.smoothness;
     p.mode = s.mode;
     p.preserveTransparency = s.preserveTransparency;
+    p.custom = s.custom;
     return p;
+}
+
+std::shared_ptr<const relief::CustomBrush> customBrushFromImage(const RgbaImage& image, bool invert,
+                                                                double angleRad, bool dynamicRotation,
+                                                                std::string& problem) {
+    problem.clear();
+    constexpr std::size_t kMaxSide = 16384;
+    if (image.width == 0 || image.height == 0) {
+        problem = "The brush image is empty";
+        return nullptr;
+    }
+    if (image.width > kMaxSide || image.height > kMaxSide ||
+        image.rgba.size() != image.width * image.height * 4) {
+        problem = "The brush image is malformed or too large";
+        return nullptr;
+    }
+    if (!std::isfinite(angleRad)) {
+        problem = "The brush angle is not valid";
+        return nullptr;
+    }
+    const std::size_t longer = std::max(image.width, image.height);
+    const std::size_t block = (longer + kMaxStampDimension - 1) / kMaxStampDimension;  // source pixels per cell
+    const std::size_t w = (image.width + block - 1) / block;
+    const std::size_t h = (image.height + block - 1) / block;
+    std::vector<float> cells(w * h, std::numeric_limits<float>::quiet_NaN());
+    bool anyOpaque = false;
+    for (std::size_t j = 0; j < h; ++j) {
+        for (std::size_t i = 0; i < w; ++i) {
+            double sum = 0.0;
+            std::size_t opaque = 0, total = 0;
+            for (std::size_t y = j * block; y < std::min(image.height, (j + 1) * block); ++y) {
+                for (std::size_t x = i * block; x < std::min(image.width, (i + 1) * block); ++x) {
+                    const std::uint8_t* px = &image.rgba[(y * image.width + x) * 4];
+                    ++total;
+                    if (px[3] >= 128) {
+                        ++opaque;
+                        sum += (0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]) / 255.0;
+                    }
+                }
+            }
+            if (opaque * 2 >= total && opaque > 0) {
+                const double v = sum / static_cast<double>(opaque);
+                cells[j * w + i] = static_cast<float>(invert ? 1.0 - v : v);
+                anyOpaque = true;
+            }
+        }
+    }
+    if (!anyOpaque) {
+        problem = "The brush image has no opaque pixel";
+        return nullptr;
+    }
+    auto cb = std::make_shared<relief::CustomBrush>();
+    if (relief::HeightField::fromData(relief::Grid{w, h, 1.0, {0.0, 0.0}}, std::move(cells), cb->stamp) !=
+        relief::Status::Ok) {
+        problem = "The brush image could not be used";
+        return nullptr;
+    }
+    cb->angleRad = angleRad;
+    cb->dynamicRotation = dynamicRotation;
+    return cb;
 }
 
 // --- Presets -----------------------------------------------------------------------------------------
@@ -153,6 +217,11 @@ std::string BrushPresets::save(const std::string& name, const BrushSettings& bru
     if (name.empty() || name.size() > kMaxPresetNameBytes) {
         return "A preset name needs 1 to 64 characters";
     }
+    for (const char c : name) {
+        if (static_cast<unsigned char>(c) < 0x20 || c == 0x7F) {
+            return "A preset name cannot contain control characters";
+        }
+    }
     if (const std::string why = brushProblem(brush); !why.empty()) {
         return why;
     }
@@ -162,12 +231,14 @@ std::string BrushPresets::save(const std::string& name, const BrushSettings& bru
                 return "\"" + name + "\" is a built-in preset; choose another name";
             }
             p.brush = brush;
+            p.brush.custom.reset();
             return {};
         }
     }
     BrushPreset p;
     p.name = name;
     p.brush = brush;
+    p.brush.custom.reset();  // stamps are a session choice, not part of a preset
     presets_.push_back(std::move(p));
     return {};
 }
@@ -183,6 +254,92 @@ bool BrushPresets::remove(const std::string& name) {
         }
     }
     return false;
+}
+
+namespace {
+
+constexpr const char* kPresetHeader = "carvetto-brush-presets 1";
+constexpr std::size_t kMaxUserPresets = 256;
+constexpr std::size_t kMaxPresetTextBytes = std::size_t{1} << 20;
+
+bool parseDouble(const std::string& text, double& out) {
+    if (text.empty() || text.size() > 40) {
+        return false;
+    }
+    std::istringstream in(text);
+    in.imbue(std::locale::classic());
+    in >> out;
+    return !in.fail() && in.peek() == std::istringstream::traits_type::eof() && std::isfinite(out);
+}
+
+}  // namespace
+
+std::string BrushPresets::serialiseUser() const {
+    std::ostringstream out;
+    out.imbue(std::locale::classic());
+    out.precision(17);
+    out << kPresetHeader << '\n';
+    for (const BrushPreset& p : presets_) {
+        if (p.builtin) {
+            continue;
+        }
+        out << p.name << '\t' << static_cast<int>(p.brush.kind) << '\t' << p.brush.diameter << '\t'
+            << p.brush.strength << '\t' << p.brush.smoothness << '\t' << static_cast<int>(p.brush.mode) << '\t'
+            << (p.brush.preserveTransparency ? 1 : 0) << '\n';
+    }
+    return out.str();
+}
+
+std::size_t BrushPresets::loadUser(const std::string& text) {
+    if (text.size() > kMaxPresetTextBytes) {
+        return 0;
+    }
+    std::istringstream in(text);
+    std::string line;
+    if (!std::getline(in, line) || line != kPresetHeader) {
+        return 0;
+    }
+    std::size_t added = 0;
+    std::size_t users = 0;
+    for (const BrushPreset& p : presets_) {
+        users += p.builtin ? 0 : 1;
+    }
+    while (std::getline(in, line)) {
+        std::vector<std::string> f;
+        std::size_t start = 0;
+        for (;;) {
+            const std::size_t tab = line.find('\t', start);
+            f.push_back(line.substr(start, tab == std::string::npos ? std::string::npos : tab - start));
+            if (tab == std::string::npos) {
+                break;
+            }
+            start = tab + 1;
+        }
+        double kind = 0, d = 0, st = 0, sm = 0, mode = 0, keepT = 0;
+        if (f.size() != 7 || !parseDouble(f[1], kind) || !parseDouble(f[2], d) || !parseDouble(f[3], st) ||
+            !parseDouble(f[4], sm) || !parseDouble(f[5], mode) || !parseDouble(f[6], keepT)) {
+            continue;
+        }
+        if (kind < 0 || kind > 4 || kind != std::floor(kind) || mode < 0 || mode > 2 || mode != std::floor(mode)) {
+            continue;
+        }
+        BrushSettings b;
+        b.kind = static_cast<relief::BrushKind>(static_cast<int>(kind));
+        b.diameter = d;
+        b.strength = st;
+        b.smoothness = sm;
+        b.mode = static_cast<relief::SculptMode>(static_cast<int>(mode));
+        b.preserveTransparency = keepT != 0.0;
+        const bool known = find(f[0]) != nullptr;
+        if (!known && users >= kMaxUserPresets) {
+            continue;
+        }
+        if (save(f[0], b).empty()) {
+            ++added;
+            users += known ? 0 : 1;
+        }
+    }
+    return added;
 }
 
 // --- Controller --------------------------------------------------------------------------------------
@@ -233,8 +390,11 @@ void SculptController::end() {
     session_ = relief::SculptSession{};
     target_ = {};
     path_.clear();
+    tailLength_ = 0.0;
     strokeOpen_ = false;
-    strokeApplied_ = false;
+    tailApplied_ = false;
+    openSteps_ = 0;
+    strokeSteps_.clear();
 }
 
 bool SculptController::dirty() const {
@@ -259,9 +419,34 @@ EditResult SculptController::beginStroke(const BrushSettings& brush, relief::Poi
     }
     brush_ = b;
     path_.assign(1, at);
+    tailLength_ = 0.0;
+    openSteps_ = 0;
+    tailApplied_ = false;
     strokeOpen_ = true;
-    strokeApplied_ = false;
-    return extendStroke(at);
+    return applyTail();
+}
+
+// Re-applies the open tail of the stroke as one session step (replacing its previous step).
+EditResult SculptController::applyTail() {
+    if (tailApplied_) {
+        session_.undoStroke();
+        --openSteps_;
+        tailApplied_ = false;
+    }
+    std::vector<relief::Dab> dabs;
+    if (relief::dabsAlong(path_, 0.2 * brush_.diameter, brush_.diameter, dabs) != relief::Status::Ok) {
+        return refused("The stroke could not be built");
+    }
+    const relief::Status st = session_.applyStroke(toBrushParams(brush_), dabs);
+    if (st != relief::Status::Ok) {
+        endStroke();
+        return refused(relief::statusMessage(st));
+    }
+    tailApplied_ = true;
+    ++openSteps_;
+    EditResult r;
+    r.changed = false;  // the document is untouched until Keep
+    return r;
 }
 
 EditResult SculptController::extendStroke(relief::Point at) {
@@ -272,37 +457,35 @@ EditResult SculptController::extendStroke(relief::Point at) {
         return refused("The pointer position is not valid");
     }
     const relief::Point last = path_.back();
-    const bool first = !strokeApplied_;
-    if (!first) {
-        // Ignore jitter well under one dab spacing; the result only depends on the path shape.
-        if (std::hypot(at.x - last.x, at.y - last.y) < 0.02 * brush_.diameter) {
-            return {};
-        }
-        if (path_.size() >= kMaxPathPoints) {
-            return refused("The stroke is too long; release and start another");
-        }
-        path_.push_back(at);
-        session_.undoStroke();  // re-apply the whole path as one stroke
+    const double step = std::hypot(at.x - last.x, at.y - last.y);
+    // Ignore jitter well under one dab spacing; the result only depends on the path shape.
+    if (step < 0.02 * brush_.diameter) {
+        return {};
     }
-    std::vector<relief::Dab> dabs;
-    if (relief::dabsAlong(path_, 0.2 * brush_.diameter, brush_.diameter, dabs) != relief::Status::Ok) {
-        return refused("The stroke could not be built");
+    if (path_.size() >= kMaxPathPoints) {
+        return refused("The stroke is too long; release and start another");
     }
-    const relief::Status st = session_.applyStroke(toBrushParams(brush_), dabs);
-    if (st != relief::Status::Ok) {
-        strokeOpen_ = false;
-        return refused(relief::statusMessage(st));
+    path_.push_back(at);
+    tailLength_ += step;
+    EditResult r = applyTail();
+    if (r.ok && tailLength_ >= kChunkDiameters * brush_.diameter) {
+        // Freeze the tail: later moves start a new chunk at this point, so a move stays cheap.
+        path_.assign(1, at);
+        tailLength_ = 0.0;
+        tailApplied_ = false;
     }
-    strokeApplied_ = true;
-    EditResult r;
-    r.changed = false;  // the document is untouched until Keep
     return r;
 }
 
 void SculptController::endStroke() {
+    if (strokeOpen_ && openSteps_ > 0) {
+        strokeSteps_.push_back(openSteps_);
+    }
     strokeOpen_ = false;
     path_.clear();
-    strokeApplied_ = false;
+    tailLength_ = 0.0;
+    tailApplied_ = false;
+    openSteps_ = 0;
 }
 
 EditResult SculptController::stroke(const BrushSettings& brush, const std::vector<relief::Point>& path) {
@@ -321,7 +504,16 @@ bool SculptController::undoStroke() {
     if (strokeOpen_) {
         endStroke();
     }
-    return session_.undoStroke();
+    if (strokeSteps_.empty()) {
+        return false;
+    }
+    std::size_t n = strokeSteps_.back();
+    strokeSteps_.pop_back();
+    bool any = false;
+    while (n-- > 0 && session_.undoStroke()) {  // the session may have dropped the oldest steps
+        any = true;
+    }
+    return any;
 }
 
 EditResult SculptController::keep(Document& doc) {
@@ -349,6 +541,7 @@ EditResult SculptController::keep(Document& doc) {
         return refused("The model could not take the sculpted component (size limits)");
     }
     session_.keep();
+    strokeSteps_.clear();
     EditResult r;
     r.changed = true;
     return r;
@@ -357,6 +550,7 @@ EditResult SculptController::keep(Document& doc) {
 void SculptController::discard() {
     endStroke();
     session_.discard();
+    strokeSteps_.clear();
 }
 
 }  // namespace carvetto::viewmodel

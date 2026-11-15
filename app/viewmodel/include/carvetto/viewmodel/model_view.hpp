@@ -103,6 +103,39 @@ Raster renderModel(const ModelSurface& surface, const OrbitCamera& camera, const
 std::optional<relief::Point> pickModelPoint(const ModelSurface& surface, const OrbitCamera& camera,
                                             const ModelRenderOptions& options, double px, double py);
 
+/// A position in the pixels of a render.
+struct ScreenPoint {
+    double x{0.0};
+    double y{0.0};
+};
+
+/// Where the model point (x, y) at model height z (before `zScale`) lands in a render with `options`
+/// from `camera` (the inverse of the framing `pickModelPoint` uses). Nullopt for an empty surface or
+/// a non-finite input. The camera is orthographic, so a flat rectangle projects to a parallelogram.
+std::optional<ScreenPoint> projectModelPoint(const ModelSurface& surface, const OrbitCamera& camera,
+                                             const ModelRenderOptions& options, double x, double y, double z);
+
+/// The brush ring cursor (T-0309): a circle of `diameter` mm around the design point `centre`,
+/// draped on the surface (each of `segments` points takes the surface height there, the height under
+/// the centre where the surface is empty), as pixels. Empty when the surface or input is unusable.
+std::vector<ScreenPoint> brushRingOutline(const ModelSurface& surface, const OrbitCamera& camera,
+                                          const ModelRenderOptions& options, relief::Point centre, double diameter,
+                                          std::size_t segments = 48);
+
+/// Reference image over the model (T-0309): where an image of `imageWidth` x `imageHeight` pixels
+/// is laid on the design plane, as a rectangle in mm: the biggest one with the image's aspect ratio
+/// that fits the model surface, centred on it. All zero when the surface or image is empty.
+struct OverlayPlacement {
+    double x{0.0};
+    double y{0.0};
+    double width{0.0};
+    double height{0.0};
+};
+OverlayPlacement overlayPlacement(const ModelSurface& surface, std::size_t imageWidth, std::size_t imageHeight);
+
+/// Opacity clamped to 0..1 (non-finite: 0.5).
+double clampedOverlayOpacity(double opacity);
+
 /// Shade (0..1) a surface point with normal (nx, ny, nz) gets from the view's light, for tests.
 /// The light sits at the upper left of the viewer.
 double modelLightFactor(const OrbitCamera& camera, double nx, double ny, double nz);

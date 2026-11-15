@@ -123,6 +123,111 @@ void OrbitCamera::viewRight() {
     panX = panY = 0.0;
 }
 
+namespace {
+
+struct Framing {
+    double scale{0.0};
+    Vec3 centre;
+    double zs{1.0};
+    double cx{0.0};
+    double cy{0.0};
+    float lo{0.0f};
+    float hi{0.0f};
+    bool ok{false};
+};
+
+// The framing renderModel and pickModelPoint use.
+Framing framingOf(const ModelSurface& surface, const OrbitCamera& camera, const ModelRenderOptions& options) {
+    Framing fr;
+    if (!surface.ok() || !surface.field.minMax(fr.lo, fr.hi)) {
+        return fr;
+    }
+    const relief::HeightField& f = surface.field;
+    const double cs = f.cellSize();
+    fr.zs = std::isfinite(options.zScale) && options.zScale > 0.0 ? options.zScale : 1.0;
+    const double spanX = static_cast<double>(f.width() - 1) * cs;
+    const double spanY = static_cast<double>(f.height() - 1) * cs;
+    const double spanZ = (static_cast<double>(fr.hi) - static_cast<double>(fr.lo)) * fr.zs;
+    fr.centre = {f.origin().x + 0.5 * spanX, f.origin().y + 0.5 * spanY,
+                 0.5 * (static_cast<double>(fr.hi) + static_cast<double>(fr.lo)) * fr.zs};
+    const double radius = std::max(0.5 * std::sqrt(spanX * spanX + spanY * spanY + spanZ * spanZ), 1e-6);
+    fr.scale = camera.zoom * 0.9 * std::min(static_cast<double>(options.width), static_cast<double>(options.height)) /
+               (2.0 * radius);
+    fr.cx = 0.5 * static_cast<double>(options.width) + camera.panX;
+    fr.cy = 0.5 * static_cast<double>(options.height) + camera.panY;
+    fr.ok = fr.scale > 0.0 && std::isfinite(fr.scale);
+    return fr;
+}
+
+}  // namespace
+
+std::optional<ScreenPoint> projectModelPoint(const ModelSurface& surface, const OrbitCamera& camera,
+                                             const ModelRenderOptions& options, double x, double y, double z) {
+    if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) {
+        return std::nullopt;
+    }
+    const Framing fr = framingOf(surface, camera, options);
+    if (!fr.ok) {
+        return std::nullopt;
+    }
+    const Basis basis = basisOf(camera);
+    const Vec3 p{x - fr.centre.x, y - fr.centre.y, z * fr.zs - fr.centre.z};
+    return ScreenPoint{fr.cx + dot(p, basis.right) * fr.scale, fr.cy - dot(p, basis.up) * fr.scale};
+}
+
+std::vector<ScreenPoint> brushRingOutline(const ModelSurface& surface, const OrbitCamera& camera,
+                                          const ModelRenderOptions& options, relief::Point centre, double diameter,
+                                          std::size_t segments) {
+    std::vector<ScreenPoint> out;
+    if (!surface.ok() || segments < 8 || segments > 1024 || !std::isfinite(diameter) || diameter <= 0.0 ||
+        !std::isfinite(centre.x) || !std::isfinite(centre.y)) {
+        return out;
+    }
+    const Framing fr = framingOf(surface, camera, options);
+    if (!fr.ok) {
+        return out;
+    }
+    const float under = surface.field.sample(centre.x, centre.y);
+    const double fallback = std::isnan(under) ? static_cast<double>(fr.hi) : static_cast<double>(under);
+    const double r = 0.5 * diameter;
+    constexpr double kTwoPi = 6.283185307179586;
+    out.reserve(segments);
+    for (std::size_t k = 0; k < segments; ++k) {
+        const double a = kTwoPi * static_cast<double>(k) / static_cast<double>(segments);
+        const double x = centre.x + r * std::cos(a);
+        const double y = centre.y + r * std::sin(a);
+        const float s = surface.field.sample(x, y);
+        const double z = std::isnan(s) ? fallback : static_cast<double>(s);
+        if (const auto p = projectModelPoint(surface, camera, options, x, y, z)) {
+            out.push_back(*p);
+        }
+    }
+    return out;
+}
+
+OverlayPlacement overlayPlacement(const ModelSurface& surface, std::size_t imageWidth, std::size_t imageHeight) {
+    OverlayPlacement o;
+    if (!surface.ok() || imageWidth == 0 || imageHeight == 0) {
+        return o;
+    }
+    const relief::HeightField& f = surface.field;
+    const double w = static_cast<double>(f.width() - 1) * f.cellSize();
+    const double h = static_cast<double>(f.height() - 1) * f.cellSize();
+    if (!(w > 0.0) || !(h > 0.0)) {
+        return o;
+    }
+    const double aspect = static_cast<double>(imageWidth) / static_cast<double>(imageHeight);
+    o.width = std::min(w, h * aspect);
+    o.height = o.width / aspect;
+    o.x = f.origin().x + 0.5 * (w - o.width);
+    o.y = f.origin().y + 0.5 * (h - o.height);
+    return o;
+}
+
+double clampedOverlayOpacity(double opacity) {
+    return std::isfinite(opacity) ? std::clamp(opacity, 0.0, 1.0) : 0.5;
+}
+
 double modelLightFactor(const OrbitCamera& camera, double nx, double ny, double nz) {
     const Vec3 l = lightDirection(basisOf(camera));
     const double len = std::sqrt(nx * nx + ny * ny + nz * nz);

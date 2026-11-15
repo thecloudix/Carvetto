@@ -1,7 +1,9 @@
 #pragma once
 
+#include <QImage>
 #include <QWidget>
 #include <functional>
+#include <cstddef>
 #include <string>
 
 #include "carvetto/viewmodel/relief_effects.hpp"
@@ -47,6 +49,28 @@ class SculptPanel : public PanelBase {
     viewmodel::BrushSettings brush() const;
     bool applyPreset(const std::string& name);
     bool savePreset(const std::string& name);
+    bool removePreset(const std::string& name);
+    /// Presets persisted across sessions (T-0309): the owner of the settings store loads the saved
+    /// text once with `loadPresets` and keeps `onPresetsChanged` (called with the text to save after
+    /// every save / delete).
+    std::size_t loadPresets(const std::string& text);
+    std::function<void(const std::string&)> onPresetsChanged;
+
+    /// Custom brush (T-0309): the stamp is the picture's luminance (alpha < 50% is "no effect"). The
+    /// picture and the two options below apply to every brush kind until cleared.
+    bool setBrushImage(const QImage& image);
+    void clearBrushImage();
+    bool hasBrushImage() const { return !brushImage_.isNull(); }
+    void setBrushImageOptions(bool invert, bool rotateWithStroke);
+
+    /// Reference image over the model (T-0309): `onOverlay` gets the image (null clears it) and the
+    /// opacity whenever either changes.
+    bool setOverlayImage(const QImage& image);
+    void clearOverlayImage();
+    void setOverlayOpacity(double opacity);
+    double overlayOpacity() const { return overlayOpacity_; }
+    bool hasOverlayImage() const { return !overlayImage_.isNull(); }
+    std::function<void(const QImage&, double)> onOverlay;
 
     // Painting, called by the Model view with design-space points.
     bool paintPress(relief::Point at);
@@ -71,6 +95,9 @@ class SculptPanel : public PanelBase {
     void message(const std::string& text, bool error);
     void showWorking();
     void fillPresets();
+    void rebuildStamp();
+    void persistPresets();
+    void overlayChanged();
 
     viewmodel::SculptController controller_;
     viewmodel::BrushPresets presets_;
@@ -82,6 +109,11 @@ class SculptPanel : public PanelBase {
     QPushButton* discardButton_;
     QPushButton* undoButton_;
     QComboBox* presetBox_;
+    QImage brushImage_;
+    bool brushInvert_{false};
+    bool brushRotate_{false};
+    QImage overlayImage_;
+    double overlayOpacity_{0.5};
     bool writing_{false};
 };
 
