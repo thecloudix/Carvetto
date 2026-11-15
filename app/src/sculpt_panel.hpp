@@ -8,6 +8,7 @@
 
 #include "carvetto/viewmodel/relief_effects.hpp"
 #include "carvetto/viewmodel/relief_sculpt.hpp"
+#include "carvetto/viewmodel/sculpt_merged_preview.hpp"
 #include "document_panels.hpp"
 
 class QCheckBox;
@@ -25,7 +26,7 @@ std::string sculptSelfTest(MainWindow& window);
 /// Docked Sculpt panel (T-0302, ADR-0084): the brush palette (Deposit, Remove, Smooth, Smudge, Undo
 /// Brush), diameter / strength / smoothness sliders, Normal / Raise / Lower mode, preserve
 /// transparency, presets, and Undo Stroke / Keep / Discard. While sculpting, the working copy of the
-/// chosen component is shown alone in the Model view (`onPreview`) and left-drag there paints
+/// chosen component is shown, merged with the rest of the model, in the Model view (`onPreview`) and left-drag there paints
 /// (`paint*`, called by the view with design-space points). Nothing reaches the document until Keep,
 /// which is one undo step. The logic is `viewmodel/relief_sculpt.hpp`.
 class SculptPanel : public PanelBase {
@@ -34,6 +35,13 @@ class SculptPanel : public PanelBase {
 
     /// Called with the working field after every change, or null when sculpting ended.
     std::function<void(const relief::HeightField*)> onPreview;
+    /// Called instead of `onPreview` with the model merged with the working component (T-0316) while
+    /// that could be composed; `onPreview` is the fallback (component alone), and null ends the preview.
+    std::function<void(const viewmodel::ModelSurface&)> onPreviewSurface;
+    /// The merged surface while sculpting and composable, else null.
+    const viewmodel::ModelSurface* mergedSurface() const {
+        return merged_.active() ? &merged_.surface() : nullptr;
+    }
     /// Called when sculpting starts / ends (the window shows the Model view and the brush cursor).
     std::function<void(bool)> onActiveChanged;
 
@@ -94,12 +102,14 @@ class SculptPanel : public PanelBase {
     void updateButtons();
     void message(const std::string& text, bool error);
     void showWorking();
+    void rebuildMerged();
     void fillPresets();
     void rebuildStamp();
     void persistPresets();
     void overlayChanged();
 
     viewmodel::SculptController controller_;
+    viewmodel::SculptMergedPreview merged_;
     viewmodel::BrushPresets presets_;
     viewmodel::BrushSettings brush_;
     QLabel* status_;

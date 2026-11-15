@@ -383,6 +383,7 @@ EditResult SculptController::begin(const Document& doc, ComponentId id) {
     }
     session_ = std::move(s);
     target_ = id;
+    dirty_ = SculptDirty{true, true, {}, {}};
     return {};
 }
 
@@ -444,9 +445,37 @@ EditResult SculptController::applyTail() {
     }
     tailApplied_ = true;
     ++openSteps_;
+    {
+        relief::Point lo = path_.front(), hi = path_.front();
+        for (const relief::Point& p : path_) {
+            lo = {std::min(lo.x, p.x), std::min(lo.y, p.y)};
+            hi = {std::max(hi.x, p.x), std::max(hi.y, p.y)};
+        }
+        markDirty({lo.x - brush_.diameter, lo.y - brush_.diameter}, {hi.x + brush_.diameter, hi.y + brush_.diameter});
+    }
     EditResult r;
     r.changed = false;  // the document is untouched until Keep
     return r;
+}
+
+void SculptController::markDirty(relief::Point lo, relief::Point hi) {
+    if (dirty_.all) {
+        return;
+    }
+    if (!dirty_.any) {
+        dirty_.lo = lo;
+        dirty_.hi = hi;
+        dirty_.any = true;
+        return;
+    }
+    dirty_.lo = {std::min(dirty_.lo.x, lo.x), std::min(dirty_.lo.y, lo.y)};
+    dirty_.hi = {std::max(dirty_.hi.x, hi.x), std::max(dirty_.hi.y, hi.y)};
+}
+
+SculptDirty SculptController::takeDirty() {
+    const SculptDirty d = dirty_;
+    dirty_ = SculptDirty{};
+    return d;
 }
 
 EditResult SculptController::extendStroke(relief::Point at) {
@@ -513,6 +542,7 @@ bool SculptController::undoStroke() {
     while (n-- > 0 && session_.undoStroke()) {  // the session may have dropped the oldest steps
         any = true;
     }
+    dirty_ = SculptDirty{true, true, {}, {}};
     return any;
 }
 
@@ -551,6 +581,7 @@ void SculptController::discard() {
     endStroke();
     session_.discard();
     strokeSteps_.clear();
+    dirty_ = SculptDirty{true, true, {}, {}};
 }
 
 }  // namespace carvetto::viewmodel

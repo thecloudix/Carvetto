@@ -657,6 +657,13 @@ void ModelView3D::setPreview(const relief::HeightField& field) {
     invalidate();
 }
 
+void ModelView3D::setPreviewSurface(const viewmodel::ModelSurface& surface) {
+    previewSurface_ = surface;
+    previewing_ = true;
+    surface_ = previewSurface_;
+    invalidate();
+}
+
 void ModelView3D::clearPreview() {
     if (previewing_) {
         previewing_ = false;

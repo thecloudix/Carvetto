@@ -444,9 +444,24 @@ void SculptPanel::updateButtons() {
     discardButton_->setEnabled(on && controller_.dirty());
 }
 
+// Composes the rest of the model once; on failure the component is previewed alone.
+void SculptPanel::rebuildMerged() {
+    const document::Document* d = doc();
+    if (d == nullptr || !controller_.active() || !merged_.begin(*d, controller_.target(), *controller_.working())) {
+        merged_.end();
+    }
+    controller_.takeDirty();
+}
+
 void SculptPanel::showWorking() {
-    if (onPreview) {
-        onPreview(controller_.working());
+    const relief::HeightField* w = controller_.working();
+    if (merged_.active() && w != nullptr) {
+        merged_.update(*w, controller_.takeDirty());
+    }
+    if (merged_.active() && onPreviewSurface) {
+        onPreviewSurface(merged_.surface());
+    } else if (onPreview) {
+        onPreview(w);
     }
     updateButtons();
 }
@@ -468,6 +483,7 @@ bool SculptPanel::startSculpting() {
     if (onActiveChanged) {
         onActiveChanged(true);
     }
+    rebuildMerged();
     showWorking();
     return true;
 }
@@ -478,6 +494,7 @@ void SculptPanel::stopSculpting() {
     }
     const bool dropped = controller_.dirty();
     controller_.end();
+    merged_.end();
     if (onPreview) {
         onPreview(nullptr);
     }
@@ -557,8 +574,15 @@ void SculptPanel::refresh() {
         // An outside edit (an Undo of a Keep, a Modify tool): follow the document.
         const document::ComponentId target = controller_.target();
         if (controller_.begin(*d, target).ok) {
+            rebuildMerged();
             showWorking();
         }
+        return;
+    }
+    // Another part of the model may have changed: compose it again (once, not per move).
+    if (!controller_.strokeOpen()) {
+        rebuildMerged();
+        showWorking();
         return;
     }
     updateButtons();
