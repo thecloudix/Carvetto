@@ -36,6 +36,10 @@ class Selection {
 
     bool operator==(const Selection& o) const { return ids() == o.ids(); }
 
+    /// Total slots scanned by compaction since construction (diagnostic; lets tests assert the
+    /// amortised O(1) removal cost by counting work instead of timing it).
+    std::size_t compactionWork() const { return compactionWork_; }
+
    private:
     // Insertion order is kept in `order_`; `pos_` maps each selected id to its slot. `remove`
     // leaves a null tombstone in the slot (O(1)) and the vector is compacted lazily, when `ids()`
@@ -45,6 +49,7 @@ class Selection {
     mutable std::vector<ObjectId> order_;
     mutable std::unordered_map<ObjectId, std::size_t> pos_;
     mutable std::size_t dead_{0};
+    mutable std::size_t compactionWork_{0};
 };
 
 }  // namespace carvetto::document

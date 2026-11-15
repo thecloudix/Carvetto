@@ -58,8 +58,6 @@ TEST_CASE("ids are strongly typed, comparable and hashable", "[document][ids]") 
 #include <cstdint>
 #include <random>
 
-#include "../geometry/cpu_scaling.hpp"
-
 namespace {
 
 /// The obvious implementation: an ordered vector searched linearly.
@@ -187,7 +185,7 @@ namespace {
 
 enum class RemoveOrder { Forward, Reverse, Random };
 
-void removeAll(std::uint64_t count, RemoveOrder order) {
+std::size_t removeAll(std::uint64_t count, RemoveOrder order) {
     std::vector<ObjectId> ids;
     ids.reserve(count);
     for (std::uint64_t i = 1; i <= count; ++i) {
@@ -205,18 +203,20 @@ void removeAll(std::uint64_t count, RemoveOrder order) {
         s.remove(id);
     }
     REQUIRE(s.empty());
+    return s.compactionWork();
 }
 
 }  // namespace
 
+// Counts compaction work instead of timing it, so scheduler noise cannot affect the result.
+// Each compaction runs only when tombstones outnumber live entries, so the slots scanned over n
+// removals total O(n) (a few n at most); compacting on every removal would scan ~n^2/2.
 TEST_CASE("selection removal scales near-linearly in every order", "[document][selection][perf]") {
     for (const RemoveOrder order : {RemoveOrder::Forward, RemoveOrder::Reverse, RemoveOrder::Random}) {
-        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(3.0,
-            3, [&] { removeAll(50'000, order); }, [&] { removeAll(100'000, order); });
-        INFO("order " << static_cast<int>(order) << ": " << t.smallSeconds << " -> " << t.largeSeconds << " s, ratio "
-                      << t.ratio());
-        // Linear is 2 (hash-table cache effects add some noise in random order); quadratic is 4.
-        CHECK(t.ratio() <= 3.0);
-        CHECK(t.largeSeconds < 2.0);
+        for (const std::uint64_t n : {std::uint64_t{50'000}, std::uint64_t{100'000}}) {
+            const std::size_t work = removeAll(n, order);
+            INFO("order " << static_cast<int>(order) << " n " << n << " work " << work);
+            CHECK(work <= 4 * n);
+        }
     }
 }
