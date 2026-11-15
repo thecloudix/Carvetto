@@ -1506,7 +1506,7 @@ Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a m
 Phase: 2   Module: app   Depends on: T-0301
 Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the cores in relief/sweep.hpp, extrude.hpp, revolve.hpp and textured_area.hpp: pick rails/profiles/boundaries from the selection, preview, Apply as one undo step through AddReliefComponentCommand, self-test coverage. Optional: both-sides mesh import and a draggable zero plane in the Model view.
 
-### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: verified (PASS), landing]
+### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: done — PR #188]
 Phase: 2   Module: app   Depends on: T-0302
 Goal: The items T-0302 left out (ADR-0084): overlay reference image over the model with opacity, custom brush stamps from an image (the core already supports CustomBrush), brush ring cursor in the Model view, presets persisted across sessions, sculpt preview merged with the other components, cheaper long strokes. Low priority.
 
@@ -1534,3 +1534,7 @@ Goal: T-0311 delivered Moulding, Project Toolpath, 3D Tabs and Create Component 
 ### T-0315 .carv 3D rough record drops the T-0304 fields (clearing, profile, order, avoidMachined)   [status: ready]
 Phase: 2   Module: core/io   Depends on: T-0304
 Goal: T-0311's coder observed the 3D rough record codec does not persist the fields added by T-0304 (clearing, profile first/last, order, avoidMachined): they reset to defaults on save/load, silently changing a saved job. Persist them (strict key lists, finite checks, minor-version bump if needed, old files load with the old defaults), byte-identical re-save test, round-trip test for every field, ADR note.
+
+### T-0316 Sculpt preview merged with the other components (T-0309 follow-up)   [status: ready]
+Phase: 2   Module: app/viewmodel   Depends on: T-0309
+Goal: Sculpt preview currently shows the working component alone. Compose the rest of the model once at stroke/session start and combine only the working component per mouse move (see ADR-0090 "Not done"), so the preview matches the merged model without O(model cells) work per move. Operation-counter test for per-move cost.
