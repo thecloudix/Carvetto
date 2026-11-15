@@ -1498,7 +1498,7 @@ Goal: Store an appearance per component and level in the document (needs a .carv
 Phase: 2   Module: app   Depends on: T-0300
 Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, slice, draft, split, vector boundary, cross section and distort (core ops are in relief/modify.hpp and relief/derive.hpp), each with one preview function and Apply through ReplaceReliefComponentCommand or an add, as one undo step; the Custom shape profile editor; preview merged with the rest of the model if affordable. Follow the T-0300 pattern (viewmodel relief_modelling, ModellingPanel pages, self-test).
 
-### T-0307 Moulding toolpath (T-0298 follow-up)   [status: ready]
+### T-0307 Moulding toolpath (T-0298 follow-up)   [status: in-progress]
 Phase: 2   Module: core/toolpath   Depends on: T-0298, T-0296
 Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a moulding cross-section along drive rails with the tool shape; Toolpath Position, Z from the cross-section height; drive rails (reverse/clear) and an open profile vector (reverse profile); finishing (stepover, vary stepover, skip flat regions, sharp corners) and roughing (larger-area clearance tool, machine flat regions, ramp plunge, allowance); boundary offset. Position semantics and flat-region handling are product readings: the coder records its readings in the ADR (section of ADR-0073) and the director lists them for owner review; do not stop for them.
 
