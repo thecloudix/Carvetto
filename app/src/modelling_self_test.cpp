@@ -177,8 +177,65 @@ std::string modellingSelfTest(MainWindow& window) {
     MD_REQUIRE(panel->preview(), "a custom profile preview failed");
     panel->field(QStringLiteral("Shape: Profile"))->setText(QStringLiteral("0,0"));
     MD_REQUIRE(!panel->preview(), "a one-point profile was accepted");
+
+    // Build forms (T-0308): Two Rail Sweep, Turn and Spin, Textured Area from the selection.
+    const auto addLine = [&](std::initializer_list<geometry::Vec2> pts, bool closed) {
+        document::Object o;
+        o.layer = doc->defaultLayer();
+        o.sheet = doc->activeSheet();
+        document::VectorObject v;
+        geometry::Polyline pl;
+        pl.points.assign(pts.begin(), pts.end());
+        pl.closed = closed;
+        v.contours.push_back(geometry::Contour::fromPolyline(pl));
+        o.data = std::move(v);
+        const bool ok = doc->execute(std::make_unique<document::AddObjectCommand>(std::move(o)));
+        return ok ? doc->objects().rbegin()->first : document::ObjectId{};
+    };
+    const document::ObjectId rail1 = addLine({{0, 60}, {40, 60}}, false);
+    const document::ObjectId rail2 = addLine({{0, 70}, {40, 70}}, false);
+    MD_REQUIRE(rail1 && rail2, "adding the rails failed");
+    doc->selection().assign({rail1, rail2});
+    panel->setBuildTool(viewmodel::BuildTool::TwoRailSweep);
+    MD_REQUIRE(panel->field(QStringLiteral("Two Rail Sweep: Section profile")) != nullptr &&
+                   panel->combo(QStringLiteral("Two Rail Sweep: Combine mode")) != nullptr,
+               "the sweep page was not built");
+    MD_REQUIRE(panel->preview() && view->previewing(), "the sweep preview failed");
+    panel->startNew();
+    const std::size_t buildCount = doc->reliefComponentCount();
+    const std::size_t buildSteps = doc->undoStack().index();
+    MD_REQUIRE(panel->apply() && doc->reliefComponentCount() == buildCount + 1 &&
+                   doc->undoStack().index() == buildSteps + 1,
+               "the sweep is not one undo step");
+    const document::ComponentId sweepId = panel->session().current(*doc);
+    MD_REQUIRE(topOf(*doc, sweepId) > 3.5F, "the swept surface is too low");
+    panel->field(QStringLiteral("Two Rail Sweep: Exact height"))->setText(QStringLiteral("2"));
+    MD_REQUIRE(panel->apply() && doc->reliefComponentCount() == buildCount + 1 && topOf(*doc, sweepId) < 2.01F,
+               "re-applying the sweep did not update it");
+    panel->field(QStringLiteral("Two Rail Sweep: Cell size"))->setText(QStringLiteral("zero"));
+    MD_REQUIRE(!panel->apply() && panel->status()->text().contains(QStringLiteral("Cell size")),
+               "a bad cell size was accepted");
+    MD_REQUIRE(window.undo() && window.undo(), "undoing the sweep failed");
+
+    panel->setBuildTool(viewmodel::BuildTool::TurnSpin);
+    panel->startNew();
+    MD_REQUIRE(panel->preview() && panel->apply() && doc->reliefComponentCount() == buildCount + 1,
+               "the Spin default did not apply");
+    MD_REQUIRE(window.undo(), "undoing the spin failed");
+
+    panel->setBuildTool(viewmodel::BuildTool::TexturedArea);
+    const document::ObjectId boundary = addLine({{0, 0}, {30, 0}, {30, 20}, {0, 20}}, true);
+    doc->selection().assign({boundary});
+    doc->componentSelection().assign({bmp});
+    panel->startNew();
+    MD_REQUIRE(panel->preview(), "the textured area preview failed");
+    MD_REQUIRE(panel->apply() && doc->reliefComponentCount() == buildCount + 1, "the textured area was not added");
+    MD_REQUIRE(doc->componentSelection().ids().size() == 1 && doc->componentSelection().ids().front() == bmp,
+               "the seed selection was not kept");
+    window.undo();
     panel->clearPreview();
     return {};
 }
+
 
 }  // namespace carvetto::app

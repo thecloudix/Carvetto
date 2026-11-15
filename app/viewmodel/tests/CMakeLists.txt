@@ -17,6 +17,7 @@ add_executable(carvetto_viewmodel_tests
   relief_modelling_test.cpp
   relief_sculpt_test.cpp
   relief_effects_test.cpp
+  relief_build_test.cpp
   model_view_test.cpp
   model_io_test.cpp
   vector_ops_test.cpp
