@@ -1490,7 +1490,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
 
-### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: verifying]
+### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: done — PR #194 (ADR-0095 readings for owner)]
 Phase: 2   Module: core/document + app   Depends on: T-0299
 Goal: Store an appearance per component and level in the document (needs a .carv minor-version bump, old files still load) and use it in the Model view; T-0299 ships one view-level material instead. Owner to confirm when a decision is needed on defaults; low priority.
 
@@ -1539,6 +1539,6 @@ Goal: T-0311's coder observed the 3D rough record codec does not persist the fie
 Phase: 2   Module: app/viewmodel   Depends on: T-0309
 Goal: Sculpt preview currently shows the working component alone. Compose the rest of the model once at stroke/session start and combine only the working component per mouse move (see ADR-0090 "Not done"), so the preview matches the merged model without O(model cells) work per move. Operation-counter test for per-move cost.
 
-### T-0317 Preview/simulation leftovers from T-0231: cancellable simulation start, first-paint and zoom scan cost, summary cost   [status: verifying]
+### T-0317 Preview/simulation leftovers from T-0231: cancellable simulation start, first-paint and zoom scan cost, summary cost   [status: verified (PASS), landing]
 Phase: 2   Module: core/simulate + app   Depends on: T-0231
 Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancellable (no UI freeze; cancel token honoured before the first step); (2) cut the first-paint and zoom scan cost of the preview (profile first, then fix the hot spot; operation counters, not timing, in tests); (3) cut the cost of the simulation summary. Tests by operation counters; ADR with measurements.
