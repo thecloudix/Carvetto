@@ -1477,7 +1477,7 @@ Goal: Docked forms for the shape, bitmap, zero-plane, scale-Z, replace below, re
 Phase: 2   Module: app   Depends on: T-0299, T-0286, T-0287, T-0288, T-0289, T-0290, T-0291
 Goal: Orientate-model dialog (top-face and rotation choices, size lock, units, centre), zero-plane positioning with undercut highlight, export actions, and the sweep, extrude/weave, turn/spin and textured-area forms. Split into two cards when picked up if the coder judges it too large.
 
-### T-0302 App: sculpting tool UI and level effects UI   [status: in-progress]
+### T-0302 App: sculpting tool UI and level effects UI   [status: verifying (first subset; polish -> T-0309)]
 Phase: 2   Module: app   Depends on: T-0299, T-0294, T-0295
 Goal: Sculpt mode in the 3D view (brush palette, sliders, mode, overlay image, presets, Keep/Discard), plus Clipping and Mirror Mode level actions.
 
@@ -1505,3 +1505,7 @@ Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a m
 ### T-0308 App: Two Rail Sweep, Extrude and Weave, Turn and Spin, Textured Area forms (T-0301 follow-up)   [status: ready]
 Phase: 2   Module: app   Depends on: T-0301
 Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the cores in relief/sweep.hpp, extrude.hpp, revolve.hpp and textured_area.hpp: pick rails/profiles/boundaries from the selection, preview, Apply as one undo step through AddReliefComponentCommand, self-test coverage. Optional: both-sides mesh import and a draggable zero plane in the Model view.
+
+### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: blocked — waits on T-0302]
+Phase: 2   Module: app   Depends on: T-0302
+Goal: The items T-0302 left out (ADR-0084): overlay reference image over the model with opacity, custom brush stamps from an image (the core already supports CustomBrush), brush ring cursor in the Model view, presets persisted across sessions, sculpt preview merged with the other components, cheaper long strokes. Low priority.
