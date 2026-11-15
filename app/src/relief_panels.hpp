@@ -6,6 +6,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "carvetto/document/ids.hpp"
 #include "carvetto/viewmodel/model_view.hpp"
@@ -140,6 +141,24 @@ class ModelView3D : public QWidget {
     viewmodel::OrbitCamera& camera() { return camera_; }
     void cameraChanged();
 
+    /// Reference image laid over the model on the design plane at the model's top, drawn with
+    /// `opacity` (0..1) (T-0309). It is a plane drawn over the surface, not occluded by it.
+    void setOverlay(const QImage& image, double opacity);
+    void clearOverlay();
+    bool hasOverlay() const { return !overlay_.isNull(); }
+    double overlayOpacity() const { return overlayOpacity_; }
+    /// Screen position of design-space corner `index` (0 top-left, 1 top-right, 2 bottom-left in
+    /// image terms) of the overlay; nullopt without an overlay (self-test).
+    std::optional<viewmodel::ScreenPoint> overlayCorner(int index);
+
+    /// Brush ring cursor (T-0309): while this returns a diameter in mm, hovering the model draws a
+    /// ring of that size on the surface under the pointer. Unset: no ring.
+    std::function<std::optional<double>()> brushDiameter;
+    /// The ring last drawn, in pixels (empty when none).
+    std::vector<viewmodel::ScreenPoint> ringOutline();
+    /// Shows the ring at design point `at` (what hovering does).
+    void setRingCentre(std::optional<relief::Point> at);
+
     /// Renders now at the current size (the paint handler does this lazily).
     const QImage& image();
     const viewmodel::ModelSurface& surface() const { return surface_; }
@@ -148,6 +167,7 @@ class ModelView3D : public QWidget {
    protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    void leaveEvent(QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
@@ -166,6 +186,9 @@ class ModelView3D : public QWidget {
     viewmodel::ModelSurface previewSurface_;
     QPoint last_;
     bool painting_{false};
+    QImage overlay_;
+    double overlayOpacity_{0.5};
+    std::optional<relief::Point> ringCentre_;
     QComboBox* materialBox_;
 };
 

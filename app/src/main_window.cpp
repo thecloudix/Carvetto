@@ -257,8 +257,16 @@ void MainWindow::buildDocks() {
             modelView_->clearPreview();
         }
     };
+    sculpt_->onOverlay = [this](const QImage& image, double opacity) {
+        if (image.isNull()) {
+            modelView_->clearOverlay();
+        } else {
+            modelView_->setOverlay(image, opacity);
+        }
+    };
     sculpt_->onActiveChanged = [this](bool on) {
         if (on) {
+            modelView_->brushDiameter = [this]() -> std::optional<double> { return sculpt_->brush().diameter; };
             views_->setCurrentWidget(modelView_);
             modelView_->onBrush = [this](std::optional<relief::Point> at, ModelView3D::BrushPhase phase) {
                 switch (phase) {
@@ -269,6 +277,8 @@ void MainWindow::buildDocks() {
             };
         } else {
             modelView_->onBrush = nullptr;
+            modelView_->brushDiameter = nullptr;
+            modelView_->setRingCentre(std::nullopt);
         }
     };
     sculptDock_ = makeDock("Sculpt", "sculptDock", sculpt_);
@@ -768,6 +778,12 @@ void MainWindow::setPersistLayout(bool persist) {
         }
         session_.setRecentFiles(paths);
         rebuildRecentMenu();
+        // Brush presets survive sessions (T-0309, ADR-0090).
+        sculpt_->loadPresets(settings.value(QStringLiteral("sculpt/brushPresets")).toString().toStdString());
+        sculpt_->onPresetsChanged = [](const std::string& text) {
+            QSettings store;
+            store.setValue(QStringLiteral("sculpt/brushPresets"), QString::fromStdString(text));
+        };
     }
 }
 
