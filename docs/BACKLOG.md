@@ -1502,7 +1502,7 @@ Goal: Forms for replace below, reset inside/outside, offset, smooth, emboss, sli
 Phase: 2   Module: core/toolpath   Depends on: T-0298, T-0296
 Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a moulding cross-section along drive rails with the tool shape; Toolpath Position, Z from the cross-section height; drive rails (reverse/clear) and an open profile vector (reverse profile); finishing (stepover, vary stepover, skip flat regions, sharp corners) and roughing (larger-area clearance tool, machine flat regions, ramp plunge, allowance); boundary offset. Position semantics and flat-region handling are product readings: the coder records its readings in the ADR (section of ADR-0073) and the director lists them for owner review; do not stop for them.
 
-### T-0308 App: Two Rail Sweep, Extrude and Weave, Turn and Spin, Textured Area forms (T-0301 follow-up)   [status: in-progress]
+### T-0308 App: Two Rail Sweep, Extrude and Weave, Turn and Spin, Textured Area forms (T-0301 follow-up)   [status: verifying]
 Phase: 2   Module: app   Depends on: T-0301
 Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the cores in relief/sweep.hpp, extrude.hpp, revolve.hpp and textured_area.hpp: pick rails/profiles/boundaries from the selection, preview, Apply as one undo step through AddReliefComponentCommand, self-test coverage. Optional: both-sides mesh import and a draggable zero plane in the Model view.
 
