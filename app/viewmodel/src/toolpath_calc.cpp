@@ -1,6 +1,7 @@
 #include "carvetto/viewmodel/toolpath_calc.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <exception>
 #include <new>
@@ -11,7 +12,10 @@
 #include <utility>
 #include <variant>
 
+#include "carvetto/relief/relief.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/finish3d.hpp"
+#include "carvetto/toolpath/rough3d.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
@@ -225,6 +229,8 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
         case ToolpathOperation::ImageEngrave: def.params = toolpath::ImageEngraveParams{}; break;
         case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
+        case ToolpathOperation::Rough3d: def.params = toolpath::Rough3dParams{}; break;
+        case ToolpathOperation::Finish3d: def.params = toolpath::Finish3dParams{}; break;
     }
     return def;
 }
@@ -300,6 +306,8 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Prism: return "prism";
         case ToolpathOperation::ImageEngrave: return "image_engrave";
         case ToolpathOperation::VCarveInlay: return "v_carve_inlay";
+        case ToolpathOperation::Rough3d: return "rough_3d";
+        case ToolpathOperation::Finish3d: return "finish_3d";
     }
     return "?";
 }
@@ -316,6 +324,11 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::ImageEngrave: return toolpath::imageEngraveToolAllowed(type);
+        case ToolpathOperation::Rough3d:
+        case ToolpathOperation::Finish3d:
+            // Every tool with a cutting profile the drop-tool surface understands.
+            return type != tooling::ToolType::DiamondDrag && type != tooling::ToolType::Drill &&
+                   type != tooling::ToolType::ThreadMill;
         case ToolpathOperation::VCarveInlay:
             return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarveInlayToolAllowed(type);
         case ToolpathOperation::VCarving:
@@ -326,6 +339,152 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
 
 bool hasClearanceTools(ToolpathOperation operation) {
     return operation == ToolpathOperation::VCarving || operation == ToolpathOperation::VCarveInlay;
+}
+
+bool usesModel(ToolpathOperation operation) {
+    return operation == ToolpathOperation::Rough3d || operation == ToolpathOperation::Finish3d;
+}
+
+namespace {
+/// True when a 3D toolpath's boundary is the selected vectors.
+bool boundaryUsesVectors(const document::ToolpathParams& params) {
+    if (const auto* r = std::get_if<toolpath::Rough3dParams>(&params)) {
+        return r->boundary == toolpath::Rough3dBoundary::Vectors;
+    }
+    if (const auto* f = std::get_if<toolpath::Finish3dParams>(&params)) {
+        return f->boundary == toolpath::Rough3dBoundary::Vectors;
+    }
+    return false;
+}
+
+std::uint64_t mixWord(std::uint64_t h, std::uint64_t w) {
+    h ^= w + 0x9E3779B97F4A7C15ULL + (h << 6) + (h >> 2);
+    return h * 1099511628211ULL;
+}
+}  // namespace
+
+std::uint64_t modelFingerprint(const document::Document& doc, document::SheetId sheet) {
+    const std::vector<relief::Level> levels = doc.reliefModel(sheet);
+    Fingerprint fp;
+    fp.add(static_cast<std::uint64_t>(levels.size()));
+    for (const relief::Level& level : levels) {
+        fp.add(static_cast<std::uint64_t>(level.mode));
+        fp.add(level.baseHeight);
+        fp.add(static_cast<std::uint64_t>(level.visible));
+        fp.add(static_cast<std::uint64_t>(level.effects.mirror));
+        fp.add(level.effects.mirrorCenter.x);
+        fp.add(level.effects.mirrorCenter.y);
+        for (const auto& polygon : level.effects.clip.polygons) {
+            fp.add(static_cast<std::uint64_t>(polygon.size()));
+            for (const relief::Point& p : polygon) {
+                fp.add(p.x);
+                fp.add(p.y);
+            }
+        }
+        fp.add(static_cast<std::uint64_t>(level.components.size()));
+        for (const relief::Component& c : level.components) {
+            fp.add(static_cast<std::uint64_t>(c.mode));
+            fp.add(c.shapeHeightPercent);
+            fp.add(c.baseHeight);
+            fp.add(static_cast<std::uint64_t>(c.visible));
+            fp.add(static_cast<std::uint64_t>(c.fade.enabled));
+            fp.add(c.fade.anchor.x);
+            fp.add(c.fade.anchor.y);
+            fp.add(c.fade.second.x);
+            fp.add(c.fade.second.y);
+            fp.add(c.fade.percent);
+            fp.add(static_cast<std::uint64_t>(c.tilt.enabled));
+            fp.add(c.tilt.pivot.x);
+            fp.add(c.tilt.pivot.y);
+            fp.add(c.tilt.raise.x);
+            fp.add(c.tilt.raise.y);
+            fp.add(c.tilt.angleRad);
+            const relief::Grid& g = c.field.grid();
+            fp.add(static_cast<std::uint64_t>(g.width));
+            fp.add(static_cast<std::uint64_t>(g.height));
+            fp.add(g.cellSize);
+            fp.add(g.origin.x);
+            fp.add(g.origin.y);
+            std::uint64_t h = 1469598103934665603ULL;  // one multiply per value: the model can be large
+            for (const float v : c.field.data()) {
+                h = mixWord(h, static_cast<std::uint64_t>(std::bit_cast<std::uint32_t>(v)));
+            }
+            fp.add(h);
+        }
+    }
+    return fp.value();
+}
+
+std::string modelProblem(const document::Document& doc) {
+    const std::vector<relief::Level> levels = doc.reliefModel(doc.activeSheet());
+    if (levels.empty()) {
+        return "this sheet has no relief model: create or import a component first";
+    }
+    relief::Grid grid;
+    if (const relief::Status s = relief::unionGrid(levels, grid); s != relief::Status::Ok) {
+        return relief::statusMessage(s);
+    }
+    return {};
+}
+
+void attachModel(ToolpathJob& job, const document::Document& doc) {
+    if (!usesModel(job.definition.operation())) {
+        return;
+    }
+    const auto refuse = [&](std::string why) {
+        if (job.refusal.empty()) {
+            job.refusal = std::move(why);
+        }
+    };
+    const std::vector<relief::Level> levels = doc.reliefModel(doc.activeSheet());
+    if (levels.empty()) {
+        refuse("this sheet has no relief model: create or import a component first");
+        return;
+    }
+    relief::Grid grid;
+    if (const relief::Status s = relief::unionGrid(levels, grid); s != relief::Status::Ok) {
+        refuse(std::string("the relief model cannot be machined: ") + relief::statusMessage(s));
+        return;
+    }
+    auto field = std::make_shared<relief::HeightField>();
+    if (const relief::Status s = relief::compose(levels, grid, *field); s != relief::Status::Ok) {
+        refuse(std::string("the relief model cannot be composed: ") + relief::statusMessage(s));
+        return;
+    }
+    job.model = std::move(field);
+}
+
+ModelDefaults modelDefaults(const document::Document& doc) {
+    ModelDefaults out;
+    const document::Job& job = doc.job();
+    if (job.zZero == document::ZZero::MachineBed) {
+        out.stockTop = job.sizeMm.z;
+        out.stockBottom = 0.0;
+    } else {
+        out.stockTop = 0.0;
+        out.stockBottom = -job.sizeMm.z;
+    }
+    out.safeZ = out.stockTop + 5.0;
+    const std::vector<relief::Level> levels = doc.reliefModel(doc.activeSheet());
+    relief::Grid grid;
+    relief::HeightField field;
+    if (levels.empty() || relief::unionGrid(levels, grid) != relief::Status::Ok) {
+        return out;
+    }
+    // A coarse composition is enough to find the top of the model.
+    const std::size_t longer = std::max(grid.width, grid.height);
+    if (longer > 256) {
+        const std::size_t stride = (longer + 255) / 256;
+        grid.cellSize *= static_cast<double>(stride);
+        grid.width = (grid.width - 1) / stride + 1;
+        grid.height = (grid.height - 1) / stride + 1;
+    }
+    float lo = 0.0f, hi = 0.0f;
+    if (relief::compose(levels, grid, field) == relief::Status::Ok && field.minMax(lo, hi)) {
+        out.zOffset = out.stockTop - static_cast<double>(hi);
+        out.valid = true;
+    }
+    return out;
 }
 
 // --- Tools ---------------------------------------------------------------------------------------
@@ -507,9 +666,15 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
     if (photoWithoutVectors) {
         return job;  // reads the bitmap only (see attachPhotoInput)
     }
+    const bool modelOnly = usesModel(job.definition.operation()) && !boundaryUsesVectors(job.definition.params);
+    if (modelOnly) {
+        return job;  // reads the relief model only (see attachModel)
+    }
     if (vectors.contours.empty()) {
         refuse(photoParams != nullptr
                    ? "Selected Vectors needs vectors to follow: select some besides the bitmap"
+                   : usesModel(job.definition.operation())
+                       ? "the Vectors boundary needs closed vectors: select some"
                    : "there are no vectors to machine (the selection is empty, or hidden, locked or on another sheet)");
         return job;
     }
@@ -616,6 +781,14 @@ void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const Res
 
 std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
                                 const document::ToolpathParams& params) {
+    if (const ToolpathOperation op = static_cast<ToolpathOperation>(params.index()); usesModel(op)) {
+        Fingerprint m;
+        m.add(modelFingerprint(doc, doc.activeSheet()));
+        if (boundaryUsesVectors(params)) {
+            m.add(fingerprint(resolveVectors(doc, selector)));
+        }
+        return m.value();
+    }
     const auto* photo = std::get_if<toolpath::ImageEngraveParams>(&params);
     if (photo == nullptr) {
         return fingerprint(resolveVectors(doc, selector));
@@ -636,6 +809,13 @@ document::ToolpathRecord makeRecord(const ToolpathJob& job, toolpath::Toolpath t
     record.params = job.definition.params;
     if (auto* profile = std::get_if<toolpath::ProfileParams>(&record.params)) {
         profile->cuttingData.reset();  // tool-database input, not part of the record
+    }
+    if (auto* rough = std::get_if<toolpath::Rough3dParams>(&record.params)) {
+        rough->vectors.clear();  // the boundary vectors come from the selection
+    }
+    if (auto* finish = std::get_if<toolpath::Finish3dParams>(&record.params)) {
+        finish->vectors.clear();
+        finish->priors.clear();
     }
     record.selection = job.selection;
     record.sheet = job.sheet;
@@ -662,8 +842,12 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         return out;
     }
     const auto* photoParams = std::get_if<toolpath::ImageEngraveParams>(&definition.params);
-    const bool needsContours = photoParams == nullptr || photoParams->strategy == toolpath::PhotoStrategy::SelectedVectors;
-    if (!tool.has_value() || (needsContours && contours.empty()) || (photoParams != nullptr && !photo.has_value())) {
+    const bool modelOp = usesModel(definition.operation());
+    const bool needsContours = modelOp ? boundaryUsesVectors(definition.params)
+                                       : photoParams == nullptr ||
+                                             photoParams->strategy == toolpath::PhotoStrategy::SelectedVectors;
+    if (!tool.has_value() || (needsContours && contours.empty()) || (photoParams != nullptr && !photo.has_value()) ||
+        (modelOp && model == nullptr)) {
         // a job not made by makeToolpathJob
         out.messages.push_back(note(MessageSeverity::Error, "the job has no tool or no vectors"));
         return out;
@@ -766,6 +950,32 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Rough3d || op == ToolpathOperation::Finish3d) {
+            std::vector<geometry::Polyline> vectors;
+            if (needsContours) {
+                for (const geometry::Contour& c : contours) {
+                    vectors.push_back(c.polygonise(geometry::Tolerance{}));
+                }
+            }
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            const std::vector<toolpath::Rough3dTool> tools{toolpath::Rough3dTool{tool->tool, tool->data, std::nullopt}};
+            toolpath::Rough3dResult r;
+            if (op == ToolpathOperation::Rough3d) {
+                toolpath::Rough3dParams params = std::get<toolpath::Rough3dParams>(definition.params);
+                params.vectors = std::move(vectors);
+                r = toolpath::rough3dToolpath(*model, tools, params, control);
+            } else {
+                toolpath::Finish3dParams params = std::get<toolpath::Finish3dParams>(definition.params);
+                params.vectors = std::move(vectors);
+                r = toolpath::finish3dToolpath(*model, tools, params, control);
+            }
+            diagnostics = r.diagnostics;
+            for (toolpath::Toolpath& tp : r.toolpaths) {
+                if (!tp.isEmpty()) {
+                    items.push_back({-1, makeRecord(*this, std::move(tp), definition.tool)});
+                }
             }
         } else if (op == ToolpathOperation::VCarveInlay) {
             std::vector<toolpath::PocketTool> clearanceTools;

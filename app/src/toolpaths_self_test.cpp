@@ -8,17 +8,22 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QImage>
 #include <QPushButton>
 #include <QTreeWidget>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <variant>
 
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/relief_commands.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/transform2.hpp"
 #include "main_window.hpp"
+#include "preview_panel.hpp"
+#include "relief_panels.hpp"
 #include "toolpath_form_dialog.hpp"
 #include "toolpaths_panel.hpp"
 
@@ -252,6 +257,99 @@ std::string toolpathsSelfTest(MainWindow& window) {
         other.close();
     }  // destroyed while the worker may still run: it is cancelled and joined
     QCoreApplication::processEvents();
+    return std::string();
+}
+
+std::string toolpaths3dSelfTest(MainWindow& window) {
+    window.setQuiet(true);
+    window.setDocument(std::make_unique<document::Document>(
+        document::Job::singleSided(100.0, 100.0, 18.0, document::Units::Millimetres)));
+    document::Document& doc = window.currentDocument();
+    ToolpathsPanel* panel = window.toolpaths();
+    ST_REQUIRE(panel != nullptr, "3D: the dock holds no ToolpathsPanel");
+
+    // Without a relief model the form opens but cannot be accepted.
+    ST_REQUIRE(panel->addAction(document::ToolpathOperation::Rough3d) != nullptr &&
+                   panel->addAction(document::ToolpathOperation::Finish3d) != nullptr,
+               "3D: the Add menu has no 3D Rough / 3D Finish entry");
+    panel->addAction(document::ToolpathOperation::Rough3d)->trigger();
+    ToolpathFormDialog* dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr, "3D: Add 3D Rough opened no form");
+    ST_REQUIRE(dlg->pickTool("end-mill-3mm"), "3D: the 3 mm end mill cannot be picked");
+    ST_REQUIRE(!dlg->okButton()->isEnabled(), "3D: OK is enabled without a relief model");
+    dlg->reject();
+
+    // A wavy model, 61 x 61 cells of 1 mm, 0 .. 6 mm high (not a plain ramp: a .carv file holds at most one
+    // move per byte, and a perfectly regular model compresses to almost nothing).
+    auto level = std::make_unique<document::AddReliefLevelCommand>(doc.activeSheet(), "Level");
+    const document::AddReliefLevelCommand* rawLevel = level.get();
+    ST_REQUIRE(doc.execute(std::move(level)), "3D: could not add a level");
+    relief::Component c;
+    c.name = "Waves";
+    std::vector<float> data;
+    for (int j = 0; j < 61; ++j) {
+        for (int i = 0; i < 61; ++i) {
+            data.push_back(static_cast<float>(3.0 + 3.0 * std::sin(i * 0.21) * std::cos(j * 0.17)));
+        }
+    }
+    ST_REQUIRE(relief::HeightField::fromData(relief::Grid{61, 61, 1.0, {20.0, 20.0}}, std::move(data), c.field) ==
+                   relief::Status::Ok,
+               "3D: could not build the model");
+    ST_REQUIRE(doc.execute(std::make_unique<document::AddReliefComponentCommand>(rawLevel->createdId(), std::move(c))),
+               "3D: could not add the model");
+    window.documentChanged();
+    const std::size_t steps = doc.undoStack().index();
+
+    // 3D Rough through the form: the stock defaults come from the job.
+    panel->addAction(document::ToolpathOperation::Rough3d)->trigger();
+    dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr && dlg->pickTool("end-mill-3mm"), "3D: no rough form or tool");
+    ST_REQUIRE(dlg->fieldEdit("stockBottom") != nullptr && dlg->fieldEdit("stockBottom")->text() == QStringLiteral("-18"),
+               "3D: the stock bottom does not default to the job thickness");
+    ST_REQUIRE(dlg->fieldEdit("zOffset") != nullptr && dlg->fieldEdit("zOffset")->text().toDouble() < -5.5 &&
+                   dlg->fieldEdit("zOffset")->text().toDouble() > -6.01,
+               "3D: the model Z offset does not put the model top at the stock top");
+    ST_REQUIRE(!dlg->typeField("stockTop", "abc"), "3D: a non-numeric stock top was accepted");
+    ST_REQUIRE(dlg->typeField("stockTop", "0") && dlg->okButton()->isEnabled(), "3D: the complete form cannot be accepted");
+    ST_REQUIRE(accept(panel) && panel->waitIdle(300000), "3D: the rough calculation did not finish");
+    ST_REQUIRE(doc.toolpaths().size() == 1 && doc.undoStack().index() == steps + 1 &&
+                   doc.toolpaths().front().operation() == document::ToolpathOperation::Rough3d &&
+                   doc.toolpaths().front().moveCount() > 10,
+               "3D: adding a 3D Rough was not one undo step with moves: " + panel->statusText().toStdString());
+
+    // 3D Finish.
+    panel->addAction(document::ToolpathOperation::Finish3d)->trigger();
+    dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr && dlg->pickTool("end-mill-3mm") && dlg->typeField("tolerance", "0.05"),
+               "3D: no finish form or tool");
+    ST_REQUIRE(accept(panel) && panel->waitIdle(300000), "3D: the finish calculation did not finish");
+    ST_REQUIRE(doc.toolpaths().size() == 2 && doc.toolpaths()[1].operation() == document::ToolpathOperation::Finish3d,
+               "3D: adding a 3D Finish failed: " + panel->statusText().toStdString());
+
+    // The Model view draws the toolpaths over the surface.
+    ModelView3D* view = window.modelView();
+    ST_REQUIRE(view != nullptr, "3D: no Model view");
+    view->resize(320, 240);
+    view->camera().viewTop();
+    view->refresh();
+    const QImage& picture = view->image();
+    std::size_t red = 0;
+    for (int y = 0; y < picture.height(); ++y) {
+        for (int x = 0; x < picture.width(); ++x) {
+            if (picture.pixel(x, y) == 0xFFD02020u) {
+                ++red;
+            }
+        }
+    }
+    ST_REQUIRE(red > 50, "3D: the Model view does not show the toolpath");
+
+    // Simulation with the existing simulator.
+    PreviewPanel* preview = window.preview();
+    ST_REQUIRE(preview != nullptr && preview->startSimulation() && preview->waitSimulation(300000),
+               "3D: the simulation did not run: " + (preview != nullptr ? preview->statusLabel()->text().toStdString() : std::string()));
+
+    // One undo step removes the finish, the model stays.
+    ST_REQUIRE(window.undo() && doc.toolpaths().size() == 1 && !doc.reliefLevels().empty(), "3D: undo did not remove the finish");
     return std::string();
 }
 

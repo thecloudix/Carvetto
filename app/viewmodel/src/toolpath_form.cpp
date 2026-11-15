@@ -11,6 +11,8 @@
 
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
+#include "carvetto/toolpath/finish3d.hpp"
+#include "carvetto/toolpath/rough3d.hpp"
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/v_carve_inlay.hpp"
 #include "carvetto/toolpath/image_engrave.hpp"
@@ -630,7 +632,71 @@ Table<toolpath::PrismParams> makePrismTable() {
 }
 
 template <class P>
+void addModelPlacement(Table<P>& t) {
+    t.num("zOffset", "Model Z offset", "Material", Kind::Length, true, true, [](P& p) -> double& { return p.zOffset; });
+    t.num("stockTop", "Stock top Z", "Material", Kind::Length, true, true, [](P& p) -> double& { return p.stockTop; });
+    t.num("stockBottom", "Stock bottom Z", "Material", Kind::Length, true, true,
+          [](P& p) -> double& { return p.stockBottom; });
+    t.num("safeZ", "Safe Z", "Material", Kind::Length, true, true, [](P& p) -> double& { return p.safeZ; });
+    t.num("allowance", "Allowance", "Cut", Kind::Length, false, true, [](P& p) -> double& { return p.allowance; });
+    bound(t, "allowance", 0.0, kMaxOffsetMm);
+    t.num("boundaryOffset", "Boundary offset", "Boundary", Kind::Length, true, true,
+          [](P& p) -> double& { return p.boundaryOffset; },
+          [](const P& p) { return p.boundary != toolpath::Rough3dBoundary::Material; });
+    bound(t, "boundaryOffset", -kMaxOffsetMm, kMaxOffsetMm);
+    t.template option<toolpath::Rough3dBoundary>("boundary", "Machining boundary", "Boundary", {"Material block", "Model", "Selected vectors"},
+                                        [](P& p) -> toolpath::Rough3dBoundary& { return p.boundary; });
+    t.template option<toolpath::RasterTravel>("travel", "Row travel", "Cut", {"Zig-zag", "One way"},
+                                     [](P& p) -> toolpath::RasterTravel& { return p.travel; });
+    t.template option<CutDirection>("direction", "Cut direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; });
+    t.flag("reverseSteps", "Reverse step direction", "Cut", [](P& p) -> bool& { return p.reverseSteps; });
+}
+
+Table<toolpath::Rough3dParams> makeRough3dTable() {
+    using P = toolpath::Rough3dParams;
+    Table<P> t;
+    addModelPlacement(t);
+    t.num("tolerance", "Merge tolerance", "Cut", Kind::Length, false, true, [](P& p) -> double& { return p.tolerance; });
+    bound(t, "tolerance", 0.0, 100.0);
+    t.num("rampAngle", "Ramp angle", "Cut", Kind::Angle, false, false, [](P& p) -> double& { return p.rampAngle; },
+          [](const P& p) { return p.rampPlunge; });
+    bound(t, "rampAngle", 0.1, 89.0);
+    t.template option<toolpath::Rough3dStrategy>("strategy", "Strategy", "Cut", {"Z level", "Raster"},
+                                        [](P& p) -> toolpath::Rough3dStrategy& { return p.strategy; });
+    t.option<toolpath::Rough3dTipMode>("tip", "Tool tip on the model", "Cut", {"Drop tool (never gouges)", "Project"},
+                                       [](P& p) -> toolpath::Rough3dTipMode& { return p.tip; });
+    t.option<toolpath::RasterAxis>("axis", "Rows along", "Cut", {"X", "Y"},
+                                   [](P& p) -> toolpath::RasterAxis& { return p.axis; });
+    t.flag("rampPlunge", "Ramp plunge", "Cut", [](P& p) -> bool& { return p.rampPlunge; });
+    return t;
+}
+
+Table<toolpath::Finish3dParams> makeFinish3dTable() {
+    using P = toolpath::Finish3dParams;
+    Table<P> t;
+    addModelPlacement(t);
+    t.num("tolerance", "Tolerance", "Cut", Kind::Length, false, false, [](P& p) -> double& { return p.tolerance; });
+    bound(t, "tolerance", 1e-4, 10.0);
+    t.num("rasterAngle", "Raster angle", "Cut", Kind::Angle, true, true, [](P& p) -> double& { return p.rasterAngle; },
+          [](const P& p) { return p.strategy == toolpath::Finish3dStrategy::Raster; });
+    t.option<toolpath::Finish3dStrategy>("strategy", "Strategy", "Cut", {"Raster", "Offset (constant scallop)"},
+                                         [](P& p) -> toolpath::Finish3dStrategy& { return p.strategy; });
+    return t;
+}
+
+template <class P>
 const Table<P>& tableOf();
+template <>
+const Table<toolpath::Rough3dParams>& tableOf() {
+    static const Table<toolpath::Rough3dParams> t = makeRough3dTable();
+    return t;
+}
+template <>
+const Table<toolpath::Finish3dParams>& tableOf() {
+    static const Table<toolpath::Finish3dParams> t = makeFinish3dTable();
+    return t;
+}
 template <>
 const Table<toolpath::ProfileParams>& tableOf() {
     static const Table<toolpath::ProfileParams> t = makeProfileTable();
@@ -982,13 +1048,15 @@ std::string checkParams(const P& p) {
             return "option '" + c.id + "' is not valid";
         }
     }
-    // The tolerances not offered as fields: the core's own ranges (distance <= chordal <= 1 mm).
-    const geometry::Tolerance& tol = p.tolerance;
-    if (!(tol.distance >= 1e-6 && tol.distance <= 1.0)) {
-        return "parameter 'tolerance.distance' is out of range";
-    }
-    if (!(tol.angle >= 0.0 && tol.angle <= 1.0)) {
-        return "parameter 'tolerance.angle' is out of range";
+    if constexpr (!std::is_same_v<P, toolpath::Rough3dParams> && !std::is_same_v<P, toolpath::Finish3dParams>) {
+        // The tolerances not offered as fields: the core's own ranges (distance <= chordal <= 1 mm).
+        const geometry::Tolerance& tol = p.tolerance;
+        if (!(tol.distance >= 1e-6 && tol.distance <= 1.0)) {
+            return "parameter 'tolerance.distance' is out of range";
+        }
+        if (!(tol.angle >= 0.0 && tol.angle <= 1.0)) {
+            return "parameter 'tolerance.angle' is out of range";
+        }
     }
     return {};
 }
@@ -1287,6 +1355,19 @@ std::vector<std::string> ToolpathForm::problems() const {
     if (needsDepth && !(depth > 0.0)) {
         out.emplace_back("set the cut depth");
     }
+    std::visit(
+        [&](const auto& p) {
+            using P = std::decay_t<decltype(p)>;
+            if constexpr (std::is_same_v<P, toolpath::Rough3dParams> || std::is_same_v<P, toolpath::Finish3dParams>) {
+                if (!(p.stockTop > p.stockBottom)) {
+                    out.emplace_back("the stock top must be above the stock bottom");
+                }
+                if (!(p.safeZ > p.stockTop)) {
+                    out.emplace_back("the safe Z must be above the stock top");
+                }
+            }
+        },
+        definition_.params);
     if (const std::string key = document::nonFiniteParam(definition_.params); !key.empty()) {
         out.push_back("parameter " + key + " is not a finite number");
     } else if (const std::string range = validateParams(definition_.params); !range.empty()) {

@@ -3,8 +3,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <vector>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/relief/relief.hpp"
 #include "carvetto/viewmodel/relief_render.hpp"
 
@@ -62,6 +64,18 @@ inline constexpr std::size_t kMaxSurfaceDimension = 512;
 ModelSurface composeModelSurface(const document::Document& doc, document::SheetId sheet,
                                  std::size_t maxDimension = kMaxSurfaceDimension);
 
+/// A toolpath drawn over the model (T-0303, ADR-0085): polylines in model space (x, y, model height;
+/// machine Z minus the toolpath's model Z offset), each run being one connected cutting stretch.
+struct ModelPathPoint {
+    double x{0.0};
+    double y{0.0};
+    double z{0.0};
+};
+struct ModelPath {
+    std::vector<std::vector<ModelPathPoint>> runs;
+    std::uint32_t colour{0xFFD02020u};
+};
+
 struct ModelRenderOptions {
     std::size_t width{640};
     std::size_t height{480};
@@ -69,7 +83,15 @@ struct ModelRenderOptions {
     /// Vertical exaggeration.
     double zScale{1.0};
     std::uint32_t background{0xFFE2E4E8u};
+    /// Toolpaths drawn as one-pixel lines over the surface, hidden where the surface is in front.
+    std::vector<ModelPath> paths;
 };
+
+/// The cutting moves (Feed, Plunge, Arc*) of the 3D rough and 3D finish records among `records`, as
+/// model-space paths (Z minus the record's model Z offset), colours cycling per toolpath. Rapids and
+/// retracts break a run. At most `maxPoints` points are kept per toolpath (evenly thinned).
+std::vector<ModelPath> modelPathsFromToolpaths(const std::vector<document::ToolpathRecord>& records,
+                                               std::size_t maxPoints = 200000);
 
 /// Draws `surface` from `camera`. Transparent cells leave the background. Deterministic; cost is
 /// O(surface cells + pixels it covers).

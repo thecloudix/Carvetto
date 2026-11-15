@@ -43,6 +43,8 @@ struct FormDocumentInfo {
     /// Image Engrave: why the bitmap the selector names cannot be carved (empty when it can).
     /// Optional; without it only the presence of a bitmap object is not checked.
     std::function<std::string(const viewmodel::VectorSelector&)> bitmapProblem;
+    /// 3D Rough / 3D Finish: why the sheet's relief model cannot be machined (empty when it can). Optional.
+    std::function<std::string()> modelProblem;
     /// Called with the document variables the form's calculation boxes name, whenever they change
     /// (and on opening), so the owner can hold them: a variable an open form uses cannot be deleted.
     std::function<void(const std::vector<std::string>&)> variablesChanged;
@@ -89,6 +91,7 @@ class ToolpathFormDialog : public QDialog {
     void applyTool();
     void applyClearance();
     void setMessage(const std::string& text, bool error);
+    bool isModel() const { return viewmodel::usesModel(form_.operation()); }
     bool isPhoto() const { return form_.operation() == document::ToolpathOperation::ImageEngrave; }
     /// What is wrong with the vectors or bitmap the toolpath would read now; empty when fine.
     std::string sourceProblem() const;

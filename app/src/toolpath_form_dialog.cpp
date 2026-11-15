@@ -56,6 +56,10 @@ const char* operationLabel(ToolpathOperation op) {
             return "Image Engrave";
         case ToolpathOperation::VCarveInlay:
             return "V-Carve Inlay";
+        case ToolpathOperation::Rough3d:
+            return "3D Rough";
+        case ToolpathOperation::Finish3d:
+            return "3D Finish";
     }
     return "?";
 }
@@ -415,6 +419,13 @@ void ToolpathFormDialog::refreshVectors() {
                         .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
         }
         countLabel_->setText(text);
+    } else if (isModel()) {
+        QString text = QStringLiteral("Machines the relief model of the active sheet.");
+        if (info_.countVectors) {
+            text += QStringLiteral(" %1 vector(s) selected now (used by the Selected vectors boundary).")
+                        .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
+        }
+        countLabel_->setText(text);
     } else if (info_.countVectors) {
         const std::size_t n = info_.countVectors(form_.selector());
         countLabel_->setText(QStringLiteral("%1 vector(s) selected now").arg(static_cast<qulonglong>(n)));
@@ -652,6 +663,28 @@ std::string ToolpathFormDialog::sourceProblem() const {
         if (p.strategy == toolpath::PhotoStrategy::SelectedVectors && info_.countVectors &&
             info_.countVectors(form_.selector()) == 0) {
             return "Selected Vectors needs vectors to follow: select some besides the bitmap";
+        }
+        return {};
+    }
+    if (isModel()) {
+        if (info_.modelProblem) {
+            if (std::string bad = info_.modelProblem(); !bad.empty()) {
+                return bad;
+            }
+        }
+        const auto boundary = std::visit(
+            [](const auto& p) -> toolpath::Rough3dBoundary {
+                using P = std::decay_t<decltype(p)>;
+                if constexpr (std::is_same_v<P, toolpath::Rough3dParams> || std::is_same_v<P, toolpath::Finish3dParams>) {
+                    return p.boundary;
+                } else {
+                    return toolpath::Rough3dBoundary::Material;
+                }
+            },
+            form_.definition().params);
+        if (boundary == toolpath::Rough3dBoundary::Vectors && info_.countVectors &&
+            info_.countVectors(form_.selector()) == 0) {
+            return "the Selected vectors boundary needs closed vectors: select some";
         }
         return {};
     }

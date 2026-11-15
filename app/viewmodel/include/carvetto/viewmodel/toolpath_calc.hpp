@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -13,6 +14,7 @@
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/relief/relief.hpp"
 #include "carvetto/tooling/cutting_data.hpp"
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/tooling/tool_database.hpp"
@@ -166,6 +168,9 @@ struct ToolpathJob {
     /// Image Engrave only: the bitmap. The contours are then the vectors of the Selected Vectors
     /// strategy (none for Raster and Hatch).
     std::optional<PhotoInput> photo;
+    /// 3D rough and 3D finish only (T-0303, ADR-0085): the composed relief model of the sheet at the
+    /// finest cell size, shared and immutable. The contours are then the Vectors boundary (if used).
+    std::shared_ptr<const relief::HeightField> model;
     std::vector<geometry::Contour> contours;
     /// The drawing object of each contour.
     std::vector<document::ObjectId> owners;
@@ -218,8 +223,35 @@ void attachPlugSheet(ToolpathJob& job, const document::Document& doc);
 void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
                       const document::BitmapDecoder& decoder);
 
+/// True for the operations that machine the composed relief model (3D rough, 3D finish).
+bool usesModel(document::ToolpathOperation operation);
+
+/// Gives `job` the composed relief model of the document's active sheet (a no-op for other
+/// operations), or sets the job's refusal when there is none or it is too large to compose.
+void attachModel(ToolpathJob& job, const document::Document& doc);
+
+/// Why the active sheet's relief model cannot be machined (no levels, nothing visible, too large);
+/// empty when it can.
+std::string modelProblem(const document::Document& doc);
+
+/// Hash of the visible relief model of `sheet` (levels, components and every height value).
+std::uint64_t modelFingerprint(const document::Document& doc, document::SheetId sheet);
+
+/// Defaults for a new 3D toolpath from the job and the model: Z zero at the material surface puts
+/// the stock top at 0 and the bottom at -thickness (MachineBed: thickness and 0); the model's highest
+/// point is placed at the stock top (`zOffset`); the safe Z is 5 mm above the stock top.
+struct ModelDefaults {
+    bool valid{false};
+    double zOffset{0.0};
+    double stockTop{0.0};
+    double stockBottom{-20.0};
+    double safeZ{5.0};
+};
+ModelDefaults modelDefaults(const document::Document& doc);
+
 /// Hash of what the toolpath of `params` reads from `selector` in `doc`: the resolved vectors, or
-/// for an image engrave its bitmap (and, for Selected Vectors, the vectors too).
+/// for an image engrave its bitmap (and, for Selected Vectors, the vectors too), for a 3D rough or
+/// finish the relief model (and, for the Vectors boundary, the vectors too).
 std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
                                 const document::ToolpathParams& params);
 

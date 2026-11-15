@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <variant>
 #include <vector>
 
 namespace carvetto::viewmodel {
@@ -283,7 +284,101 @@ Raster renderModel(const ModelSurface& surface, const OrbitCamera& camera, const
         }
         std::swap(prev, cur);
     }
+
+    // Toolpaths: depth-tested one-pixel lines (a small bias lets paths lying on the surface show).
+    const float bias = static_cast<float>(radius * 0.004);
+    const auto project = [&](const ModelPathPoint& q) {
+        const Vec3 p{q.x - centre.x, q.y - centre.y, q.z * zs - centre.z};
+        Vertex v;
+        v.sx = cx + dot(p, basis.right) * scale;
+        v.sy = cy - dot(p, basis.up) * scale;
+        v.depth = dot(p, basis.toEye);
+        v.valid = true;
+        return v;
+    };
+    const auto plot = [&](long x, long y, double depth, std::uint32_t colour) {
+        if (x < 0 || y < 0 || x >= static_cast<long>(r.width) || y >= static_cast<long>(r.height)) {
+            return;
+        }
+        const std::size_t idx = static_cast<std::size_t>(y) * r.width + static_cast<std::size_t>(x);
+        if (static_cast<float>(depth) + bias >= zbuf[idx]) {
+            r.pixels[idx] = colour;
+        }
+    };
+    for (const ModelPath& path : options.paths) {
+        for (const auto& run : path.runs) {
+            for (std::size_t k = 0; k < run.size(); ++k) {
+                const Vertex a = project(k == 0 ? run[0] : run[k - 1]);
+                const Vertex b = project(run[k]);
+                const double span = std::max(std::fabs(b.sx - a.sx), std::fabs(b.sy - a.sy));
+                if (!std::isfinite(span) || span > 1.0e5) {
+                    continue;
+                }
+                const long steps = std::max(1L, static_cast<long>(std::ceil(span)));
+                for (long t = 0; t <= steps; ++t) {
+                    const double u = static_cast<double>(t) / static_cast<double>(steps);
+                    plot(static_cast<long>(std::floor(a.sx + (b.sx - a.sx) * u)),
+                         static_cast<long>(std::floor(a.sy + (b.sy - a.sy) * u)), a.depth + (b.depth - a.depth) * u,
+                         path.colour);
+                }
+            }
+        }
+    }
     return r;
+}
+
+std::vector<ModelPath> modelPathsFromToolpaths(const std::vector<document::ToolpathRecord>& records,
+                                               std::size_t maxPoints) {
+    static constexpr std::uint32_t kColours[] = {0xFFD02020u, 0xFF2060D0u, 0xFF20A040u, 0xFFA020C0u, 0xFFD08010u};
+    std::vector<ModelPath> out;
+    std::size_t colour = 0;
+    for (const document::ToolpathRecord& rec : records) {
+        double zOffset = 0.0;
+        if (const auto* rough = std::get_if<toolpath::Rough3dParams>(&rec.params)) {
+            zOffset = rough->zOffset;
+        } else if (const auto* finish = std::get_if<toolpath::Finish3dParams>(&rec.params)) {
+            zOffset = finish->zOffset;
+        } else {
+            continue;
+        }
+        if (!rec.hasMoves() || rec.moves->empty()) {
+            continue;
+        }
+        const std::vector<toolpath::Move>& moves = *rec.moves;
+        const std::size_t stride = std::max<std::size_t>(1, (moves.size() + maxPoints - 1) / std::max<std::size_t>(maxPoints, 1));
+        ModelPath path;
+        path.colour = kColours[colour++ % (sizeof(kColours) / sizeof(kColours[0]))];
+        std::vector<ModelPathPoint> run;
+        std::size_t index = 0;
+        ModelPathPoint prev{};
+        for (const toolpath::Move& m : moves) {
+            const ModelPathPoint here{m.to.x, m.to.y, m.to.z - zOffset};
+            const bool cutting = m.kind == toolpath::MoveKind::Feed || m.kind == toolpath::MoveKind::Plunge ||
+                                 toolpath::isArc(m.kind);
+            if (!cutting) {
+                if (run.size() > 1) {
+                    path.runs.push_back(std::move(run));
+                }
+                run.clear();
+                index = 0;
+            } else {
+                if (run.empty()) {
+                    run.push_back(prev);  // the run starts where the tool started cutting
+                }
+                if (index++ % stride == 0) {
+                    run.push_back(here);
+                }
+            }
+            prev = here;
+        }
+        if (run.size() > 1) {
+            path.runs.push_back(std::move(run));
+        }
+        if (!path.runs.empty()) {
+            out.push_back(std::move(path));
+        }
+    }
+    return out;
 }
 
 }  // namespace carvetto::viewmodel

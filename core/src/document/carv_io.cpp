@@ -447,7 +447,21 @@ constexpr EnumName<toolpath::PhotoStrategy> kPhotoStrategies[] = {{toolpath::Pho
                                                                   {toolpath::PhotoStrategy::Hatch, "hatch"},
                                                                   {toolpath::PhotoStrategy::SelectedVectors,
                                                                    "selected_vectors"}};
-constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
+constexpr EnumName<toolpath::Rough3dStrategy> kRough3dStrategies[] = {{toolpath::Rough3dStrategy::ZLevel, "z_level"},
+                                                                     {toolpath::Rough3dStrategy::Raster, "raster"}};
+constexpr EnumName<toolpath::Rough3dBoundary> kRough3dBoundaries[] = {{toolpath::Rough3dBoundary::Material, "material"},
+                                                                     {toolpath::Rough3dBoundary::Model, "model"},
+                                                                     {toolpath::Rough3dBoundary::Vectors, "vectors"}};
+constexpr EnumName<toolpath::RasterAxis> kRasterAxes[] = {{toolpath::RasterAxis::AlongX, "along_x"},
+                                                          {toolpath::RasterAxis::AlongY, "along_y"}};
+constexpr EnumName<toolpath::RasterTravel> kRasterTravels[] = {{toolpath::RasterTravel::ZigZag, "zigzag"},
+                                                               {toolpath::RasterTravel::OneWay, "one_way"}};
+constexpr EnumName<toolpath::Rough3dTipMode> kRough3dTips[] = {{toolpath::Rough3dTipMode::DropTool, "drop_tool"},
+                                                               {toolpath::Rough3dTipMode::Project, "project"}};
+constexpr EnumName<toolpath::Finish3dStrategy> kFinish3dStrategies[] = {{toolpath::Finish3dStrategy::Raster, "raster"},
+                                                                       {toolpath::Finish3dStrategy::Offset, "offset"}};
+constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Rough3d, "rough_3d"},
+                                                      {ToolpathOperation::Finish3d, "finish_3d"},{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
                                                       {ToolpathOperation::Engrave, "engrave"},
@@ -1044,6 +1058,49 @@ json encodeImageEngraveParams(const toolpath::ImageEngraveParams& p) {
     return j;
 }
 
+json encodeRough3dParams(const toolpath::Rough3dParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["strategy"] = nameOf(kRough3dStrategies, p.strategy);
+    j["tip"] = nameOf(kRough3dTips, p.tip);
+    j["z_offset"] = p.zOffset;
+    j["stock_top"] = p.stockTop;
+    j["stock_bottom"] = p.stockBottom;
+    j["allowance"] = p.allowance;
+    j["safe_z"] = p.safeZ;
+    j["boundary"] = nameOf(kRough3dBoundaries, p.boundary);
+    j["boundary_offset"] = p.boundaryOffset;
+    j["axis"] = nameOf(kRasterAxes, p.axis);
+    j["travel"] = nameOf(kRasterTravels, p.travel);
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["reverse_steps"] = p.reverseSteps;
+    j["ramp_plunge"] = p.rampPlunge;
+    j["ramp_angle_rad"] = p.rampAngle;
+    j["tolerance"] = p.tolerance;
+    j["rest_tolerance"] = p.restTolerance;
+    return j;
+}
+
+json encodeFinish3dParams(const toolpath::Finish3dParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["strategy"] = nameOf(kFinish3dStrategies, p.strategy);
+    j["z_offset"] = p.zOffset;
+    j["stock_top"] = p.stockTop;
+    j["stock_bottom"] = p.stockBottom;
+    j["allowance"] = p.allowance;
+    j["safe_z"] = p.safeZ;
+    j["boundary"] = nameOf(kRough3dBoundaries, p.boundary);
+    j["boundary_offset"] = p.boundaryOffset;
+    j["raster_angle_rad"] = p.rasterAngle;
+    j["travel"] = nameOf(kRasterTravels, p.travel);
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["reverse_steps"] = p.reverseSteps;
+    j["tolerance"] = p.tolerance;
+    j["rest_tolerance"] = p.restTolerance;
+    return j;
+}
+
 json encodeFlutingParams(const toolpath::FlutingParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -1141,6 +1198,10 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeVCarveInlayParams(*vcInlay);
     } else if (const auto* photo = std::get_if<toolpath::ImageEngraveParams>(&tp.params)) {
         j["params"] = encodeImageEngraveParams(*photo);
+    } else if (const auto* rough = std::get_if<toolpath::Rough3dParams>(&tp.params)) {
+        j["params"] = encodeRough3dParams(*rough);
+    } else if (const auto* finish = std::get_if<toolpath::Finish3dParams>(&tp.params)) {
+        j["params"] = encodeFinish3dParams(*finish);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2350,6 +2411,16 @@ constexpr std::array<std::string_view, 12> kImageEngraveKeys{
     "name",   "max_depth", "invert",    "stepover_retract", "line_spacing_percent", "line_angle_rad",
     "strategy", "safe_z",  "depth_tolerance", "tolerance",   "tool",              "layers"};
 
+// 3D rough and finish records exist only in job.json (ADR-0085).
+constexpr std::array<std::string_view, 18> kRough3dKeys{
+    "name",     "strategy", "tip",           "z_offset",     "stock_top",      "stock_bottom",
+    "allowance", "safe_z",  "boundary",      "boundary_offset", "axis",        "travel",
+    "direction", "reverse_steps", "ramp_plunge", "ramp_angle_rad", "tolerance", "rest_tolerance"};
+constexpr std::array<std::string_view, 15> kFinish3dKeys{
+    "name",      "strategy",  "z_offset",  "stock_top", "stock_bottom", "allowance",
+    "safe_z",    "boundary",  "boundary_offset", "raster_angle_rad", "travel", "direction",
+    "reverse_steps", "tolerance", "rest_tolerance"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2850,6 +2921,97 @@ toolpath::VCarveInlayParams decodeVCarveInlayParams(JsonReader& r, const Path& p
     return out;
 }
 
+toolpath::Rough3dParams decodeRough3dParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::Rough3dParams out;
+    // Not a params.json record: no "tool"/"layers" keys, so the whole list applies.
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kRough3dKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kRough3dStrategies);
+        } else if (k == "tip") {
+            out.tip = rec.choice(kRough3dTips);
+        } else if (k == "z_offset") {
+            out.zOffset = rec.number();
+        } else if (k == "stock_top") {
+            out.stockTop = rec.number();
+        } else if (k == "stock_bottom") {
+            out.stockBottom = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "boundary") {
+            out.boundary = rec.choice(kRough3dBoundaries);
+        } else if (k == "boundary_offset") {
+            out.boundaryOffset = rec.number();
+        } else if (k == "axis") {
+            out.axis = rec.choice(kRasterAxes);
+        } else if (k == "travel") {
+            out.travel = rec.choice(kRasterTravels);
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "reverse_steps") {
+            out.reverseSteps = rec.boolean();
+        } else if (k == "ramp_plunge") {
+            out.rampPlunge = rec.boolean();
+        } else if (rec.isAngle("ramp_angle")) {
+            out.rampAngle = rec.angle();
+        } else if (k == "tolerance") {
+            out.tolerance = rec.number();
+        } else if (k == "rest_tolerance") {
+            out.restTolerance = rec.number();
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
+toolpath::Finish3dParams decodeFinish3dParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::Finish3dParams out;
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kFinish3dKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kFinish3dStrategies);
+        } else if (k == "z_offset") {
+            out.zOffset = rec.number();
+        } else if (k == "stock_top") {
+            out.stockTop = rec.number();
+        } else if (k == "stock_bottom") {
+            out.stockBottom = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "boundary") {
+            out.boundary = rec.choice(kRough3dBoundaries);
+        } else if (k == "boundary_offset") {
+            out.boundaryOffset = rec.number();
+        } else if (rec.isAngle("raster_angle")) {
+            out.rasterAngle = rec.angle();
+        } else if (k == "travel") {
+            out.travel = rec.choice(kRasterTravels);
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "reverse_steps") {
+            out.reverseSteps = rec.boolean();
+        } else if (k == "tolerance") {
+            out.tolerance = rec.number();
+        } else if (k == "rest_tolerance") {
+            out.restTolerance = rec.number();
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::ImageEngraveParams decodeImageEngraveParams(JsonReader& r, const Path& p, ParamsDialect d,
                                                     LegacyParamsExtras* legacy) {
     toolpath::ImageEngraveParams out;
@@ -2992,6 +3154,12 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::ImageEngrave) {
         return decodeImageEngraveParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Rough3d) {
+        return decodeRough3dParams(r, p, d);
+    }
+    if (operation == ToolpathOperation::Finish3d) {
+        return decodeFinish3dParams(r, p, d);
     }
     return decodePocketParams(r, p, d, legacy);
 }

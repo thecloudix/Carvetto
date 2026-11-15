@@ -32,6 +32,8 @@ enum class Finish3dStrategy {
 struct Finish3dPrior {
     Toolpath toolpath;
     Rough3dTool tool;
+
+    bool operator==(const Finish3dPrior&) const = default;
 };
 
 struct Finish3dParams {

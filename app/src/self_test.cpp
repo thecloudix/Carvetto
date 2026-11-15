@@ -803,6 +803,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9a. 3D Rough and 3D Finish on a relief model: forms, Model view overlay, simulation (T-0303).
+    if (const std::string why = toolpaths3dSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9b. Image Engrave: import a bitmap, form, calculation, stale, save and reload (T-0275).
     if (const std::string why = imageSelfTest(window); !why.empty()) {
         return fail(why);
