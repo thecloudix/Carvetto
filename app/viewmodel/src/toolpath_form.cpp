@@ -1,5 +1,6 @@
 #include "carvetto/viewmodel/toolpath_form.hpp"
 
+#include <set>
 #include <algorithm>
 #include <charconv>
 #include <cmath>
@@ -661,6 +662,9 @@ Table<toolpath::Rough3dParams> makeRough3dTable() {
     addModelPlacement(t);
     t.num("tolerance", "Merge tolerance", "Cut", Kind::Length, false, true, [](P& p) -> double& { return p.tolerance; });
     bound(t, "tolerance", 0.0, 100.0);
+    t.num("restTolerance", "Rest tolerance", "Rest tools", Kind::Length, false, true,
+          [](P& p) -> double& { return p.restTolerance; });
+    bound(t, "restTolerance", 0.0, 100.0);
     t.num("rampAngle", "Ramp angle", "Cut", Kind::Angle, false, false, [](P& p) -> double& { return p.rampAngle; },
           [](const P& p) { return p.rampPlunge; });
     bound(t, "rampAngle", 0.1, 89.0);
@@ -680,6 +684,9 @@ Table<toolpath::Finish3dParams> makeFinish3dTable() {
     addModelPlacement(t);
     t.num("tolerance", "Tolerance", "Cut", Kind::Length, false, false, [](P& p) -> double& { return p.tolerance; });
     bound(t, "tolerance", 1e-4, 10.0);
+    t.num("restTolerance", "Rest tolerance", "Rest tools", Kind::Length, false, true,
+          [](P& p) -> double& { return p.restTolerance; });
+    bound(t, "restTolerance", 0.0, 100.0);
     t.num("rasterAngle", "Raster angle", "Cut", Kind::Angle, true, true, [](P& p) -> double& { return p.rasterAngle; },
           [](const P& p) { return p.strategy == toolpath::Finish3dStrategy::Raster; });
     t.option<toolpath::Finish3dStrategy>("strategy", "Strategy", "Cut", {"Raster", "Offset (constant scallop)"},
@@ -710,6 +717,9 @@ Table<toolpath::MouldingParams> makeMouldingTable() {
     bound(t, "rampAngle", 0.1, 89.0);
     t.num("tolerance", "Tolerance", "Cut", Kind::Length, false, false, [](P& p) -> double& { return p.tolerance; });
     bound(t, "tolerance", 1e-4, 10.0);
+    t.num("restTolerance", "Rest tolerance", "Rest tools", Kind::Length, false, true,
+          [](P& p) -> double& { return p.restTolerance; });
+    bound(t, "restTolerance", 0.0, 100.0);
     t.derived(
         "profileObject", "Profile vector (object id, 0 = first open vector)", "Section", Kind::Count,
         [](const P& p) { return static_cast<double>(p.profileObject); },
@@ -1407,7 +1417,12 @@ FieldResult ToolpathForm::setClearanceTools(const tooling::ToolDatabase& db,
     FieldResult res;
     if (!hasClearanceTools(operation())) {
         res.ok = false;
-        res.message = "only a V-carve or a V-carve inlay has clearance tools";
+        res.message = "only a V-carve, V-carve inlay, 3D rough, 3D finish or moulding has earlier tools";
+        return res;
+    }
+    if (operation() == ToolpathOperation::Moulding && sources.size() > 1) {
+        res.ok = false;
+        res.message = "a moulding takes at most one larger-area clearance tool";
         return res;
     }
     for (std::size_t i = 0; i < sources.size(); ++i) {
@@ -1419,6 +1434,23 @@ FieldResult ToolpathForm::setClearanceTools(const tooling::ToolDatabase& db,
     }
     definition_.clearanceTools = sources;
     return res;
+}
+
+FieldResult ToolpathForm::setPriorToolpaths(const std::vector<std::uint64_t>& ids) {
+    FieldResult res;
+    auto* finish = std::get_if<toolpath::Finish3dParams>(&definition_.params);
+    if (finish == nullptr) {
+        res.ok = false;
+        res.message = "only a 3D finish has prior toolpaths";
+        return res;
+    }
+    finish->priorToolpaths = ids;
+    return res;
+}
+
+std::vector<std::uint64_t> ToolpathForm::priorToolpaths() const {
+    const auto* finish = std::get_if<toolpath::Finish3dParams>(&definition_.params);
+    return finish != nullptr ? finish->priorToolpaths : std::vector<std::uint64_t>{};
 }
 
 void ToolpathForm::refreshTools(const tooling::ToolDatabase& db) {
@@ -1478,6 +1510,15 @@ std::vector<std::string> ToolpathForm::problems() const {
                 }
                 if (!(p.safeZ > p.stockTop)) {
                     out.emplace_back("the safe Z must be above the stock top");
+                }
+            }
+            if constexpr (std::is_same_v<P, toolpath::Finish3dParams>) {
+                std::set<std::uint64_t> seen;
+                for (const std::uint64_t id : p.priorToolpaths) {
+                    if (id == 0 || !seen.insert(id).second) {
+                        out.emplace_back("the prior toolpaths must be existing toolpaths, each listed once");
+                        break;
+                    }
                 }
             }
             if constexpr (std::is_same_v<P, toolpath::Project3dParams>) {

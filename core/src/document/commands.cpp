@@ -922,7 +922,7 @@ bool AddToolpathCommand::apply(Document& doc) {
     if (!applied_) {
         normalise(record_);
         if (!canTakeId(doc, record_.id.value) || !selectionValid(doc, record_.selection, record_.id) ||
-            !nonFiniteParam(record_.params).empty() || !spindleOffAllowed(record_)) {
+            !nonFiniteParam(record_.params).empty() || !spindleOffAllowed(record_) || !groupProblem(record_).empty()) {
             return false;
         }
         if (record_.id.isNull()) {
@@ -961,7 +961,7 @@ bool SetToolpathCommand::apply(Document& doc) {
     normalise(after_);
     ToolpathRecord* record = doc.findToolpath(after_.id);
     if (!record || *record == after_ || !selectionValid(doc, after_.selection, after_.id) ||
-        !nonFiniteParam(after_.params).empty() || !spindleOffAllowed(after_)) {
+        !nonFiniteParam(after_.params).empty() || !spindleOffAllowed(after_) || !groupProblem(after_).empty()) {
         return false;
     }
     before_ = *record;

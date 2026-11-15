@@ -60,7 +60,11 @@ inline constexpr int kCarvFormatMinorRelief = 9;
 /// mirror centre, clip polygons); written only when a level has one. The newest minor this build
 /// writes and reads.
 inline constexpr int kCarvFormatMinorLevelEffects = 10;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorLevelEffects;
+/// 1.11 (T-0314, ADR-0094) adds toolpath groups (`job.json` toolpath `group`: id, role and the whole tool list of
+/// a calculation that makes several toolpaths) and a 3D finish's `prior_toolpaths`; written only when a record
+/// has one. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorToolGroups = 11;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorToolGroups;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

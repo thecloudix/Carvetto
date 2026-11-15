@@ -34,3 +34,5 @@ Status: accepted (T-0303, first part: rough and finish)
 Project Toolpath onto Model and 3D Tabs entries (core: `project3d.hpp`), Create Component From Toolpath
 Preview (core: `simulate/preview_component.hpp`), rest-tool lists and prior toolpaths for 3D rough/finish,
 the Moulding toolpath (T-0307), vector-boundary offsets beyond what the core offers.
+
+Update (T-0314, ADR-0094): rest-tool lists and prior toolpaths for 3D rough/finish are done.

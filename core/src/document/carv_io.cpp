@@ -1107,6 +1107,13 @@ json encodeFinish3dParams(const toolpath::Finish3dParams& p) {
     j["reverse_steps"] = p.reverseSteps;
     j["tolerance"] = p.tolerance;
     j["rest_tolerance"] = p.restTolerance;
+    if (!p.priorToolpaths.empty()) {  // T-0314: absent = no prior toolpaths
+        json priors = json::array();
+        for (const std::uint64_t id : p.priorToolpaths) {
+            priors.push_back(id);
+        }
+        j["prior_toolpaths"] = std::move(priors);
+    }
     return j;
 }
 
@@ -1308,6 +1315,21 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
     j["tool"] = std::move(tool);
     if (tp.sheet.value != 0) {
         j["sheet"] = tp.sheet.value;  // T-0261: only double-sided records, so other files are unchanged
+    }
+    if (tp.group.id != 0) {
+        json group = json::object();  // T-0314: only records of a multi-tool calculation
+        group["id"] = tp.group.id;
+        group["role"] = tp.group.role;
+        json tools = json::array();
+        for (const ToolSource& t : tp.group.tools) {
+            json one = json::object();
+            one["id"] = t.toolId;
+            one["machine"] = t.machine;
+            one["material"] = t.material;
+            tools.push_back(std::move(one));
+        }
+        group["tools"] = std::move(tools);
+        j["group"] = std::move(group);
     }
     if (!tp.expressions.empty()) {
         json expressions = json::object();  // T-0271: only records with calculation entries
@@ -2487,10 +2509,12 @@ constexpr std::array<std::string_view, 18> kRough3dKeys{
     "name",     "strategy", "tip",           "z_offset",     "stock_top",      "stock_bottom",
     "allowance", "safe_z",  "boundary",      "boundary_offset", "axis",        "travel",
     "direction", "reverse_steps", "ramp_plunge", "ramp_angle_rad", "tolerance", "rest_tolerance"};
-constexpr std::array<std::string_view, 15> kFinish3dKeys{
+constexpr std::array<std::string_view, 16> kFinish3dKeys{
     "name",      "strategy",  "z_offset",  "stock_top", "stock_bottom", "allowance",
     "safe_z",    "boundary",  "boundary_offset", "raster_angle_rad", "travel", "direction",
-    "reverse_steps", "tolerance", "rest_tolerance"};
+    "reverse_steps", "tolerance", "rest_tolerance", "prior_toolpaths"};
+/// Most prior toolpaths a 3D finish lists (T-0314).
+constexpr std::size_t kMaxPriorToolpaths = 256;
 
 // Moulding and projected toolpath records exist only in job.json (ADR-0091).
 constexpr std::array<std::string_view, 25> kMouldingKeys{
@@ -3201,6 +3225,19 @@ toolpath::Finish3dParams decodeFinish3dParams(JsonReader& r, const Path& p, Para
             out.tolerance = rec.number();
         } else if (k == "rest_tolerance") {
             out.restTolerance = rec.number();
+        } else if (k == "prior_toolpaths") {
+            const Path pf = rec.field();
+            if (r.peek() != JKind::Array) {
+                fail(pf, "must be a JSON array of toolpath ids");
+            }
+            r.beginArray();
+            for (std::size_t i = 0; r.nextElement(); ++i) {
+                if (out.priorToolpaths.size() >= kMaxPriorToolpaths) {
+                    fail(pf, "lists too many prior toolpaths");
+                }
+                r.budget().chargeDocument(kCostChild);
+                out.priorToolpaths.push_back(readEntityId(r, pf.at(i)));
+            }
         } else {
             rec.skip();
         }
@@ -3390,8 +3427,10 @@ struct DecodedToolpath {
     std::uint64_t moveCount{0};
 };
 
-constexpr std::array<std::string_view, 9> kToolpathKeys{"id",        "name", "operation", "params",
-                                                        "selection", "tool", "moves",     "sheet", "expressions"};
+constexpr std::array<std::string_view, 10> kToolpathKeys{"id",        "name", "operation", "params",     "selection",
+                                                         "tool",      "moves", "sheet",     "expressions", "group"};
+constexpr std::array<std::string_view, 3> kGroupKeys{"id", "role", "tools"};
+constexpr std::array<std::string_view, 3> kGroupToolKeys{"id", "machine", "material"};
 constexpr std::array<std::string_view, 3> kSelectionKeys{"all", "layers", "objects"};
 constexpr std::array<std::string_view, 11> kToolKeys{"id",          "machine",       "material",   "name",
                                                      "tool_number", "diameter",      "feed_rate",  "plunge_rate",
@@ -3478,6 +3517,51 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
             }
         } else if (k == "sheet") {
             tp.sheet = SheetId{readEntityId(r, f)};  // T-0261
+        } else if (k == "group") {
+            // T-0314 (ADR-0094): the toolpaths of one calculation, with the whole tool list
+            Record g(r, f, kGroupKeys);
+            while (g.next()) {
+                const Path gf = g.field();
+                if (g.key() == "id") {
+                    tp.group.id = readEntityId(r, gf);
+                } else if (g.key() == "role") {
+                    tp.group.role = static_cast<std::uint32_t>(readInt(r, gf, 0, static_cast<int>(kMaxGroupTools) - 1));
+                } else if (g.key() == "tools") {
+                    if (r.peek() != JKind::Array) {
+                        fail(gf, "must be a JSON array of tools");
+                    }
+                    r.beginArray();
+                    for (std::size_t i = 0; r.nextElement(); ++i) {
+                        if (tp.group.tools.size() >= kMaxGroupTools) {
+                            fail(gf, "lists too many tools");
+                        }
+                        r.budget().chargeDocument(kCostRecord);
+                        const Path elementPath = gf.at(i);
+                        Record t(r, elementPath, kGroupToolKeys);
+                        ToolSource src;
+                        while (t.next()) {
+                            const Path tf = t.field();
+                            if (t.key() == "id") {
+                                src.toolId = readStoredString(r, tf);
+                            } else if (t.key() == "machine") {
+                                src.machine = readStoredString(r, tf);
+                            } else if (t.key() == "material") {
+                                src.material = readStoredString(r, tf);
+                            } else {
+                                t.skip();
+                            }
+                        }
+                        tp.group.tools.push_back(std::move(src));
+                    }
+                } else {
+                    g.skip();
+                }
+            }
+            g.require("id");
+            g.require("tools");
+            if (tp.group.id == 0 || tp.group.tools.empty() || tp.group.role >= tp.group.tools.size()) {
+                fail(f, "must have a nonzero id, at least one tool and a role that names one of them");
+            }
         } else if (k == "expressions") {
             // T-0271: field id -> calculation text, at most 64 entries of at most 4096 bytes
             if (r.peek() != JKind::Object) {
@@ -5025,7 +5109,14 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                                  [](const ToolpathRecord& tp) { return !tp.expressions.empty(); });
         const bool usesEffects = std::any_of(doc.reliefLevels().begin(), doc.reliefLevels().end(),
                                              [](const ReliefLevel& l) { return l.effects.any(); });
-        version["minor"] = usesEffects          ? kCarvFormatMinorLevelEffects
+        const bool usesGroups = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(),
+                                            [](const ToolpathRecord& tp) { return tp.group.id != 0; });
+        const bool usesPriors = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
+            const auto* f = std::get_if<toolpath::Finish3dParams>(&tp.params);
+            return f != nullptr && !f->priorToolpaths.empty();
+        });
+        version["minor"] = (usesGroups || usesPriors) ? kCarvFormatMinorToolGroups
+                           : usesEffects          ? kCarvFormatMinorLevelEffects
                            : usesRelief           ? kCarvFormatMinorRelief
                            : usesExpressions    ? kCarvFormatMinorExpressions
                            : usesToolpathSheet ? kCarvFormatMinorToolpathSheet
@@ -5160,6 +5251,10 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                      " is not a finite number"};
             }
             if (const std::string problem = spindleOffProblem(tp); !problem.empty()) {
+                return CarvError{CarvError::Code::InvalidContent, "toolpath '" + clipped(tp.name) + "' (#" +
+                                                                      std::to_string(tp.id.value) + "): " + problem};
+            }
+            if (const std::string problem = groupProblem(tp); !problem.empty()) {
                 return CarvError{CarvError::Code::InvalidContent, "toolpath '" + clipped(tp.name) + "' (#" +
                                                                       std::to_string(tp.id.value) + "): " + problem};
             }

@@ -58,6 +58,11 @@ ToolpathOutcome failure(std::string message, std::vector<ToolpathMessage> messag
     return out;
 }
 
+/// The operations whose groups of an old file (without stored groups) are inferred from tool types.
+bool inferredGroupOperation(ToolpathOperation op) {
+    return op == ToolpathOperation::VCarving || op == ToolpathOperation::VCarveInlay;
+}
+
 bool isClearanceType(const tooling::Tool& tool) {
     return toolpath::vCarvingClearanceToolAllowed(tool.type) && !toolpath::vCarvingToolAllowed(tool.type);
 }
@@ -118,6 +123,17 @@ void ToolpathSession::adopt(const ToolpathRecord& record) {
     b.def.params = record.params;
     b.def.tool = record.toolSource;
     b.def.selector.base = record.selection;
+    if (record.group.id != 0 && hasClearanceTools(record.operation())) {
+        // A stored group (T-0314): the tool list is in the record, the last tool is the operation's own.
+        const std::vector<document::ToolSource>& tools = record.group.tools;
+        b.def.tool = tools.back();
+        b.def.clearanceTools.assign(tools.begin(), tools.end() - 1);
+        b.def.expressions = record.expressions;
+        b.group = record.group.id;
+        b.role = record.group.role + 1 == tools.size() ? -1 : static_cast<int>(record.group.role);
+        b.stored = hasRestTools(record.operation());
+        nextGroup_ = std::max(nextGroup_, record.group.id + 1);
+    }
     b.vectors = inputsFingerprint(*doc_, b.def.selector, b.def.params);
     b.tools = toolsFingerprintOf(b.def, db_);
     baselines_.emplace(MovesKey(record.moves), std::move(b));
@@ -128,7 +144,7 @@ void ToolpathSession::inferGroups(const std::vector<bool>& adopted) {
     std::vector<std::size_t> run;
     for (std::size_t i = 0; i < recs.size(); ++i) {
         const ToolpathRecord& rec = recs[i];
-        if (!adopted[i] || !hasClearanceTools(rec.operation())) {
+        if (!adopted[i] || !inferredGroupOperation(rec.operation()) || rec.group.id != 0) {
             run.clear();
             continue;
         }
@@ -168,7 +184,7 @@ void ToolpathSession::inferGroups(const std::vector<bool>& adopted) {
     }
     // Clearance toolpaths left without a carving toolpath cannot be recalculated alone.
     for (std::size_t i = 0; i < recs.size(); ++i) {
-        if (!adopted[i] || !hasClearanceTools(recs[i].operation())) {
+        if (!adopted[i] || !inferredGroupOperation(recs[i].operation()) || recs[i].group.id != 0) {
             continue;
         }
         Baseline* b = baselineOf(recs[i]);
@@ -234,13 +250,19 @@ const ToolpathRecord* ToolpathSession::carvingOf(const ToolpathRecord& record) {
     if (b == nullptr || b->group == 0 || b->role == -1) {
         return &record;
     }
+    const ToolpathRecord* firstMember = nullptr;
     for (const ToolpathRecord& r : doc_->toolpaths()) {
         const Baseline* rb = baselineOf(r);
         if (rb != nullptr && rb->group == b->group && rb->role == -1) {
             return &r;
         }
+        if (rb != nullptr && rb->group == b->group && firstMember == nullptr) {
+            firstMember = &r;
+        }
     }
-    return nullptr;
+    // A stored group whose last tool had nothing to cut has no record of its own tool: any member carries the
+    // definition (every member stores the whole tool list and the same parameters).
+    return b->stored ? firstMember : nullptr;
 }
 
 ToolpathDefinition ToolpathSession::definitionOf(const ToolpathRecord& record) {
@@ -521,6 +543,13 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
         job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);
         attachModel(job, *doc_);
         attachSource(job, *doc_);
+        std::vector<ToolpathId> own;
+        if (target.has_value()) {
+            if (const ToolpathRecord* rec = doc_->findToolpath(*target)) {
+                own = membersOf(*rec);
+            }
+        }
+        attachPriors(job, *doc_, db_, own);
     }
     job.target = target.value_or(ToolpathId{});
     if (doc_->job().type == document::JobType::DoubleSided) {
@@ -732,6 +761,14 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
             std::optional<ToolpathId> prev;
             for (const ToolpathCalculation::Item& item : c.items) {
                 ToolpathRecord rec = item.record;
+                if (group != 0 && hasRestTools(c.definition.operation())) {
+                    // A rest-tool group is stored in the record (T-0314): the whole tool list, this record's place in it.
+                    rec.group.id = group;
+                    rec.group.tools = c.definition.clearanceTools;
+                    rec.group.tools.push_back(c.definition.tool);
+                    rec.group.role = static_cast<std::uint32_t>(item.role < 0 ? rec.group.tools.size() - 1
+                                                                              : static_cast<std::size_t>(item.role));
+                }
                 const auto existing = std::find_if(plan.roles.begin(), plan.roles.end(),
                                                    [&](const auto& r) { return r.first == item.role; });
                 if (existing != plan.roles.end()) {
@@ -879,6 +916,7 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
         b.tools = c.toolsFingerprint;
         b.group = reg.group;
         b.role = reg.role;
+        b.stored = reg.group != 0 && hasRestTools(c.definition.operation());
         baselines_[MovesKey(reg.moves)] = std::move(b);
     }
     for (const Plan& plan : plans) {
@@ -1081,6 +1119,9 @@ std::string ToolpathSession::recordName(const ToolpathRecord& record, const std:
     const Baseline* b = baselineOf(record);
     const bool grouped = b != nullptr && hasClearanceTools(record.operation()) &&
                          !b->def.clearanceTools.empty();
+    if (grouped && record.operation() == ToolpathOperation::Moulding) {
+        return b->role == -1 ? paramsName : paramsName + " [Clear]";  // the core's names (ADR-0086)
+    }
     return grouped ? paramsName + " [" + record.tool.name + "]" : paramsName;
 }
 
@@ -1113,6 +1154,9 @@ ToolpathOutcome ToolpathSession::duplicate(ToolpathId id) {
         }
         ToolpathRecord copy = *src;
         copy.id = ToolpathId{};
+        if (copy.group.id != 0) {
+            copy.group.id = group;
+        }
         setParamsName(copy.params, newName);
         copy.name = recordName(*src, newName);
         if (const std::string bad = validateToolpathName(copy.name); !bad.empty()) {

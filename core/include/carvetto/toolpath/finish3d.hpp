@@ -72,6 +72,9 @@ struct Finish3dParams {
     /// Earlier toolpaths whose result (by simulation) is the starting stock. With priors even the
     /// first tool is a rest tool.
     std::vector<Finish3dPrior> priors;
+    /// Ids of the document's toolpath records whose moves are the priors (app level: the core ignores it and
+    /// reads `priors`; T-0314, ADR-0094). Each prior's tool is the record's tool.
+    std::vector<std::uint64_t> priorToolpaths;
 
     bool operator==(const Finish3dParams&) const = default;
 };

@@ -130,10 +130,15 @@ void ToolpathFormDialog::buildStatic() {
     toolCombo_->setObjectName(QStringLiteral("toolCombo"));
     toolCombo_->addItem(QStringLiteral("(choose a tool)"), QString());
     const bool vBitMode = viewmodel::hasClearanceTools(form_.operation());
+    const bool restMode = viewmodel::hasRestTools(form_.operation());  // 3D rough / finish, moulding (T-0314)
+    const bool mouldingMode = form_.operation() == document::ToolpathOperation::Moulding;
     for (const tooling::Tool* t : viewmodel::toolsFor(db_, form_.operation(), false)) {
         toolCombo_->addItem(qs(t->name), qs(t->id));
     }
-    top->addRow(vBitMode ? QStringLiteral("Carving tool") : QStringLiteral("Tool"), toolCombo_);
+    top->addRow(restMode ? QStringLiteral("Tool (the last, finest)")
+                         : vBitMode ? QStringLiteral("Carving tool")
+                                    : QStringLiteral("Tool"),
+                toolCombo_);
     dataCombo_ = new QComboBox(this);
     dataCombo_->setObjectName(QStringLiteral("cuttingDataCombo"));
     top->addRow(QStringLiteral("Cutting data"), dataCombo_);
@@ -166,7 +171,10 @@ void ToolpathFormDialog::buildStatic() {
     outer->addLayout(top);
 
     // Clearance tools (V-carve only).
-    clearanceBox_ = new QGroupBox(QStringLiteral("Clearance tools (flat areas, in order)"), this);
+    clearanceBox_ = new QGroupBox(mouldingMode ? QStringLiteral("Larger area clearance tool (cuts first; at most one)")
+                                  : restMode   ? QStringLiteral("Earlier tools (cut first; the tool above cuts what they leave)")
+                                               : QStringLiteral("Clearance tools (flat areas, in order)"),
+                                  this);
     auto* cbox = new QVBoxLayout(clearanceBox_);
     clearanceList_ = new QListWidget(clearanceBox_);
     clearanceList_->setObjectName(QStringLiteral("clearanceList"));
@@ -239,6 +247,23 @@ void ToolpathFormDialog::buildStatic() {
         });
         clearanceList_->setCurrentRow(row + 1);
     });
+
+    // Prior toolpaths (3D finish only, T-0314): the toolpaths whose result is the starting stock.
+    priorsBox_ = new QGroupBox(QStringLiteral("Prior toolpaths (ids, comma separated; the finish only cuts what they left)"), this);
+    auto* pbox = new QVBoxLayout(priorsBox_);
+    priorsEdit_ = new QLineEdit(priorsBox_);
+    priorsEdit_->setObjectName(QStringLiteral("priorToolpaths"));
+    {
+        QStringList ids;
+        for (const std::uint64_t id : form_.priorToolpaths()) {
+            ids.push_back(QString::number(static_cast<qulonglong>(id)));
+        }
+        priorsEdit_->setText(ids.join(QStringLiteral(", ")));
+    }
+    pbox->addWidget(priorsEdit_);
+    outer->addWidget(priorsBox_);
+    priorsBox_->setVisible(form_.operation() == document::ToolpathOperation::Finish3d);
+    connect(priorsEdit_, &QLineEdit::textEdited, this, [this](const QString& text) { applyPriorsText(text); });
 
     // Vectors (the selector).
     auto* vbox = new QGroupBox(isPhoto() ? QStringLiteral("Bitmap") : QStringLiteral("Vectors"), this);
@@ -395,6 +420,49 @@ void ToolpathFormDialog::applyTool() {
     setMessage(r.message, !r.ok);
     refreshCuttingData();
     refreshPlaceholders();
+}
+
+bool ToolpathFormDialog::applyPriorsText(const QString& text) {
+    std::vector<std::uint64_t> ids;
+    bool ok = true;
+    for (const QString& part : text.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        bool num = false;
+        const qulonglong v = part.trimmed().toULongLong(&num);
+        if (!num) {
+            ok = false;
+            break;
+        }
+        ids.push_back(static_cast<std::uint64_t>(v));
+    }
+    if (ok) {
+        const viewmodel::FieldResult r = form_.setPriorToolpaths(ids);
+        ok = r.ok;
+        setMessage(r.message, !r.ok);
+    } else {
+        setMessage("the prior toolpaths are toolpath ids separated by commas", true);
+    }
+    priorsEdit_->setStyleSheet(ok ? QString() : QString::fromUtf8(kBadStyle));
+    if (ok) {
+        badFields_.erase("priorToolpaths");
+    } else {
+        badFields_.insert("priorToolpaths");
+    }
+    refreshStatus();
+    return ok;
+}
+
+bool ToolpathFormDialog::typePriors(const std::string& text) {
+    priorsEdit_->setText(qs(text));
+    return applyPriorsText(qs(text));
+}
+
+bool ToolpathFormDialog::addClearanceTool(const std::string& toolId) {
+    std::vector<document::ToolSource> list = form_.clearanceTools();
+    list.push_back(document::ToolSource{toolId, "", ""});
+    const viewmodel::FieldResult r = form_.setClearanceTools(db_, list);
+    setMessage(r.message, !r.ok);
+    applyClearance();
+    return r.ok;
 }
 
 void ToolpathFormDialog::applyClearance() {

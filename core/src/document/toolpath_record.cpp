@@ -283,10 +283,24 @@ bool spindleOffAllowed(const ToolpathRecord& record) {
     return spindleOffProblem(record).empty();
 }
 
+std::string groupProblem(const ToolpathRecord& record) {
+    const ToolGroup& g = record.group;
+    if (g.id != 0 && (g.tools.empty() || g.tools.size() > kMaxGroupTools || g.role >= g.tools.size())) {
+        return "its tool group needs 1 to " + std::to_string(kMaxGroupTools) + " tools and a role that names one";
+    }
+    if (g.id == 0 && (!g.tools.empty() || g.role != 0)) {
+        return "a toolpath outside a group has group tools";
+    }
+    if (const auto* f = std::get_if<toolpath::Finish3dParams>(&record.params); f != nullptr && f->priorToolpaths.size() > 256) {
+        return "a 3D finish lists too many prior toolpaths";
+    }
+    return {};
+}
+
 bool ToolpathRecord::operator==(const ToolpathRecord& other) const {
     if (!(id == other.id && name == other.name && params == other.params && selection == other.selection &&
           tool == other.tool && toolSource == other.toolSource && sheet == other.sheet &&
-          expressions == other.expressions)) {
+          expressions == other.expressions && group == other.group)) {
         return false;
     }
     if (moves == other.moves) {
