@@ -71,6 +71,9 @@ ModellingPanel::ModellingPanel(DocumentGetter getter, QWidget* parent) : PanelBa
     toolBox_->addItem(QStringLiteral("Bitmap to Relief"));
     toolBox_->addItem(QStringLiteral("Zero Plane"));
     toolBox_->addItem(QStringLiteral("Scale Model Z"));
+    for (int i = 0; i < viewmodel::kBuildToolCount; ++i) {
+        toolBox_->addItem(QString::fromUtf8(viewmodel::buildToolName(static_cast<viewmodel::BuildTool>(i))));
+    }
     for (int i = 0; i < viewmodel::kModifyToolCount; ++i) {
         toolBox_->addItem(QString::fromUtf8(viewmodel::modifyToolName(static_cast<viewmodel::ModifyTool>(i))));
     }
@@ -80,6 +83,9 @@ ModellingPanel::ModellingPanel(DocumentGetter getter, QWidget* parent) : PanelBa
     stack_->addWidget(buildBitmapPage());
     stack_->addWidget(buildZeroPlanePage());
     stack_->addWidget(buildScaleZPage());
+    for (int i = 0; i < viewmodel::kBuildToolCount; ++i) {
+        stack_->addWidget(buildBuildPage(static_cast<viewmodel::BuildTool>(i)));
+    }
     for (int i = 0; i < viewmodel::kModifyToolCount; ++i) {
         stack_->addWidget(buildModifyPage(static_cast<viewmodel::ModifyTool>(i)));
     }
@@ -109,7 +115,8 @@ ModellingPanel::ModellingPanel(DocumentGetter getter, QWidget* parent) : PanelBa
         // Scale Z and the modify tools change existing components; there is nothing to "start new".
         newButton_->setEnabled(i != static_cast<int>(Tool::ScaleZ) && !modify);
         if (modify && doc() != nullptr) {
-            writeModify(viewmodel::defaultModifyForm(*doc(), static_cast<viewmodel::ModifyTool>(i - 4)));
+            writeModify(viewmodel::defaultModifyForm(
+                *doc(), static_cast<viewmodel::ModifyTool>(i - static_cast<int>(Tool::Modify))));
         }
     });
     connect(previewButton_, &QPushButton::clicked, this, [this]() { preview(); });
@@ -216,11 +223,11 @@ QWidget* ModellingPanel::buildScaleZPage() {
     return page;
 }
 
-QWidget* ModellingPanel::buildModifyPage(viewmodel::ModifyTool tool) {
+QWidget* ModellingPanel::buildFieldsPage(const QString& p, const std::vector<viewmodel::ModifyField>& fields,
+                                         const char* helpText) {
     auto* page = new QWidget(this);
     auto* form = new QFormLayout(page);
-    const QString p = QString::fromUtf8(viewmodel::modifyToolName(tool));
-    for (const viewmodel::ModifyField& spec : viewmodel::modifyFields(tool)) {
+    for (const viewmodel::ModifyField& spec : fields) {
         const QString label = qs(spec.label);
         const QString name = p + QStringLiteral(": ") + label;
         switch (spec.kind) {
@@ -244,10 +251,20 @@ QWidget* ModellingPanel::buildModifyPage(viewmodel::ModifyTool tool) {
             }
         }
     }
-    auto* help = new QLabel(QString::fromUtf8(viewmodel::modifyHelp(tool)), page);
+    auto* help = new QLabel(QString::fromUtf8(helpText), page);
     help->setWordWrap(true);
     form->addRow(help);
     return page;
+}
+
+QWidget* ModellingPanel::buildModifyPage(viewmodel::ModifyTool tool) {
+    return buildFieldsPage(QString::fromUtf8(viewmodel::modifyToolName(tool)), viewmodel::modifyFields(tool),
+                           viewmodel::modifyHelp(tool));
+}
+
+QWidget* ModellingPanel::buildBuildPage(viewmodel::BuildTool tool) {
+    return buildFieldsPage(QString::fromUtf8(viewmodel::buildToolName(tool)), viewmodel::buildFields(tool),
+                           viewmodel::buildHelp(tool));
 }
 
 // --- form <-> widgets ---------------------------------------------------------------------------------
@@ -357,6 +374,39 @@ void ModellingPanel::writeModify(const viewmodel::ModifyForm& f) {
     }
 }
 
+void ModellingPanel::writeBuild(const viewmodel::BuildForm& f) {
+    const QString p = QString::fromUtf8(viewmodel::buildToolName(f.tool));
+    for (const viewmodel::ModifyField& spec : viewmodel::buildFields(f.tool)) {
+        const QString name = p + QStringLiteral(": ") + qs(spec.label);
+        const auto it = f.values.find(spec.label);
+        const std::string& v = it != f.values.end() ? it->second : spec.defaultValue;
+        switch (spec.kind) {
+            case viewmodel::ModifyField::Kind::Number: field(name)->setText(qs(v)); break;
+            case viewmodel::ModifyField::Kind::Check: check(name)->setChecked(v == "true"); break;
+            case viewmodel::ModifyField::Kind::Choice: combo(name)->setCurrentText(qs(v)); break;
+        }
+    }
+}
+
+viewmodel::BuildForm ModellingPanel::readBuild() const {
+    viewmodel::BuildForm f;
+    f.tool = buildTool();
+    const QString p = QString::fromUtf8(viewmodel::buildToolName(f.tool));
+    for (const viewmodel::ModifyField& spec : viewmodel::buildFields(f.tool)) {
+        const QString name = p + QStringLiteral(": ") + qs(spec.label);
+        switch (spec.kind) {
+            case viewmodel::ModifyField::Kind::Number: f.values[spec.label] = str(field(name)); break;
+            case viewmodel::ModifyField::Kind::Check:
+                f.values[spec.label] = check(name)->isChecked() ? "true" : "false";
+                break;
+            case viewmodel::ModifyField::Kind::Choice:
+                f.values[spec.label] = combo(name)->currentText().toStdString();
+                break;
+        }
+    }
+    return f;
+}
+
 viewmodel::ModifyForm ModellingPanel::readModify() const {
     viewmodel::ModifyForm f;
     f.tool = modifyTool();
@@ -384,11 +434,22 @@ void ModellingPanel::setTool(Tool t) {
 
 ModellingPanel::Tool ModellingPanel::tool() const {
     const int i = toolBox_->currentIndex();
-    return i >= static_cast<int>(Tool::Modify) ? Tool::Modify : static_cast<Tool>(i);
+    if (i >= static_cast<int>(Tool::Modify)) {
+        return Tool::Modify;
+    }
+    return i >= static_cast<int>(Tool::Build) ? Tool::Build : static_cast<Tool>(i);
 }
 
 void ModellingPanel::setModifyTool(viewmodel::ModifyTool t) {
     toolBox_->setCurrentIndex(static_cast<int>(Tool::Modify) + static_cast<int>(t));
+}
+
+void ModellingPanel::setBuildTool(viewmodel::BuildTool t) {
+    toolBox_->setCurrentIndex(static_cast<int>(Tool::Build) + static_cast<int>(t));
+}
+
+viewmodel::BuildTool ModellingPanel::buildTool() const {
+    return static_cast<viewmodel::BuildTool>(toolBox_->currentIndex() - static_cast<int>(Tool::Build));
 }
 
 viewmodel::ModifyTool ModellingPanel::modifyTool() const {
@@ -442,6 +503,7 @@ bool ModellingPanel::preview() {
             message(p.info, false);
             return true;
         }
+        case Tool::Build: p = viewmodel::previewBuild(*d, readBuild()); break;
         case Tool::CreateShape: p = viewmodel::previewCreateShape(*d, readShape()); break;
         case Tool::Bitmap: p = viewmodel::previewBitmapRelief(*d, readBitmap(), decoder); break;
         case Tool::ZeroPlane: p = viewmodel::previewZeroPlane(*d, readZeroPlane()); break;
@@ -462,6 +524,9 @@ bool ModellingPanel::preview() {
         return false;
     }
     shown = &p.component.field;
+    if (tool() == Tool::Build && relief::bake(p.component, previewBaked_) == relief::Status::Ok) {
+        shown = &previewBaked_;   // Exact height of Turn/Spin lives in the shape height percent
+    }
     if (onPreview) {
         onPreview(shown);
     }
@@ -480,7 +545,9 @@ bool ModellingPanel::apply() {
         case Tool::Modify: r = viewmodel::applyModify(*d, readModify()); break;
         default: {
             viewmodel::ModellingPreview p;
-            if (tool() == Tool::CreateShape) {
+            if (tool() == Tool::Build) {
+                p = viewmodel::previewBuild(*d, readBuild());
+            } else if (tool() == Tool::CreateShape) {
                 p = viewmodel::previewCreateShape(*d, readShape());
             } else if (tool() == Tool::Bitmap) {
                 p = viewmodel::previewBitmapRelief(*d, readBitmap(), decoder);
@@ -491,7 +558,13 @@ bool ModellingPanel::apply() {
                 r.ok = false;
                 r.message = p.message;
             } else {
+                // The seed of Textured Area / Extrude is the selected component: keep it selected so
+                // applying again re-reads the same seed rather than the component just made.
+                const std::vector<document::ComponentId> before = d->componentSelection().ids();
                 r = session_.apply(*d, std::move(p.component));
+                if (tool() == Tool::Build && r.ok && !before.empty()) {
+                    d->componentSelection().assign(before);
+                }
             }
             break;
         }
@@ -518,6 +591,9 @@ void ModellingPanel::reset() {
     const document::Document* md = doc() != nullptr ? doc() : &none;
     for (int i = 0; i < viewmodel::kModifyToolCount; ++i) {
         writeModify(viewmodel::defaultModifyForm(*md, static_cast<viewmodel::ModifyTool>(i)));
+    }
+    for (int i = 0; i < viewmodel::kBuildToolCount; ++i) {
+        writeBuild(viewmodel::defaultBuildForm(static_cast<viewmodel::BuildTool>(i)));
     }
     clearPreview();
     message({}, false);

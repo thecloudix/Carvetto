@@ -6,6 +6,7 @@
 
 #include "carvetto/relief/relief.hpp"
 #include "carvetto/viewmodel/relief_tree.hpp"
+#include "carvetto/viewmodel/relief_build.hpp"
 #include "carvetto/viewmodel/relief_modelling.hpp"
 #include "document_panels.hpp"
 
@@ -32,8 +33,10 @@ std::string modellingSelfTest(MainWindow& window);
 /// again re-applies to the same component until Start New Component.
 class ModellingPanel : public PanelBase {
    public:
-    /// `Modify` stands for every page of `viewmodel::ModifyTool` (T-0306); see `modifyTool()`.
-    enum class Tool { CreateShape = 0, Bitmap = 1, ZeroPlane = 2, ScaleZ = 3, Modify = 4 };
+    /// `Build` stands for every page of `viewmodel::BuildTool` (T-0308, see `buildTool()`), `Modify` for
+    /// every page of `viewmodel::ModifyTool` (T-0306, see `modifyTool()`). The values are the index of
+    /// the first page of the group in the tool box.
+    enum class Tool { CreateShape = 0, Bitmap = 1, ZeroPlane = 2, ScaleZ = 3, Build = 4, Modify = 4 + viewmodel::kBuildToolCount };
 
     explicit ModellingPanel(DocumentGetter getter, QWidget* parent = nullptr);
 
@@ -46,6 +49,8 @@ class ModellingPanel : public PanelBase {
     Tool tool() const;
     void setModifyTool(viewmodel::ModifyTool tool);
     viewmodel::ModifyTool modifyTool() const;
+    void setBuildTool(viewmodel::BuildTool tool);
+    viewmodel::BuildTool buildTool() const;
 
     bool preview();      ///< Builds the result of the current form and shows it; false with a message.
     bool apply();        ///< The Apply button.
@@ -67,6 +72,11 @@ class ModellingPanel : public PanelBase {
     QWidget* buildZeroPlanePage();
     QWidget* buildScaleZPage();
     QWidget* buildModifyPage(viewmodel::ModifyTool tool);
+    QWidget* buildBuildPage(viewmodel::BuildTool tool);
+    void writeBuild(const viewmodel::BuildForm& f);
+    viewmodel::BuildForm readBuild() const;
+    QWidget* buildFieldsPage(const QString& prefix, const std::vector<viewmodel::ModifyField>& fields,
+                             const char* help);
     void writeModify(const viewmodel::ModifyForm& f);
     viewmodel::ModifyForm readModify() const;
     void writeShape(const viewmodel::CreateShapeForm& f);
@@ -84,6 +94,7 @@ class ModellingPanel : public PanelBase {
     QStackedWidget* stack_;
     QLabel* status_;
     viewmodel::ModifyResult lastModify_;   ///< The previewed modify result (kept alive for the shown field).
+    relief::HeightField previewBaked_;     ///< The baked preview of the build forms (kept alive for the view).
     QPushButton* previewButton_;
     QPushButton* applyButton_;
     QPushButton* resetButton_;
