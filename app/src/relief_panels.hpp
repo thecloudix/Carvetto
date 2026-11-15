@@ -4,6 +4,7 @@
 #include <QTreeWidget>
 #include <QWidget>
 #include <functional>
+#include <optional>
 #include <string>
 
 #include "carvetto/document/ids.hpp"
@@ -129,6 +130,13 @@ class ModelView3D : public QWidget {
     void setPreview(const relief::HeightField& field);
     void clearPreview();
     bool previewing() const { return previewing_; }
+    /// Brush painting (T-0302): when set, a left-button press, drag and release on the model call
+    /// this with the design-space point under the pointer (Press, Move) or an empty point (Release).
+    /// Press returns false when nothing is hit.
+    enum class BrushPhase { Press, Move, Release };
+    std::function<void(std::optional<relief::Point>, BrushPhase)> onBrush;
+    /// Design-space point of the model under the widget position `pos`.
+    std::optional<relief::Point> pickAt(QPoint pos);
     viewmodel::OrbitCamera& camera() { return camera_; }
     void cameraChanged();
 
@@ -142,6 +150,7 @@ class ModelView3D : public QWidget {
     void resizeEvent(QResizeEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
 
    private:
@@ -156,6 +165,7 @@ class ModelView3D : public QWidget {
     bool previewing_{false};
     viewmodel::ModelSurface previewSurface_;
     QPoint last_;
+    bool painting_{false};
     QComboBox* materialBox_;
 };
 

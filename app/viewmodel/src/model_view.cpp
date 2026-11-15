@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -379,6 +380,71 @@ std::vector<ModelPath> modelPathsFromToolpaths(const std::vector<document::Toolp
         }
     }
     return out;
+}
+
+std::optional<relief::Point> pickModelPoint(const ModelSurface& surface, const OrbitCamera& camera,
+                                            const ModelRenderOptions& options, double px, double py) {
+    if (!surface.ok() || !std::isfinite(px) || !std::isfinite(py)) {
+        return std::nullopt;
+    }
+    const relief::HeightField& f = surface.field;
+    float lo = 0.0f, hi = 0.0f;
+    if (!f.minMax(lo, hi)) {
+        return std::nullopt;
+    }
+    // Same framing as renderModel.
+    const double cs = f.cellSize();
+    const double zs = std::isfinite(options.zScale) && options.zScale > 0.0 ? options.zScale : 1.0;
+    const double spanX = static_cast<double>(f.width() - 1) * cs;
+    const double spanY = static_cast<double>(f.height() - 1) * cs;
+    const double spanZ = (static_cast<double>(hi) - static_cast<double>(lo)) * zs;
+    const Vec3 centre{f.origin().x + 0.5 * spanX, f.origin().y + 0.5 * spanY,
+                      0.5 * (static_cast<double>(hi) + static_cast<double>(lo)) * zs};
+    const double radius = std::max(0.5 * std::sqrt(spanX * spanX + spanY * spanY + spanZ * spanZ), 1e-6);
+    const double w = static_cast<double>(options.width), h = static_cast<double>(options.height);
+    const double scale = camera.zoom * 0.9 * std::min(w, h) / (2.0 * radius);
+    if (!(scale > 0.0)) {
+        return std::nullopt;
+    }
+    const Basis basis = basisOf(camera);
+    const double a = (px - (0.5 * w + camera.panX)) / scale;
+    const double b = -(py - (0.5 * h + camera.panY)) / scale;
+    // Point on the ray at parameter t (towards the eye), in model space.
+    struct Hit {
+        double x, y, gap;
+    };
+    auto at = [&](double t) {
+        const double x = a * basis.right.x + b * basis.up.x + t * basis.toEye.x + centre.x;
+        const double y = a * basis.right.y + b * basis.up.y + t * basis.toEye.y + centre.y;
+        const double z = a * basis.right.z + b * basis.up.z + t * basis.toEye.z + centre.z;
+        const float s = f.sample(x, y);
+        // Positive while the ray is above the surface (or outside it).
+        const double gap = std::isnan(s) ? 1.0 : z - static_cast<double>(s) * zs;
+        return Hit{x, y, gap};
+    };
+    const double step = std::max(0.5 * cs, 2.0 * radius / 8192.0);
+    double t = 2.0 * radius;
+    Hit prev = at(t);
+    for (; t > -2.0 * radius; t -= step) {
+        const Hit cur = at(t - step);
+        if (prev.gap > 0.0 && cur.gap <= 0.0) {
+            double tHi = t, tLo = t - step;
+            Hit best = cur;
+            for (int i = 0; i < 24; ++i) {
+                const double mid = 0.5 * (tHi + tLo);
+                const Hit m = at(mid);
+                if (m.gap > 0.0) {
+                    tHi = mid;
+                } else {
+                    tLo = mid;
+                    best = m;
+                }
+            }
+            return relief::Point{best.x, best.y};
+        }
+        prev = cur;
+    }
+    return std::nullopt;
 }
 
 }  // namespace carvetto::viewmodel

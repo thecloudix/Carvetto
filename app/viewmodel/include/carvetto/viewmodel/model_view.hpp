@@ -97,6 +97,12 @@ std::vector<ModelPath> modelPathsFromToolpaths(const std::vector<document::Toolp
 /// O(surface cells + pixels it covers).
 Raster renderModel(const ModelSurface& surface, const OrbitCamera& camera, const ModelRenderOptions& options = {});
 
+/// The design-space point of the surface under pixel (px, py) of a render with `options` (width,
+/// height, zScale) from `camera`: the first surface cell the view ray hits. Nullopt when the ray
+/// misses the model or the surface is empty. Used by the Sculpt mode to place the brush (T-0302).
+std::optional<relief::Point> pickModelPoint(const ModelSurface& surface, const OrbitCamera& camera,
+                                            const ModelRenderOptions& options, double px, double py);
+
 /// Shade (0..1) a surface point with normal (nx, ny, nz) gets from the view's light, for tests.
 /// The light sits at the upper left of the viewer.
 double modelLightFactor(const OrbitCamera& camera, double nx, double ny, double nz);

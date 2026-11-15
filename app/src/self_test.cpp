@@ -51,6 +51,7 @@
 #include "properties_panel.hpp"
 #include "modelling_panel.hpp"
 #include "model_io_dialogs.hpp"
+#include "sculpt_panel.hpp"
 #include "relief_panels.hpp"
 #include "dimension_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
@@ -801,6 +802,11 @@ int runSelfTest() {
 
     // 8e. 3D import and export dialogs (T-0301).
     if (const std::string why = modelIoSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 8f. Sculpt mode and the level effect actions (T-0302).
+    if (const std::string why = sculptSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

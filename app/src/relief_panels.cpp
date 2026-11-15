@@ -715,14 +715,43 @@ void ModelView3D::resizeEvent(QResizeEvent* event) {
     invalidate();
 }
 
+std::optional<relief::Point> ModelView3D::pickAt(QPoint pos) {
+    options_.width = static_cast<std::size_t>(std::max(width(), 1));
+    options_.height = static_cast<std::size_t>(std::max(height(), 1));
+    return viewmodel::pickModelPoint(surface_, camera_, options_, pos.x() + 0.5, pos.y() + 0.5);
+}
+
 void ModelView3D::mousePressEvent(QMouseEvent* event) {
     last_ = event->pos();
     setFocus();
+    if (onBrush && event->button() == Qt::LeftButton) {
+        if (const auto hit = pickAt(event->pos())) {
+            painting_ = true;
+            onBrush(hit, BrushPhase::Press);
+        }
+    }
+}
+
+void ModelView3D::mouseReleaseEvent(QMouseEvent* event) {
+    if (painting_ && event->button() == Qt::LeftButton) {
+        painting_ = false;
+        if (onBrush) {
+            onBrush(std::nullopt, BrushPhase::Release);
+        }
+    }
 }
 
 void ModelView3D::mouseMoveEvent(QMouseEvent* event) {
     const QPoint delta = event->pos() - last_;
     last_ = event->pos();
+    if (painting_) {
+        if (event->buttons() == Qt::LeftButton && onBrush) {
+            if (const auto hit = pickAt(event->pos())) {
+                onBrush(hit, BrushPhase::Move);
+            }
+        }
+        return;
+    }
     const bool pan = (event->buttons() & Qt::MiddleButton) ||
                      ((event->buttons() & Qt::RightButton) && (event->modifiers() & Qt::ControlModifier)) ||
                      ((event->buttons() & Qt::LeftButton) && (event->buttons() & Qt::RightButton));

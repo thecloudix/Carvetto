@@ -183,3 +183,34 @@ TEST_CASE("degenerate render sizes give an empty raster", "[viewmodel][model_vie
     opt.height = 10;
     CHECK(renderModel(ModelSurface{}, OrbitCamera{}, opt).pixels.size() == 100);
 }
+
+TEST_CASE("picking a pixel finds the model point the renderer drew there", "[viewmodel][model_view][pick]") {
+    Document doc;
+    addField(doc, addLevel(doc), 41, 41, 1.0, 5.0f);  // x, y in 0..40
+    const ModelSurface s = composeModelSurface(doc, doc.activeSheet());
+    REQUIRE(s.ok());
+    ModelRenderOptions opt;
+    opt.width = 200;
+    opt.height = 200;
+    const OrbitCamera cam = top();
+    const auto centre = pickModelPoint(s, cam, opt, 100.0, 100.0);
+    REQUIRE(centre.has_value());
+    CHECK(std::fabs(centre->x - 20.0) < 0.5);
+    CHECK(std::fabs(centre->y - 20.0) < 0.5);
+    // Top view: X to the right, Y up.
+    const auto right = pickModelPoint(s, cam, opt, 120.0, 100.0);
+    const auto up = pickModelPoint(s, cam, opt, 100.0, 80.0);
+    REQUIRE(right.has_value());
+    REQUIRE(up.has_value());
+    CHECK(right->x > centre->x);
+    CHECK(up->y > centre->y);
+    // The border pixel the renderer leaves as background is a miss.
+    CHECK_FALSE(pickModelPoint(s, cam, opt, 2.0, 2.0).has_value());
+    // Tilted view: the pixel the renderer paints under the centre still resolves into the field.
+    OrbitCamera tilted;
+    const auto t = pickModelPoint(s, tilted, opt, 100.0, 100.0);
+    REQUIRE(t.has_value());
+    CHECK(t->x >= 0.0);
+    CHECK(t->x <= 40.0);
+    CHECK_FALSE(pickModelPoint(ModelSurface{}, cam, opt, 100.0, 100.0).has_value());
+}
