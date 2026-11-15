@@ -1506,7 +1506,7 @@ Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a m
 Phase: 2   Module: app   Depends on: T-0301
 Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the cores in relief/sweep.hpp, extrude.hpp, revolve.hpp and textured_area.hpp: pick rails/profiles/boundaries from the selection, preview, Apply as one undo step through AddReliefComponentCommand, self-test coverage. Optional: both-sides mesh import and a draggable zero plane in the Model view.
 
-### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: in-progress]
+### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: verifying]
 Phase: 2   Module: app   Depends on: T-0302
 Goal: The items T-0302 left out (ADR-0084): overlay reference image over the model with opacity, custom brush stamps from an image (the core already supports CustomBrush), brush ring cursor in the Model view, presets persisted across sessions, sculpt preview merged with the other components, cheaper long strokes. Low priority.
 
