@@ -489,6 +489,8 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Prism: return "prism";
         case document::ToolpathOperation::ImageEngrave: return "image_engrave";
         case document::ToolpathOperation::VCarveInlay: return "v_carve_inlay";
+        case document::ToolpathOperation::Rough3d: return "rough_3d";
+        case document::ToolpathOperation::Finish3d: return "finish_3d";
     }
     return "?";
 }

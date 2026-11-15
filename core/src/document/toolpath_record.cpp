@@ -187,6 +187,28 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"depth_tolerance", v->depthTolerance}});
         return key.empty() ? nonFiniteTolerance(v->tolerance) : key;
     }
+    if (const auto* r = std::get_if<toolpath::Rough3dParams>(&params)) {
+        return firstNonFinite({{"z_offset", r->zOffset},
+                               {"stock_top", r->stockTop},
+                               {"stock_bottom", r->stockBottom},
+                               {"allowance", r->allowance},
+                               {"safe_z", r->safeZ},
+                               {"boundary_offset", r->boundaryOffset},
+                               {"ramp_angle_rad", r->rampAngle},
+                               {"tolerance", r->tolerance},
+                               {"rest_tolerance", r->restTolerance}});
+    }
+    if (const auto* r = std::get_if<toolpath::Finish3dParams>(&params)) {
+        return firstNonFinite({{"z_offset", r->zOffset},
+                               {"stock_top", r->stockTop},
+                               {"stock_bottom", r->stockBottom},
+                               {"allowance", r->allowance},
+                               {"safe_z", r->safeZ},
+                               {"boundary_offset", r->boundaryOffset},
+                               {"raster_angle_rad", r->rasterAngle},
+                               {"tolerance", r->tolerance},
+                               {"rest_tolerance", r->restTolerance}});
+    }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},
                                       {"cut_depth", p.cutDepth},

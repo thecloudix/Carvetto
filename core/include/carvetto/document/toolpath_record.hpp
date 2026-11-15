@@ -10,6 +10,8 @@
 
 #include "carvetto/document/ids.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/finish3d.hpp"
+#include "carvetto/toolpath/rough3d.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/fluting.hpp"
@@ -67,15 +69,18 @@ struct ToolSource {
 /// its own tool. A chamfer (T-0236) takes its tool and cutting data as arguments too, as do a thread mill
 /// (T-0237) and a straight inlay (T-0238). A image engrave (T-0275) reads a bitmap object of the
 /// document: the record's selection lists it (the first bitmap object among `selection.objects`)
-/// and, for the Selected Vectors strategy, the vectors to follow.
+/// and, for the Selected Vectors strategy, the vectors to follow. A 3D rough and a 3D finish (T-0303,
+/// ADR-0085) machine the composed relief model of the record's sheet; their `vectors` (boundary
+/// polylines) and `priors` are not part of a record: the vectors come from the selection.
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
                                     toolpath::EngraveParams, toolpath::VCarvingParams, toolpath::ChamferParams,
                                     toolpath::ThreadMillParams, toolpath::PrismParams, toolpath::FlutingParams,
                                     toolpath::InlayParams, toolpath::ImageEngraveParams,
-                                    toolpath::VCarveInlayParams>;
+                                    toolpath::VCarveInlayParams, toolpath::Rough3dParams,
+                                    toolpath::Finish3dParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay, Rough3d, Finish3d };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;

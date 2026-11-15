@@ -98,6 +98,8 @@ std::string toolFor(ToolpathOperation op, Rng& rng) {
         case ToolpathOperation::Chamfer: return "v-bit-90";
         case ToolpathOperation::ThreadMill:
         case ToolpathOperation::Inlay:
+        case ToolpathOperation::Rough3d:
+        case ToolpathOperation::Finish3d:
         case ToolpathOperation::Fluting: return "end-mill-3mm";
     }
     return "end-mill-3mm";
@@ -488,6 +490,8 @@ TEST_CASE("robustness: degenerate and hostile vectors", "[toolpath][robust]") {
                 case ToolpathOperation::Prism: def = prismDefinition(db); break;
                 case ToolpathOperation::ImageEngrave: def = photoDefinition(db); break;
                 case ToolpathOperation::VCarveInlay: def = vCarveInlayDefinition(db); break;
+                case ToolpathOperation::Rough3d:
+                case ToolpathOperation::Finish3d: def = pocketDefinition(db); break;  // not in kOps (3D ops: see toolpath_3d_test)
             }
             if (tracing()) {
                 std::cerr << "vector " << shape.name << " op " << static_cast<int>(op) << std::endl;

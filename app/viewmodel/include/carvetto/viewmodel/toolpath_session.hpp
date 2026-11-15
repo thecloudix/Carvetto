@@ -195,6 +195,8 @@ class ToolpathSession {
     std::size_t countVectors(const VectorSelector& selector) const;
     /// Image Engrave: why `selector` names no usable bitmap now (empty when it does).
     std::string bitmapProblem(const VectorSelector& selector) const;
+    /// 3D Rough / 3D Finish: why the active sheet's relief model cannot be machined (empty when it can).
+    std::string modelProblem() const;
 
     // --- Calculation -------------------------------------------------------------------------
     /// Copies everything a calculation needs. `target` = recalculate that toolpath (its V-carve).

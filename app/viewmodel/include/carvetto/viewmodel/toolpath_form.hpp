@@ -48,6 +48,12 @@
 //   Image Engrave  maxDepth stepoverRetract safeZ lineSpacing (percent of the tool diameter) lineAngle (not for
 //               Selected Vectors) chordal (Selected Vectors only); choices strategy, invert. It reads the bitmap
 //               in the selector's objects (T-0275).
+//   3D Rough    zOffset stockTop stockBottom safeZ allowance boundaryOffset (not for the material block) tolerance
+//               rampAngle (with rampPlunge); choices boundary travel direction reverseSteps strategy tip axis
+//               rampPlunge (T-0303, ADR-0085). It machines the relief model of the active sheet; the selector's
+//               vectors are the boundary for "Selected vectors".
+//   3D Finish   the same placement fields, tolerance and rasterAngle (raster); choices strategy (raster/offset)
+//               boundary travel direction reverseSteps.
 // Choices carry the enum/bool inputs; see `choices()`.
 
 namespace carvetto::viewmodel {

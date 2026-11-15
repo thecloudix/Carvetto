@@ -277,7 +277,7 @@ void ToolpathSession::computeStaleness() {
     std::vector<std::pair<VectorSelector, std::uint64_t>> memo;
     const auto vectorsOf = [&](const ToolpathDefinition& def) {
         const VectorSelector& selector = def.selector;
-        if (def.operation() == ToolpathOperation::ImageEngrave) {
+        if (def.operation() == ToolpathOperation::ImageEngrave || usesModel(def.operation())) {
             return inputsFingerprint(*doc_, selector, def.params);
         }
         for (const auto& [sel, fp] : memo) {
@@ -405,6 +405,17 @@ std::vector<ToolpathId> ToolpathSession::enabledToolpaths() {
 
 ToolpathForm ToolpathSession::newForm(ToolpathOperation operation) {
     ToolpathForm form(operation, doc_ != nullptr ? doc_->job().displayUnits : document::Units::Millimetres);
+    if (doc_ != nullptr && usesModel(operation)) {
+        // Stock and model placement come from the job and the model (the form's own fields can change them).
+        const ModelDefaults d = modelDefaults(*doc_);
+        const auto set = [&](const char* id, double mm) {
+            form.setField(id, std::to_string(document::toDisplay(mm, form.units())));
+        };
+        set("zOffset", d.zOffset);
+        set("stockTop", d.stockTop);
+        set("stockBottom", d.stockBottom);
+        set("safeZ", d.safeZ);
+    }
     if (doc_ != nullptr) {
         VectorSelector current = VectorSelector::fromSelection(*doc_);
         if (!current.base.objects.empty()) {
@@ -451,6 +462,13 @@ std::string ToolpathSession::bitmapProblem(const VectorSelector& selector) const
     return resolveBitmap(*doc_, selector).problem;
 }
 
+std::string ToolpathSession::modelProblem() const {
+    if (doc_ == nullptr) {
+        return "there is no document";
+    }
+    return viewmodel::modelProblem(*doc_);
+}
+
 // --- Calculation ---------------------------------------------------------------------------------
 
 ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::optional<ToolpathId> target) {
@@ -465,6 +483,7 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     const VectorSelector selector = bad.empty() ? normalisedSelector(definition.selector) : VectorSelector{};
     const ResolvedVectors resolved = resolveVectors(*doc_, selector);
     const bool photo = std::holds_alternative<toolpath::ImageEngraveParams>(definition.params);
+    const bool model = usesModel(definition.operation());
     // A image engrave stores its explicit selection as it is (it names the bitmap, which no vector filter keeps).
     const document::VectorSelection stored = photo ? selector.base : storedSelection(selector, resolved);
     ToolpathJob job = makeToolpathJob(definition, resolved, db_, stored);
@@ -474,6 +493,10 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     if (photo) {
         job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);
         attachPhotoInput(job, *doc_, resolveBitmap(*doc_, selector), bitmapDecoder_);
+    }
+    if (model) {
+        job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);
+        attachModel(job, *doc_);
     }
     job.target = target.value_or(ToolpathId{});
     if (doc_->job().type == document::JobType::DoubleSided) {

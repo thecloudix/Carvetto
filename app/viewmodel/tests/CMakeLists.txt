@@ -53,6 +53,7 @@ add_executable(carvetto_viewmodel_tests
   toolpath_fluting_test.cpp
   toolpath_prism_test.cpp
   toolpath_photo_test.cpp
+  toolpath_3d_test.cpp
   toolpath_preview_test.cpp
   simulation_test.cpp
   toolpath_robustness_test.cpp

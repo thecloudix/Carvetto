@@ -620,10 +620,13 @@ ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(paren
 
 void ModelView3D::refresh() {
     document::Document* d = getter_ ? getter_() : nullptr;
+    options_.paths.clear();
     if (previewing_) {
         surface_ = previewSurface_;
     } else if (d != nullptr) {
         surface_ = viewmodel::composeModelSurface(*d, d->activeSheet());
+        // 3D toolpaths of the job are drawn over the model (T-0303).
+        options_.paths = viewmodel::modelPathsFromToolpaths(d->toolpaths());
     } else {
         surface_ = viewmodel::ModelSurface{};
     }
