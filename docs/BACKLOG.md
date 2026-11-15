@@ -1342,7 +1342,7 @@ Goal: The job sheet is a single document for the whole job. For double-sided job
 Acceptance criteria:
   1. A double-sided job's sheet lists each side with its own toolpaths and zero reference; single-sided output unchanged byte-for-byte; self-test; changelog fragment; CI green.
 
-### T-0279 Profile: exact capsule-union tab judge (T-0252 residuals i, j, l; T-0167 retry)   [status: ready — LOW]
+### T-0279 Profile: exact capsule-union tab judge (T-0252 residuals i, j, l; T-0167 retry)   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0252
 Goal: The remaining loose-piece/tab residuals (i, j, l) need an exact capsule-union judge for the tab layer; T-0167's cell-widening attempt failed the acceptance criteria on the U-part family. Design a bounded exact judge (ADR first), with the flood oracle as the reference and mutants killed. Optional: lead-in modelling if a witness scene is ever found; undiagnosed (f) 9302_2199 (1 of 3 tabs left out).
 Acceptance criteria:
@@ -1490,7 +1490,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
 
-### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: ready — LOW]
+### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: in-progress]
 Phase: 2   Module: core/document + app   Depends on: T-0299
 Goal: Store an appearance per component and level in the document (needs a .carv minor-version bump, old files still load) and use it in the Model view; T-0299 ships one view-level material instead. Owner to confirm when a decision is needed on defaults; low priority.
 
@@ -1538,3 +1538,7 @@ Goal: T-0311's coder observed the 3D rough record codec does not persist the fie
 ### T-0316 Sculpt preview merged with the other components (T-0309 follow-up)   [status: done — PR #190]
 Phase: 2   Module: app/viewmodel   Depends on: T-0309
 Goal: Sculpt preview currently shows the working component alone. Compose the rest of the model once at stroke/session start and combine only the working component per mouse move (see ADR-0090 "Not done"), so the preview matches the merged model without O(model cells) work per move. Operation-counter test for per-move cost.
+
+### T-0317 Preview/simulation leftovers from T-0231: cancellable simulation start, first-paint and zoom scan cost, summary cost   [status: in-progress]
+Phase: 2   Module: core/simulate + app   Depends on: T-0231
+Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancellable (no UI freeze; cancel token honoured before the first step); (2) cut the first-paint and zoom scan cost of the preview (profile first, then fix the hot spot; operation counters, not timing, in tests); (3) cut the cost of the simulation summary. Tests by operation counters; ADR with measurements.
