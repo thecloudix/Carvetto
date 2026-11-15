@@ -715,18 +715,25 @@ Rough3dResult rough3dToolpath(const relief::HeightField& model, const std::vecto
         // the column when every node between the two rows may be visited.
         std::size_t chainEndRow = 0;
         std::size_t chainEndPos = 0;
-        auto pass = [&](auto&& okNode, auto&& okLink, auto&& zOf) -> bool {
-            for (std::size_t s = 0; s < rowSeq.size(); ++s) {
+        auto pass = [&](auto&& okNode, auto&& okLink, auto&& zOf, std::size_t r0, std::size_t r1, std::size_t c0,
+                        std::size_t c1) -> bool {
+            std::vector<std::size_t> rowsHere;
+            for (std::size_t rw : rowSeq) {
+                if (rw >= r0 && rw <= r1) {
+                    rowsHere.push_back(rw);
+                }
+            }
+            for (std::size_t s = 0; s < rowsHere.size(); ++s) {
                 if ((s & 63u) == 0 && c.isCancelled()) {
                     return false;
                 }
-                const std::size_t row = rowSeq[s];
+                const std::size_t row = rowsHere[s];
                 const bool back = p.travel == RasterTravel::ZigZag && (s & 1u) != 0;
-                const std::size_t nc = fr.cols();
+                const std::size_t nc = c1 - c0 + 1;
                 c.work += nc;
                 std::size_t col = 0;  // index in travel order
                 while (col < nc) {
-                    auto posOf = [&](std::size_t t) { return back ? nc - 1 - t : t; };
+                    auto posOf = [&](std::size_t t) { return back ? c1 - t : c0 + t; };
                     if (!okNode(fr.node(row, posOf(col)))) {
                         ++col;
                         continue;
@@ -738,7 +745,7 @@ Rough3dResult rough3dToolpath(const relief::HeightField& model, const std::vecto
                         ++col;
                     }
                     bool linked = false;
-                    if (!chain.empty() && p.travel == RasterTravel::ZigZag && s > 0 && chainEndRow == rowSeq[s - 1] &&
+                    if (!chain.empty() && p.travel == RasterTravel::ZigZag && s > 0 && chainEndRow == rowsHere[s - 1] &&
                         chainEndPos == startPos) {
                         const bool up = row > chainEndRow;
                         bool ok = true;
@@ -780,7 +787,8 @@ Rough3dResult rough3dToolpath(const relief::HeightField& model, const std::vecto
         bool okRun = true;
         if (p.strategy == Rough3dStrategy::Raster) {
             okRun = pass([&](std::size_t nd) { return elig[nd] != 0; }, [&](std::size_t nd) { return mask[nd] != 0; },
-                         [&](std::size_t nd) { return static_cast<double>(T[nd]); });
+                         [&](std::size_t nd) { return static_cast<double>(T[nd]); }, 0, fr.rows() - 1, 0,
+                         fr.cols() - 1);
         } else {
             const double sd = cd.passDepth;
             const double top = std::min(p.stockTop, static_cast<double>(highestScur));
@@ -797,21 +805,384 @@ Rough3dResult rough3dToolpath(const relief::HeightField& model, const std::vecto
                 }
             }
             levels.push_back(floorZ);
-            for (double L : levels) {
-                const float Lf = roundUp(L);
-                okRun = pass(
-                    [&](std::size_t nd) {
-                        return elig[nd] != 0 && T[nd] <= Lf && static_cast<double>(scur[nd]) > L + 1e-9;
-                    },
-                    [&](std::size_t nd) { return mask[nd] != 0 && T[nd] <= Lf; },
-                    [&](std::size_t) { return static_cast<double>(Lf); });
-                if (!okRun || em.overLimit) {
-                    break;
+            const std::size_t nl = levels.size();
+            std::vector<float> levelsF(nl);
+            for (std::size_t i = 0; i < nl; ++i) {
+                levelsF[i] = roundUp(levels[i]);
+            }
+            // Node n is visited at the levels startLv[n] .. endLv[n] (T <= level, stock above the level).
+            std::vector<std::uint32_t> startLv(N, 1);
+            std::vector<std::uint32_t> endLv(N, 0);
+            std::vector<std::uint32_t> nextLv(N, 0);
+            for (std::size_t nd = 0; nd < N; ++nd) {
+                if (elig[nd] == 0) {
+                    continue;
                 }
-                // Everything visited at this level is now at most Lf.
-                for (std::size_t nd = 0; nd < N; ++nd) {
-                    if (elig[nd] != 0 && T[nd] <= Lf && static_cast<double>(scur[nd]) > L + 1e-9) {
-                        scur[nd] = Lf;
+                std::size_t lo = 0;
+                std::size_t hi = nl;  // first i with scur > L_i + 1e-9 (monotone)
+                while (lo < hi) {
+                    const std::size_t mid = (lo + hi) / 2;
+                    if (static_cast<double>(scur[nd]) > levels[mid] + 1e-9) {
+                        hi = mid;
+                    } else {
+                        lo = mid + 1;
+                    }
+                }
+                const std::size_t st = lo;
+                lo = 0;
+                hi = nl;  // first i with levelsF[i] < T (T <= level fails)
+                while (lo < hi) {
+                    const std::size_t mid = (lo + hi) / 2;
+                    if (T[nd] <= levelsF[mid]) {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                if (lo > st) {
+                    startLv[nd] = static_cast<std::uint32_t>(st);
+                    endLv[nd] = static_cast<std::uint32_t>(lo - 1);
+                    nextLv[nd] = static_cast<std::uint32_t>(st);
+                }
+            }
+            auto active = [&](std::size_t nd, std::size_t li) {
+                return elig[nd] != 0 && startLv[nd] <= endLv[nd] && nextLv[nd] == li && li <= endLv[nd];
+            };
+            const bool offsetClear = p.clearing == Rough3dClearing::Offset;
+            const std::size_t Wd = w;
+            std::vector<std::uint32_t> mark(N, 0);
+            std::uint32_t stamp = 0;
+            std::vector<std::int32_t> dist(N, -1);
+            std::vector<std::uint32_t> pend(N, 0);
+            std::uint32_t pendStamp = 0;
+            std::vector<std::uint32_t> seen(N, 0);
+            std::vector<std::uint32_t> par(N, 0);
+            std::uint32_t seenStamp = 0;
+            struct Dir {
+                long dx, dy;
+            };
+            // The first four are the 4-neighbours (walk and link steps); all eight give the ring distance.
+            const Dir dirs[8] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}};
+            auto nbr = [&](std::uint32_t nd, int k, std::uint32_t& out) {  // k < 8
+                const long i = static_cast<long>(nd % Wd) + dirs[k].dx;
+                const long j = static_cast<long>(nd / Wd) + dirs[k].dy;
+                if (i < 0 || j < 0 || i >= static_cast<long>(w) || j >= static_cast<long>(h)) {
+                    return false;
+                }
+                out = static_cast<std::uint32_t>(static_cast<std::size_t>(j) * w + static_cast<std::size_t>(i));
+                return true;
+            };
+            const std::size_t linkDepth = 2 * kStep + 2;
+            // Contour rings of a unit: ring k = unit nodes at 8-neighbour (Chebyshev) distance k from outside the
+            // unit, so the ring around a rectangle or an island is a 4-connected loop (ADR-0082).
+            std::vector<std::vector<std::uint32_t>> rings;
+            auto prepareRings = [&](const std::vector<std::uint32_t>& nodes) {
+                std::vector<std::uint32_t> q;
+                for (std::uint32_t nd : nodes) {
+                    dist[nd] = -1;
+                }
+                for (std::uint32_t nd : nodes) {
+                    bool edge = false;
+                    for (int k = 0; k < 8 && !edge; ++k) {
+                        std::uint32_t o = 0;
+                        edge = !nbr(nd, k, o) || mark[o] != stamp;
+                    }
+                    if (edge) {
+                        dist[nd] = 0;
+                        q.push_back(nd);
+                    }
+                }
+                std::int32_t maxD = 0;
+                for (std::size_t hd = 0; hd < q.size(); ++hd) {
+                    const std::uint32_t nd = q[hd];
+                    maxD = std::max(maxD, dist[nd]);
+                    for (int k = 0; k < 8; ++k) {
+                        std::uint32_t o = 0;
+                        if (nbr(nd, k, o) && mark[o] == stamp && dist[o] < 0) {
+                            dist[o] = dist[nd] + 1;
+                            q.push_back(o);
+                        }
+                    }
+                }
+                c.work += nodes.size() * 4;
+                rings.assign(static_cast<std::size_t>(maxD) + 1, {});
+                for (std::uint32_t nd : nodes) {
+                    rings[static_cast<std::size_t>(dist[nd])].push_back(nd);
+                }
+            };
+            // Cuts ring `k` of the prepared unit at level height `Lf`, wall-following with the region
+            // interior on the left of the travel (climb) or the right (conventional).
+            auto walkRing = [&](std::size_t k, double Lf) {
+                const std::vector<std::uint32_t>& rn = rings[k];
+                if (rn.empty()) {
+                    return;
+                }
+                const std::uint32_t ps = ++pendStamp;
+                std::size_t remaining = rn.size();
+                for (std::uint32_t nd : rn) {
+                    pend[nd] = ps;
+                }
+                auto okLinkNode = [&](std::uint32_t nd) {
+                    if (p.avoidMachined) {
+                        return mark[nd] == stamp;
+                    }
+                    return mask[nd] != 0 && static_cast<double>(T[nd]) <= Lf;
+                };
+                auto visit = [&](std::uint32_t nd) {
+                    chain.push_back(nd);
+                    zn.push_back(Lf);
+                    if (pend[nd] == ps) {
+                        pend[nd] = 0;
+                        --remaining;
+                    }
+                };
+                std::size_t startPtr = 0;
+                std::vector<std::uint32_t> bq;
+                while (remaining > 0 && !em.overLimit) {
+                    bool linked = false;
+                    if (!chain.empty()) {
+                        // Shortest link through allowed nodes to a pending node of this ring.
+                        const std::uint32_t from = chain.back();
+                        const std::uint32_t sd2 = ++seenStamp;
+                        bq.assign(1, from);
+                        seen[from] = sd2;
+                        std::size_t head = 0;
+                        std::size_t levelEnd = 1;
+                        std::size_t depth = 0;
+                        std::uint32_t found = 0;
+                        bool got = false;
+                        while (head < bq.size() && !got && depth < linkDepth) {
+                            for (; head < levelEnd && !got; ++head) {
+                                const std::uint32_t cur = bq[head];
+                                ++c.work;
+                                for (int d = 0; d < 4 && !got; ++d) {
+                                    std::uint32_t o = 0;
+                                    if (!nbr(cur, d, o) || seen[o] == sd2 || !okLinkNode(o)) {
+                                        continue;
+                                    }
+                                    seen[o] = sd2;
+                                    par[o] = cur;
+                                    bq.push_back(o);
+                                    if (pend[o] == ps) {
+                                        found = o;
+                                        got = true;
+                                    }
+                                }
+                            }
+                            levelEnd = bq.size();
+                            ++depth;
+                        }
+                        if (got) {
+                            std::vector<std::uint32_t> path;
+                            for (std::uint32_t x = found; x != from; x = par[x]) {
+                                path.push_back(x);
+                            }
+                            for (std::size_t pi = path.size(); pi-- > 0;) {
+                                visit(path[pi]);
+                            }
+                            linked = true;
+                        } else {
+                            flush();
+                        }
+                    }
+                    if (!linked) {
+                        while (startPtr < rn.size() && pend[rn[startPtr]] != ps) {
+                            ++startPtr;
+                        }
+                        visit(rn[startPtr]);
+                    }
+                    // Greedy wall-following walk over pending ring nodes.
+                    while (remaining > 0) {
+                        const std::uint32_t cur = chain.back();
+                        long ox = 0;
+                        long oy = 0;
+                        for (int d = 0; d < 8; ++d) {
+                            std::uint32_t o = 0;
+                            if (!nbr(cur, d, o) || mark[o] != stamp || dist[o] < dist[cur]) {
+                                ox += dirs[d].dx;
+                                oy += dirs[d].dy;
+                            }
+                        }
+                        long hx = -oy;
+                        long hy = ox;
+                        if (hx == 0 && hy == 0 && chain.size() >= 2) {
+                            const std::uint32_t pr = chain[chain.size() - 2];
+                            hx = static_cast<long>(cur % Wd) - static_cast<long>(pr % Wd);
+                            hy = static_cast<long>(cur / Wd) - static_cast<long>(pr / Wd);
+                        } else if (p.direction != CutDirection::Climb) {
+                            hx = -hx;
+                            hy = -hy;
+                        }
+                        long bestScore = std::numeric_limits<long>::min();
+                        std::uint32_t bestNode = 0;
+                        bool any = false;
+                        for (int d = 0; d < 4; ++d) {
+                            std::uint32_t o = 0;
+                            if (!nbr(cur, d, o) || pend[o] != ps) {
+                                continue;
+                            }
+                            const long sc = dirs[d].dx * hx + dirs[d].dy * hy;
+                            if (!any || sc > bestScore) {
+                                any = true;
+                                bestScore = sc;
+                                bestNode = o;
+                            }
+                        }
+                        if (!any) {
+                            break;
+                        }
+                        visit(bestNode);
+                    }
+                    ++c.work;
+                }
+            };
+            // Cuts one unit (a set of nodes) at level `li`.
+            auto cutUnit = [&](std::size_t li, const std::vector<std::uint32_t>& nodes, bool boxed) -> bool {
+                if (nodes.empty()) {
+                    return true;
+                }
+                const float Lf = levelsF[li];
+                ++stamp;
+                for (std::uint32_t nd : nodes) {
+                    mark[nd] = stamp;
+                }
+                c.work += nodes.size();
+                std::size_t r0 = 0;
+                std::size_t r1 = fr.rows() - 1;
+                std::size_t c0 = 0;
+                std::size_t c1 = fr.cols() - 1;
+                if (boxed) {
+                    r0 = c0 = std::numeric_limits<std::size_t>::max();
+                    r1 = c1 = 0;
+                    for (std::uint32_t nd : nodes) {
+                        const std::size_t rw = fr.alongX ? nd / w : nd % w;
+                        const std::size_t cl = fr.alongX ? nd % w : nd / w;
+                        r0 = std::min(r0, rw);
+                        r1 = std::max(r1, rw);
+                        c0 = std::min(c0, cl);
+                        c1 = std::max(c1, cl);
+                    }
+                }
+                const bool avoid = p.avoidMachined;
+                auto okNode = [&](std::size_t nd) { return mark[nd] == stamp; };
+                auto okLink = [&](std::size_t nd) {
+                    return avoid ? mark[nd] == stamp : (mask[nd] != 0 && T[nd] <= Lf);
+                };
+                auto zOf = [&](std::size_t) { return static_cast<double>(Lf); };
+                bool ok = true;
+                const bool profileOnly = !offsetClear && p.profile != Rough3dProfile::None;
+                if (offsetClear || profileOnly) {
+                    prepareRings(nodes);
+                }
+                if (offsetClear) {
+                    std::vector<std::size_t> order;
+                    for (std::size_t k = 0; k < rings.size(); ++k) {
+                        if (k == 0 || k % kStep == 0 || k + 1 == rings.size()) {
+                            order.push_back(k);
+                        }
+                    }
+                    if (p.profile == Rough3dProfile::Last && order.size() > 1) {
+                        std::rotate(order.begin(), order.begin() + 1, order.end());
+                    }
+                    for (std::size_t k : order) {
+                        if (c.isCancelled()) {
+                            return false;
+                        }
+                        walkRing(k, static_cast<double>(Lf));
+                    }
+                } else {
+                    if (profileOnly && p.profile == Rough3dProfile::First) {
+                        walkRing(0, static_cast<double>(Lf));
+                    }
+                    ok = pass(okNode, okLink, zOf, r0, r1, c0, c1);
+                    if (ok && profileOnly && p.profile == Rough3dProfile::Last) {
+                        walkRing(0, static_cast<double>(Lf));
+                    }
+                }
+                flush();
+                for (std::uint32_t nd : nodes) {
+                    scur[nd] = Lf;
+                    nextLv[nd] = static_cast<std::uint32_t>(li + 1);
+                }
+                return ok;
+            };
+            if (p.order == Rough3dOrder::LevelByLevel) {
+                for (std::size_t li = 0; li < nl && okRun && !em.overLimit; ++li) {
+                    std::vector<std::uint32_t> nodes;
+                    for (std::size_t nd = 0; nd < N; ++nd) {
+                        if (active(nd, li)) {
+                            nodes.push_back(static_cast<std::uint32_t>(nd));
+                        }
+                    }
+                    okRun = cutUnit(li, nodes, false);
+                }
+            } else {
+                // Depth-first: components of the nodes that start at a level are cut, then their
+                // sub-components at the next levels before the next component (explicit stack).
+                struct Frame2 {
+                    std::size_t level;
+                    std::vector<std::uint32_t> nodes;
+                };
+                std::vector<std::uint32_t> inS(N, 0);
+                std::uint32_t inStamp = 0;
+                // Components of `cand` (ascending), pushed so the first pops first.
+                auto components = [&](const std::vector<std::uint32_t>& cand, std::size_t level,
+                                      std::vector<Frame2>& stack) {
+                    const std::uint32_t sm = ++inStamp;
+                    for (std::uint32_t nd : cand) {
+                        inS[nd] = sm;
+                    }
+                    std::vector<std::vector<std::uint32_t>> comps;
+                    for (std::uint32_t s0 : cand) {
+                        if (inS[s0] != sm) {
+                            continue;
+                        }
+                        std::vector<std::uint32_t> comp{s0};
+                        inS[s0] = 0;
+                        for (std::size_t hd = 0; hd < comp.size(); ++hd) {
+                            for (int k = 0; k < 4; ++k) {
+                                std::uint32_t o = 0;
+                                if (nbr(comp[hd], k, o) && inS[o] == sm) {
+                                    inS[o] = 0;
+                                    comp.push_back(o);
+                                }
+                            }
+                        }
+                        std::sort(comp.begin(), comp.end());
+                        comps.push_back(std::move(comp));
+                        c.work += comps.back().size();
+                    }
+                    for (std::size_t ci = comps.size(); ci-- > 0;) {
+                        stack.push_back(Frame2{level, std::move(comps[ci])});
+                    }
+                };
+                for (std::size_t li = 0; li < nl && okRun && !em.overLimit; ++li) {
+                    std::vector<std::uint32_t> roots;
+                    for (std::size_t nd = 0; nd < N; ++nd) {
+                        if (active(nd, li)) {
+                            roots.push_back(static_cast<std::uint32_t>(nd));
+                        }
+                    }
+                    std::vector<Frame2> stack;
+                    components(roots, li, stack);
+                    while (!stack.empty() && okRun && !em.overLimit) {
+                        if (c.isCancelled()) {
+                            okRun = false;
+                            break;
+                        }
+                        Frame2 f = std::move(stack.back());
+                        stack.pop_back();
+                        okRun = cutUnit(f.level, f.nodes, true);
+                        if (!okRun || f.level + 1 >= nl) {
+                            continue;
+                        }
+                        std::vector<std::uint32_t> next;
+                        for (std::uint32_t nd : f.nodes) {
+                            if (active(nd, f.level + 1)) {
+                                next.push_back(nd);
+                            }
+                        }
+                        components(next, f.level + 1, stack);
                     }
                 }
             }
