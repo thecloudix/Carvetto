@@ -13,6 +13,7 @@
 #include "carvetto/document/document.hpp"
 #include "main_window.hpp"
 #include "modelling_panel.hpp"
+#include "carvetto/viewmodel/relief_modelling.hpp"
 #include "relief_panels.hpp"
 
 namespace carvetto::app {
@@ -134,6 +135,49 @@ std::string modellingSelfTest(MainWindow& window) {
     MD_REQUIRE(!panel->apply(), "a negative height was accepted");
     panel->clearPreview();
     window.undo();
+
+    // Modify forms (T-0306): offset and slice on the bitmap component, then a custom shape profile.
+    doc->componentSelection().assign({bmp});
+    panel->setModifyTool(viewmodel::ModifyTool::Smooth);
+    MD_REQUIRE(panel->field(QStringLiteral("Smooth: Radius")) != nullptr &&
+                   panel->combo(QStringLiteral("Smooth: Radius")) == nullptr,
+               "the Smooth page was not built");
+    panel->field(QStringLiteral("Smooth: Percent"))->setText(QStringLiteral("100"));
+    panel->field(QStringLiteral("Smooth: Radius"))->setText(QStringLiteral("50"));   // cells are 10 mm here
+    MD_REQUIRE(panel->preview() && view->previewing(), "the Smooth preview failed");
+    const std::size_t modSteps = doc->undoStack().index();   // not count(): a redo tail would be dropped
+    const std::size_t modCount = doc->reliefComponentCount();
+    const bool applied = panel->apply();
+    MD_REQUIRE(applied && doc->undoStack().index() == modSteps + 1 && doc->reliefComponentCount() == modCount,
+               "Smooth is not one in-place undo step");
+    MD_REQUIRE(window.undo(), "undoing Smooth failed");
+
+    panel->setModifyTool(viewmodel::ModifyTool::Slice);
+    panel->field(QStringLiteral("Slice Model: Thickness"))->setText(QStringLiteral("1"));
+    panel->check(QStringLiteral("Slice Model: Boundary vectors"))->setChecked(true);
+    MD_REQUIRE(panel->preview(), "the Slice preview failed");
+    const std::size_t objectsBefore = doc->objects().size();
+    MD_REQUIRE(panel->apply() && doc->reliefComponentCount() > modCount && doc->objects().size() == objectsBefore + 1 &&
+                   doc->undoStack().index() == modSteps + 1,
+               "Slice did not add components and boundaries as one step");
+    MD_REQUIRE(window.undo() && doc->reliefComponentCount() == modCount, "undoing Slice failed");
+
+    panel->setModifyTool(viewmodel::ModifyTool::Offset);
+    panel->field(QStringLiteral("Offset Model: Distance"))->setText(QStringLiteral("x"));
+    MD_REQUIRE(!panel->preview() && panel->status()->text().contains(QStringLiteral("Distance")),
+               "a bad offset distance was accepted");
+    panel->setModifyTool(viewmodel::ModifyTool::VectorBoundary);
+    MD_REQUIRE(panel->apply() && doc->objects().size() == objectsBefore + 1, "Create Vector Boundary failed");
+    window.undo();
+
+    panel->setTool(ModellingPanel::Tool::CreateShape);
+    panel->combo(QStringLiteral("Shape: Kind"))->setCurrentIndex(static_cast<int>(relief::ShapeKind::Custom));
+    panel->field(QStringLiteral("Shape: Profile"))->setText(QStringLiteral("0,0; 0.5,1; 1,0.5"));
+    doc->selection().assign({vecId});
+    MD_REQUIRE(panel->preview(), "a custom profile preview failed");
+    panel->field(QStringLiteral("Shape: Profile"))->setText(QStringLiteral("0,0"));
+    MD_REQUIRE(!panel->preview(), "a one-point profile was accepted");
+    panel->clearPreview();
     return {};
 }
 

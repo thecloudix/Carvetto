@@ -219,3 +219,183 @@ TEST_CASE("modelling: Scale Z on a document without a model is refused", "[viewm
     CHECK_FALSE(r.changed);
     CHECK(doc.undoStack().count() == 0);
 }
+
+// --- T-0306 modify forms ---------------------------------------------------------------------------------
+
+namespace {
+
+/// A 20 x 20 mm Add shape (45 degrees, 1 mm cells) from a rectangle, applied through the session.
+ComponentId addModel(Document& doc) {
+    const ObjectId v = addRect(doc, 10.0, 10.0, 30.0, 30.0);
+    doc.selection().assign({v});
+    CreateShapeForm f;
+    const ModellingPreview p = previewCreateShape(doc, f);
+    REQUIRE(p.ok);
+    ModellingSession s;
+    REQUIRE(s.apply(doc, p.component).ok);
+    doc.selection().assign({});
+    return s.current(doc);
+}
+
+}  // namespace
+
+TEST_CASE("modelling: custom shape profile text is parsed and validated", "[viewmodel][relief][modelling]") {
+    std::vector<relief::ProfilePoint> pts;
+    std::string err;
+    REQUIRE(parseShapeProfile("0,0; 0.5,0.8; 1,1;", pts, err));
+    REQUIRE(pts.size() == 3);
+    CHECK(pts[1].h == 0.8);
+    CHECK_FALSE(parseShapeProfile("0,0", pts, err));
+    CHECK_FALSE(parseShapeProfile("0,0; 0,1", pts, err));
+    CHECK_FALSE(parseShapeProfile("0,0; 2,1", pts, err));
+    CHECK_FALSE(parseShapeProfile("0,0; x,1", pts, err));
+
+    Document doc;
+    doc.selection().assign({addRect(doc, 10.0, 10.0, 30.0, 30.0)});
+    CreateShapeForm f;
+    f.kind = relief::ShapeKind::Custom;
+    f.profile = "0,0; 0.5,1; 1,0.5";
+    CHECK(previewCreateShape(doc, f).ok);
+    f.profile = "nonsense";
+    CHECK_FALSE(previewCreateShape(doc, f).ok);
+}
+
+TEST_CASE("modelling: every modify tool has fields and defaults", "[viewmodel][relief][modelling]") {
+    Document doc;
+    for (int i = 0; i < kModifyToolCount; ++i) {
+        const auto tool = static_cast<ModifyTool>(i);
+        CHECK(std::string(modifyToolName(tool)).size() > 0);
+        CHECK(std::string(modifyHelp(tool)).size() > 0);
+        const ModifyForm f = defaultModifyForm(doc, tool);
+        CHECK(f.values.size() == modifyFields(tool).size());
+    }
+    CHECK_FALSE(previewModify(doc, defaultModifyForm(doc, ModifyTool::Smooth)).ok);   // no model
+}
+
+TEST_CASE("modelling: replace below, offset, smooth and emboss change the component in place",
+          "[viewmodel][relief][modelling]") {
+    Document doc;
+    const ComponentId id = addModel(doc);
+    const float top = maxHeight(doc.findReliefComponent(id)->data);
+
+    ModifyForm rb = defaultModifyForm(doc, ModifyTool::ReplaceBelow);
+    rb.values["Threshold"] = "3";
+    ModifyResult r = previewModify(doc, rb);
+    REQUIRE(r.ok);
+    CHECK(r.previewField() != nullptr);
+    CHECK(doc.findReliefComponent(id)->data.field.at(0, 0) != r.replacements.front().field.at(0, 0));  // untouched
+    const std::size_t steps = doc.undoStack().count();
+    REQUIRE(applyModify(doc, rb).ok);
+    CHECK(doc.undoStack().count() == steps + 1);
+    CHECK(doc.reliefComponentCount() == 1);
+    CHECK(maxHeight(doc.findReliefComponent(id)->data) == top);
+    CHECK(doc.undo());
+
+    ModifyForm off = defaultModifyForm(doc, ModifyTool::Offset);
+    off.values["Distance"] = "bad";
+    CHECK_FALSE(previewModify(doc, off).ok);
+    CHECK(previewModify(doc, off).message.find("Distance") != std::string::npos);
+    off.values["Distance"] = "-1";
+    REQUIRE(applyModify(doc, off).ok);
+
+    ModifyForm sm = defaultModifyForm(doc, ModifyTool::Smooth);
+    REQUIRE(applyModify(doc, sm).ok);
+    ModifyForm em = defaultModifyForm(doc, ModifyTool::Emboss);
+    REQUIRE(applyModify(doc, em).ok);
+    CHECK(doc.reliefComponentCount() == 1);
+}
+
+TEST_CASE("modelling: reset inside vectors needs closed vectors and makes cells transparent",
+          "[viewmodel][relief][modelling]") {
+    Document doc;
+    const ComponentId id = addModel(doc);
+    ModifyForm f = defaultModifyForm(doc, ModifyTool::ResetByVectors);
+    CHECK_FALSE(previewModify(doc, f).ok);
+    doc.selection().assign({addRect(doc, 15.0, 15.0, 25.0, 25.0)});
+    const ModifyResult r = previewModify(doc, f);
+    REQUIRE(r.ok);
+    const relief::HeightField& field = r.replacements.front().field;
+    const relief::HeightField& orig = doc.findReliefComponent(id)->data.field;
+    const std::size_t ci = static_cast<std::size_t>((20.0 - orig.origin().x) / orig.cellSize());
+    const std::size_t cj = static_cast<std::size_t>((20.0 - orig.origin().y) / orig.cellSize());
+    CHECK(std::isnan(field.at(ci, cj)));
+    CHECK_FALSE(std::isnan(orig.at(ci, cj)));
+    f.values["Region"] = "Outside";
+    const ModifyResult out = previewModify(doc, f);
+    REQUIRE(out.ok);
+    CHECK_FALSE(std::isnan(out.replacements.front().field.at(ci, cj)));
+}
+
+TEST_CASE("modelling: slice, draft and split add components in one undo step", "[viewmodel][relief][modelling]") {
+    Document doc;
+    const ComponentId id = addModel(doc);
+    const std::size_t steps = doc.undoStack().count();
+
+    ModifyForm sl = defaultModifyForm(doc, ModifyTool::Slice);
+    sl.values["Thickness"] = "4";
+    sl.values["Boundary vectors"] = "true";
+    const ModifyResult sp = previewModify(doc, sl);
+    REQUIRE(sp.ok);
+    CHECK(sp.additions.size() >= 2);
+    CHECK_FALSE(sp.vectors.empty());
+    const std::size_t objects = doc.objects().size();
+    REQUIRE(applyModify(doc, sl).ok);
+    CHECK(doc.undoStack().count() == steps + 1);
+    CHECK(doc.reliefComponentCount() == 1 + sp.additions.size());
+    CHECK(doc.objects().size() == objects + 1);
+    CHECK(doc.undo());
+    CHECK(doc.reliefComponentCount() == 1);
+    CHECK(doc.objects().size() == objects);
+
+    ModifyForm dr = defaultModifyForm(doc, ModifyTool::Draft);
+    REQUIRE(applyModify(doc, dr).ok);
+    CHECK(doc.reliefComponentCount() == 2);
+    CHECK(doc.undo());
+
+    // Split with an open vertical line at x = 20: original becomes part A, part B is added.
+    Object line;
+    line.layer = doc.defaultLayer();
+    line.sheet = doc.activeSheet();
+    VectorObject vo;
+    geometry::Polyline pl;
+    pl.points = {{20.0, 0.0}, {20.0, 40.0}};
+    vo.contours.push_back(geometry::Contour::fromPolyline(pl));
+    line.data = std::move(vo);
+    auto add = std::make_unique<AddObjectCommand>(std::move(line));
+    REQUIRE(doc.execute(std::move(add)));
+    ModifyForm sp2 = defaultModifyForm(doc, ModifyTool::Split);
+    CHECK_FALSE(previewModify(doc, sp2).ok);   // no vector selected
+    doc.selection().assign({doc.objects().rbegin()->first});
+    REQUIRE(applyModify(doc, sp2).ok);
+    CHECK(doc.reliefComponentCount() == 2);
+    CHECK(doc.findReliefComponent(id)->data.name.find("A") != std::string::npos);
+    CHECK(doc.undo());
+    CHECK(doc.reliefComponentCount() == 1);
+}
+
+TEST_CASE("modelling: vector boundary, cross section and distort", "[viewmodel][relief][modelling]") {
+    Document doc;
+    const ComponentId id = addModel(doc);
+    const std::size_t objects = doc.objects().size();
+
+    REQUIRE(applyModify(doc, defaultModifyForm(doc, ModifyTool::VectorBoundary)).ok);
+    CHECK(doc.objects().size() == objects + 1);
+
+    ModifyForm cs = defaultModifyForm(doc, ModifyTool::CrossSection);   // starts from the bounds
+    const ModifyResult r = previewModify(doc, cs);
+    REQUIRE(r.ok);
+    CHECK_FALSE(r.vectors.empty());
+    cs.values["Spacing"] = "-1";
+    CHECK_FALSE(previewModify(doc, cs).ok);
+
+    ModifyForm di = defaultModifyForm(doc, ModifyTool::Distort);
+    const double x1 = std::stod(di.values["Right-bottom X"]);
+    di.values["Right-bottom X"] = std::to_string(x1 + 10.0);
+    di.values["Right-top X"] = std::to_string(x1 + 10.0);
+    const std::size_t steps = doc.undoStack().count();
+    REQUIRE(applyModify(doc, di).ok);
+    CHECK(doc.undoStack().count() == steps + 1);
+    CHECK(doc.findReliefComponent(id)->data.field.width() > 20);
+    di.values["Right-top X"] = "bad";
+    CHECK_FALSE(applyModify(doc, di).ok);
+}
