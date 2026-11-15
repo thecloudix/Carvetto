@@ -129,6 +129,8 @@ class ModelView3D : public QWidget {
     /// Shows `field` alone instead of the document's model (the modelling forms' preview, T-0300);
     /// `clearPreview` returns to the model. `refresh` keeps showing the preview until cleared.
     void setPreview(const relief::HeightField& field);
+    /// Shows an already composed surface (the sculpt preview merged with the model, T-0316).
+    void setPreviewSurface(const viewmodel::ModelSurface& surface);
     void clearPreview();
     bool previewing() const { return previewing_; }
     /// Brush painting (T-0302): when set, a left-button press, drag and release on the model call

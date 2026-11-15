@@ -110,6 +110,15 @@ document::ComponentId defaultSculptTarget(const document::Document& doc);
 /// A stroke is frozen into a chunk after this many brush diameters of path.
 inline constexpr double kChunkDiameters = 30.0;
 
+/// What may have changed in the working copy since the last `takeDirty` (T-0316): a design-space
+/// rectangle (padded by a brush diameter), or everything after a session start, Undo Stroke or Discard.
+struct SculptDirty {
+    bool all{false};
+    bool any{false};
+    relief::Point lo;
+    relief::Point hi;
+};
+
 class SculptController {
    public:
     /// Starts on `id` (null: `defaultSculptTarget`). Ends a running session first (discarding it).
@@ -136,6 +145,8 @@ class SculptController {
     bool strokeOpen() const { return strokeOpen_; }
     /// Session steps the open stroke currently owns (1 until it is long enough to be chunked).
     std::size_t openStrokeSteps() const { return openSteps_; }
+    /// The region touched since the last call, then forgets it. A whole-field change reports `all`.
+    SculptDirty takeDirty();
     /// A complete stroke along `path` (begin, extend, end).
     EditResult stroke(const BrushSettings& brush, const std::vector<relief::Point>& path);
 
@@ -150,7 +161,9 @@ class SculptController {
 
    private:
     EditResult applyTail();
+    void markDirty(relief::Point lo, relief::Point hi);
 
+    SculptDirty dirty_{true, true, {}, {}};
     relief::SculptSession session_;
     document::ComponentId target_;
     BrushSettings brush_;

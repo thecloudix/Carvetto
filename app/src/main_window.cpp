@@ -240,6 +240,8 @@ void MainWindow::buildDocks() {
         if (field != nullptr) {
             modelView_->setPreview(*field);
             views_->setCurrentWidget(modelView_);
+        } else if (sculpt_ != nullptr && sculpt_->mergedSurface() != nullptr) {
+            modelView_->setPreviewSurface(*sculpt_->mergedSurface());
         } else if (sculpt_ != nullptr && sculpt_->controller().working() != nullptr) {
             modelView_->setPreview(*sculpt_->controller().working());  // sculpting owns the Model view
         } else {
@@ -256,6 +258,9 @@ void MainWindow::buildDocks() {
         } else {
             modelView_->clearPreview();
         }
+    };
+    sculpt_->onPreviewSurface = [this](const viewmodel::ModelSurface& surface) {
+        modelView_->setPreviewSurface(surface);
     };
     sculpt_->onOverlay = [this](const QImage& image, double opacity) {
         if (image.isNull()) {

@@ -32,6 +32,7 @@ add_library(carvetto_viewmodel STATIC
   src/relief_tree.cpp
   src/relief_modelling.cpp
   src/relief_sculpt.cpp
+  src/sculpt_merged_preview.cpp
   src/relief_effects.cpp
   src/relief_build.cpp
   src/model_view.cpp
