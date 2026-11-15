@@ -148,6 +148,7 @@ add_executable(carvetto_tests
   relief/textured_area_test.cpp
   relief/sculpt_test.cpp
   toolpath/finish3d_test.cpp
+  toolpath/moulding_test.cpp
   toolpath/project3d_test.cpp
   text/font_test.cpp
   text/outline_test.cpp
