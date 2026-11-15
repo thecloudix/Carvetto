@@ -1490,7 +1490,7 @@ Phase: 2   Module: core/toolpath   Depends on: T-0296
 Goal: Add offset clearing to Z-level roughing (contour tracing of the per-level regions), Profile First/Last/None, depth-first ordering and "avoid machined areas". Confirm the T-0296 choice that transparent model cells are ignored and cut to the stock floor under Material boundary (owner product reading, recorded in ADR-0071).
 Acceptance criteria: simulator shows no gouge below model + allowance; offset clearing leaves no more stock than raster clearing at the same allowance; deterministic and cancellable.
 
-### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: done — PR #194 (ADR-0095 readings for owner)]
+### T-0305 Per-component appearance (Same as Parent / Solid Colour / Material / Colour from Children) (T-0299 follow-up)   [status: done — PR #193 (ADR-0095 readings for owner)]
 Phase: 2   Module: core/document + app   Depends on: T-0299
 Goal: Store an appearance per component and level in the document (needs a .carv minor-version bump, old files still load) and use it in the Model view; T-0299 ships one view-level material instead. Owner to confirm when a decision is needed on defaults; low priority.
 
