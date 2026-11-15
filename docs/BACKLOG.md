@@ -1506,7 +1506,7 @@ Goal: Moulding toolpath per docs/reference/feature-inventory.md §5: profile a m
 Phase: 2   Module: app   Depends on: T-0301
 Goal: Forms (viewmodel + Modelling panel pages, following T-0300/T-0306) for the cores in relief/sweep.hpp, extrude.hpp, revolve.hpp and textured_area.hpp: pick rails/profiles/boundaries from the selection, preview, Apply as one undo step through AddReliefComponentCommand, self-test coverage. Optional: both-sides mesh import and a draggable zero plane in the Model view.
 
-### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: ready]
+### T-0309 Sculpt polish: overlay image, custom brush from image, brush ring cursor, persisted presets (T-0302 follow-up)   [status: in-progress]
 Phase: 2   Module: app   Depends on: T-0302
 Goal: The items T-0302 left out (ADR-0084): overlay reference image over the model with opacity, custom brush stamps from an image (the core already supports CustomBrush), brush ring cursor in the Model view, presets persisted across sessions, sculpt preview merged with the other components, cheaper long strokes. Low priority.
 
@@ -1515,7 +1515,7 @@ Phase: 2   Module: core/tests   Depends on: T-0270
 Goal: CI run 43649513980 (main, T-0300 merge, linux-app ubuntu-24.04, 2026-11-14) failed only this test (ctest #981) after T-0270 added the CPU-time retry helper. Find why it still flakes under load (wall-clock leak, thread contention, ratio on tiny absolute times, retry count too low) and make it deterministic: prefer counting operations over timing; if a timing assertion must stay, derive the bound from measured CPU time with a floor that makes noise irrelevant. (Re-scoped by director 2026-11-15 after verifier round 1: the sibling-test audit moved to T-0313; this card covers the one failing test.)
 Acceptance criteria: the test cannot fail from scheduler noise (justify in the ADR or the test comment); 200 consecutive runs under `stress`-style load (e.g. ctest -j16 --repeat until-fail:50 on this test plus a CPU burner) show no failure; mutants of the asserted complexity (quadratic removal) are still killed; one changelog fragment.
 
-### T-0311 App: Project Toolpath onto Model, 3D Tabs, Create Component From Toolpath Preview, rest-tool lists, Moulding entry (T-0303 follow-up)   [status: ready]
+### T-0311 App: Project Toolpath onto Model, 3D Tabs, Create Component From Toolpath Preview, rest-tool lists, Moulding entry (T-0303 follow-up)   [status: in-progress]
 Phase: 2   Module: app + core/document   Depends on: T-0303, T-0307
 Goal: The items T-0303 left out (ADR-0085 "Remaining"): toolpath entries/dialogs for Project Toolpath onto Model and 3D Tabs (core/toolpath/project3d.hpp), the Model-menu action Create Component From Toolpath Preview (core/simulate/preview_component.hpp), rest-tool lists and prior toolpaths for 3D rough/finish, and the Moulding toolpath entry once T-0307 lands (follow the extension point in ADR-0085). Follow the T-0303 pattern; self-test coverage.
 
