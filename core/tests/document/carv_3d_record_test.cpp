@@ -38,6 +38,10 @@ toolpath::Rough3dParams fullRough() {
     p.axis = toolpath::RasterAxis::AlongY;
     p.travel = toolpath::RasterTravel::OneWay;
     p.direction = toolpath::CutDirection::Conventional;
+    p.clearing = toolpath::Rough3dClearing::Offset;
+    p.profile = toolpath::Rough3dProfile::Last;
+    p.order = toolpath::Rough3dOrder::DepthFirst;
+    p.avoidMachined = true;
     p.reverseSteps = true;
     p.rampPlunge = true;
     p.rampAngle = 0.3490658503988659;
@@ -144,4 +148,40 @@ TEST_CASE("T-0303: non-finite 3D parameters are refused", "[document][toolpath][
     ToolpathRecord edit = doc.toolpaths()[0];
     edit.params = bad;
     CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
+}
+
+TEST_CASE("T-0315: every T-0304 rough field survives save and load", "[document][toolpath][carv][3d]") {
+    using toolpath::Rough3dClearing;
+    using toolpath::Rough3dOrder;
+    using toolpath::Rough3dProfile;
+    const auto roundTrip = [](const toolpath::Rough3dParams& in) {
+        Document doc;
+        REQUIRE(doc.execute(std::make_unique<AddToolpathCommand>(recordWith(in))));
+        auto saved = saveCarv(doc, CarvExtras{});
+        REQUIRE(saved.ok());
+        auto back = loadCarv(std::span<const std::uint8_t>(saved.value()));
+        REQUIRE(back.ok());
+        REQUIRE(back.value().document.toolpaths().size() == 1);
+        return std::get<toolpath::Rough3dParams>(back.value().document.toolpaths()[0].params);
+    };
+    for (const auto c : {Rough3dClearing::Raster, Rough3dClearing::Offset}) {
+        toolpath::Rough3dParams p;
+        p.clearing = c;
+        CHECK(roundTrip(p).clearing == c);
+    }
+    for (const auto v : {Rough3dProfile::None, Rough3dProfile::First, Rough3dProfile::Last}) {
+        toolpath::Rough3dParams p;
+        p.profile = v;
+        CHECK(roundTrip(p).profile == v);
+    }
+    for (const auto v : {Rough3dOrder::LevelByLevel, Rough3dOrder::DepthFirst}) {
+        toolpath::Rough3dParams p;
+        p.order = v;
+        CHECK(roundTrip(p).order == v);
+    }
+    for (const bool v : {false, true}) {
+        toolpath::Rough3dParams p;
+        p.avoidMachined = v;
+        CHECK(roundTrip(p).avoidMachined == v);
+    }
 }
