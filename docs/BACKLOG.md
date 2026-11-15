@@ -1531,10 +1531,10 @@ Goal: About 30 tests still assert complexity by CPU-time ratios (perf_test, tool
 Phase: 2   Module: core/io + app   Depends on: T-0311
 Goal: T-0311 delivered Moulding, Project Toolpath, 3D Tabs and Create Component From Toolpath Preview but not rest-tool lists and prior toolpaths for 3D rough/finish, nor the Moulding larger-area clearance tool. The session infers V-carve groups by tool type, which cannot distinguish a 3D rest group from separate toolpaths on reload, so store the group (priors, clearTool) explicitly in the .carv record (minor-version bump, ADR) and wire the forms, rest-machining use in simulation, and tests including old-file load.
 
-### T-0315 .carv 3D rough record drops the T-0304 fields (clearing, profile, order, avoidMachined)   [status: in-progress]
+### T-0315 .carv 3D rough record drops the T-0304 fields (clearing, profile, order, avoidMachined)   [status: verifying]
 Phase: 2   Module: core/io   Depends on: T-0304
 Goal: T-0311's coder observed the 3D rough record codec does not persist the fields added by T-0304 (clearing, profile first/last, order, avoidMachined): they reset to defaults on save/load, silently changing a saved job. Persist them (strict key lists, finite checks, minor-version bump if needed, old files load with the old defaults), byte-identical re-save test, round-trip test for every field, ADR note.
 
-### T-0316 Sculpt preview merged with the other components (T-0309 follow-up)   [status: verifying]
+### T-0316 Sculpt preview merged with the other components (T-0309 follow-up)   [status: done — PR #190]
 Phase: 2   Module: app/viewmodel   Depends on: T-0309
 Goal: Sculpt preview currently shows the working component alone. Compose the rest of the model once at stroke/session start and combine only the working component per mouse move (see ADR-0090 "Not done"), so the preview matches the merged model without O(model cells) work per move. Operation-counter test for per-move cost.
