@@ -1611,7 +1611,7 @@ Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-s
 Acceptance criteria:
   1. Bank patterns match holes on test layouts; unmatched holes are reported; output order minimises moves; round trip and hostile-record tests; ADR.
 
-### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: verifying (dialog -> T-0336)]
+### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: done — PR #203 (dialog -> T-0336, general nester -> T-0337)]
 Phase: 3   Module: core/io + app   Depends on: T-0328
 Goal: Import a parts list (CSV/XML) describing rectangular panels with holes/dados through a user-editable mapping file (column -> part length/width/thickness/material/label/operations), then auto-nest the panels and create Profile/Drilling/Pocket toolpaths. No third-party product names or formats beyond generic CSV/XML.
 Acceptance criteria:
