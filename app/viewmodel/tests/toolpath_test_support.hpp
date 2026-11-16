@@ -84,6 +84,13 @@ inline ToolpathDefinition drillDefinition(const tooling::ToolDatabase& db) {
     return form.definition();
 }
 
+inline ToolpathDefinition drillBankDefinition(const tooling::ToolDatabase& db) {
+    ToolpathForm form(document::ToolpathOperation::DrillBank, document::Units::Millimetres);
+    REQUIRE(form.setTool(db, source("drill-3mm")).ok);
+    REQUIRE(form.setField("cutDepth", "4").ok);
+    return form.definition();
+}
+
 inline ToolpathDefinition engraveDefinition(const tooling::ToolDatabase& db) {
     ToolpathForm form(document::ToolpathOperation::Engrave, document::Units::Millimetres);
     REQUIRE(form.setTool(db, source("v-bit-90")).ok);

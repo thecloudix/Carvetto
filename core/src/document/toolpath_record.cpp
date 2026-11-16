@@ -120,6 +120,31 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", d->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(d->tolerance) : key;
     }
+    if (const auto* b = std::get_if<toolpath::DrillBankParams>(&params)) {
+        std::string key = firstNonFinite({{"start_depth", b->startDepth},
+                                          {"cut_depth", b->cutDepth},
+                                          {"safe_z", b->safeZ},
+                                          {"retract_gap", b->retractGap},
+                                          {"dwell_time", b->dwellTime},
+                                          {"start_position[0]", b->startPosition.x},
+                                          {"start_position[1]", b->startPosition.y},
+                                          {"pitch", b->pitch},
+                                          {"row_offset", b->rowOffset},
+                                          {"column_offset", b->columnOffset},
+                                          {"pitch_tolerance", b->pitchTolerance},
+                                          {"diameter_tolerance", b->diameterTolerance}});
+        for (std::size_t i = 0; key.empty() && i < b->spindleDiameters.size(); ++i) {
+            if (!std::isfinite(b->spindleDiameters[i])) {
+                key = "spindle_diameters[" + std::to_string(i) + "]";
+            }
+        }
+        for (std::size_t i = 0; key.empty() && i < b->spindleDepths.size(); ++i) {
+            if (!std::isfinite(b->spindleDepths[i])) {
+                key = "spindle_depths[" + std::to_string(i) + "]";
+            }
+        }
+        return key.empty() ? nonFiniteTolerance(b->tolerance) : key;
+    }
     if (const auto* e = std::get_if<toolpath::EngraveParams>(&params)) {
         std::string key = firstNonFinite({{"depth", e->depth},
                                           {"safe_z", e->safeZ},

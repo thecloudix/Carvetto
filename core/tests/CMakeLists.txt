@@ -117,6 +117,7 @@ add_executable(carvetto_tests
   document/carv_toolpath_test.cpp
   document/carv_storage_residuals_test.cpp
   document/carv_drill_record_test.cpp
+  document/carv_drill_bank_record_test.cpp
   document/carv_chamfer_record_test.cpp
   document/carv_thread_mill_record_test.cpp
   document/carv_inlay_record_test.cpp
@@ -179,6 +180,7 @@ add_executable(carvetto_tests
   toolpath/enclosed_pieces_test.cpp toolpath/exact_tab_judge_test.cpp
   toolpath/toolpath_residual_scale_test.cpp
   toolpath/drill_test.cpp
+  toolpath/drill_bank_test.cpp
   toolpath/drill_post_test.cpp
   toolpath/chamfer_test.cpp
   toolpath/prism_test.cpp

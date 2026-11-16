@@ -89,7 +89,8 @@ std::string toolFor(ToolpathOperation op, Rng& rng) {
         case ToolpathOperation::Profile:
         case ToolpathOperation::Pocket:
             return rng.pick<std::string>({"end-mill-3mm", "end-mill-6mm", "v-bit-90"});
-        case ToolpathOperation::Drill: return rng.pick<std::string>({"drill-3mm", "end-mill-3mm"});
+        case ToolpathOperation::Drill:
+        case ToolpathOperation::DrillBank: return rng.pick<std::string>({"drill-3mm", "end-mill-3mm"});
         case ToolpathOperation::Engrave: return rng.pick<std::string>({"v-bit-90", "end-mill-3mm"});
         case ToolpathOperation::VCarving:
         case ToolpathOperation::VCarveInlay:
@@ -495,6 +496,7 @@ TEST_CASE("robustness: degenerate and hostile vectors", "[toolpath][robust]") {
                 case ToolpathOperation::LaserCutFill: def = laserDefinition(db); break;
                 case ToolpathOperation::LaserPicture: def = laserPictureDefinition(db); break;
                 case ToolpathOperation::LaserSketch: def = laserSketchDefinition(db); break;
+                case ToolpathOperation::DrillBank: def = drillBankDefinition(db); break;
                 case ToolpathOperation::Prism: def = prismDefinition(db); break;
                 case ToolpathOperation::ImageEngrave: def = photoDefinition(db); break;
                 case ToolpathOperation::VCarveInlay: def = vCarveInlayDefinition(db); break;

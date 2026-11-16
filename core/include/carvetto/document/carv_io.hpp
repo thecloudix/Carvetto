@@ -79,9 +79,12 @@ inline constexpr int kCarvFormatMinorRotaryGaps = 14;
 /// Profile record has the option or a move is compensated.
 inline constexpr int kCarvFormatMinorCutterComp = 15;
 /// 1.16 (T-0324, ADR-0104, ADR-0105) adds Laser Picture and Laser Sketch Engraving records (operations `laser_picture`
-/// and `laser_sketch`); written only when a record is one of them. The newest minor this build writes and reads.
+/// and `laser_sketch`); written only when a record is one of them.
 inline constexpr int kCarvFormatMinorLaserImages = 16;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorLaserImages;
+/// 1.17 (T-0328, ADR-0106) adds Drill Bank records (operation `drill_bank`: the head's spindle pattern and matching
+/// parameters); written only when a record is a drill bank's. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorDrillBank = 17;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorDrillBank;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

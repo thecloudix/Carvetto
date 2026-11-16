@@ -70,6 +70,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "Laser Sketch Engraving";
         case ToolpathOperation::LaserCutFill:
             return "Laser Cut / Fill";
+        case ToolpathOperation::DrillBank:
+            return "Drill Bank";
     }
     return "?";
 }

@@ -19,6 +19,7 @@
 #include "carvetto/toolpath/project3d.hpp"
 #include "carvetto/toolpath/rough3d.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
+#include "carvetto/toolpath/drill_bank.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/laser.hpp"
 #include "carvetto/toolpath/laser_picture.hpp"
@@ -235,6 +236,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::LaserCutFill: def.params = toolpath::LaserCutFillParams{}; break;
         case ToolpathOperation::LaserPicture: def.params = toolpath::LaserPictureParams{}; break;
         case ToolpathOperation::LaserSketch: def.params = toolpath::LaserSketchParams{}; break;
+        case ToolpathOperation::DrillBank: def.params = toolpath::DrillBankParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
         case ToolpathOperation::ImageEngrave: def.params = toolpath::ImageEngraveParams{}; break;
         case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
@@ -322,6 +324,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::LaserCutFill: return "laser_cut_fill";
         case ToolpathOperation::LaserPicture: return "laser_picture";
         case ToolpathOperation::LaserSketch: return "laser_sketch";
+        case ToolpathOperation::DrillBank: return "drill_bank";
         case ToolpathOperation::Prism: return "prism";
         case ToolpathOperation::ImageEngrave: return "image_engrave";
         case ToolpathOperation::VCarveInlay: return "v_carve_inlay";
@@ -346,6 +349,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::LaserCutFill:
         case ToolpathOperation::LaserPicture:
         case ToolpathOperation::LaserSketch: return toolpath::laserToolAllowed(type);
+        case ToolpathOperation::DrillBank: return toolpath::drillToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::ImageEngrave: return toolpath::imageEngraveToolAllowed(type);
         case ToolpathOperation::Rough3d:
@@ -1092,6 +1096,15 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         } else if (op == ToolpathOperation::Drill) {
             toolpath::DrillResult r = toolpath::drillToolpath(contours, tool->tool, tool->data,
                                                               std::get<toolpath::DrillParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::DrillBank) {
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            toolpath::DrillBankResult r = toolpath::drillBankToolpath(
+                contours, tool->tool, tool->data, std::get<toolpath::DrillBankParams>(definition.params), control);
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
