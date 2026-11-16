@@ -311,6 +311,8 @@ add_library(carvetto_core STATIC
   src/io/dxf_import.cpp
   src/io/dxf_export.cpp
   src/io/raster.cpp
+  src/io/parts_import.cpp
+  src/io/parts_build.cpp
   src/io/mesh.cpp
   src/io/export3d.cpp
   src/io/bitmap_trace.cpp
