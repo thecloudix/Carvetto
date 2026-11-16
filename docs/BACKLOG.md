@@ -1586,7 +1586,7 @@ Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither ima
 Acceptance criteria:
   1. Power/dither output verified against reference rasters; model source works with the relief engine; forms and self-test; ADR.
 
-### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: in-progress]
+### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: verifying]
 Phase: 3   Module: core/simulate + core/tooling + core/post + app   Depends on: T-0323
 Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (power x speed vs burn rate -> mark depth/darkness); machine flag for laser-capable posts; post-adaptation guide (power variable, laser blocks) in docs; ship our own laser-capable GRBL-style post with golden tests.
 Acceptance criteria:
