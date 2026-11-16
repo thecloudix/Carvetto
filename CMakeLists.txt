@@ -14,7 +14,8 @@ option(CARVETTO_BUILD_VIEWMODEL "Build the Qt-free app view-model library (alway
 # Warnings as errors everywhere.
 add_library(carvetto_warnings INTERFACE)
 if(MSVC)
-  target_compile_options(carvetto_warnings INTERFACE /W4 /WX /permissive- /utf-8)
+  # /bigobj: large generated variant/visit code (toolpath forms, record codecs) exceeds the default COFF section limit (C1128).
+  target_compile_options(carvetto_warnings INTERFACE /W4 /WX /permissive- /utf-8 /bigobj)
 else()
   target_compile_options(carvetto_warnings INTERFACE -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion -Wsign-conversion)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
