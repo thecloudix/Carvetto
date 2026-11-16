@@ -473,6 +473,72 @@ TEST_CASE("scripting: hostile values crossing the boundary are budgeted", "[scri
     }
 }
 
+TEST_CASE("scripting: conversion work is charged to the instruction budget", "[scripting][hostile]") {
+    // Host calls that convert big values used to cost ~4 VM instructions each however much they
+    // copied, so a loop of them ran for minutes. Conversion in both directions is now paid for.
+    ScriptLimits l;
+    l.maxInstructions = 2'000'000;
+    ScriptHost host(l);
+    std::size_t calls = 0;
+    host.registerFunction("", "echo", [&calls](const ScriptValues& a) {
+        ++calls;
+        return a;
+    });
+    host.registerFunction("", "sink", [&calls](const ScriptValues&) {
+        ++calls;
+        return ScriptValues{};
+    });
+    host.registerFunction("", "big", [&calls](const ScriptValues&) {
+        ++calls;
+        ScriptValue::Array a(50'000, ScriptValue(std::int64_t{7}));
+        return ScriptValues{ScriptValue(std::move(a))};
+    });
+    const std::string mk = "local t = {} for i = 1, 20000 do t[i] = i end ";
+    SECTION("arguments") {
+        const auto r = host.run(mk + "for i = 1, 1000 do sink(t) end return 1", "t");
+        CHECK(r.status == ScriptStatus::InstructionLimit);
+        CHECK(calls < 20);
+    }
+    SECTION("arguments and results") {
+        const auto r = host.run(mk + "for i = 1, 1000 do echo(t) end return 1", "t");
+        CHECK(r.status == ScriptStatus::InstructionLimit);
+        CHECK(calls < 20);
+    }
+    SECTION("results only") {
+        const auto r = host.run("for i = 1, 1000 do big() end return 1", "t");
+        CHECK(r.status == ScriptStatus::InstructionLimit);
+        CHECK(calls < 20);
+    }
+    SECTION("a script cannot swallow the budget error and go on") {
+        const auto r = host.run(mk + "for i = 1, 1000 do pcall(sink, t) end return 1", "t");
+        CHECK(r.status == ScriptStatus::InstructionLimit);
+        CHECK(calls < 20);
+    }
+    SECTION("rejected values cost too") {
+        const auto r = host.run(
+            "local l = {1} for i = 1, 15 do local n = {} for j = 1, 60 do n[j] = l end l = n end "
+            "for i = 1, 1000 do pcall(sink, l) end return 1",
+            "t");
+        CHECK(r.status == ScriptStatus::InstructionLimit);
+        CHECK(calls == 0);
+    }
+    SECTION("the returned value is charged after the run") {
+        ScriptLimits l2;
+        l2.maxInstructions = 100'000;
+        ScriptHost h2(l2);
+        const auto r = h2.run("local t = {} for i = 1, 8000 do t[i] = i end return t", "t");
+        CHECK(r.status == ScriptStatus::InstructionLimit);
+        CHECK(r.returned.empty());
+        const auto ok = h2.run("local t = {} for i = 1, 500 do t[i] = i end return t", "t");
+        REQUIRE(ok.ok());
+        CHECK(ok.instructionsUsed >= 500 * 8);
+    }
+    SECTION("honest use is still cheap") {
+        const auto r = host.run("local t = {1, 2, 3} for i = 1, 100 do t = echo(t) end return t", "t");
+        CHECK(r.ok());
+    }
+}
+
 TEST_CASE("scripting: host function throwing a non-std exception is contained", "[scripting]") {
     ScriptHost host;
     host.registerFunction("", "weird", [](const ScriptValues&) -> ScriptValues { throw 42; });

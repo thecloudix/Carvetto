@@ -195,6 +195,7 @@ endif()
 # a granted `package` cannot load native code on any platform.
 set(_lua_loadlib "${lua_SOURCE_DIR}/src/loadlib.c")
 file(READ "${_lua_loadlib}" _lua_loadlib_src)
+string(REPLACE "\r\n" "\n" _lua_loadlib_src "${_lua_loadlib_src}")
 string(FIND "${_lua_loadlib_src}" "#elif defined(LUA_DL_DLL)" _lua_dl_at)
 if(NOT _lua_dl_at EQUAL -1)
   string(REPLACE "#elif defined(LUA_DL_DLL)" "#elif 0 /* Carvetto T-0330: native loading disabled */" _lua_loadlib_src "${_lua_loadlib_src}")

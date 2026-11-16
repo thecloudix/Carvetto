@@ -6,7 +6,9 @@
 #include <lua.h>
 #include <lualib.h>
 
+#include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <memory>
 #include <new>
@@ -167,6 +169,14 @@ namespace {
 
 // Work budget of one conversion Lua -> host. A table that is a shared DAG expands to exponentially
 // many copies, so the total number of values and bytes is bounded, not only the depth.
+constexpr const char* kBudgetWhy = "instruction budget exceeded";
+constexpr std::uint64_t kUnitsPerValue = 8;  // budget units per value visited, either direction
+constexpr std::uint64_t kUnitsPerEntry = 4;  // per table entry walked while checking the shape
+
+std::uint64_t remainingUnits(const RunCtx* c) {
+    return c->instr >= c->lim->maxInstructions ? 0 : c->lim->maxInstructions - c->instr;
+}
+
 struct Conv {
     int maxDepth = 0;
     std::uint64_t elementsLeft = 0;
@@ -174,6 +184,21 @@ struct Conv {
     const std::atomic<bool>* cancel = nullptr;
     std::uint64_t polled = 0;
     const char* why = nullptr;  // set when the conversion fails for a budget reason
+    // Instruction-budget units this conversion may still spend (the run's remaining budget) and
+    // has spent. The caller adds `unitsUsed` to the run's counter, so conversion work is paid for
+    // like VM work and one conversion cannot outlast the budget.
+    std::uint64_t unitsLeft = 0;
+    std::uint64_t unitsUsed = 0;
+
+    bool spend(std::uint64_t u) {
+        if (u > unitsLeft) {
+            why = kBudgetWhy;
+            return false;
+        }
+        unitsLeft -= u;
+        unitsUsed += u;
+        return true;
+    }
 };
 
 // Never raises a Lua error (it also runs outside any protected call); returns false for a value
@@ -186,6 +211,9 @@ bool toValue(lua_State* L, int idx, int depth, Conv& cv, ScriptValue& out) {
         return false;
     }
     --cv.elementsLeft;
+    if (!cv.spend(kUnitsPerValue)) {
+        return false;
+    }
     if ((++cv.polled & 1023u) == 0 && cv.cancel != nullptr &&
         cv.cancel->load(std::memory_order_relaxed)) {
         cv.why = "script cancelled";
@@ -214,6 +242,9 @@ bool toValue(lua_State* L, int idx, int depth, Conv& cv, ScriptValue& out) {
                 return false;
             }
             cv.bytesLeft -= n;
+            if (!cv.spend(n / 8)) {
+                return false;
+            }
             out = ScriptValue(std::string(s, n));
             return true;
         }
@@ -231,6 +262,10 @@ bool toValue(lua_State* L, int idx, int depth, Conv& cv, ScriptValue& out) {
             while (lua_next(L, idx) != 0) {
                 ++count;
                 lua_pop(L, 1);
+                if (!cv.spend(kUnitsPerEntry)) {
+                    lua_pop(L, 1);  // the key
+                    return false;
+                }
                 if (count > n) {
                     lua_pop(L, 1);  // the key
                     return false;   // has keys outside the sequence
@@ -260,8 +295,41 @@ bool toValue(lua_State* L, int idx, int depth, Conv& cv, ScriptValue& out) {
 }
 
 // May raise a Lua error (memory) or throw ScriptError: only called inside protected calls.
-void pushValue(lua_State* L, const ScriptValue& v, int depth, int maxDepth) {
+// Work done while pushing host results into Lua. Like Conv it is paid from the run's budget; when
+// it runs out the run's trip flags are set (so the next instruction raises even if the script
+// swallows this error) and ScriptError is thrown.
+struct PushCharge {
+    lua_State* L = nullptr;
+    RunCtx* rc = nullptr;
+    std::uint64_t left = 0;
+    std::uint64_t used = 0;
+    std::uint64_t polled = 0;
+
+    void spend(std::uint64_t u) {
+        if (u > left) {
+            rc->instr = rc->lim->maxInstructions;
+            rc->tripInstr = true;
+            rc->tripText = kBudgetWhy;
+            tripAll(L);
+            throw ScriptError{kBudgetWhy};
+        }
+        left -= u;
+        used += u;
+        if ((++polled & 1023u) == 0 && rc->cancel != nullptr &&
+            rc->cancel->load(std::memory_order_relaxed)) {
+            rc->tripCancel = true;
+            rc->tripText = "script cancelled";
+            tripAll(L);
+            throw ScriptError{"script cancelled"};
+        }
+    }
+};
+
+void pushValue(lua_State* L, const ScriptValue& v, int depth, int maxDepth, PushCharge* pc) {
     luaL_checkstack(L, 4, "too many values");
+    if (pc != nullptr) {
+        pc->spend(kUnitsPerValue);
+    }
     if (v.isNil()) {
         lua_pushnil(L);
     } else if (v.isBool()) {
@@ -272,6 +340,9 @@ void pushValue(lua_State* L, const ScriptValue& v, int depth, int maxDepth) {
         lua_pushnumber(L, static_cast<lua_Number>(v.asNumber()));
     } else if (v.isString()) {
         const std::string& s = v.asString();
+        if (pc != nullptr) {
+            pc->spend(s.size() / 8);
+        }
         lua_pushlstring(L, s.data(), s.size());
     } else {
         if (depth >= maxDepth) {
@@ -281,7 +352,7 @@ void pushValue(lua_State* L, const ScriptValue& v, int depth, int maxDepth) {
         lua_createtable(L, static_cast<int>(a.size()), 0);
         lua_Integer i = 1;
         for (const ScriptValue& e : a) {
-            pushValue(L, e, depth + 1, maxDepth);
+            pushValue(L, e, depth + 1, maxDepth, pc);
             lua_rawseti(L, -2, i++);
         }
     }
@@ -299,12 +370,18 @@ int hostCallImpl(lua_State* L, std::string& err) {
     cv.elementsLeft = rc->lim->maxValueElements;
     cv.bytesLeft = rc->lim->maxValueBytes;
     cv.cancel = rc->cancel;
+    cv.unitsLeft = remainingUnits(rc);
     ScriptValues args;
     const int n = lua_gettop(L);
     args.reserve(static_cast<std::size_t>(n));
     for (int i = 1; i <= n; ++i) {
         ScriptValue a;
         if (!toValue(L, i, 0, cv, a)) {
+            rc->instr += cv.unitsUsed;
+            if (cv.why != nullptr && std::strcmp(cv.why, kBudgetWhy) == 0) {
+                rc->instr = std::max(rc->instr, rc->lim->maxInstructions);
+                checkBudget(L, rc);  // trips and raises
+            }
             if (cv.why != nullptr) {
                 if (rc->cancel != nullptr && std::string(cv.why) == "script cancelled") {
                     rc->tripCancel = true;
@@ -321,22 +398,32 @@ int hostCallImpl(lua_State* L, std::string& err) {
         }
         args.push_back(std::move(a));
     }
+    rc->instr += cv.unitsUsed;
+    checkBudget(L, rc);
     ScriptValues results;
+    bool failed = true;
+    PushCharge pc;
+    pc.L = L;
+    pc.rc = rc;
+    pc.left = remainingUnits(rc);
     try {
         results = (*fn)(args);
         for (const ScriptValue& r : results) {
-            pushValue(L, r, 0, maxDepth);
+            pushValue(L, r, 0, maxDepth, &pc);
         }
+        failed = false;
     } catch (const ScriptError& e) {
         err = e.message;
-        return -1;
     } catch (const std::exception& e) {
         err = e.what();
-        return -1;
     } catch (...) {
         err = "host function threw an unknown exception";
+    }
+    rc->instr += pc.used;
+    if (failed) {
         return -1;
     }
+    checkBudget(L, rc);
     return static_cast<int>(results.size());
 }
 
@@ -614,7 +701,7 @@ int setupState(lua_State* L) {
             lua_pushlightuserdata(L, const_cast<HostFunction*>((*a->fns)[i]));
             lua_pushcclosure(L, hostCall, 1);
         } else {
-            pushValue(L, *(*a->values)[i], 0, ctxOf(L)->lim->maxValueDepth);
+            pushValue(L, *(*a->values)[i], 0, ctxOf(L)->lim->maxValueDepth, nullptr);
         }
         lua_setfield(L, -2, name.c_str());
         lua_pop(L, 1);
@@ -785,13 +872,18 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
             cv.elementsLeft = limits_.maxValueElements;
             cv.bytesLeft = limits_.maxValueBytes;
             cv.cancel = cancel;
+            cv.unitsLeft = remainingUnits(&ctx);
             for (int i = 2; i <= top; ++i) {
                 ScriptValue v;
                 if (!toValue(L, i, 0, cv, v)) {
+                    ctx.instr += cv.unitsUsed;
                     if (cv.why != nullptr) {
                         const bool cancelled = std::string(cv.why) == "script cancelled";
+                        const bool budget = std::strcmp(cv.why, kBudgetWhy) == 0;
                         res.returned.clear();
-                        finish(cancelled ? ScriptStatus::Cancelled : ScriptStatus::RuntimeError,
+                        finish(cancelled ? ScriptStatus::Cancelled
+                               : budget  ? ScriptStatus::InstructionLimit
+                                         : ScriptStatus::RuntimeError,
                                std::string("returned value: ") + cv.why, {});
                         return res;
                     }
@@ -799,6 +891,7 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
                 }
                 res.returned.push_back(std::move(v));
             }
+            ctx.instr += cv.unitsUsed;
             finish(ScriptStatus::Ok, {}, {});
             return res;
         }

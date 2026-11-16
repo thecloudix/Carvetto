@@ -66,6 +66,15 @@ on GCC and MSVC.
      to the previous level, 15 levels) expands to 60^15 copies in the C++ heap. Over budget, a host
      call fails with a catchable script error and a returned value ends the run with RuntimeError.
      Cancellation is polled every 1024 values. Host exceptions of any type become script errors.
+     *Conversion is paid for:* the budgets above bound one conversion, but a loop of host calls could
+     repeat a maximal one millions of times for ~4 VM instructions each. So every value visited costs 8
+     budget units (a table entry walked during the shape check 4, strings 1 per 8 bytes), in both
+     directions (arguments, host results, the returned value). A conversion may spend at most the run's
+     remaining budget and stops there (trip -> InstructionLimit, also for rejected values), and the units
+     are added to the instruction counter afterwards; the post-run conversion is accounted the same way
+     (a script that spent its whole budget cannot also return a large table). Rule for the class: any
+     host-boundary work done outside the instruction hook is charged to the budget, bounded, or both. The
+     work a host function itself does is the registering code's responsibility.
    * *Output:* `print` is captured, not written anywhere, and bounded by `maxOutputBytes`.
    * *Recursion:* Lua's own limits stay (about 200 nested C calls or metamethods, 1 M stack slots), and the
      heap limit bounds them in practice; the result is a normal error (`stack overflow`).
