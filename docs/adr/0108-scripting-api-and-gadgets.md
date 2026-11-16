@@ -44,11 +44,17 @@ vendor SDK.
    out and roll everything back. The instruction, string and value budgets still bound what the script
    itself does between host calls, and `GadgetLimits` caps what a script can ask the host for per run
    (objects 100 000 including layers, layers 1 000, changed variables 10 000, toolpaths 64, custom moves
-   500 000, dialogs 100, log lines and bytes). Waiting is bounded too: the combined time in dialogs and
-   toolpath calculation is capped at 30 minutes (`maxPausedNanos`, checked before and after every such
-   call; a blocking call itself is not interrupted, and the core operations are not interruptible, so
-   the bound is "the run that crosses it ends at the next call"; a script cannot `pcall` its way out of
-   it). Every app dialog a gadget opens (message, confirmation, form) has an "Abort gadget" button that
+   500 000, dialogs 100, log lines and bytes). Waiting is bounded too, with two separate budgets: dialog time (user-driven; 30 minutes,
+   `maxPausedNanos`) and toolpath calculation time (3 minutes, `maxCalculationNanos`; no user is deciding
+   anything, and ~60 calculations of 29 s must not freeze the application for half an hour). Both are
+   checked before and after every such call; crossing either, and crossing the dialog cap, fails the run
+   and cannot be swallowed by `pcall` (the Session remembers the overrun and fails the run at the end
+   whatever the script did). A dialog itself is not interruptible (the user has Abort); a toolpath
+   calculation is: while it runs a watchdog thread (real steady clock, 20 ms poll) raises
+   `ToolpathRequest::cancel` when the calculation outlives what is left of its budget or the user's
+   cancel flag is set, and the session passes that token to `ToolpathJob::run` (the operations that poll
+   a cancel token stop; an operation that does not poll one still runs to its end and the run then
+   fails at the next check). Every app dialog a gadget opens (message, confirmation, form) has an "Abort gadget" button that
    sets the run's cancel flag (`GadgetRunOptions::cancel`): when the call returns the run ends as
    `Cancelled` and is rolled back, even if the script was about to finish.
 7. **Failure wording.** `describeFailure` gives each status a title and a sentence a user can act on, always
@@ -69,13 +75,22 @@ vendor SDK.
    user settings (real runs only; the self-test never touches settings) and win over the manifest.
 10. **Install New Gadget** takes a folder (folder picker), shows the manifest, the menu path, the shortcut
     and a trust warning, then copies ONLY `manifest.json` and `gadget.lua` into a new folder named after
-    the gadget (sanitised to `[a-z0-9-]`, so a name cannot escape the gadgets folder; a name with
-    non-ASCII characters, or one that sanitises to nothing, gets an 8-hex-digit FNV-1a hash of the whole
-    name appended so different names never share a folder; Windows device names get `-gadget`) via a
+    the gadget (`<slug>-<16 hex>`: a lower-case `[a-z0-9-]` slug of at most 40 characters, so a name
+    cannot escape the gadgets folder, and ALWAYS a 64-bit FNV-1a hash of every byte of the exact name, so
+    'My Gadget', 'my-gadget', 'My_Gadget', 'a/b' and 'a\\b', 'CON' and 'con gadget', and names sharing a
+    long prefix all get different folders; at most 57 characters; the suffix also rules out Windows device
+    names; FNV-1a is not collision-proof against a deliberate attacker, so `installGadget` additionally
+    reads the manifest of whatever already sits in the target folder and refuses, even with replace, when
+    its name differs from the new one: a different gadget is never overwritten, and the replace prompt
+    only appears for the same name) via a
     temporary folder and a rename; an installed gadget is replaced only after a second confirmation, and
     safely: the old folder is renamed aside, the new one renamed in, the old one deleted only on
     success and put back if the rename in fails. Menu strings from a manifest are shown literally: `&`
-    is doubled before Qt sees it, so `&Hack` is not a mnemonic marker.
+    is doubled before Qt sees it, so `&Hack` is not a mnemonic marker. So is every other piece of text a
+    gadget, manifest or script supplies: message and confirm boxes, form labels, the install and error
+    boxes are `Qt::PlainText` with no text interaction (Qt's default AutoText would have shown a
+    clickable `<a href>`, and `<img>` can read a file URL), tooltips are HTML-escaped, status-bar text is
+    drawn plain by Qt; the self-test asserts a link, `<b>` and `<img>` come out literally.
 11. **Toolpaths.** `toolpath.create(kind, objects, params)`: kinds `profile`, `pocket`, `drill`, `engrave`.
     `params` uses the field and choice ids of the operation's own form (`cutDepth`, `passDepth`,
     `startDepth`, `safeZ`, `allowance`, `side`, `direction`, `strategy`, ... see `toolpath_form.hpp`) plus
@@ -128,6 +143,20 @@ flipped, abort replaced by commit, selection not restored, rotation centre at th
 form maximum exclusive, locked layers allowed, log byte cap removed, feed `< 0` instead of `<= 0`, dwell
 seconds without the lower bound. One (the toolpath cap in `create`) first SURVIVED a test that only
 reached the cap through `create_custom`, and led to the stronger "caps are exact" test.
+
+Round 3 (verifier round 2): `object.set_layer(unlockedObject, lockedLayer)` is now in the locked-layer
+attempts (mutant "target layer lock not checked" survived before; applied by hand, test fails, reverted);
+the dialog cap survives `pcall` (mutant "overrun not recorded in countDialog" killed by the pcall loop
+test); the calculation budget has exact boundary tests on the fake clock (3000 allowed, 4500 not, one
+call of 3001 not, dialog time does not eat it, 63 x 29 s fails) and a real-time test of the cancel
+token; folder names have a test for every collision pair the verifier found, the 50-character prefix
+case and a different-gadget-in-the-folder refusal. Also applied by hand and seen failing in round 3: the pcall-swallowable dialog cap, the calculation
+bucket merged into the dialog bucket, a watchdog that never raises the token, `set_layer` without the
+lock check on the target layer, the hash only appended for non-ASCII names (the old behaviour), and the
+different-gadget check removed; in the Qt self-test: `makePlain` dropped from the gadget box, the
+install/confirm box, a form label built as a default (AutoText) label, and `setTextFormat` removed from
+`makePlainLabel`. Not covered by a test: the real-time watchdog under a calculation that never polls its
+token (documented above: it then runs to its end and the run fails at the next check).
 
 The verifier of round 1 found four survivors that round 1 had wrongly counted as killed or never tried,
 all now killed (each applied by hand, test seen failing, reverted): removing the pause around

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 #include <cmath>
 #include <cstdio>
 #include <memory>
@@ -69,58 +72,133 @@ struct Session {
     std::size_t dialogCalls{0};
     std::size_t layerCalls{0};
     std::size_t variableEdits{0};
-    bool pausedOver{false};  ///< the waiting budget was crossed (a script cannot pcall its way out of it)
+    /// Set when a cap that a script must not be able to swallow with pcall is crossed (waiting
+    /// budgets, the dialog cap): the run fails at the end whatever the script did with the error.
+    std::string overrun;
     const std::atomic<bool>* cancel{nullptr};
 
     Session(Document& d, const GadgetServices& se, const GadgetLimits& g) : doc(d), sv(se), gl(g) {}
 
     std::function<std::uint64_t()> base;
-    std::uint64_t pausedNs{0};
+    std::uint64_t pausedNs{0};   ///< all time spent in host callbacks: stopped on the deadline clock
+    std::uint64_t dialogNs{0};   ///< ... of which dialogs (user time; budget `maxPausedNanos`)
+    std::uint64_t calcNs{0};     ///< ... of which toolpath calculation (budget `maxCalculationNanos`)
+    std::atomic<bool> calcCancel{false};  ///< raised by the watchdog; read by the calculation
 
     /// The deadline clock: the time source minus the time spent paused. (The script thread is the
     /// only reader and it is inside the host callback while paused, so no read sees a pause in
     /// progress.)
     std::uint64_t now() const { return base() - pausedNs; }
     /// Stops the deadline clock while host code the script waits for (a dialog, a toolpath
-    /// calculation) runs.
+    /// calculation) runs, and books the time to `bucket`.
     struct Pause {
         Session& s;
+        std::uint64_t& bucket;
         std::uint64_t start;
-        explicit Pause(Session& se) : s(se), start(se.base()) {}
-        ~Pause() { s.pausedNs += s.base() - start; }
+        Pause(Session& se, std::uint64_t& b) : s(se), bucket(b), start(se.base()) {}
+        ~Pause() {
+            const std::uint64_t d = s.base() - start;
+            s.pausedNs += d;
+            bucket += d;
+        }
         Pause(const Pause&) = delete;
         Pause& operator=(const Pause&) = delete;
     };
 
     bool cancelled() const { return cancel != nullptr && cancel->load(std::memory_order_relaxed); }
 
+    enum class Wait { Dialog, Calculation };
+
+    /// Ends a toolpath calculation that overruns its budget or that the user aborts: a watchdog thread
+    /// raises `calcCancel`, which the calculation polls (`ToolpathRequest::cancel`). It uses the real
+    /// steady clock (the injected clock belongs to the script thread); the exact accounting of the
+    /// budget is still done on the injected clock by `Pause`.
+    class Watchdog {
+    public:
+        Watchdog(Session& s, std::uint64_t remainingNs) : s_(s), remaining_(remainingNs) {
+            thread_ = std::thread([this] { loop(); });
+        }
+        ~Watchdog() {
+            {
+                std::lock_guard<std::mutex> lock(m_);
+                done_ = true;
+            }
+            cv_.notify_all();
+            thread_.join();
+        }
+        Watchdog(const Watchdog&) = delete;
+        Watchdog& operator=(const Watchdog&) = delete;
+        bool tripped() const { return tripped_.load(); }
+
+    private:
+        void loop() {
+            const auto start = std::chrono::steady_clock::now();
+            std::unique_lock<std::mutex> lock(m_);
+            while (!done_) {
+                const auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                         std::chrono::steady_clock::now() - start)
+                                         .count();
+                const bool over = static_cast<std::uint64_t>(elapsed) > remaining_;
+                if (over || s_.cancelled()) {
+                    if (over) {
+                        tripped_ = true;
+                    }
+                    s_.calcCancel = true;
+                    return;
+                }
+                cv_.wait_for(lock, std::chrono::milliseconds(20));
+            }
+        }
+        Session& s_;
+        std::uint64_t remaining_;
+        std::mutex m_;
+        std::condition_variable cv_;
+        bool done_{false};
+        std::atomic<bool> tripped_{false};
+        std::thread thread_;
+    };
+
     /// Runs host code the script waits for (a dialog, a toolpath calculation) with the deadline clock
-    /// stopped. The combined time of all such calls is capped (`maxPausedNanos`), and a cancel
-    /// request (the user's Abort) ends the run when the call returns.
+    /// stopped. Dialog time and calculation time have separate budgets (`maxPausedNanos`,
+    /// `maxCalculationNanos`); crossing either fails the run and cannot be swallowed by pcall. A
+    /// calculation is also cut short (cancel token) when its budget runs out or the user aborts. A
+    /// cancel request (the user's Abort) ends the run when the call returns.
     template <class F>
-    auto paused(const std::string& fn, F&& call) {
+    auto paused(const std::string& fn, Wait kind, F&& call) {
+        std::uint64_t& bucket = kind == Wait::Dialog ? dialogNs : calcNs;
+        const std::uint64_t limit = kind == Wait::Dialog ? gl.maxPausedNanos : gl.maxCalculationNanos;
+        bool watchdogTripped = false;
         const auto check = [&] {
-            if (pausedNs > gl.maxPausedNanos) {
-                pausedOver = true;
-                fail(fn, "this gadget spent too long waiting for dialogs and calculations (limit " +
-                             std::to_string(gl.maxPausedNanos / 1'000'000'000ull) + " seconds)");
+            if (bucket > limit || watchdogTripped) {
+                const std::string what = kind == Wait::Dialog ? "dialogs" : "toolpath calculations";
+                overrun = "this gadget spent too long waiting for " + what + " (limit " +
+                          std::to_string(limit / 1'000'000'000ull) + " seconds)";
+                fail(fn, overrun);
             }
             if (cancelled()) {
                 fail(fn, "script cancelled");
             }
         };
         check();
-        if constexpr (std::is_void_v<decltype(call())>) {
-            {
-                Pause pause(*this);
-                call();
+        const auto guarded = [&](auto&& body) {
+            Pause pause(*this, bucket);
+            if (kind == Wait::Calculation) {
+                calcCancel = false;
+                Watchdog dog(*this, limit - bucket);
+                struct Done {
+                    Watchdog& d;
+                    bool& flag;
+                    ~Done() { flag = d.tripped(); }
+                } done{dog, watchdogTripped};
+                return body();
             }
+            return body();
+        };
+        if constexpr (std::is_void_v<decltype(call())>) {
+            guarded([&] { call(); });
             check();
         } else {
-            auto r = [&] {
-                Pause pause(*this);
-                return call();
-            }();
+            auto r = guarded([&] { return call(); });
             check();
             return r;
         }
@@ -128,7 +206,8 @@ struct Session {
 
     void countDialog(const std::string& fn) {
         if (++dialogCalls > gl.maxDialogs) {
-            fail(fn, "this gadget opened too many dialogs (limit " + std::to_string(gl.maxDialogs) + ")");
+            overrun = "this gadget opened too many dialogs (limit " + std::to_string(gl.maxDialogs) + ")";
+            fail(fn, overrun);
         }
     }
 };
@@ -1178,7 +1257,10 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         if (++s.toolpathCalls > s.gl.maxToolpaths) {
             fail(fn, "this gadget created too many toolpaths (limit " + std::to_string(s.gl.maxToolpaths) + ")");
         }
-        const ToolpathCreated r = s.paused(fn, [&] { return s.sv.createToolpath(req); });
+        const ToolpathCreated r = s.paused(fn, Session::Wait::Calculation, [&] {
+            req.cancel = &s.calcCancel;
+            return s.sv.createToolpath(req);
+        });
         if (!r.ok) {
             fail(fn, r.message.empty() ? std::string("the toolpath could not be calculated") : r.message);
         }
@@ -1232,7 +1314,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
             fail(fn, "no user interface available");
         }
         s.countDialog(fn);
-        std::optional<ScriptValue::Map> got = s.paused(fn, [&] { return s.sv.ui.form(spec); });
+        std::optional<ScriptValue::Map> got = s.paused(fn, Session::Wait::Dialog, [&] { return s.sv.ui.form(spec); });
         if (!got) {
             return one(ScriptValue());
         }
@@ -1248,7 +1330,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
             fail(fn, "no user interface available");
         }
         s.countDialog(fn);
-        s.paused(fn, [&] { s.sv.ui.message(text); });
+        s.paused(fn, Session::Wait::Dialog, [&] { s.sv.ui.message(text); });
         return ScriptValues{};
     });
     reg("carvetto.ui", "confirm", [&s](const ScriptValues& a) {
@@ -1261,7 +1343,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
             fail(fn, "no user interface available");
         }
         s.countDialog(fn);
-        return one(ScriptValue(s.paused(fn, [&] { return s.sv.ui.confirm(text); })));
+        return one(ScriptValue(s.paused(fn, Session::Wait::Dialog, [&] { return s.sv.ui.confirm(text); })));
     });
 
     // ---- run -----------------------------------------------------------------------------------
@@ -1276,10 +1358,11 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         result.script.status = ScriptStatus::Cancelled;
         result.script.message = "script cancelled";
     }
-    if (s.pausedOver && result.script.ok()) {
+    if (!s.overrun.empty() && result.script.ok()) {
+        // A cap that was crossed fails the run even when the script swallowed the error with pcall.
         result.script.status = ScriptStatus::RuntimeError;
         result.script.chunkName = std::string(chunkName);
-        result.script.message = "this gadget spent too long waiting for dialogs and calculations";
+        result.script.message = s.overrun;
     }
     if (result.script.ok()) {
         undo.endMacro();

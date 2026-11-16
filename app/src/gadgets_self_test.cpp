@@ -5,13 +5,16 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QAbstractButton>
 #include <QKeySequence>
+#include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <filesystem>
+#include <functional>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -351,6 +354,87 @@ std::string gadgetsSelfTest(MainWindow& window) {
         const auto junk = gadgets->installGadget(root / "junk");
         GD_REQUIRE(!junk.has_value(), "a folder with no usable manifest was installed");
         GD_REQUIRE(gadgets->manager().gadgets().size() == 7, "the gadget count is wrong after installs");
+    }
+
+    // 9. Text from a gadget is shown literally: no clickable links, no markup (message, confirm,
+    //    form labels, the install question).
+    {
+        const QString markup = QStringLiteral("<a href=\"https://example.com\">click me</a> <b>bold</b> <img src=\"file:///etc/hostname\">");
+        const std::string markupUtf8 = markup.toStdString();
+        scripting::GadgetUi realUi = gadgets->realUi();
+        QString seenText;
+        bool plain = false;
+        bool noLinks = false;
+        bool sawBox = false;
+        std::function<void(QString)> poll = [&](const QString& clickName) {
+            auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget());
+            if (box == nullptr) {
+                QTimer::singleShot(50, [&poll, clickName]() { poll(clickName); });  // not shown yet (loaded machine)
+                return;
+            }
+            sawBox = true;
+            seenText = box->text();
+            plain = box->textFormat() == Qt::PlainText;
+            noLinks = true;
+            for (QLabel* label : box->findChildren<QLabel*>()) {
+                const Qt::TextInteractionFlags flags = label->textInteractionFlags();
+                if (label->objectName() == QStringLiteral("qt_msgbox_label") &&
+                    ((flags & Qt::LinksAccessibleByMouse) != 0 || (flags & Qt::LinksAccessibleByKeyboard) != 0)) {
+                    noLinks = false;
+                }
+            }
+            for (QAbstractButton* b : box->buttons()) {
+                if (QString(b->text()).remove(QLatin1Char('&')) == clickName) {
+                    b->click();
+                    return;
+                }
+            }
+            box->accept();
+        };
+        const auto inspect = [&](const char* clickName) {
+            QTimer::singleShot(100, [&poll, name = QString::fromLatin1(clickName)]() { poll(name); });
+        };
+        inspect("OK");
+        realUi.message(markupUtf8);
+        GD_REQUIRE(sawBox && plain && noLinks && seenText == markup, "a gadget message box does not show its text literally");
+        sawBox = false;
+        inspect("Yes");
+        const bool yes = realUi.confirm(markupUtf8);
+        GD_REQUIRE(sawBox && plain && noLinks && seenText == markup && yes, "a gadget confirm box does not show its text literally");
+
+        scripting::FormSpec spec;
+        spec.title = "T";
+        scripting::FormField f;
+        f.name = "a";
+        f.label = markupUtf8;
+        f.kind = scripting::FormFieldKind::Text;
+        f.defaultValue = scripting::ScriptValue("x");
+        spec.fields = {f};
+        GadgetFormDialog form(spec, {}, &window);
+        bool labelFound = false;
+        for (QLabel* label : form.findChildren<QLabel*>()) {
+            if (label->text() == markup) {
+                labelFound = true;
+                GD_REQUIRE(label->textFormat() == Qt::PlainText && !label->openExternalLinks() &&
+                               label->textInteractionFlags() == Qt::NoTextInteraction,
+                           "a form label shows markup");
+            }
+        }
+        GD_REQUIRE(labelFound, "the form label was altered or missing");
+        GD_REQUIRE(plainToolTip(markup).contains(QStringLiteral("&lt;a href")) && !plainToolTip(markup).contains(QStringLiteral("<a ")),
+                   "a tooltip would render markup");
+
+        // the install question names the gadget and its description from the manifest
+        const fs::path evil = viewmodel::pathFromUtf8(tmp.path().toStdString()) / "download" / "evil";
+        writeGadget(evil.parent_path(), "evil",
+                    "{\"name\": \"<b>Evil</b>\", \"api_version\": 1, \"menu\": \"Samples/Evil\", \"description\": \"<a href='https://example.com'>go</a>\"}",
+                    "return 1");
+        sawBox = false;
+        inspect("No");
+        const auto declined = installGadgetDialog(&window, gadgets->manager(), evil, {});
+        GD_REQUIRE(sawBox && plain && noLinks && seenText.contains(QStringLiteral("<b>Evil</b>")) &&
+                       seenText.contains(QStringLiteral("<a href='https://example.com'>go</a>")) && !declined.has_value(),
+                   "the install question does not show the manifest text literally");
     }
 
     gadgets->setUiOverride(std::nullopt);

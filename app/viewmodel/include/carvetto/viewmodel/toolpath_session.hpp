@@ -222,8 +222,9 @@ class ToolpathSession {
     /// when given.
     std::vector<ToolpathJob> prepareRecalculateAll(bool onlyStale, std::vector<ToolpathOutcome>* refused = nullptr);
 
-    /// `prepare` + `run` + `apply`.
-    ToolpathOutcome add(const ToolpathDefinition& definition);
+    /// `prepare` + `run` + `apply`. `cancel` (optional, must outlive the call) is passed to the
+    /// calculation: when it reads true the calculation stops and nothing is added.
+    ToolpathOutcome add(const ToolpathDefinition& definition, const std::atomic<bool>* cancel = nullptr);
     /// Recalculates toolpath `id` with a new definition and replaces it (and the other toolpaths of
     /// its V-carve). The old records stay when the calculation fails.
     ToolpathOutcome update(document::ToolpathId id, const ToolpathDefinition& definition);
@@ -329,7 +330,7 @@ class ToolpathSession {
     ToolpathOutcome applyOne(const ToolpathCalculation& calculation, const char* text);
     BatchOutcome applyMany(const std::vector<ToolpathCalculation>& calculations, const char* text);
     ToolpathOutcome runAndApply(const ToolpathDefinition& definition, std::optional<document::ToolpathId> target,
-                                const char* text);
+                                const char* text, const std::atomic<bool>* cancel = nullptr);
     std::string recordName(const document::ToolpathRecord& record, const std::string& paramsName);
 
     document::Document* doc_{nullptr};

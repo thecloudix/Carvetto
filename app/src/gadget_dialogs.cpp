@@ -40,6 +40,25 @@ std::vector<std::string> shortcutChoices() {
 
 }  // namespace
 
+QLabel* makePlainLabel(const QString& text, QWidget* parent) {
+    auto* label = new QLabel(parent);
+    label->setTextFormat(Qt::PlainText);
+    label->setTextInteractionFlags(Qt::NoTextInteraction);
+    label->setOpenExternalLinks(false);
+    label->setText(text);
+    return label;
+}
+
+void makePlain(QMessageBox& box) {
+    box.setTextFormat(Qt::PlainText);
+    box.setTextInteractionFlags(Qt::NoTextInteraction);
+}
+
+QString plainToolTip(const QString& text) {
+    // "<qt>" makes Qt render the escaped text as rich text, which shows it literally.
+    return QStringLiteral("<qt>") + text.toHtmlEscaped() + QStringLiteral("</qt>");
+}
+
 GadgetFormDialog::GadgetFormDialog(const scripting::FormSpec& spec, const GadgetFormChoices& choices, QWidget* parent)
     : QDialog(parent) {
     setWindowTitle(qs(spec.title));
@@ -104,7 +123,7 @@ GadgetFormDialog::GadgetFormDialog(const scripting::FormSpec& spec, const Gadget
             }
         }
         w->setObjectName(qs("gadgetField_" + f.name));
-        form->addRow(qs(f.label), w);
+        form->addRow(makePlainLabel(qs(f.label), this), w);
         rows_.push_back(Row{f, w});
     }
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -190,6 +209,7 @@ bool GadgetFormDialog::setValue(const std::string& name, const ScriptValue& valu
 
 void showGadgetError(QWidget* parent, const viewmodel::GadgetErrorReport& report) {
     QMessageBox box(QMessageBox::Warning, qs(report.title), qs(report.summary), QMessageBox::Ok, parent);
+    makePlain(box);
     box.setObjectName(QStringLiteral("gadgetErrorDialog"));
     if (!report.detail.empty()) {
         box.setDetailedText(qs(report.detail));
@@ -203,10 +223,10 @@ GadgetShortcutsDialog::GadgetShortcutsDialog(viewmodel::GadgetManager& manager, 
     setObjectName(QStringLiteral("gadgetShortcutsDialog"));
     auto* layout = new QVBoxLayout(this);
     top_ = layout;
-    layout->addWidget(new QLabel(QStringLiteral("Choose a Ctrl+F-key for each gadget. A key another gadget uses is refused."), this));
+    layout->addWidget(makePlainLabel(QStringLiteral("Choose a Ctrl+F-key for each gadget. A key another gadget uses is refused."), this));
     body_ = new QWidget(this);
     layout->addWidget(body_);
-    message_ = new QLabel(this);
+    message_ = makePlainLabel(QString(), this);
     layout->addWidget(message_);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -239,7 +259,7 @@ void GadgetShortcutsDialog::reload() {
         if (!row.note.empty()) {
             label += QStringLiteral(" (") + qs(row.note) + QStringLiteral(")");
         }
-        form->addRow(label, combo);
+        form->addRow(makePlainLabel(label, fresh), combo);
         combos_.push_back(combo);
     }
     top_->replaceWidget(body_, fresh);
@@ -282,13 +302,17 @@ std::optional<scripting::InstallResult> installGadgetDialog(QWidget* parent, vie
         if (ask) {
             return ask(text);
         }
-        return QMessageBox::question(parent, title, text, QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
+        QMessageBox mb(QMessageBox::Question, title, text, QMessageBox::Yes | QMessageBox::No, parent);
+        makePlain(mb);
+        return mb.exec() == QMessageBox::Yes;
     };
     const scripting::InstallResult seen = manager.inspect(folder);
     if (!seen.ok) {
         if (!ask) {
-            QMessageBox::warning(parent, QStringLiteral("Install New Gadget"),
-                                 QStringLiteral("This folder is not a gadget: ") + qs(seen.error));
+            QMessageBox mb(QMessageBox::Warning, QStringLiteral("Install New Gadget"),
+                           QStringLiteral("This folder is not a gadget: ") + qs(seen.error), QMessageBox::Ok, parent);
+            makePlain(mb);
+            mb.exec();
         }
         return std::nullopt;
     }
@@ -318,7 +342,9 @@ std::optional<scripting::InstallResult> installGadgetDialog(QWidget* parent, vie
         r = manager.install(folder, true);
     }
     if (!r.ok && !ask) {
-        QMessageBox::warning(parent, QStringLiteral("Install New Gadget"), qs(r.error));
+        QMessageBox mb(QMessageBox::Warning, QStringLiteral("Install New Gadget"), qs(r.error), QMessageBox::Ok, parent);
+        makePlain(mb);
+        mb.exec();
     }
     return r;
 }

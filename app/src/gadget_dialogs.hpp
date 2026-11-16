@@ -15,11 +15,22 @@
 
 class QComboBox;
 class QLabel;
+class QMessageBox;
 class QPushButton;
 class QVBoxLayout;
 class QWidget;
 
 namespace carvetto::app {
+
+/// Text that comes from a gadget, its manifest or its script output is DATA, never markup: Qt's
+/// default AutoText would turn "<a href=...>" into a clickable link (and "<img>" into a file read).
+/// Every box and label that shows such text is made plain with these helpers.
+/// A label that shows `text` literally: PlainText, no link or text interaction, no buddy.
+QLabel* makePlainLabel(const QString& text, QWidget* parent);
+/// Makes `box` show its text, informative text and details literally.
+void makePlain(QMessageBox& box);
+/// Tooltip text that is shown literally (Qt treats tooltips that look like HTML as rich text).
+QString plainToolTip(const QString& text);
 
 /// Layers and tools a gadget form may offer (`layer` and `tool` fields).
 struct GadgetFormChoices {

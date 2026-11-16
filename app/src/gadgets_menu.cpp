@@ -99,8 +99,8 @@ void GadgetsMenu::addItems(QMenu* into, const std::vector<viewmodel::GadgetMenuI
         QAction* action = into->addAction(qs(viewmodel::escapeMenuMnemonics(item.label)));
         action->setEnabled(item.enabled);
         if (!item.tooltip.empty()) {
-            action->setToolTip(qs(item.tooltip));
-            action->setStatusTip(qs(item.tooltip));
+            action->setToolTip(plainToolTip(qs(item.tooltip)));
+            action->setStatusTip(qs(item.tooltip));  // the status bar draws plain text
         }
         if (!item.shortcut.empty()) {
             action->setShortcut(QKeySequence(qs(item.shortcut)));
@@ -156,6 +156,8 @@ scripting::GadgetUi GadgetsMenu::realUi() {
     // (with the per-run caps of GadgetLimits) is how the user ends a gadget that keeps asking.
     const auto box = [this, parent](const std::string& text, QMessageBox::Icon icon, bool yesNo) {
         QMessageBox mb(icon, QStringLiteral("Gadget"), qs(text), QMessageBox::NoButton, parent);
+        mb.setObjectName(QStringLiteral("gadgetBox"));
+        makePlain(mb);  // the gadget's text is shown literally, never as links or markup
         QPushButton* yes = mb.addButton(yesNo ? QMessageBox::Yes : QMessageBox::Ok);
         if (yesNo) {
             mb.addButton(QMessageBox::No);
@@ -180,7 +182,10 @@ viewmodel::GadgetRunReport GadgetsMenu::runGadget(std::size_t index) {
         report.error = viewmodel::GadgetErrorReport{"Gadget", "Wait for the toolpath calculation to finish.", "",
                                                     scripting::ScriptStatus::RuntimeError, 0};
         if (!window_.quiet()) {
-            QMessageBox::information(&window_, QStringLiteral("Gadget"), qs(report.error->summary));
+            QMessageBox mb(QMessageBox::Information, QStringLiteral("Gadget"), qs(report.error->summary),
+                           QMessageBox::Ok, &window_);
+            makePlain(mb);
+            mb.exec();
         }
         last_ = report;
         return report;

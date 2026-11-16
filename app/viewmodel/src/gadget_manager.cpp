@@ -177,7 +177,7 @@ scripting::ToolpathCreated createToolpath(ToolpathSession& session,
         return out;
     }
     session.invalidate();
-    const ToolpathOutcome o = session.add(form.definition());
+    const ToolpathOutcome o = session.add(form.definition(), req.cancel);
     out.ok = o.ok;
     out.message = o.message;
     out.ids = o.ids;

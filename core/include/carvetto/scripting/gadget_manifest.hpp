@@ -102,10 +102,13 @@ using RenameFn = std::function<std::error_code(const std::filesystem::path& from
 InstallResult installGadget(const std::filesystem::path& source, const std::filesystem::path& root,
                             std::size_t maxScriptBytes, bool replace = false, const RenameFn& rename = {});
 
-/// The folder name an installed gadget gets: lower-case ASCII letters, digits and '-' only (at most
-/// ~60 characters, never empty, never ending in '.' or ' '). A name with non-ASCII characters, or one
-/// that sanitises to nothing, gets a short stable hash of the whole name appended, so different names
-/// do not collide; Windows device names (CON, NUL, COM1, LPT1, ...) get "-gadget" appended.
+/// The folder name an installed gadget gets: a pure function of the EXACT full name, "<slug>-<16 hex>"
+/// where the slug is the lower-case ASCII letters/digits of the name (other runs become one '-', at
+/// most 40 characters, "gadget" when nothing is left) and the hex is a 64-bit hash of every byte of the
+/// name. At most 57 characters. Names that differ in any way (case, punctuation, separators, non-ASCII,
+/// a shared long prefix) get different folders barring a 64-bit hash collision, and installGadget
+/// additionally refuses to touch a folder whose installed manifest has a different name. Never a
+/// Windows device name, never ends in '.' or ' '.
 std::string gadgetFolderName(const std::string& name);
 
 }  // namespace carvetto::scripting

@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <set>
+#include <vector>
 #include <string>
 
 #include "carvetto/scripting/gadget_api.hpp"
@@ -198,10 +200,11 @@ TEST_CASE("gadget install: copies manifest and script, refuses duplicates", "[ga
     InstallResult r = installGadget(src.root / "pkg", dst.root / "gadgets", 1000);
     INFO(r.error);
     REQUIRE(r.ok);
-    CHECK(r.gadget.folderName == "my-cool-gadget");
-    CHECK(fs::exists(dst.root / "gadgets" / "my-cool-gadget" / kGadgetManifestFile));
-    CHECK(fs::exists(dst.root / "gadgets" / "my-cool-gadget" / kGadgetScriptFile));
-    CHECK_FALSE(fs::exists(dst.root / "gadgets" / "my-cool-gadget" / "extra.bin"));
+    const std::string folder = gadgetFolderName("My Cool Gadget!");
+    CHECK(r.gadget.folderName == folder);
+    CHECK(fs::exists(dst.root / "gadgets" / folder / kGadgetManifestFile));
+    CHECK(fs::exists(dst.root / "gadgets" / folder / kGadgetScriptFile));
+    CHECK_FALSE(fs::exists(dst.root / "gadgets" / folder / "extra.bin"));
     CHECK(discoverGadgets(dst.root / "gadgets").gadgets.size() == 1);
 
     r = installGadget(src.root / "pkg", dst.root / "gadgets", 1000);
@@ -245,7 +248,7 @@ TEST_CASE("gadget install: the folder name cannot escape the gadgets folder", "[
     const InstallResult r = installGadget(src.root / "p", dst.root / "g", 1000);
     REQUIRE(r.ok);
     CHECK(r.gadget.folder.parent_path() == dst.root / "g");
-    CHECK(r.gadget.folderName == "evil");
+    CHECK(r.gadget.folderName.rfind("evil-", 0) == 0);
     makeGadget(src.root, "q", manifest("..."), "return 1");
     const InstallResult q = installGadget(src.root / "q", dst.root / "g", 1000);
     REQUIRE(q.ok);
@@ -253,33 +256,46 @@ TEST_CASE("gadget install: the folder name cannot escape the gadgets folder", "[
 }
 
 TEST_CASE("gadget install: folder names are unique, stable, ASCII and safe on Windows", "[gadget][manifest][t0331]") {
-    // plain names keep the readable folder
-    CHECK(gadgetFolderName("Weave Creator") == "weave-creator");
-    // two different non-ASCII names do not share a folder, and the name is stable
+    // readable slug plus a 16-hex hash of the exact name
+    const std::string weave = gadgetFolderName("Weave Creator");
+    CHECK(weave.rfind("weave-creator-", 0) == 0);
+    CHECK(weave.size() == std::string("weave-creator-").size() + 16);
+    CHECK(weave == gadgetFolderName("Weave Creator"));  // stable
+    // two different non-ASCII names do not share a folder
     const std::string a = gadgetFolderName("\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB");
     const std::string b = gadgetFolderName("\xE3\x82\xAE\xE3\x83\xA3\xE3\x83\x89\xE3\x82\xB8\xE3\x82\xA7");
     CHECK(a != b);
     CHECK(a == gadgetFolderName("\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB"));
     CHECK(gadgetFolderName("Caf\xC3\xA9") != gadgetFolderName("Caf\xC3\xA8"));
     CHECK(gadgetFolderName("Caf\xC3\xA9").rfind("caf-", 0) == 0);
-    for (const std::string& n : {a, b, gadgetFolderName("Caf\xC3\xA9"), gadgetFolderName("..."), gadgetFolderName("")}) {
+    // every collision pair that plain sanitising used to merge
+    const std::string longA = std::string(60, 'x') + "A";
+    const std::string longB = std::string(60, 'x') + "B";
+    const std::vector<std::string> distinct = {"My Gadget", "my-gadget", "My_Gadget", "my gadget!", "a/b", "a\\b", "CON",
+                                               "con gadget", "con", "con-gadget", "A", "a", longA, longB, "", "...", "!!",
+                                               "Caf\xC3\xA9", "Caf\xC3\xA8", "name", "name."};
+    std::set<std::string> seen;
+    for (const std::string& n : distinct) {
         INFO(n);
-        CHECK_FALSE(n.empty());
-        for (const char c : n) {
+        const std::string f = gadgetFolderName(n);
+        CHECK(seen.insert(f).second);
+        CHECK(f.size() <= 57);
+        CHECK_FALSE(f.empty());
+        for (const char c : f) {
             CHECK(((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'));
         }
-        CHECK(n.back() != '-');
+        CHECK(f.back() != '-');
+        CHECK(f.front() != '-');
     }
-    // Windows device names, whatever the case; trailing dots and spaces vanish
+    CHECK(gadgetFolderName("").rfind("gadget-", 0) == 0);
+    CHECK(gadgetFolderName(longA).size() <= 57);
+    // Windows device names, whatever the case, never come out bare
     for (const char* n : {"CON", "nul", "Prn", "AUX", "com1", "COM9", "LPT1", "lpt9", "con.", "NUL  "}) {
         INFO(n);
         const std::string f = gadgetFolderName(n);
-        CHECK(f.size() > 3);
-        CHECK(f.find("-gadget") != std::string::npos);
+        CHECK(f.size() > 16);
+        CHECK(f.find('-') != std::string::npos);
     }
-    CHECK(gadgetFolderName("com0") == "com0");  // not a device name
-    CHECK(gadgetFolderName("COM10") == "com10");
-    CHECK(gadgetFolderName("Name. ") == "name");
     // two different non-ASCII gadgets install side by side
     Scratch src("install-unicode-src");
     Scratch dst("install-unicode-dst");
@@ -338,5 +354,33 @@ TEST_CASE("gadget install: a failed replace keeps the old gadget", "[gadget][man
     CHECK(text == "return 'new'");
     for (const auto& e : fs::directory_iterator(dst.root)) {
         CHECK(e.path().filename().string()[0] != '.');
+    }
+}
+
+TEST_CASE("gadget install: a different gadget in the same folder is never replaced", "[gadget][manifest][t0331]") {
+    Scratch src("install-differ-src");
+    Scratch dst("install-differ-dst");
+    makeGadget(src.root, "one", manifest("My Gadget"), "return 1");
+    makeGadget(src.root, "two", manifest("My_Gadget"), "return 2");
+    REQUIRE(installGadget(src.root / "one", dst.root, 1000).ok);
+    REQUIRE(installGadget(src.root / "two", dst.root, 1000).ok);  // different folders: side by side
+    CHECK(discoverGadgets(dst.root).gadgets.size() == 2);
+
+    // Force a folder shared by two different names (a hash collision, or a hand-edited folder):
+    // the manifest name check refuses even with replace, and the installed gadget is untouched.
+    const fs::path existing = dst.root / gadgetFolderName("Other One");
+    write(existing / kGadgetManifestFile, manifest("Someone Else"));
+    write(existing / kGadgetScriptFile, "return 'mine'");
+    makeGadget(src.root, "three", manifest("Other One"), "return 3");
+    for (const bool replace : {false, true}) {
+        const InstallResult r = installGadget(src.root / "three", dst.root, 1000, replace);
+        CHECK_FALSE(r.ok);
+        CHECK(contains(r.error, "different gadget"));
+        CHECK(contains(r.error, "Someone Else"));
+        CHECK_FALSE(contains(r.error, "already installed"));  // so the UI offers no Replace
+        std::string text;
+        std::ifstream in(existing / kGadgetScriptFile);
+        std::getline(in, text);
+        CHECK(text == "return 'mine'");
     }
 }

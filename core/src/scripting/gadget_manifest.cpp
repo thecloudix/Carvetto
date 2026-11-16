@@ -83,50 +83,38 @@ GadgetInfo infoFor(const fs::path& folder, GadgetManifest manifest) {
 }  // namespace
 
 std::string gadgetFolderName(const std::string& name) {
+    // A readable slug (at most 40 characters) for humans; uniqueness comes only from the hash of the
+    // EXACT original name, which is always appended. Different names that sanitise to the same slug
+    // ('My Gadget', 'my-gadget', 'My_Gadget', 'a/b', 'a\\b', 'CON', 'con gadget', long shared prefixes)
+    // therefore get different folders. The slug and "-<16 hex>" suffix can never be a Windows device
+    // name, never end in '.' or ' ', and never contain a path separator.
     std::string out;
-    bool lossy = false;
     for (const char ch : name) {
         const unsigned char c = static_cast<unsigned char>(ch);
-        if (c >= 0x80) {
-            lossy = true;
-        }
-        if (std::isalnum(c) != 0 && c < 0x80) {
+        if (c < 0x80 && std::isalnum(c) != 0) {
             out += static_cast<char>(std::tolower(c));
         } else if (!out.empty() && out.back() != '-') {
             out += '-';
         }
     }
+    if (out.size() > 40) {
+        out.resize(40);
+    }
     while (!out.empty() && out.back() == '-') {
         out.pop_back();
     }
-    if (out.size() > 50) {
-        out.resize(50);
-        while (!out.empty() && out.back() == '-') {
-            out.pop_back();
-        }
+    if (out.empty()) {
+        out = "gadget";
     }
-    if (out.empty() || lossy) {
-        // Names that lose characters (non-ASCII) or vanish entirely get a stable hash of the whole
-        // name, so two different such gadgets never share a folder.
-        std::uint32_t h = 2166136261u;
-        for (const char ch : name) {
-            h = (h ^ static_cast<unsigned char>(ch)) * 16777619u;
-        }
-        char hex[16];
-        std::snprintf(hex, sizeof hex, "%08x", static_cast<unsigned>(h));
-        return (out.empty() ? std::string("gadget") : out) + "-" + hex;
+    // 64-bit FNV-1a over every byte of the name, then the length mixed in.
+    std::uint64_t h = 14695981039346656037ull;
+    for (const char ch : name) {
+        h = (h ^ static_cast<unsigned char>(ch)) * 1099511628211ull;
     }
-    // Windows device names are not usable as folder names.
-    static const char* const reserved[] = {"con", "prn", "aux", "nul"};
-    bool isReserved = false;
-    for (const char* r : reserved) {
-        isReserved = isReserved || out == r;
-    }
-    if ((out.size() == 4 && (out.compare(0, 3, "com") == 0 || out.compare(0, 3, "lpt") == 0) && out[3] >= '1' &&
-         out[3] <= '9')) {
-        isReserved = true;
-    }
-    return isReserved ? out + "-gadget" : out;
+    h = (h ^ static_cast<std::uint64_t>(name.size())) * 1099511628211ull;
+    char hex[24];
+    std::snprintf(hex, sizeof hex, "%016llx", static_cast<unsigned long long>(h));
+    return out + "-" + hex;
 }
 
 ManifestParse parseGadgetManifest(std::string_view text) {
@@ -385,9 +373,22 @@ InstallResult installGadget(const fs::path& source, const fs::path& root, std::s
     }
     const std::string base = gadgetFolderName(r.gadget.manifest.name);
     const fs::path dest = root / base;
-    if (fs::exists(fs::symlink_status(dest, ec)) && !replace) {
-        r.error = "\"" + r.gadget.manifest.name + "\" is already installed";
-        return r;
+    if (fs::exists(fs::symlink_status(dest, ec))) {
+        // Whatever is in the folder must be the same gadget (same exact name) before it can be
+        // refused as "already installed" or replaced; a different gadget is never overwritten.
+        std::string existingText;
+        if (readFile(dest / kGadgetManifestFile, kMaxManifestBytes, existingText).empty()) {
+            const ManifestParse existing = parseGadgetManifest(existingText);
+            if (existing.manifest && existing.manifest->name != r.gadget.manifest.name) {
+                r.error = "the folder for \"" + r.gadget.manifest.name + "\" is used by a different gadget, \"" +
+                          existing.manifest->name + "\"; it was not changed";
+                return r;
+            }
+        }
+        if (!replace) {
+            r.error = "\"" + r.gadget.manifest.name + "\" is already installed";
+            return r;
+        }
     }
     const fs::path tmp = root / (".installing-" + base);
     fs::remove_all(tmp, ec);

@@ -66,6 +66,10 @@ struct ToolpathRequest {
     std::string kind;
     std::vector<document::ObjectId> objects;
     ScriptValue::Map params;
+    /// Raised while the calculation should stop (its time budget ran out, or the user aborted the
+    /// gadget). Pass it to the calculation's own cancel hook; a cancelled calculation reports failure.
+    /// Null/unset when the calculation cannot be interrupted.
+    const std::atomic<bool>* cancel{nullptr};
 };
 
 struct ToolpathCreated {
@@ -107,12 +111,19 @@ struct GadgetLimits {
     std::size_t maxCreatedLayers = 1000;
     /// Executed `doc.set_variable` calls (that change a value) one run may make.
     std::size_t maxVariableEdits = 10'000;
-    /// Combined time one run may spend inside host callbacks that block the script (dialogs and
-    /// toolpath calculation), in nanoseconds (default 30 minutes). The deadline does not run during
-    /// those calls, so this is what keeps a gadget from sitting in them forever. Checked before and
-    /// after every such call: the run that crosses it fails, rolled back (a blocking call itself is
-    /// not interrupted; the user ends a dialog with Abort, see `GadgetRunOptions::cancel`).
+    /// Combined time one run may spend waiting in DIALOGS (user time: `ui.message/confirm/form`), in
+    /// nanoseconds (default 30 minutes). The deadline does not run during dialogs, so this is what
+    /// keeps a gadget from sitting in them forever. Checked before and after every dialog: the run
+    /// that crosses it fails, rolled back, and a script cannot pcall its way out (a dialog itself is
+    /// not interrupted; the user ends it with Abort, see `GadgetRunOptions::cancel`).
     std::uint64_t maxPausedNanos = 30ull * 60ull * 1'000'000'000ull;
+    /// Combined time one run may spend CALCULATING toolpaths (`toolpath.create`), in nanoseconds
+    /// (default 3 minutes). Much smaller than the dialog budget: no user is deciding anything, and
+    /// ~60 slow calculations must not freeze the application for half an hour. A calculation that
+    /// runs past what is left of it is cancelled through `ToolpathRequest::cancel` (the watchdog polls
+    /// every 20 ms; the calculations poll the token at their own pace), and the run fails, rolled
+    /// back, not swallowable by pcall. The user's Abort cuts a calculation short the same way.
+    std::uint64_t maxCalculationNanos = 3ull * 60ull * 1'000'000'000ull;
 };
 
 struct GadgetRunOptions {

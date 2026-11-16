@@ -64,8 +64,11 @@ class GadgetsMenu {
     /// Opens the Gadget Shortcuts dialog (modal).
     void shortcutsDialog();
 
-   private:
+    /// The dialogs a gadget run really shows (message and confirm boxes, the form), all of them
+    /// showing gadget text literally. Public so the self-test can drive the real boxes.
     scripting::GadgetUi realUi();
+
+   private:
     void addItems(QMenu* into, const std::vector<viewmodel::GadgetMenuItem>& items);
     void loadOverrides();
     void storeOverrides();

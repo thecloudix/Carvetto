@@ -1,6 +1,8 @@
 // T-0331: the gadget API binding (ADR-0102, ADR-0108): reads, edits through commands, ONE undo step
 // per run, rollback on any failure, forms, toolpaths through a service, hostile gadgets.
 #include <catch2/catch_test_macros.hpp>
+#include <chrono>
+#include <thread>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <atomic>
@@ -300,6 +302,14 @@ TEST_CASE("gadget: per-run caps are exact", "[gadget][t0331]") {
         r = runGadget(doc, ui, "while true do carvetto.ui.message('x') end", "g", o);
         CHECK(contains(r.script.message, "too many dialogs"));
         CHECK(shown == 100);
+        // a script cannot pcall its way out of the cap: the run still fails and rolls back
+        shown = 0;
+        r = runGadget(doc, ui, "carvetto.layer.create('x') for i = 1, 150 do pcall(carvetto.ui.message, 'x') end", "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK_FALSE(r.committed);
+        CHECK(contains(r.script.message, "too many dialogs"));
+        CHECK(shown == 100);
+        CHECK(doc.layers().size() == 1);
     }
     SECTION("layers and variable edits: the limit itself is allowed, one more is not") {
         o.gadgetLimits.maxCreatedLayers = 2;
@@ -338,16 +348,88 @@ TEST_CASE("gadget: per-run caps are exact", "[gadget][t0331]") {
                                "pcall(carvetto.ui.message, 'd') carvetto.layer.create('x')", "g", o);
         CHECK_FALSE(r.ok());
         CHECK(doc.layers().size() == 1);
-        // toolpath calculation counts as waiting too
+    }
+    SECTION("toolpath calculation has its own, smaller budget, exactly") {
+        std::uint64_t t = 0;
+        o.limits.clockNanos = [&t] { return t; };
+        o.limits.deadlineMillis = 0;
+        o.gadgetLimits.maxPausedNanos = 1'000'000;  // dialogs: generous here
+        o.gadgetLimits.maxCalculationNanos = 3000;
+        o.gadgetLimits.maxToolpaths = 1000;  // the toolpath COUNT cap has its own test
         GadgetServices tp = fakeToolpathService(doc);
         const auto inner = tp.createToolpath;
-        tp.createToolpath = [&t, inner](const ToolpathRequest& q) {
-            t += 2000;
+        std::uint64_t cost = 1500;
+        tp.createToolpath = [&t, inner, &cost](const ToolpathRequest& q) {
+            t += cost;
             return inner(q);
         };
-        r = runGadget(doc, tp, "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) "
-                               "carvetto.toolpath.create('drill', {i}, {}) carvetto.toolpath.create('drill', {i}, {})", "g", o);
+        tp.ui.message = [&t](const std::string&) { t += 5000; };  // dialog time never eats the calculation budget
+        const std::string prefix = "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) carvetto.ui.message('m') ";
+        const std::string call = "carvetto.toolpath.create('drill', {i}, {}) ";
+        const std::size_t before = doc.toolpaths().size();
+        GadgetRunResult r = runGadget(doc, tp, prefix + call + call, "g", o);  // 3000 = the cap: allowed
+        INFO(r.script.message);
+        CHECK(r.ok());
+        CHECK(doc.toolpaths().size() == before + 2);
+        r = runGadget(doc, tp, prefix + call + call + call, "g", o);  // 4500: one over
         CHECK_FALSE(r.ok());
+        INFO(r.script.message);
+        CHECK(contains(r.script.message, "too long waiting for toolpath calculations"));
+        CHECK(doc.toolpaths().size() == before + 2);  // rolled back
+        // one call that alone costs 3001 is over, and pcall cannot hide it
+        cost = 3001;
+        r = runGadget(doc, tp, prefix + "pcall(carvetto.toolpath.create, 'drill', {i}, {})", "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK(contains(r.script.message, "toolpath calculations"));
+        // ~60 slow calculations cannot add up to half an hour any more
+        cost = 29'000'000'000ull;
+        o.gadgetLimits.maxCalculationNanos = GadgetLimits{}.maxCalculationNanos;
+        std::string many = prefix;
+        for (int k = 0; k < 63; ++k) {
+            many += "pcall(carvetto.toolpath.create, 'drill', {i}, {}) ";
+        }
+        r = runGadget(doc, tp, many, "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK(doc.toolpaths().size() == before + 2);
+        CHECK(GadgetLimits{}.maxCalculationNanos <= 5ull * 60ull * 1'000'000'000ull);
+    }
+    SECTION("a running calculation is cut short through the cancel token") {
+        o.gadgetLimits.maxCalculationNanos = 100'000'000;  // 100 ms of real time
+        GadgetServices tp = fakeToolpathService(doc);
+        bool sawToken = false;
+        tp.createToolpath = [&sawToken](const ToolpathRequest& q) {
+            sawToken = q.cancel != nullptr;
+            const auto start = std::chrono::steady_clock::now();
+            while (q.cancel != nullptr && !q.cancel->load() &&
+                   std::chrono::steady_clock::now() - start < std::chrono::seconds(20)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            ToolpathCreated c;
+            c.message = "the calculation was cancelled";
+            return c;
+        };
+        const auto begin = std::chrono::steady_clock::now();
+        const GadgetRunResult r = runGadget(doc, tp,
+            "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) pcall(carvetto.toolpath.create, 'drill', {i}, {})",
+            "g", o);
+        CHECK(std::chrono::steady_clock::now() - begin < std::chrono::seconds(15));
+        CHECK(sawToken);
+        CHECK_FALSE(r.ok());
+        CHECK(contains(r.script.message, "toolpath calculations"));
+        CHECK(doc.toolpaths().empty());
+        // the user's Abort cuts a calculation short too
+        std::atomic<bool> abort{false};
+        o.gadgetLimits.maxCalculationNanos = GadgetLimits{}.maxCalculationNanos;
+        o.cancel = &abort;
+        const auto spin = tp.createToolpath;
+        tp.createToolpath = [&abort, spin](const ToolpathRequest& q) {
+            abort = true;
+            return spin(q);
+        };
+        const GadgetRunResult r2 = runGadget(doc, tp,
+            "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) carvetto.toolpath.create('drill', {i}, {})",
+            "g", o);
+        CHECK(r2.script.status == ScriptStatus::Cancelled);
         CHECK(doc.toolpaths().empty());
     }
     SECTION("the log keeps whole lines up to its byte cap") {
@@ -594,6 +676,7 @@ TEST_CASE("gadget: objects on a locked layer cannot be edited and a gadget canno
         "carvetto.object.scale(" + a + ", 2)",
         "carvetto.object.delete(" + a + ")",
         "carvetto.object.set_layer(" + a + ", carvetto.doc.layers()[2])",
+        "carvetto.object.set_layer(" + b + ", carvetto.doc.layers()[1])",  // INTO the locked layer
         "carvetto.layer.set(carvetto.doc.layers()[1], {locked = false})",
         "carvetto.object.move({" + b + ", " + a + "}, 1, 1)",  // one locked object refuses the whole call
     };
@@ -601,7 +684,8 @@ TEST_CASE("gadget: objects on a locked layer cannot be edited and a gadget canno
         INFO(src);
         const GadgetRunResult r = runGadget(doc, noServices(), src, "g", quick());
         CHECK_FALSE(r.ok());
-        CHECK((contains(r.script.message, "locked layer") || contains(r.script.message, "cannot unlock")));
+        CHECK((contains(r.script.message, "locked layer") || contains(r.script.message, "is locked") ||
+               contains(r.script.message, "cannot unlock")));
         CHECK(stateOf(doc) == before);
     }
     // the unlocked layer, and moving onto/off nothing locked, still work; locking is allowed; so are
@@ -959,7 +1043,8 @@ TEST_CASE("gadget: hostile gadgets are stopped and rolled back", "[gadget][t0331
         GadgetRunOptions o = quick();
         o.limits.deadlineMillis = 1000;
         o.limits.clockNanos = [&t] { return t += 1'000; };
-        o.gadgetLimits.maxPausedNanos = ~0ull;  // this case is about the deadline; the budget has its own
+        o.gadgetLimits.maxPausedNanos = ~0ull;  // this case is about the deadline; the budgets have their own
+        o.gadgetLimits.maxCalculationNanos = ~0ull;
         const GadgetRunResult r = runGadget(doc, sv,
                                             "carvetto.ui.message('a') for i = 1, 2000 do end carvetto.ui.confirm('b') "
                                             "carvetto.ui.form({title = 't', fields = {}}) for i = 1, 2000 do end "
@@ -995,7 +1080,8 @@ TEST_CASE("gadget: hostile gadgets are stopped and rolled back", "[gadget][t0331
         o.limits.maxInstructions = 500'000'000;
         o.limits.deadlineMillis = 100;
         o.limits.clockNanos = [&t] { return t += 1'000'000; };
-        o.gadgetLimits.maxPausedNanos = ~0ull;  // the waiting budget has its own test
+        o.gadgetLimits.maxPausedNanos = ~0ull;  // the waiting budgets have their own tests
+        o.gadgetLimits.maxCalculationNanos = ~0ull;
         const GadgetRunResult r = runGadget(doc, sv, "carvetto.ui.message('a') while true do end", "g", o);
         CHECK(r.script.status == ScriptStatus::Timeout);
     }
