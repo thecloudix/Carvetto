@@ -1547,3 +1547,95 @@ Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancel
 ### T-0318 Profile residual (i): reproduce and fix the V-bit SHARP severed kept tabs (T-0279 split)   [status: ready — LOW]
 Phase: 1   Module: core/toolpath   Depends on: T-0279
 Goal: Residual (i) of T-0252 was not reproducible in T-0279 because scenes 9301_153 and 9308_412 are absent from the harness archive; a 650-scene V-bit SHARP screen still shows three oracle-severed kept tabs (9308 scenes 13, 63, 69), identical on main and the T-0279 branch. Regenerate the scenes, diagnose, fix with ADR, mutants killed. Owner may defer indefinitely.
+
+## Phase 3 — Rotary, modules, scripting (drafted 2026-11-16; scripting compatibility with any third-party gadget SDK is NOT a goal unless the owner decides so, see PLAN §6.4)
+
+### T-0319 Rotary job: Job Setup / Material Setup pages, sheets and flat-design area (audit + complete)   [status: ready]
+Phase: 3   Module: core/document + app/viewmodel + app   Depends on: T-0243
+Goal: core already has JobType::Rotary, RotaryAxis, Job::rotary(length, diameter, ...) and the post ROTARY_WRAP_X/Y keys. Audit what exists, then complete the rotary job: Job Setup Rotary page (Length, Diameter, Along X / Along Y, Flip Design, Z-zero at cylinder surface or axis), Material Setup Rotary (Diameter, Gap Outside / Gap Inside Model), rotary sheets (Edit Sheet for Rotary), .carv round trip (minor bump only if new fields), self-test driving it. Flat design area = length x pi x diameter is already modelled; keep units mm/radians in core.
+Acceptance criteria:
+  1. A rotary job can be created, edited, saved and reloaded with all fields; the design area and Z-zero follow Length/Diameter/orientation; app self-test drives the pages; ADR.
+
+### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: blocked — waits on T-0319]
+Phase: 3   Module: core/post + core/simulate + app   Depends on: T-0319
+Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/Y with the job diameter, sign, A-axis angle in the right units, feed handling for the rotary axis, MAXIMUM_ROTATION handling) correct and golden-tested for X and Y axes; add an Auto-Wrapping View (wrapped preview of vectors, toolpaths and the model on a cylinder, with a wrapped/flat toggle) and wrapped material-removal simulation for rotary jobs. Cover rotary refusals (tool longer than radius, etc.) with diagnostics.
+Acceptance criteria:
+  1. Golden-file tests of wrapped output for X and Y along-axis jobs; wrapped view and simulation covered by viewmodel tests and the self-test; ADR with the unit and sign conventions.
+
+### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: blocked — waits on T-0319]
+Phase: 3   Module: core/relief + core/geometry + app   Depends on: T-0319, T-0295
+Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around the cylinder at render time, like Clipping and Mirror Mode, made permanent by Bake); Vector Unwrapper (turns a cross-section into a contour for two-rail rotary modelling; centre options); 3D import into a rotary job (mesh mapped to the cylinder, orientation options). Operation-counter tests; .carv bump only if used.
+Acceptance criteria:
+  1. Wrapping effect composes and bakes equal to the direct wrapped surface on test models; unwrapper round-trips a known cross-section; rotary import places a mesh on the cylinder; ADR with the readings for owner review.
+
+### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: blocked — waits on T-0320]
+Phase: 3   Module: core/toolpath + core/geometry + app   Depends on: T-0320
+Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turns a cylinder down to a radius, and wrapped fluting and spiral layouts that generate vectors (flute count, length, start/end, spiral pitch) on the flat design area ready for the existing toolpaths. Forms, undo, self-test.
+Acceptance criteria:
+  1. Each tool produces the expected vectors/toolpath on test cylinders (counts, spacing, pitch exact); app forms drive them; ADR.
+
+### T-0323 Laser: laser tool power model and Laser Cut / Fill toolpath   [status: ready]
+Phase: 3   Module: core/toolpath + core/tooling + core/post + app/viewmodel   Depends on: T-0243
+Goal: Laser tool (maximum burn rate already in cutting data) with power, move speed, passes (cut depth -> number of passes), repeats and overscan; Laser Cut/Fill toolpath: Cut Outside/Right, Cut Inside/Left (kerf compensated), Cut On, Hatch Fill (stepover, angle, cross hatch, fill together/regionally, outline), allowance. Output through the post's JET_TOOL_POWER/ON/OFF blocks (already parsed; make them act). .carv record (job.json-only, minor bump rules as ADR-0021), viewmodel form, self-test.
+Acceptance criteria:
+  1. Cut and Fill toolpaths verified on test shapes (kerf side, hatch spacing/angle, cross hatch, overscan moves, pass count); post output uses the jet blocks with correct power values; round trip and hostile-record tests; ADR.
+
+### T-0324 Laser Picture and Sketch Engraving (bitmap/model source, dithering)   [status: blocked — waits on T-0323]
+Phase: 3   Module: core/toolpath + app   Depends on: T-0323, T-0250
+Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither image, power modulation, overscan) and Laser Sketch Engraving (bitmap or 3D-model source, line thickness, stepover, hatch angle, fill together/regionally/between vectors, cross hatch, machine-limit boundary). Reuse the image pipeline from Image Engrave.
+Acceptance criteria:
+  1. Power/dither output verified against reference rasters; model source works with the relief engine; forms and self-test; ADR.
+
+### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: blocked — waits on T-0323]
+Phase: 3   Module: core/simulate + core/tooling + core/post + app   Depends on: T-0323
+Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (power x speed vs burn rate -> mark depth/darkness); machine flag for laser-capable posts; post-adaptation guide (power variable, laser blocks) in docs; ship our own laser-capable GRBL-style post with golden tests.
+Acceptance criteria:
+  1. Burn marks match the model on test paths (counter-based, no timing); laser post golden test; ADR.
+
+### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: blocked — waits on T-0324, T-0325]
+Phase: 3   Module: app + app/viewmodel   Depends on: T-0324, T-0325
+Goal: Wire Laser Cut/Fill, Picture and Sketch Engraving into the Toolpaths panel (entries, dialogs, recalculation, staleness, preview and simulation overlay, job-sheet rows) following the T-0303/T-0311 pattern.
+Acceptance criteria:
+  1. Each laser toolpath can be created, recalculated, previewed, simulated and saved from the UI; self-test drives all three.
+
+### T-0327 Cutter compensation (G41/G42) for Profile toolpaths   [status: ready]
+Phase: 3   Module: core/toolpath + core/post + app/viewmodel   Depends on: T-0252
+Goal: Profile option to output controller-side cutter compensation: lead-in/out geometry that makes the compensation engage and release safely, move flags on the toolpath moves, and CUTTER_COMP_LEFT/RIGHT/OFF post blocks (already parsed) emitted around compensated passes; refusal rules (arcs smaller than the tool radius, inner corners, tabs interaction); the toolpath still carries the nominal (uncompensated) geometry for simulation. .carv field with minor bump only when used, form option, tests.
+Acceptance criteria:
+  1. Compensated Profile output is correct on test parts (left/right, climb/conventional, corners, tabs) and post blocks appear in the right order; simulation matches the uncompensated result; hostile/refusal cases; ADR.
+
+### T-0328 Drill Bank toolpath   [status: ready]
+Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0243
+Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-spindle drill bank (spindle spacing, which spindles are active, holes matched to the bank pattern, rows/columns offsets, per-hole depth, peck/dwell reuse of Drilling), with a refusal when holes cannot be matched. .carv record, form, self-test.
+Acceptance criteria:
+  1. Bank patterns match holes on test layouts; unmatched holes are reported; output order minimises moves; round trip and hostile-record tests; ADR.
+
+### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: blocked — waits on T-0328]
+Phase: 3   Module: core/io + app   Depends on: T-0328
+Goal: Import a parts list (CSV/XML) describing rectangular panels with holes/dados through a user-editable mapping file (column -> part length/width/thickness/material/label/operations), then auto-nest the panels and create Profile/Drilling/Pocket toolpaths. No third-party product names or formats beyond generic CSV/XML.
+Acceptance criteria:
+  1. A sample parts file imports into nested panels and toolpaths; bad mappings give clear diagnostics; ADR with the mapping schema.
+
+### T-0330 Scripting host: embedded Lua (sandboxed), ScriptHost and API design   [status: ready]
+Phase: 3   Module: core/scripting   Depends on: —
+Goal: Embed Lua (MIT; pinned release via FetchContent like the other dependencies; ADR on licence and size) behind ScriptHost in core/scripting with no Qt: a sandbox (no io/os/debug/package unless granted, instruction and memory limits, cancellation, wall-clock-free budget by instruction count), error reporting with line numbers, and our OWN documented API design (ADR-0098+) - do not copy any vendor SDK shapes. Deliver the host, the API surface design document, and tests including hostile scripts (infinite loops, memory bombs, string bombs).
+Acceptance criteria:
+  1. Scripts run with the documented limits and are cancellable; hostile scripts are stopped; core builds on all CI platforms; ADR with the API design for owner review.
+
+### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: blocked — waits on T-0330]
+Phase: 3   Module: core/scripting + app/viewmodel + app   Depends on: T-0330
+Goal: Bind the designed API: read/create/modify vectors and layers, selection, document variables, create toolpaths, show simple input forms; all edits go through undoable commands (one undo step per gadget run); gadget discovery (folder of scripts with a manifest), Gadgets menu built at startup, Install New Gadget, Gadget Shortcuts (Ctrl+F-key), error dialog.
+Acceptance criteria:
+  1. A sample gadget creates vectors and a toolpath in one undo step from the Gadgets menu; sandbox limits enforced in the app; self-test.
+
+### T-0332 Stock gadgets as scripts: Celtic weave, drag knife, keyhole, job-sheet editor, DXF batch   [status: blocked — waits on T-0331]
+Phase: 3   Module: gadgets + docs   Depends on: T-0331, T-0299
+Goal: Port the stock gadget behaviours as original scripts shipped with the app: weave creator (grid, intersection states, cross-section, Apply creates vectors for Extrude and Weave), drag-knife toolpath (blade offset, tolerance angle, swivel, passes), keyhole toolpath, job-sheet editor (logo, colours, sections), DXF batch convert. Written from the behaviour descriptions only (clean room).
+Acceptance criteria:
+  1. Each gadget produces the documented output on test inputs; install path works; ADR/doc per gadget.
+
+### T-0333 Clipart library browser (local folders)   [status: ready — LOW]
+Phase: 3   Module: app + core/io   Depends on: —
+Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (SVG, DXF, PNG), thumbnails generated off the UI thread and cached, search by name, drag/insert into the drawing at the cursor/centre with scale-to-fit, favourites; no online store. Thumbnail cache size bounded; hostile files refused with clear messages.
+Acceptance criteria:
+  1. Browsing a folder of mixed files shows thumbnails; insert is one undo step; self-test; ADR.
