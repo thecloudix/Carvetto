@@ -1598,7 +1598,7 @@ Goal: Wire Laser Cut/Fill, Picture and Sketch Engraving into the Toolpaths panel
 Acceptance criteria:
   1. Each laser toolpath can be created, recalculated, previewed, simulated and saved from the UI; self-test drives all three.
 
-### T-0327 Cutter compensation (G41/G42) for Profile toolpaths   [status: verifying]
+### T-0327 Cutter compensation (G41/G42) for Profile toolpaths   [status: done — PR #198]
 Phase: 3   Module: core/toolpath + core/post + app/viewmodel   Depends on: T-0252
 Goal: Profile option to output controller-side cutter compensation: lead-in/out geometry that makes the compensation engage and release safely, move flags on the toolpath moves, and CUTTER_COMP_LEFT/RIGHT/OFF post blocks (already parsed) emitted around compensated passes; refusal rules (arcs smaller than the tool radius, inner corners, tabs interaction); the toolpath still carries the nominal (uncompensated) geometry for simulation. .carv field with minor bump only when used, form option, tests.
 Acceptance criteria:
