@@ -333,6 +333,11 @@ MappingResult parsePartsMapping(std::string_view text) {
         }
         const std::string line = trim(raw);
         if (line.empty() || line[0] == '#') continue;
+        if (line.find('\r') != std::string::npos) {
+            sink.error(kMapping, lineNo,
+                       "CR-only line endings are not supported (CRLF and LF are): save the file with LF or CRLF line endings");
+            continue;
+        }
         const std::size_t eq = line.find('=');
         if (eq == std::string::npos) {
             sink.error(kMapping, lineNo, "expected `key = value`");

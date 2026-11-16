@@ -156,6 +156,12 @@ TEST_CASE("mapping: keys are case-insensitive, CRLF and BOM tolerated, index col
     CHECK(*r.mapping.defaultThicknessMm == 18.0);
 }
 
+TEST_CASE("mapping: CR-only line endings are refused with a clear message", "[parts][mapping]") {
+    const MappingResult r = parsePartsMapping("units = mm\rcolumn.length = Length\rcolumn.width = Width\r");
+    CHECK_FALSE(r.ok);
+    CHECK(hasText(r.diagnostics, "CR-only line endings are not supported (CRLF and LF are)"));
+}
+
 TEST_CASE("mapping: diagnostics name the line and the problem", "[parts][mapping]") {
     auto errors = [](const std::string& extra) {
         return parsePartsMapping(std::string(kMapping) + extra);
@@ -724,4 +730,42 @@ TEST_CASE("nest: deterministic and work is bounded by shelves", "[parts][nest]")
     // steps counts shelf/sheet probes: at most items * (shelves + sheets), here far below items^2.
     CHECK(a.steps < static_cast<std::uint64_t>(items.size()) * 2000u);
     CHECK(a.steps >= items.size());
+}
+
+TEST_CASE("parts: blind holes and dados are converted from inches", "[parts][read]") {
+    const PartsMapping inch =
+        mapping("units = inch\ncolumn.length=L\ncolumn.width=W\ncolumn.thickness=T\ncolumn.holes=H\ncolumn.dados=D\n");
+    const PartsList a = readPartsText("L,W,T,H,D\n10,5.5,0.75,2:2:0.25:0.5,L:1:0.5:0.25\n", inch);
+    REQUIRE_FALSE(a.hasErrors());
+    REQUIRE(a.parts.size() == 1);
+    REQUIRE(a.parts[0].holes.size() == 1);
+    CHECK(std::abs(a.parts[0].holes[0].xMm - 50.8) < 1e-9);
+    CHECK(std::abs(a.parts[0].holes[0].yMm - 50.8) < 1e-9);
+    CHECK(std::abs(a.parts[0].holes[0].diameterMm - 6.35) < 1e-9);
+    CHECK(std::abs(a.parts[0].holes[0].depthMm - 12.7) < 1e-9);
+    REQUIRE(a.parts[0].dados.size() == 1);
+    CHECK(std::abs(a.parts[0].dados[0].posMm - 25.4) < 1e-9);
+    CHECK(std::abs(a.parts[0].dados[0].widthMm - 12.7) < 1e-9);
+    CHECK(std::abs(a.parts[0].dados[0].depthMm - 6.35) < 1e-9);
+}
+
+TEST_CASE("parts: a dado that exactly fills the panel passes despite binary rounding", "[parts][read]") {
+    // 0.5 + 1.51 = 2.01 in decimal, but in millimetres (x 25.4) the sum is one ulp above 2.01 x 25.4.
+    const PartsMapping inch = mapping("units = inch\ncolumn.length=L\ncolumn.width=W\ncolumn.thickness=T\ncolumn.dados=D\n");
+    const PartsList a = readPartsText("L,W,T,D\n10,2.01,0.75,L:0.5:1.51:0.25\n", inch);
+    CHECK_FALSE(a.hasErrors());
+    CHECK(a.parts.size() == 1);
+    CHECK(readPartsText("L,W,T,D\n10,2.01,0.75,L:0.5:1.52:0.25\n", inch).hasErrors());
+}
+
+TEST_CASE("nest: shelves that exactly fill the sheet height pass despite binary rounding", "[parts][nest]") {
+    NestOptions o;
+    o.sheetLengthMm = 1000;
+    o.sheetWidthMm = 429.9;
+    o.marginMm = 2.3;
+    o.gapMm = 1.1;
+    // 252.4 + 1.1 + 171.8 = 429.9 - 2 x 2.3 in decimal; in doubles the sum lands one ulp above.
+    const NestResult r = nestRectangles({{900, 252.4}, {900, 171.8}}, o);
+    CHECK(r.sheetCount == 1);
+    CHECK(r.unplaced.empty());
 }

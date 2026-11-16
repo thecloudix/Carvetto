@@ -193,3 +193,50 @@ TEST_CASE("parts import form: files are read with a size bound", "[parts][viewmo
     CHECK_FALSE(form.loadPartsFile((dir / "missing.csv").string()).empty());
     CHECK(form.preview().canApply);  // the failed loads changed nothing
 }
+
+namespace {
+
+// Lowest Z of each toolpath, by name fragment, over the session's job summary.
+std::vector<std::pair<std::string, double>> depthsOf(ToolpathSession& session) {
+    std::vector<std::pair<std::string, double>> out;
+    for (const auto& e : session.summary().entries) {
+        REQUIRE(e.minZ.has_value());
+        out.emplace_back(e.name, *e.minZ);
+    }
+    return out;
+}
+
+double depthOf(const std::vector<std::pair<std::string, double>>& all, const std::string& fragment) {
+    for (const auto& [name, z] : all) {
+        if (name.find(fragment) != std::string::npos) return z;
+    }
+    FAIL("no toolpath named like " << fragment);
+    return 0.0;
+}
+
+}  // namespace
+
+TEST_CASE("parts import form: cut depths follow the feature depth or the sheet thickness", "[parts][viewmodel]") {
+    Fixture f;
+    f.form.setPartsText(
+        "Label,Length,Width,Thickness,Material,Qty,Holes,Dados\n"
+        "Side,600,300,18,Birch,1,50:50:3|550:50:3:6,L:100:10:6|W:200:10:4\n"
+        "Back,600,500,6,Hardboard,1,,\n");
+    const PartsImportOutcome o = f.form.apply(f.doc, &f.session);
+    REQUIRE(o.ok);
+    const auto depths = depthsOf(f.session);
+    CHECK(depths.size() == o.toolpaths.size());
+    CHECK(depthOf(depths, "dados 4.0000") == -4.0);
+    CHECK(depthOf(depths, "dados 6.0000") == -6.0);
+    CHECK(depthOf(depths, "holes 6.0000") == -6.0);   // blind
+    CHECK(depthOf(depths, "holes 18.0000") == -18.0);  // through: the sheet thickness
+    // Profiles: the panel thickness of each sheet.
+    std::vector<double> profiles;
+    for (const auto& [name, z] : depths) {
+        if (name.find("outlines") != std::string::npos) profiles.push_back(z);
+    }
+    std::sort(profiles.begin(), profiles.end());
+    REQUIRE(profiles.size() == 2);
+    CHECK(profiles[0] == -18.0);
+    CHECK(profiles[1] == -6.0);
+}

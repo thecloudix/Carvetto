@@ -130,10 +130,14 @@ restores them.
 
 ## Mutation review (new logic)
 Hand-mutated and run against the `[parts]` tests; killed: nest fit comparisons (x and y, with and without the
-epsilon), shelf height order, gap accumulation (both axes), rotation preference and its tie, rotated hole/dado
-mapping, hole/dado extent, position, depth and diameter bounds, hole and dado count limits, dimension lower bound,
-header match counting, delimiter tie-break and mixed warning, column index bound, file-size bound, header-only
-detection, reuse of an empty active sheet, refusal on unplaced panels. Survivors, argued equivalent: comparisons
+epsilon, the latter on shelves and dados that fit exactly only in decimal, e.g. 0.5 + 1.51 in against 2.01 in, and
+252.4 + 1.1 + 171.8 mm on a 429.9 mm sheet with 2.3 mm margins), shelf height order, gap accumulation (both axes),
+rotation preference and its tie, rotated hole/dado mapping, hole/dado extent, position, depth and diameter bounds,
+unit conversion of every hole and dado value (blind hole and dado in inches), hole and dado count limits, dimension
+lower bound, header match counting, delimiter tie-break and mixed warning, column index bound, file-size bound,
+header-only detection, reuse of an empty active sheet, refusal on unplaced panels, and the cut depths of the
+toolpaths (dado, blind hole, through hole = sheet thickness, profile = sheet thickness; asserted on the lowest Z of
+the computed moves). Survivors, argued equivalent: comparisons
 `>=` vs `>` against `thickness - 1e-9` for a dado depth (differ only inside the 1e-9 tolerance); `x <= limit + eps`
 vs `x < limit + eps` (same, tolerance); the 10000-row cap is only reachable below the 5000-panel cap with rows of
 quantity 0, which are rejected, so the cap is a cheap pre-check whose exact boundary cannot be observed (it is
