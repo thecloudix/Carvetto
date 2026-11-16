@@ -1562,7 +1562,7 @@ Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/
 Acceptance criteria:
   1. Golden-file tests of wrapped output for X and Y along-axis jobs; wrapped view and simulation covered by viewmodel tests and the self-test; ADR with the unit and sign conventions.
 
-### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: in-progress]
+### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: verifying (app UI -> T-0341)]
 Phase: 3   Module: core/relief + core/geometry + app   Depends on: T-0319, T-0295
 Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around the cylinder at render time, like Clipping and Mirror Mode, made permanent by Bake); Vector Unwrapper (turns a cross-section into a contour for two-rail rotary modelling; centre options); 3D import into a rotary job (mesh mapped to the cylinder, orientation options). Operation-counter tests; .carv bump only if used.
 Acceptance criteria:
@@ -1685,3 +1685,9 @@ Phase: 3   Module: app + app/viewmodel   Depends on: T-0322, T-0334
 Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) but no Qt dialog, menu entry or self-test. Add the dialogs and menu entries for rotary jobs, let a following Fluting toolpath take its depth from the layout, preview the layouts in the wrapped view (needs T-0334), and drive it all from --self-test.
 Acceptance criteria:
   1. A rotary job can create fluting and spiral layouts from the UI as one undo step with a wrapped preview; self-test drives it.
+
+### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: ready — LOW]
+Phase: 3   Module: app + app/viewmodel   Depends on: T-0321, T-0334
+Goal: T-0321 delivered the Wrapping level effect, unwrapCrossSection and meshToRotaryField with viewmodel actions but no Qt UI. Add the Wrapping toggle in the level effects UI (and enable Bake for a wrapping-only level in sculpt_panel.cpp), the Vector Unwrapper form, the rotary 3D import dialog (orientation, fit, axis movement), and self-test steps driving them; interactive rotation rings, the orientation gizmo, Resize material block and Reimport remain optional.
+Acceptance criteria:
+  1. For a rotary job the user can turn on Wrapping, unwrap a selected cross-section, and import a mesh onto the cylinder from the UI; self-test drives all three.
