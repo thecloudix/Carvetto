@@ -1674,7 +1674,7 @@ Goal: Observed on a machine at load ~59: 'scripting: hostile scripts - memory an
 Acceptance criteria:
   1. No scripting/gadget test depends on wall-clock time except the one real-clock smoke test; 20 consecutive runs under artificial load pass; mutants of the helper killed.
 
-### T-0339 Windows CI: MSVC C1128 (object file section limit) in toolpath_form.cpp broke main's windows-app job   [status: in-progress]
+### T-0339 Windows CI: MSVC C1128 (object file section limit) in toolpath_form.cpp broke main's windows-app job   [status: done — PR #206 (windows-app green)]
 Phase: 3   Module: build   Depends on: —
 Goal: main's windows-app job failed from T-0328 on with `toolpath_form.cpp : fatal error C1128: number of sections exceeded object file format limit: compile with /bigobj`. Add /bigobj to the shared MSVC options; confirm windows-app green on the PR.
 Acceptance criteria:
