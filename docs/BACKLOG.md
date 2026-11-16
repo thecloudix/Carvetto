@@ -1586,7 +1586,7 @@ Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither ima
 Acceptance criteria:
   1. Power/dither output verified against reference rasters; model source works with the relief engine; forms and self-test; ADR.
 
-### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: verifying]
+### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: verified round 2, landing]
 Phase: 3   Module: core/simulate + core/tooling + core/post + app   Depends on: T-0323
 Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (power x speed vs burn rate -> mark depth/darkness); machine flag for laser-capable posts; post-adaptation guide (power variable, laser blocks) in docs; ship our own laser-capable GRBL-style post with golden tests.
 Acceptance criteria:
@@ -1605,7 +1605,7 @@ Goal: Profile option to output controller-side cutter compensation: lead-in/out 
 Acceptance criteria:
   1. Compensated Profile output is correct on test parts (left/right, climb/conventional, corners, tabs) and post blocks appear in the right order; simulation matches the uncompensated result; hostile/refusal cases; ADR.
 
-### T-0328 Drill Bank toolpath   [status: verifying (subset; per-spindle detail -> T-0335)]
+### T-0328 Drill Bank toolpath   [status: in-progress (round 2: rebase, minor 17, mutants)]
 Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0243
 Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-spindle drill bank (spindle spacing, which spindles are active, holes matched to the bank pattern, rows/columns offsets, per-hole depth, peck/dwell reuse of Drilling), with a refusal when holes cannot be matched. .carv record, form, self-test.
 Acceptance criteria:
@@ -1624,7 +1624,7 @@ RE-SCOPED 2026-11-16 after three verifier FAILs (round 1: shared-table conversio
 Acceptance criteria:
   1. Scripts run with the documented limits and are cancellable; hostile scripts are stopped; core builds on all CI platforms; ADR with the API design for owner review.
 
-### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: in-progress]
+### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: verifying]
 Phase: 3   Module: core/scripting + app/viewmodel + app   Depends on: T-0330
 Goal: Bind the designed API: read/create/modify vectors and layers, selection, document variables, create toolpaths, show simple input forms; all edits go through undoable commands (one undo step per gadget run); gadget discovery (folder of scripts with a manifest), Gadgets menu built at startup, Install New Gadget, Gadget Shortcuts (Ctrl+F-key), error dialog.
 Also (from the T-0330 verifier): make host-callback failures for oversized values report 'value too large' instead of the vague 'host function threw an unknown exception', and add the Lua MIT notice to the shipped third-party notices.
@@ -1637,7 +1637,7 @@ Goal: Port the stock gadget behaviours as original scripts shipped with the app:
 Acceptance criteria:
   1. Each gadget produces the documented output on test inputs; install path works; ADR/doc per gadget.
 
-### T-0333 Clipart library browser (local folders)   [status: in-progress]
+### T-0333 Clipart library browser (local folders)   [status: verifying]
 Phase: 3   Module: app + core/io   Depends on: —
 Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (SVG, DXF, PNG), thumbnails generated off the UI thread and cached, search by name, drag/insert into the drawing at the cursor/centre with scale-to-fit, favourites; no online store. Thumbnail cache size bounded; hostile files refused with clear messages.
 Acceptance criteria:
