@@ -1611,7 +1611,7 @@ Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-s
 Acceptance criteria:
   1. Bank patterns match holes on test layouts; unmatched holes are reported; output order minimises moves; round trip and hostile-record tests; ADR.
 
-### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: in-progress]
+### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: verifying (dialog -> T-0336)]
 Phase: 3   Module: core/io + app   Depends on: T-0328
 Goal: Import a parts list (CSV/XML) describing rectangular panels with holes/dados through a user-editable mapping file (column -> part length/width/thickness/material/label/operations), then auto-nest the panels and create Profile/Drilling/Pocket toolpaths. No third-party product names or formats beyond generic CSV/XML.
 Acceptance criteria:
@@ -1654,3 +1654,15 @@ Phase: 3   Module: core/toolpath + core/document + core/post + core/simulate + a
 Goal: T-0328 emits the head's (reference spindle's) path only; DrillBankResult::placements carries the per-spindle detail but the toolpath record does not. Add a per-stroke spindle list to the toolpath (schema + .carv bump only when used, hostile caps), make preview and simulation drill one hole per active spindle per stroke, and write the post's drill-bank blocks (the SETUP_DRILL_BANK family parsed by the post interpreter; audit what is parsed vs acted on) with golden tests; Add-menu entry and per-spindle list editor in the app with a self-test.
 Acceptance criteria:
   1. A drill-bank job simulates one hole per active spindle, posts with the drill-bank blocks, and round-trips through .carv; app drives it.
+
+### T-0336 App dialog for the parts-list import (T-0329 follow-up)   [status: ready — LOW]
+Phase: 3   Module: app   Depends on: T-0329
+Goal: File/Edit menu entry and dialog driving the Qt-free PartsImportForm: choose CSV and mapping files (or paste), show the preview and line-numbered diagnostics, allow-partial toggle, tool choices per Profile/Drill/Pocket, Apply as one undo step; self-test.
+Acceptance criteria:
+  1. A parts list imports end to end from the UI with diagnostics shown; self-test drives it.
+
+### T-0337 General Nest Parts (rotation step, mirroring, parts inside parts, grain/offcuts) to replace the shelf nester   [status: ready — LOW]
+Phase: 3   Module: core/geometry + app   Depends on: T-0329
+Goal: The feature inventory lists Nest Parts (rotate to best fit by step angle, mirror, allow parts inside other parts, nest boundary, start corner/direction, nesting sheets). T-0329 found core has no nesting and added only a deterministic rectangle shelf nester (io::nestRectangles). Implement a real polygon nester behind the same interface with operation-counter budgets, deterministic results and tests against the shelf nester for rectangles, then the app form.
+Acceptance criteria:
+  1. Arbitrary closed vectors nest within boundary/sheets with rotation and containment options; deterministic; bounded; form and self-test.
