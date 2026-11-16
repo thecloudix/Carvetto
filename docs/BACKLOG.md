@@ -1592,7 +1592,7 @@ Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (pow
 Acceptance criteria:
   1. Burn marks match the model on test paths (counter-based, no timing); laser post golden test; ADR.
 
-### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: in-progress]
+### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: verifying]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0324, T-0325
 Goal: Wire Laser Cut/Fill, Picture and Sketch Engraving into the Toolpaths panel (entries, dialogs, recalculation, staleness, preview and simulation overlay, job-sheet rows) following the T-0303/T-0311 pattern.
 Also: with the machine-limit boundary on, overscan strokes can still leave the limits (the burn is clipped, the beam-off overscan moves are not): clamp overscan to the limits or note it in ADR-0105 (T-0324 verifier). Call post::laserSetupProblem(machine, post) from the UI (T-0325) and add the machine laser flag to the tool/machine setup dialog. Self-tests for Picture and Sketch entries belong here.
