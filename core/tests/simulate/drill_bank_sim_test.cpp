@@ -183,3 +183,48 @@ TEST_CASE("simulate: drill bank toolpaths are refused when the head cannot be us
     CHECK(heightAt(other, 10, 10) == Approx(-2.0).margin(1e-6));
     CHECK(heightAt(other, 30, 10) == Approx(0.0).margin(1e-6));  // no spindle at the head offset
 }
+
+TEST_CASE("simulate: a laser toolpath and a drill bank toolpath simulate together in one run (T-0325 + T-0335)",
+          "[simulate][drill_bank][laser]") {
+    Toolpath laser;
+    laser.name = "Laser";
+    laser.tool.toolNumber = 2;
+    laser.tool.diameter = 1.0;
+    laser.tool.feedRate = 1000.0;
+    laser.tool.plungeRate = 200.0;
+    laser.tool.laser = true;
+    laser.moves = {Move::rapid({5, 10, 1}), Move::feed({5, 10, 0}), Move::feed({25, 10, 0}).withJet(100.0),
+                   Move::retract({25, 10, 1})};
+    const Toolpath bank = stroke(0b111);
+    const ToolShape flat = *ToolShape::flatEndMill(3.0);
+
+    Simulator laserOnly(stockOf(100, 40, 0.25, 10.0));
+    REQUIRE(laserOnly.addLaserToolpath(laser, 1000.0, 1));
+    REQUIRE(laserOnly.advanceAll());
+    const Simulator bankOnly = cutStroke(bank);
+
+    for (const bool laserFirst : {true, false}) {
+        Simulator both(stockOf(100, 40, 0.25, 10.0));
+        if (laserFirst) {
+            REQUIRE(both.addLaserToolpath(laser, 1000.0, 1));
+            REQUIRE(both.addToolpath(bank, flat, 2));
+        } else {
+            REQUIRE(both.addToolpath(bank, flat, 1));
+            REQUIRE(both.addLaserToolpath(laser, 1000.0, 2));
+        }
+        REQUIRE(both.advanceAll());
+        // The burn layer is exactly the laser's alone; the bank holes are exactly the drill's alone.
+        REQUIRE(both.burnDoses().size() == laserOnly.burnDoses().size());
+        for (std::size_t k = 0; k < both.burnDoses().size(); ++k) {
+            REQUIRE(both.burnDoses()[k] == laserOnly.burnDoses()[k]);
+        }
+        CHECK(both.markedCells() == laserOnly.markedCells());
+        CHECK(both.markedCells() > 0);
+        CHECK(heightAt(both, 30, 20) == Approx(-4.0).margin(1e-6));
+        CHECK(heightAt(both, 50, 20) == Approx(-6.0).margin(1e-6));
+        CHECK(heightAt(both, 70, 20) == Approx(-3.0).margin(1e-6));
+        CHECK(heightAt(both, 15, 10) == Approx(0.0).margin(1e-6));  // the beam removes no material
+        CHECK(both.heightfield().cutCells() == bankOnly.heightfield().cutCells());
+        CHECK(both.diagnostics().empty());
+    }
+}
