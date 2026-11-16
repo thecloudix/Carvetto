@@ -28,6 +28,7 @@ struct LevelEffectsSummary {
     std::size_t clipVertices{0};
     relief::MirrorMode mirror{relief::MirrorMode::None};
     relief::Point mirrorCenter;
+    bool wrapping{false};  ///< The Wrapping effect is on (T-0321).
     /// Closed vectors in the selection that Apply / Update Clipping would use.
     std::size_t selectedClosedVectors{0};
     std::string text() const;  ///< "Clipped by 2 polygons; mirror: Left to right".
@@ -47,6 +48,9 @@ EditResult removeLevelClip(document::Document& doc, document::LevelId level);
 /// Sets the mirror mode; the axes pass through the model centre (the existing centre is kept when
 /// the sheet shows nothing).
 EditResult setLevelMirror(document::Document& doc, document::LevelId level, relief::MirrorMode mode);
+/// Turns the Wrapping effect (ADR-0114) on or off. On: rotary jobs only; the circumference and the window start
+/// come from the job's flat design area (its extent round the cylinder and where it starts). One undo step.
+EditResult setLevelWrapping(document::Document& doc, document::LevelId level, bool enabled);
 /// Makes the level's effects permanent (BakeReliefLevelEffectsCommand).
 EditResult bakeLevelEffects(document::Document& doc, document::LevelId level);
 

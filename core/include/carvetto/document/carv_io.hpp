@@ -88,9 +88,12 @@ inline constexpr int kCarvFormatMinorDrillBank = 17;
 /// only when some drill bank move names spindles.
 inline constexpr int kCarvFormatMinorBankSpindles = 18;
 /// 1.19 (T-0322, ADR-0115) adds Rounding records (operation `rounding`: the rotary blank, radius, method and
-/// extent); written only when a record is a rounding's. The newest minor this build writes and reads.
+/// extent); written only when a record is a rounding's.
 inline constexpr int kCarvFormatMinorRounding = 19;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorRounding;
+/// 1.20 (T-0321, ADR-0114) adds the Wrapping level effect (`wrapping` in a level's `effects` record); written only
+/// when a level has it enabled. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorWrapping = 20;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorWrapping;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

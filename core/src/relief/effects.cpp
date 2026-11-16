@@ -11,6 +11,10 @@ bool finitePoint(const Point& p) { return std::isfinite(p.x) && std::isfinite(p.
 
 Status validateEffects(const LevelEffects& e) {
     if (!finitePoint(e.mirrorCenter)) return Status::BadParameter;
+    if (e.wrapping.enabled &&
+        !(std::isfinite(e.wrapping.circumference) && e.wrapping.circumference > 0.0 && std::isfinite(e.wrapping.start))) {
+        return Status::BadParameter;
+    }
     if (e.clip.polygons.size() > kMaxClipPolygons) return Status::BadParameter;
     std::size_t vertices = 0;
     for (const auto& poly : e.clip.polygons) {
@@ -86,10 +90,66 @@ Status applyMirror(MirrorMode mode, Point center, HeightField& field) {
     return Status::Ok;
 }
 
+Status applyWrapping(const Wrapping& w, HeightField& field) {
+    if (!w.enabled) return Status::Ok;
+    LevelEffects probe;
+    probe.wrapping = w;
+    if (validateEffects(probe) != Status::Ok) return Status::BadParameter;
+    if (field.empty()) return Status::Ok;
+    const Grid& g = field.grid();
+    const bool circY = w.circumferenceIsY;
+    const std::size_t n = circY ? g.height : g.width;  // cells along the circumference
+    const double o = circY ? g.origin.y : g.origin.x;
+    const double cs = g.cellSize;
+    const double span = static_cast<double>(n - 1) * cs;
+    if (span / w.circumference + 2.0 > static_cast<double>(kMaxWrapPeriods)) return Status::BadParameter;
+    const HeightField src = field;
+    const std::size_t m = circY ? g.width : g.height;  // cells across
+    const double eps = 1e-9;
+    for (std::size_t a = 0; a < m; ++a) {
+        for (std::size_t b = 0; b < n; ++b) {
+            const double c = o + static_cast<double>(b) * cs;
+            float out = kTransparent;
+            if (c >= w.start && c < w.start + w.circumference) {
+                const double kLo = std::ceil((o - c) / w.circumference - eps);
+                const double kHi = std::floor((o + span - c) / w.circumference + eps);
+                for (double k = kLo; k <= kHi; k += 1.0) {
+                    const double f = (c + k * w.circumference - o) / cs;
+                    const double r = std::round(f);
+                    float v;
+                    if (std::fabs(f - r) < eps) {
+                        if (r < 0.0 || r > static_cast<double>(n - 1)) continue;
+                        const auto idx = static_cast<std::size_t>(r);
+                        v = circY ? src.at(a, idx) : src.at(idx, a);
+                    } else {
+                        if (f < 0.0 || f > static_cast<double>(n - 1)) continue;
+                        const auto i0 = static_cast<std::size_t>(f);
+                        const double t = f - static_cast<double>(i0);
+                        const float v0 = circY ? src.at(a, i0) : src.at(i0, a);
+                        const float v1 = circY ? src.at(a, i0 + 1) : src.at(i0 + 1, a);
+                        v = (std::isnan(v0) || std::isnan(v1))
+                                ? kTransparent
+                                : static_cast<float>((1.0 - t) * static_cast<double>(v0) + t * static_cast<double>(v1));
+                    }
+                    out = combine(CombineMode::MergeHigh, out, v);
+                }
+            }
+            if (circY) {
+                field.set(a, b, out);
+            } else {
+                field.set(b, a, out);
+            }
+        }
+    }
+    return Status::Ok;
+}
+
 Status applyEffects(const LevelEffects& e, HeightField& field) {
     const Status s = validateEffects(e);
     if (s != Status::Ok) return s;
     Status r = applyMirror(e.mirror, e.mirrorCenter, field);
+    if (r != Status::Ok) return r;
+    r = applyWrapping(e.wrapping, field);
     if (r != Status::Ok) return r;
     return applyClip(e.clip, field);
 }

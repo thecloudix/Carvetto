@@ -19,9 +19,9 @@ bool fin(relief::Point p) {
 std::string reliefEffectsProblem(const relief::LevelEffects& e) {
     return relief::validateEffects(e) == relief::Status::Ok
                ? std::string{}
-               : "the level's clipping or mirror settings are invalid (a clip needs at most " +
+               : "the level's clipping, mirror or wrapping settings are invalid (a clip needs at most " +
                      std::to_string(relief::kMaxClipPolygons) + " polygons of 3 or more finite points and at most " +
-                     std::to_string(relief::kMaxClipVertices) + " vertices, the mirror centre must be finite)";
+                     std::to_string(relief::kMaxClipVertices) + " vertices, the mirror centre must be finite, a wrapping needs a positive finite circumference)";
 }
 
 std::string reliefComponentProblem(const relief::Component& c) {

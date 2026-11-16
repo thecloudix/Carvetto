@@ -242,8 +242,23 @@ class SetReliefLevelMirrorCommand : public Command {
     Props after_;
 };
 
+/// Sets (or, with `enabled` false, removes) a level's Wrapping effect (T-0321, ADR-0114). Refused for an unknown
+/// level, invalid parameters (see `relief::validateEffects`) or an unchanged setting.
+class SetReliefLevelWrappingCommand : public Command {
+   public:
+    SetReliefLevelWrappingCommand(LevelId id, relief::Wrapping wrapping) : id_(id), after_(wrapping) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return after_.enabled ? "Set level wrapping" : "Remove level wrapping"; }
+
+   private:
+    LevelId id_;
+    relief::Wrapping before_;
+    relief::Wrapping after_;
+};
+
 /// Makes a level's effects permanent: replaces its visible components by one component holding the
-/// composed result (`relief::bakeLevel`), clears clipping and mirror mode, and keeps the level's
+/// composed result (`relief::bakeLevel`), clears clipping, mirror mode and wrapping, and keeps the level's
 /// own properties. Hidden components are discarded. Refused when the level has no effects, no
 /// visible component, or the result would break the component or cell caps. Undo restores the
 /// original components and effects; the new component's id is kept for redo.

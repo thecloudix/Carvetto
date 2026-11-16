@@ -156,12 +156,24 @@ MeshImportOutcome importMeshIntoDocument(document::Document& doc, document::Shee
     c.name = name.empty() ? "Model" : name;
     c.field = std::move(raster.value().top);
     out.undercutCells = raster.value().undercutCount;
-
     // A mesh in millimetres lands where it was centred; without centring the field keeps the
     // mesh's own XY (the grid origin is in model coordinates).
+    MeshImportOutcome added = addImportedComponent(doc, sheet, std::move(c), "Import 3D model");
+    added.undercutCells = out.undercutCells;
+    return added;
+}
+
+MeshImportOutcome addImportedComponent(document::Document& doc, document::SheetId sheet, relief::Component component,
+                                       const char* undoText) {
+    MeshImportOutcome out;
+    auto fail = [&out](std::string message) {
+        out.ok = false;
+        out.error = std::move(message);
+        return out;
+    };
     std::vector<document::LevelId> levels = doc.reliefLevelsOnSheet(sheet);
     doc.undoStack().breakCoalescing();
-    doc.undoStack().beginMacro("Import 3D model");
+    doc.undoStack().beginMacro(undoText);
     document::LevelId level;
     if (levels.empty()) {
         EditResult added = addReliefLevel(doc, sheet, {}, &level);
@@ -172,7 +184,7 @@ MeshImportOutcome importMeshIntoDocument(document::Document& doc, document::Shee
     } else {
         level = levels.back();
     }
-    auto cmd = std::make_unique<document::AddReliefComponentCommand>(level, std::move(c));
+    auto cmd = std::make_unique<document::AddReliefComponentCommand>(level, std::move(component));
     const document::AddReliefComponentCommand* raw = cmd.get();
     const bool done = doc.execute(std::move(cmd));
     const document::ComponentId id = done ? raw->createdId() : document::ComponentId{};

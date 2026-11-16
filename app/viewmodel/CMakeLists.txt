@@ -39,6 +39,7 @@ add_library(carvetto_viewmodel STATIC
   src/model_view.cpp
   src/wrapped_view.cpp
   src/model_io.cpp
+  src/rotary_tools.cpp
   src/preview_component.cpp
   src/playback.cpp
   src/tools.cpp

@@ -111,6 +111,9 @@ std::string LevelEffectsSummary::text() const {
         os << "clipped by " << clipPolygons << (clipPolygons == 1 ? " polygon" : " polygons");
     }
     os << "; mirror: " << mirrorModeName(mirror);
+    if (wrapping) {
+        os << "; wrapped";
+    }
     return os.str();
 }
 
@@ -127,6 +130,7 @@ std::optional<LevelEffectsSummary> summarizeEffects(const Document& doc, LevelId
     }
     s.mirror = l->effects.mirror;
     s.mirrorCenter = l->effects.mirrorCenter;
+    s.wrapping = l->effects.wrapping.enabled;
     s.selectedClosedVectors = clipFromSelection(doc).polygons.size();
     return s;
 }
@@ -179,9 +183,33 @@ EditResult setLevelMirror(Document& doc, LevelId level, relief::MirrorMode mode)
                "The mirror mode could not be set");
 }
 
+EditResult setLevelWrapping(Document& doc, LevelId level, bool enabled) {
+    const document::ReliefLevel* l = doc.findReliefLevel(level);
+    if (l == nullptr) {
+        return refused("Pick a level first");
+    }
+    relief::Wrapping w;
+    if (enabled) {
+        const document::Job& job = doc.job();
+        if (job.type != document::JobType::Rotary) {
+            return refused("Wrapping needs a rotary job");
+        }
+        const geometry::Box2 area = document::materialBounds(job.datum, job.sizeMm.x, job.sizeMm.y, job.datumOffsetMm);
+        w.enabled = true;
+        w.circumferenceIsY = job.rotaryAxis == document::RotaryAxis::X;
+        w.circumference = job.circumferenceMm();
+        w.start = w.circumferenceIsY ? area.min.y : area.min.x;
+    }
+    if (w == l->effects.wrapping) {
+        return refused(enabled ? "The level is already wrapped" : "The level is not wrapped");
+    }
+    return run(doc, std::make_unique<document::SetReliefLevelWrappingCommand>(level, w),
+               "The wrapping could not be set");
+}
+
 EditResult bakeLevelEffects(Document& doc, LevelId level) {
     return run(doc, std::make_unique<document::BakeReliefLevelEffectsCommand>(level),
-               "Nothing to bake: the level needs a clip or mirror mode and a visible component");
+               "Nothing to bake: the level needs a clip, mirror mode or wrapping and a visible component");
 }
 
 }  // namespace carvetto::viewmodel

@@ -444,6 +444,11 @@ std::uint64_t modelFingerprint(const document::Document& doc, document::SheetId 
         fp.add(static_cast<std::uint64_t>(level.effects.mirror));
         fp.add(level.effects.mirrorCenter.x);
         fp.add(level.effects.mirrorCenter.y);
+        if (level.effects.wrapping.enabled) {  // only then, so existing fingerprints are unchanged
+            fp.add(static_cast<std::uint64_t>(level.effects.wrapping.circumferenceIsY));
+            fp.add(level.effects.wrapping.circumference);
+            fp.add(level.effects.wrapping.start);
+        }
         for (const auto& polygon : level.effects.clip.polygons) {
             fp.add(static_cast<std::uint64_t>(polygon.size()));
             for (const relief::Point& p : polygon) {

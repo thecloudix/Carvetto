@@ -207,7 +207,7 @@ void SculptMergedPreview::recompute(std::size_t i0, std::size_t i1, std::size_t 
     }
     evaluations_ += rect * (1 + above_.size());
     // Effects. A mirror reads cells anywhere, so it redoes the level and everything it touches.
-    if (level_.effects.mirror != relief::MirrorMode::None) {
+    if (level_.effects.mirror != relief::MirrorMode::None || level_.effects.wrapping.enabled) {
         levelFin_ = levelPre_;
         relief::applyEffects(level_.effects, levelFin_);
         evaluations_ += static_cast<std::uint64_t>(w) * grid_.height;

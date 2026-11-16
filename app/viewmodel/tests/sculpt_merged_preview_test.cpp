@@ -121,6 +121,16 @@ TEST_CASE("merged sculpt preview honours clipping and mirror", "[viewmodel][scul
                                                                           relief::Point{20.0, 20.0})));
         strokeAndCompare(doc, target);
     }
+    {  // Wrapping (T-0321): a stroke past the window edge shows up wrapped
+        Document doc;
+        const LevelId l0 = addLevel(doc, relief::CombineMode::Add);
+        const ComponentId target = addBlock(doc, l0, 41, 0.0, 2.0f, relief::CombineMode::Add, "Target");
+        relief::Wrapping w;
+        w.enabled = true;
+        w.circumference = 25.0;
+        REQUIRE(doc.execute(std::make_unique<SetReliefLevelWrappingCommand>(l0, w)));
+        strokeAndCompare(doc, target);
+    }
 }
 
 TEST_CASE("merged sculpt preview follows Undo Stroke and Discard", "[viewmodel][sculpt]") {

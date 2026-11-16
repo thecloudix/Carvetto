@@ -2250,9 +2250,10 @@ TEST_CASE("cutter comp: the minor ladder puts compensation above rotary gaps and
     CHECK(kCarvFormatMinorRotaryGaps > kCarvFormatMinorLaser);
     CHECK(kCarvFormatMinorLaserImages > kCarvFormatMinorCutterComp);
     CHECK(kCarvFormatMinorDrillBank > kCarvFormatMinorLaserImages);  // T-0328
-    CHECK(kCarvFormatMinorBankSpindles > kCarvFormatMinorDrillBank);  // T-0335: the newest minor
-    CHECK(kCarvFormatMinorRounding > kCarvFormatMinorBankSpindles);  // T-0322: the newest minor
-    CHECK(kCarvFormatMinor == kCarvFormatMinorRounding);
+    CHECK(kCarvFormatMinorBankSpindles > kCarvFormatMinorDrillBank);  // T-0335
+    CHECK(kCarvFormatMinorRounding > kCarvFormatMinorBankSpindles);  // T-0322
+    CHECK(kCarvFormatMinorWrapping > kCarvFormatMinorRounding);  // T-0321: the newest minor
+    CHECK(kCarvFormatMinor == kCarvFormatMinorWrapping);
     Job job = Job::rotary(400.0, 60.0, Units::Millimetres);
     job.gapOutsideMm = 1.5;  // a rotary gap alone is minor 14
     Document doc(job);

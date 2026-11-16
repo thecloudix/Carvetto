@@ -163,13 +163,31 @@ struct Clip {
 inline constexpr std::size_t kMaxClipPolygons = 256;
 inline constexpr std::size_t kMaxClipVertices = 65536;
 
+/// Wrapping of a level (T-0321, ADR-0114): the flat-modelled relief is folded round the circumference of a
+/// rotary job, so content past the edge of the window [start, start + circumference) comes back in on the
+/// other side. The circumference direction is the design Y (cylinder along X) or X.
+struct Wrapping {
+    bool enabled = false;
+    bool circumferenceIsY = true;
+    double circumference = 0.0;  ///< Length of one turn, mm; > 0 and finite when enabled.
+    double start = 0.0;          ///< Circumference coordinate where the window starts.
+    bool operator==(const Wrapping& o) const {
+        return enabled == o.enabled && (!enabled || (circumferenceIsY == o.circumferenceIsY &&
+                                                    circumference == o.circumference && start == o.start));
+    }
+};
+
+/// Most periods (turns of the cylinder) a wrapped level may span; more is BadParameter.
+inline constexpr std::size_t kMaxWrapPeriods = 64;
+
 /// Non-destructive per-level effects, applied at compose time after the level's components are
-/// combined and its base height added: mirror first, then clip (so the clip bounds the result).
+/// combined and its base height added: mirror first, then wrapping, then clip (so the clip bounds the result).
 struct LevelEffects {
     Clip clip;
     MirrorMode mirror = MirrorMode::None;
     Point mirrorCenter;  ///< The mirror axes pass through this point (design space).
-    bool any() const { return !clip.polygons.empty() || mirror != MirrorMode::None; }
+    Wrapping wrapping;
+    bool any() const { return !clip.polygons.empty() || mirror != MirrorMode::None || wrapping.enabled; }
 };
 
 struct Level {

@@ -202,7 +202,7 @@ TEST_CASE("T-0328: drill bank records save and load exactly; save -> load -> sav
     CHECK(back.document.checkIntegrity().empty());
     CHECK(back.formatMinor == kCarvFormatMinorBankSpindles);  // T-0335: the strokes name spindles
     CHECK(kCarvFormatMinorDrillBank == 17);
-    CHECK(kCarvFormatMinor >= kCarvFormatMinorBankSpindles);
+    CHECK(kCarvFormatMinor >= kCarvFormatMinorBankSpindles);  // newer minors (T-0321: 1.19) are for other features
     CHECK(save(back.document, back.extras) == once);
 }
 

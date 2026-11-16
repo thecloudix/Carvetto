@@ -24,6 +24,7 @@ add_executable(carvetto_viewmodel_tests
   model_view_test.cpp
   wrapped_view_test.cpp
   model_io_test.cpp
+  rotary_tools_test.cpp
   preview_component_test.cpp
   vector_ops_test.cpp
   keepout_test.cpp

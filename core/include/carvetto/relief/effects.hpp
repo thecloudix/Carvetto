@@ -21,7 +21,15 @@ Status applyClip(const Clip& clip, HeightField& field);
 /// makes the target transparent.
 Status applyMirror(MirrorMode mode, Point center, HeightField& field);
 
-/// Mirror, then clip. BadParameter when the effects are invalid.
+/// Folds the field round the circumference (T-0321, ADR-0114). Cells whose circumference coordinate lies in
+/// [start, start + circumference) take the highest opaque value of the field at that coordinate plus any whole
+/// number of circumferences (so a relief that runs past the window edge wraps in on the other side, and
+/// overlapping turns merge high); every other cell becomes transparent. Linear interpolation along the
+/// circumference, exact on cell centres. No change when not enabled. BadParameter for a non-finite or
+/// non-positive circumference, or when the field spans more than kMaxWrapPeriods turns.
+Status applyWrapping(const Wrapping& wrapping, HeightField& field);
+
+/// Mirror, wrapping, then clip. BadParameter when the effects are invalid.
 Status applyEffects(const LevelEffects& e, HeightField& field);
 
 /// A level's visible components composed on their union grid with effects applied (level base
