@@ -43,7 +43,7 @@ on GCC and MSVC.
    disables hooks and an infinite loop there would hang the host. `math.randomseed(0)` is applied at
    start: random numbers are repeatable until the script seeds them.
 6. **Limits (`ScriptLimits`, defaults in the header).**
-   * *Instructions:* a count hook every 1000 VM instructions adds to a budget (default 50 M; measured on a loaded Debug build, `while true do end` stops in about 0.4 s;
+   * *Instructions:* a count hook every 100 VM instructions adds to a budget (default 50 M; measured on a loaded Debug build, `while true do end` stops in about 0.4 s;
      Release not measured); the run stops within one block. The budget is shared by coroutines. After a trip the hook
      is re-armed to fire on every instruction, so a script that wraps the loop in `pcall` (or loops over
      `pcall`) is stopped by the next instruction outside the `pcall`.
@@ -58,8 +58,15 @@ on GCC and MSVC.
      with a pattern we could not reproduce; the lower default leaves 10x margin.
    * *Heap:* the allocator refuses growth past `maxMemoryBytes` (default 64 MiB); Lua raises "not enough
      memory", which a script may catch; its loop is then stopped by the instruction budget.
-   * *Strings:* `string.rep` is refused above `maxStringBytes`; every other way to grow a string
-     (`..`, `format`, `concat`) is bounded by the heap limit.
+   * *Strings and blocks (per-operation caps):* the allocator refuses any single new string above
+     `maxStringBytes` (default 1 MiB; this covers `..`, `rep`, `format`, `tostring`, `concat`, error
+     messages, `gsub` results) and any single block above `maxAllocationBytes` (default 8 MiB: one table
+     array, stack, `luaL_Buffer`). A refused request is an ordinary "not enough memory" (MemoryLimit).
+     `string.rep` also refuses up front with "resulting string too large". `load` refuses text chunks
+     above `maxLoadBytes` (256 KiB, returns nil plus a message). The point is not accounting but
+     latency: one C-side operation touches at most a few MiB, so the deadline poll below fires within
+     milliseconds of any operation. Consequence: arrays above about 500 k elements cannot be built in a
+     script.
    * *Values crossing the boundary:* one conversion (a returned value or the arguments of a host
      call) visits at most `maxValueElements` (1 M) values and copies at most `maxValueBytes` (16 MiB) of
      string data, besides the depth limit. Without this, a table built as a shared DAG (60 references
@@ -75,6 +82,26 @@ on GCC and MSVC.
      (a script that spent its whole budget cannot also return a large table). Rule for the class: any
      host-boundary work done outside the instruction hook is charged to the budget, bounded, or both. The
      work a host function itself does is the registering code's responsibility.
+   * *Wall-clock deadline (backstop):* three verifier rounds showed that charging cannot bound every
+     C-side path of the Lua libraries (each round plugged one and found more). So the guarantee is
+     layered: the deterministic budgets above give reproducible stops for ordinary runaway scripts, and
+     `ScriptLimits::deadlineMillis` (default 5000, 0 = off) ends whatever they miss with status
+     `Timeout`. The deadline is polled every 100 VM instructions (also inside coroutines, and again
+     after a trip, so `pcall` cannot swallow it), every 256 pattern steps, every 1024 values converted
+     in either direction, and at each host-call and library-call boundary. The clock is injectable
+     (`ScriptLimits::clockNanos`, default `std::chrono::steady_clock`) so unit tests use a fake clock and
+     never sleep. **A Timeout is explicitly non-deterministic**: whether and where a script is stopped
+     depends on machine speed and load, unlike every other status; callers must not treat it as
+     reproducible and must not cache or compare it. The host stays usable afterwards (each run has its
+     own Lua state, nothing is shared). Work done by a host function itself is not interrupted; the
+     deadline fires when it returns.
+   * *Measured (Debug, loaded machine, defaults, verifier attack scripts a1..a17):* a10 coroutine churn
+     and a12 `tonumber` loop stop on the deadline at 5.0 s; a13 sort 1.95 s, a17 insert/remove 1.1 s,
+     a6 deep-stack errors 1.6 s, a9 big keys 1.5 s, a7 unpack 0.84 s, a11 `load` loop 1.45 s (all
+     instruction budget); a16 `gsub` 0.07 s and a4 `table.concat` 0.006 s (memory cap); a3, a3s, a5, a8,
+     a14, a15 stop in under 1 ms (string cap / invalid format); a2 0.014 s and a1 0.5 s (the host
+     function that builds a 1 M-element array dominates; the push is refused by the block cap). No
+     attack ran past the deadline plus one capped operation.
    * *Output:* `print` is captured, not written anywhere, and bounded by `maxOutputBytes`.
    * *Recursion:* Lua's own limits stay (about 200 nested C calls or metamethods, 1 M stack slots), and the
      heap limit bounds them in practice; the result is a normal error (`stack overflow`).
@@ -83,7 +110,7 @@ on GCC and MSVC.
    pattern steps; checked once before starting. A cancelled script cannot catch the error (see 6).
    The flag is the same kind of flag as `geometry::CancelScope`; the two will be raised together by T-0331.
 8. **Results.** `ScriptResult` carries a status (Ok, SyntaxError, RuntimeError, InstructionLimit,
-   MemoryLimit, OutputLimit, Cancelled, LimitsInvalid), the message `name:LINE: text` as Lua reports it,
+   MemoryLimit, OutputLimit, Cancelled, Timeout, LimitsInvalid), the message `name:LINE: text` as Lua reports it,
    the parsed line, a traceback, the captured output, the returned values and the budget used. Chunk names
    are passed as `=name` so messages read `gadget.lua:12:`.
 9. **Values across the boundary** (`ScriptValue`): nil, bool, int64, double, string, array of values
@@ -97,9 +124,10 @@ on GCC and MSVC.
 
 ## Known limits (honest)
 * Instruction counts bound CPU only approximately: a single C call that does a lot of work in one go
-  (for example sorting 4 M elements once) runs to completion; its cost is charged afterwards.
-  The heap limit caps how big such an operand can be.
-* The budget is deterministic (instruction counts), not wall-clock; tests never time anything.
+  (for example sorting 500 k elements once) runs to completion; its cost is charged afterwards. The
+  per-operation caps limit the operand size and the deadline ends the run at the next poll.
+* The instruction, pattern, heap and size budgets are deterministic; the wall-clock deadline is not
+  (see 6). Tests use a fake clock; the one real-clock test is a smoke test with generous margins.
 * The sandbox is a policy over a language runtime, not an OS boundary: it protects a user from a
   gadget's file/process access and runaway resource use, not against memory-safety bugs in Lua itself.
   If that is wanted later, run scripts in a helper process.

@@ -77,3 +77,7 @@ manifest; limits can be raised per gadget only by the user, in a confirmation di
    to)? Proposed: only inside a folder the user chose in the form.
 3. Default budget (about half a second of VM time, 64 MiB heap): enough for a weave creator on a large
    grid? Proposed to measure with the stock gadgets (T-0332) and set per-gadget manifest hints.
+4. Wall-clock deadline (5 s default, ADR-0101): a gadget that is stopped by it gets status `Timeout`,
+   which is non-deterministic: the same gadget on a slower or loaded machine may time out where it
+   passed elsewhere. The gadget runner should show it as "took too long on this machine" rather than
+   as a script bug, and a gadget manifest may later ask for a longer deadline. Proposed: accept.

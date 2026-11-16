@@ -7,6 +7,7 @@
 #include <lualib.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -34,7 +35,7 @@ using carvetto::scripting::ScriptLimits;
 using carvetto::scripting::ScriptValue;
 using carvetto::scripting::ScriptValues;
 
-constexpr int kBlock = 1000;  // VM instructions per hook call
+constexpr int kBlock = 100;  // VM instructions per hook call (budget and clock are polled here)
 
 // Everything one run owns. It is the allocator's user data, so every callback finds it from any
 // lua_State (main thread or coroutine) with lua_getallocf.
@@ -50,9 +51,27 @@ struct RunCtx {
     bool tripInstr = false;
     bool tripCancel = false;
     bool tripOutput = false;
+    bool tripTimeout = false;
+    std::uint64_t startNs = 0;
+    std::uint64_t deadlineNs = 0;  // 0: none
     const char* tripText = "";
     std::vector<std::string>* output = nullptr;
 };
+
+std::uint64_t nowNs(const RunCtx* c) {
+    if (c->lim->clockNanos) {
+        return c->lim->clockNanos();
+    }
+    return static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch())
+            .count());
+}
+
+// True once the wall-clock deadline has passed.
+bool deadlinePassed(const RunCtx* c) {
+    return c->deadlineNs != 0 && nowNs(c) >= c->deadlineNs;
+}
 
 RunCtx* ctxOf(lua_State* L) {
     void* ud = nullptr;
@@ -62,6 +81,7 @@ RunCtx* ctxOf(lua_State* L) {
 
 void* allocator(void* ud, void* ptr, std::size_t osize, std::size_t nsize) {
     auto* c = static_cast<RunCtx*>(ud);
+    const bool newString = ptr == nullptr && osize == LUA_TSTRING;
     if (ptr == nullptr) {
         osize = 0;  // then osize is a type tag, not a size
     }
@@ -75,6 +95,15 @@ void* allocator(void* ud, void* ptr, std::size_t osize, std::size_t nsize) {
     if (nsize > osize) {
         const std::size_t grow = nsize - osize;
         if (grow > c->lim->maxMemoryBytes || c->used > c->lim->maxMemoryBytes - grow) {
+            c->memFailed = true;
+            return nullptr;
+        }
+    }
+    // One block bigger than the caps is refused: it keeps every single C-side operation short, so
+    // the deadline poll runs within milliseconds. Strings are told apart by the type tag.
+    if (nsize > osize) {
+        const std::size_t cap = newString ? c->lim->maxStringBytes + 64 : c->lim->maxAllocationBytes;
+        if (nsize > cap) {
             c->memFailed = true;
             return nullptr;
         }
@@ -104,7 +133,13 @@ void tripAll(lua_State* L) {
 }
 
 void checkBudget(lua_State* L, RunCtx* c) {
-    if (c->tripCancel || c->tripInstr) {
+    if (c->tripCancel || c->tripInstr || c->tripTimeout) {
+        raiseTrip(L, c);
+    }
+    if (deadlinePassed(c)) {
+        c->tripTimeout = true;
+        c->tripText = "script timed out";
+        tripAll(L);
         raiseTrip(L, c);
     }
     if (c->cancel != nullptr && c->cancel->load(std::memory_order_relaxed)) {
@@ -143,7 +178,7 @@ int carvettoLuaMatchStep(lua_State* L) {
     if (c == nullptr || c->lim == nullptr) {
         return 0;
     }
-    if (c->tripCancel || c->tripInstr) {
+    if (c->tripCancel || c->tripInstr || c->tripTimeout) {
         raiseTrip(L, c);
     }
     ++c->patternSteps;
@@ -153,12 +188,19 @@ int carvettoLuaMatchStep(lua_State* L) {
         tripAll(L);
         raiseTrip(L, c);
     }
-    if ((c->patternSteps & 255u) == 0 && c->cancel != nullptr &&
-        c->cancel->load(std::memory_order_relaxed)) {
-        c->tripCancel = true;
-        c->tripText = "script cancelled";
-        tripAll(L);
-        raiseTrip(L, c);
+    if ((c->patternSteps & 255u) == 0) {
+        if (c->cancel != nullptr && c->cancel->load(std::memory_order_relaxed)) {
+            c->tripCancel = true;
+            c->tripText = "script cancelled";
+            tripAll(L);
+            raiseTrip(L, c);
+        }
+        if (deadlinePassed(c)) {
+            c->tripTimeout = true;
+            c->tripText = "script timed out";
+            tripAll(L);
+            raiseTrip(L, c);
+        }
     }
     return 0;
 }
@@ -170,6 +212,7 @@ namespace {
 // Work budget of one conversion Lua -> host. A table that is a shared DAG expands to exponentially
 // many copies, so the total number of values and bytes is bounded, not only the depth.
 constexpr const char* kBudgetWhy = "instruction budget exceeded";
+constexpr const char* kTimeoutWhy = "script timed out";
 constexpr std::uint64_t kUnitsPerValue = 8;  // budget units per value visited, either direction
 constexpr std::uint64_t kUnitsPerEntry = 4;  // per table entry walked while checking the shape
 
@@ -182,6 +225,7 @@ struct Conv {
     std::uint64_t elementsLeft = 0;
     std::uint64_t bytesLeft = 0;
     const std::atomic<bool>* cancel = nullptr;
+    const RunCtx* rc = nullptr;  // for the deadline poll
     std::uint64_t polled = 0;
     const char* why = nullptr;  // set when the conversion fails for a budget reason
     // Instruction-budget units this conversion may still spend (the run's remaining budget) and
@@ -214,10 +258,15 @@ bool toValue(lua_State* L, int idx, int depth, Conv& cv, ScriptValue& out) {
     if (!cv.spend(kUnitsPerValue)) {
         return false;
     }
-    if ((++cv.polled & 1023u) == 0 && cv.cancel != nullptr &&
-        cv.cancel->load(std::memory_order_relaxed)) {
-        cv.why = "script cancelled";
-        return false;
+    if ((++cv.polled & 1023u) == 0) {
+        if (cv.cancel != nullptr && cv.cancel->load(std::memory_order_relaxed)) {
+            cv.why = "script cancelled";
+            return false;
+        }
+        if (cv.rc != nullptr && deadlinePassed(cv.rc)) {
+            cv.why = kTimeoutWhy;
+            return false;
+        }
     }
     switch (lua_type(L, idx)) {
         case LUA_TNIL:
@@ -315,12 +364,19 @@ struct PushCharge {
         }
         left -= u;
         used += u;
-        if ((++polled & 1023u) == 0 && rc->cancel != nullptr &&
-            rc->cancel->load(std::memory_order_relaxed)) {
-            rc->tripCancel = true;
-            rc->tripText = "script cancelled";
-            tripAll(L);
-            throw ScriptError{"script cancelled"};
+        if ((++polled & 1023u) == 0) {
+            if (rc->cancel != nullptr && rc->cancel->load(std::memory_order_relaxed)) {
+                rc->tripCancel = true;
+                rc->tripText = "script cancelled";
+                tripAll(L);
+                throw ScriptError{"script cancelled"};
+            }
+            if (deadlinePassed(rc)) {
+                rc->tripTimeout = true;
+                rc->tripText = kTimeoutWhy;
+                tripAll(L);
+                throw ScriptError{kTimeoutWhy};
+            }
         }
     }
 };
@@ -370,6 +426,7 @@ int hostCallImpl(lua_State* L, std::string& err) {
     cv.elementsLeft = rc->lim->maxValueElements;
     cv.bytesLeft = rc->lim->maxValueBytes;
     cv.cancel = rc->cancel;
+    cv.rc = rc;
     cv.unitsLeft = remainingUnits(rc);
     ScriptValues args;
     const int n = lua_gettop(L);
@@ -383,6 +440,12 @@ int hostCallImpl(lua_State* L, std::string& err) {
                 checkBudget(L, rc);  // trips and raises
             }
             if (cv.why != nullptr) {
+                if (std::strcmp(cv.why, kTimeoutWhy) == 0) {
+                    rc->tripTimeout = true;
+                    rc->tripText = kTimeoutWhy;
+                    tripAll(L);
+                    raiseTrip(L, rc);
+                }
                 if (rc->cancel != nullptr && std::string(cv.why) == "script cancelled") {
                     rc->tripCancel = true;
                     rc->tripText = "script cancelled";
@@ -486,6 +549,11 @@ int luaSafeLoad(lua_State* L) {
     const char* s = lua_tolstring(L, 1, &len);
     const char* name = luaL_optstring(L, 2, s);
     const bool hasEnv = lua_gettop(L) >= 4;
+    if (len > ctxOf(L)->lim->maxLoadBytes) {
+        lua_pushnil(L);
+        lua_pushliteral(L, "load: chunk too large");
+        return 2;
+    }
     charge(L, len / 8 + 1);
     if (luaL_loadbufferx(L, s, len, name, "t") != LUA_OK) {
         lua_pushnil(L);
@@ -716,7 +784,7 @@ int messageHandler(lua_State* L) {
     if (m == nullptr) {
         m = lua_pushfstring(L, "(error object is a %s value)", luaL_typename(L, 1));
     }
-    if (c->tripCancel || c->tripInstr || c->tripOutput) {
+    if (c->tripCancel || c->tripInstr || c->tripOutput || c->tripTimeout) {
         lua_pushstring(L, m);
         return 1;
     }
@@ -808,6 +876,13 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
     ctx.lim = &limits_;
     ctx.cancel = cancel;
     ctx.output = &res.output;
+    ctx.startNs = nowNs(&ctx);
+    if (limits_.deadlineMillis != 0) {
+        ctx.deadlineNs = ctx.startNs + limits_.deadlineMillis * 1'000'000ull;
+        if (ctx.deadlineNs == 0) {
+            ctx.deadlineNs = 1;
+        }
+    }
     std::unique_ptr<lua_State, StateCloser> state(lua_newstate(allocator, &ctx));
     auto finish = [&](ScriptStatus st, std::string msg, std::string tb) {
         res.status = st;
@@ -872,6 +947,7 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
             cv.elementsLeft = limits_.maxValueElements;
             cv.bytesLeft = limits_.maxValueBytes;
             cv.cancel = cancel;
+            cv.rc = &ctx;
             cv.unitsLeft = remainingUnits(&ctx);
             for (int i = 2; i <= top; ++i) {
                 ScriptValue v;
@@ -880,8 +956,10 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
                     if (cv.why != nullptr) {
                         const bool cancelled = std::string(cv.why) == "script cancelled";
                         const bool budget = std::strcmp(cv.why, kBudgetWhy) == 0;
+                        const bool timedOut = std::strcmp(cv.why, kTimeoutWhy) == 0;
                         res.returned.clear();
                         finish(cancelled ? ScriptStatus::Cancelled
+                               : timedOut ? ScriptStatus::Timeout
                                : budget  ? ScriptStatus::InstructionLimit
                                          : ScriptStatus::RuntimeError,
                                std::string("returned value: ") + cv.why, {});
@@ -909,6 +987,8 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
         ScriptStatus status = ScriptStatus::RuntimeError;
         if (ctx.tripCancel) {
             status = ScriptStatus::Cancelled;
+        } else if (ctx.tripTimeout) {
+            status = ScriptStatus::Timeout;
         } else if (ctx.tripInstr) {
             status = ScriptStatus::InstructionLimit;
         } else if (ctx.tripOutput && msg.find("output limit exceeded") != std::string::npos) {

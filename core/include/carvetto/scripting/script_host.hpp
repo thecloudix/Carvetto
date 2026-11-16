@@ -60,8 +60,14 @@ struct ScriptLimits {
     std::uint64_t maxPatternSteps = 2'000'000;
     /// Bytes the Lua heap may hold (all strings, tables, closures, stacks, the loaded chunk).
     std::size_t maxMemoryBytes = 64u * 1024u * 1024u;
-    /// Longest string `string.rep` may build (other string growth is bounded by maxMemoryBytes).
-    std::size_t maxStringBytes = 16u * 1024u * 1024u;
+    /// Longest string a script may build by any means (rep, concatenation, format, tostring, error
+    /// messages, ...). Together with maxAllocationBytes it keeps every single C-side operation short.
+    std::size_t maxStringBytes = 1u * 1024u * 1024u;
+    /// Largest single heap block (one table array, stack, buffer) the Lua heap may grow by; a larger
+    /// request fails like running out of memory.
+    std::size_t maxAllocationBytes = 8u * 1024u * 1024u;
+    /// Longest chunk text `load` accepts (the parser runs in C code).
+    std::size_t maxLoadBytes = 256u * 1024u;
     /// Elements one `table.move` may copy (the copy loop runs in C code).
     std::size_t maxTableMoveElements = 1u << 20;
     /// Bytes `print` may emit in total (each line also costs one newline byte).
@@ -75,6 +81,13 @@ struct ScriptLimits {
     std::uint64_t maxValueElements = 1u << 20;
     /// Bytes of string data one such conversion may copy.
     std::uint64_t maxValueBytes = 16u * 1024u * 1024u;
+    /// Wall-clock backstop for the whole run, in milliseconds (0 = none). The deterministic budgets
+    /// above end ordinary runaway scripts reproducibly; this one bounds anything they cannot see.
+    /// A run stopped by it ends with ScriptStatus::Timeout and is NOT reproducible.
+    std::uint64_t deadlineMillis = 5000;
+    /// Monotonic time source in nanoseconds; empty uses std::chrono::steady_clock. Tests inject a
+    /// fake clock so deadline behaviour is deterministic.
+    std::function<std::uint64_t()> clockNanos;
 };
 
 /// Standard libraries a run may use besides the always-present base, coroutine, table, string,
@@ -94,6 +107,7 @@ enum class ScriptStatus {
     MemoryLimit,       ///< the heap limit was hit and the run ended on it
     OutputLimit,       ///< `print` exceeded maxOutputBytes
     Cancelled,         ///< the cancel flag was seen
+    Timeout,           ///< the wall-clock deadline passed (non-deterministic by nature)
     LimitsInvalid,     ///< source larger than maxSourceBytes (nothing was run)
 };
 
@@ -131,7 +145,7 @@ class ScriptHost {
     void setValue(std::string_view module, std::string_view name, ScriptValue value);
 
     /// Runs `source` as a chunk called `chunkName` (it appears in messages as "chunkName:LINE:").
-    /// `cancel` (optional, must outlive the call) is polled about every 1000 VM instructions and
+    /// `cancel` (optional, must outlive the call) is polled about every 100 VM instructions and
     /// in pattern matching.
     ScriptResult run(std::string_view source, std::string_view chunkName,
                      const std::atomic<bool>* cancel = nullptr) const;

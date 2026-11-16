@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 
@@ -553,6 +555,7 @@ TEST_CASE("scripting: string functions on huge operands are charged", "[scriptin
     // 1000 upper() calls on a 10 MB string must hit the instruction budget quickly.
     ScriptLimits l;
     l.maxStringBytes = 16u * 1024u * 1024u;
+    l.maxAllocationBytes = 32u * 1024u * 1024u;
     ScriptHost host(l);
     int calls = 0;
     host.registerFunction("", "tick", [&calls](const ScriptValues&) {
@@ -562,4 +565,181 @@ TEST_CASE("scripting: string functions on huge operands are charged", "[scriptin
     const auto r = host.run("local s = string.rep('x', 10000000) for i = 1, 1000 do s:upper() tick() end", "t");
     CHECK(r.status == ScriptStatus::InstructionLimit);
     CHECK(calls < 100);  // 1 unit per 8 bytes: about 40 calls fit in 50 M; at 1 per 64 about 320 did
+}
+
+namespace {
+
+// A fake monotonic clock: every reading advances time by `stepNs`; `reads` counts the polls.
+struct FakeClock {
+    std::uint64_t now = 1'000'000;
+    std::uint64_t stepNs = 1'000'000;  // 1 ms per reading
+    std::uint64_t reads = 0;
+    std::function<std::uint64_t()> fn() {
+        return [this]() {
+            ++reads;
+            now += stepNs;
+            return now;
+        };
+    }
+};
+
+ScriptLimits hugeBudgets(FakeClock& clock, std::uint64_t deadlineMs) {
+    ScriptLimits l;
+    l.maxInstructions = ~std::uint64_t{0} / 4;
+    l.maxPatternSteps = ~std::uint64_t{0} / 4;
+    l.maxValueElements = 1u << 24;
+    l.maxValueBytes = 1u << 28;
+    l.deadlineMillis = deadlineMs;
+    l.clockNanos = clock.fn();
+    return l;
+}
+
+}  // namespace
+
+TEST_CASE("scripting: wall-clock deadline backstop (fake clock)", "[scripting][hostile][deadline]") {
+    FakeClock clock;
+    SECTION("an endless loop ends with Timeout, not the instruction limit") {
+        ScriptHost host(hugeBudgets(clock, 50));
+        const auto r = host.run("while true do end", "t");
+        CHECK(r.status == ScriptStatus::Timeout);
+        CHECK(contains(r.message, "timed out"));
+        CHECK(r.instructionsUsed < 100'000);  // a fake ms per poll: ~50 polls of 100 instructions
+    }
+    SECTION("pcall cannot swallow the timeout") {
+        ScriptHost host(hugeBudgets(clock, 20));
+        const auto r = host.run("while true do pcall(function() while true do end end) end", "t");
+        CHECK(r.status == ScriptStatus::Timeout);
+    }
+    SECTION("it is honoured inside a coroutine") {
+        ScriptHost host(hugeBudgets(clock, 20));
+        const auto r = host.run("local f = coroutine.wrap(function() while true do end end) f()", "t");
+        CHECK(r.status == ScriptStatus::Timeout);
+    }
+    SECTION("it is polled in the pattern matcher") {
+        ScriptHost host(hugeBudgets(clock, 5));
+        const auto r = host.run("return (('a'):rep(2000) .. 'c'):find(('.-'):rep(8) .. 'b')", "t");
+        CHECK(r.status == ScriptStatus::Timeout);
+        CHECK(r.patternStepsUsed < 100'000);
+    }
+    SECTION("it is polled while a host result is converted into Lua") {
+        ScriptHost host(hugeBudgets(clock, 20));
+        host.registerFunction("", "big", [](const ScriptValues&) {
+            return ScriptValues{ScriptValue(ScriptValue::Array(300'000, ScriptValue(1)))};
+        });
+        const auto r = host.run("local t = big() return 1", "t");
+        CHECK(r.status == ScriptStatus::Timeout);
+        CHECK(clock.reads < 40);  // the boundary poll (every 1024 values) ended it, not 300k values
+    }
+    SECTION("it is polled while a script table is converted for the host") {
+        ScriptHost host(hugeBudgets(clock, 20));
+        host.registerFunction("", "sink", [](const ScriptValues&) { return ScriptValues{}; });
+        // Build a table without many VM instructions: table.move copies in C.
+        const auto r = host.run(
+            "local t = {} for i = 1, 100 do t[i] = i end "
+            "local u = table.move(t, 1, 100, 1, {}) "
+            "local w = {} for i = 1, 3000 do w[i] = u end "
+            "local ok = pcall(sink, w) return 1",
+            "t");
+        CHECK(r.status == ScriptStatus::Timeout);
+    }
+    SECTION("it is polled while the returned values are converted") {
+        ScriptHost host(hugeBudgets(clock, 5));
+        host.registerFunction("", "big", [](const ScriptValues&) {
+            return ScriptValues{ScriptValue(ScriptValue::Array(1500, ScriptValue(1)))};
+        });
+        const auto r = host.run("local t = big() local u = {} for i = 1, 200 do u[i] = t end return u", "t");
+        CHECK(r.status == ScriptStatus::Timeout);
+    }
+    SECTION("deadlineMillis = 0 disables it") {
+        FakeClock fast;
+        fast.stepNs = 1'000'000'000;
+        ScriptLimits l = hugeBudgets(fast, 0);
+        l.maxInstructions = 100'000;
+        ScriptHost host(l);
+        const auto r = host.run("while true do end", "t");
+        CHECK(r.status == ScriptStatus::InstructionLimit);
+    }
+    SECTION("a run that finishes in time is unaffected, and the host stays usable after a timeout") {
+        ScriptHost host(hugeBudgets(clock, 50));
+        CHECK(host.run("while true do end", "t").status == ScriptStatus::Timeout);
+        clock.now = 1'000'000;
+        const auto r = host.run("return 40 + 2", "t");
+        REQUIRE(r.ok());
+        CHECK(r.returned.at(0).asInt() == 42);
+    }
+    SECTION("the deterministic budgets still win when they come first") {
+        ScriptLimits l = hugeBudgets(clock, 1'000'000);
+        l.maxInstructions = 10'000;
+        ScriptHost host(l);
+        CHECK(host.run("while true do end", "t").status == ScriptStatus::InstructionLimit);
+    }
+}
+
+TEST_CASE("scripting: per-operation caps keep single C-side operations short", "[scripting][hostile][caps]") {
+    ScriptLimits l;
+    l.maxStringBytes = 1u << 20;
+    ScriptHost host(l);
+    SECTION("concatenation cannot build a string above maxStringBytes") {
+        const auto r = host.run(
+            "local a = string.rep('x', 700000) local b = string.rep('y', 700000) return #(a .. b)", "t");
+        CHECK_FALSE(r.ok());
+        CHECK(r.status == ScriptStatus::MemoryLimit);
+    }
+    SECTION("repeated concatenation of big strings fails at once") {
+        const auto r = host.run(
+            "local a = string.rep('x', 700000) for i = 1, 1e7 do local c = a .. a end", "t");
+        CHECK(r.status == ScriptStatus::MemoryLimit);
+        CHECK(r.instructionsUsed < 200'000);
+    }
+    SECTION("table.concat result is capped too") {
+        const auto r = host.run(
+            "local s = string.rep('x', 500000) local t = {s, s, s} return #table.concat(t)", "t");
+        CHECK(r.status == ScriptStatus::MemoryLimit);
+    }
+    SECTION("an error message cannot exceed the cap") {
+        const auto r = host.run(
+            "local s = string.rep('x', 900000) return pcall(error, s .. s)", "t");
+        CHECK(r.status == ScriptStatus::MemoryLimit);
+    }
+    SECTION("a single block above maxAllocationBytes is refused") {
+        ScriptLimits l2;
+        l2.maxAllocationBytes = 64u * 1024u;
+        ScriptHost h2(l2);
+        const auto r = h2.run("local t = {} for i = 1, 100000 do t[i] = i end return #t", "t");
+        CHECK(r.status == ScriptStatus::MemoryLimit);
+    }
+    SECTION("strings and tables below the caps still work") {
+        const auto r = host.run(
+            "local a = string.rep('x', 400000) local b = a .. a local t = {} "
+            "for i = 1, 50000 do t[i] = i end return #b, #t", "t");
+        REQUIRE(r.ok());
+        CHECK(r.returned.at(0).asInt() == 800000);
+        CHECK(r.returned.at(1).asInt() == 50000);
+    }
+    SECTION("load refuses a chunk above maxLoadBytes") {
+        ScriptLimits l2;
+        l2.maxLoadBytes = 1000;
+        ScriptHost h2(l2);
+        const auto r = h2.run(
+            "local f, e = load('x = 1 ' .. string.rep(' ', 2000)) return f == nil, e", "t");
+        REQUIRE(r.ok());
+        CHECK(r.returned.at(0).asBool());
+        CHECK(contains(r.returned.at(1).asString(), "too large"));
+        const auto ok = h2.run("local f = load('return 7') return f()", "t");
+        REQUIRE(ok.ok());
+        CHECK(ok.returned.at(0).asInt() == 7);
+    }
+}
+
+TEST_CASE("scripting: real-clock deadline smoke test", "[scripting][hostile][deadline]") {
+    ScriptLimits l;
+    l.maxInstructions = ~std::uint64_t{0} / 4;
+    l.deadlineMillis = 150;
+    ScriptHost host(l);
+    const auto t0 = std::chrono::steady_clock::now();
+    const auto r = host.run("local n = 0 while true do n = n + 1 end", "t");
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count();
+    CHECK(r.status == ScriptStatus::Timeout);
+    CHECK(ms >= 100);
+    CHECK(ms < 20'000);  // generous: only proves the deadline ends the run
 }
