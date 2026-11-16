@@ -1562,13 +1562,13 @@ Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/
 Acceptance criteria:
   1. Golden-file tests of wrapped output for X and Y along-axis jobs; wrapped view and simulation covered by viewmodel tests and the self-test; ADR with the unit and sign conventions.
 
-### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: ready]
+### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: in-progress]
 Phase: 3   Module: core/relief + core/geometry + app   Depends on: T-0319, T-0295
 Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around the cylinder at render time, like Clipping and Mirror Mode, made permanent by Bake); Vector Unwrapper (turns a cross-section into a contour for two-rail rotary modelling; centre options); 3D import into a rotary job (mesh mapped to the cylinder, orientation options). Operation-counter tests; .carv bump only if used.
 Acceptance criteria:
   1. Wrapping effect composes and bakes equal to the direct wrapped surface on test models; unwrapper round-trips a known cross-section; rotary import places a mesh on the cylinder; ADR with the readings for owner review.
 
-### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: ready]
+### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: in-progress]
 Phase: 3   Module: core/toolpath + core/geometry + app   Depends on: T-0320
 Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turns a cylinder down to a radius, and wrapped fluting and spiral layouts that generate vectors (flute count, length, start/end, spiral pitch) on the flat design area ready for the existing toolpaths. Forms, undo, self-test.
 Acceptance criteria:
@@ -1592,7 +1592,7 @@ Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (pow
 Acceptance criteria:
   1. Burn marks match the model on test paths (counter-based, no timing); laser post golden test; ADR.
 
-### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: ready]
+### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: in-progress]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0324, T-0325
 Goal: Wire Laser Cut/Fill, Picture and Sketch Engraving into the Toolpaths panel (entries, dialogs, recalculation, staleness, preview and simulation overlay, job-sheet rows) following the T-0303/T-0311 pattern.
 Also: with the machine-limit boundary on, overscan strokes can still leave the limits (the burn is clipped, the beam-off overscan moves are not): clamp overscan to the limits or note it in ADR-0105 (T-0324 verifier). Call post::laserSetupProblem(machine, post) from the UI (T-0325) and add the machine laser flag to the tool/machine setup dialog. Self-tests for Picture and Sketch entries belong here.
