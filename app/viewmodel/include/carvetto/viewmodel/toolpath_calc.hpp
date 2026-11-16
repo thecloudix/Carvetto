@@ -180,9 +180,11 @@ struct PriorInput {
 /// of both: it may be run on another thread, and run more than once with the same result.
 struct ToolpathJob {
     ToolpathDefinition definition;
-    /// Image Engrave only: the bitmap. The contours are then the vectors of the Selected Vectors
-    /// strategy (none for Raster and Hatch).
+    /// Image Engrave, Laser Picture and Laser Sketch (bitmap source): the bitmap. The contours are then the
+    /// vectors of the Selected Vectors strategy / the Vectors boundary (none otherwise).
     std::optional<PhotoInput> photo;
+    /// Laser Sketch with the machine limit boundary only (T-0324, `attachMachineLimits`): where the machine can burn.
+    std::optional<geometry::Box2> machineLimits;
     /// 3D rough and 3D finish only (T-0303, ADR-0085): the composed relief model of the sheet at the
     /// finest cell size, shared and immutable. The contours are then the Vectors boundary (if used).
     std::shared_ptr<const relief::HeightField> model;
@@ -246,8 +248,28 @@ void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const Res
 /// of a toolpath onto it).
 bool usesModel(document::ToolpathOperation operation);
 
-/// Gives `job` the composed relief model of the document's active sheet (a no-op for other
-/// operations), or sets the job's refusal when there is none or it is too large to compose.
+/// True when the toolpath of `params` reads a bitmap of the selection: an image engrave, a laser picture, a laser
+/// sketch with the bitmap source (T-0324).
+bool usesBitmap(const document::ToolpathParams& params);
+
+/// True when the toolpath of `params` reads the sheet's composed relief model: `usesModel`, and a laser sketch with
+/// the model source (T-0324).
+bool readsModel(const document::ToolpathParams& params);
+
+/// The machine limits a laser sketch honours (ADR-0105): the active sheet's material rectangle, cut down to the
+/// machine's work area measured from the rectangle's lower-left corner when `machine` states one. Empty when the
+/// sheet has no area.
+std::optional<geometry::Box2> machineLimitsOf(const document::Document& doc, const tooling::Machine* machine);
+
+/// Hash of the machine limits without a machine (the sheet's material rectangle), for staleness.
+std::uint64_t machineLimitsFingerprint(const document::Document& doc);
+
+/// Gives a laser sketch job with the machine limit boundary its limits (a no-op for other jobs); refuses when the
+/// sheet has no area. The machine is the one the tool's cutting data was chosen for, if any.
+void attachMachineLimits(ToolpathJob& job, const document::Document& doc, const tooling::ToolDatabase& db);
+
+/// Gives `job` the composed relief model of the document's active sheet (a no-op for operations that do not read
+/// it: `readsModel`), or sets the job's refusal when there is none or it is too large to compose.
 void attachModel(ToolpathJob& job, const document::Document& doc);
 
 /// Gives `job` the toolpath a Project Toolpath onto Model / 3D Tabs job projects (a no-op for other operations):

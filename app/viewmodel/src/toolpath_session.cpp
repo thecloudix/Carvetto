@@ -300,7 +300,7 @@ void ToolpathSession::computeStaleness() {
     std::vector<std::pair<VectorSelector, std::uint64_t>> memo;
     const auto vectorsOf = [&](const ToolpathDefinition& def) {
         const VectorSelector& selector = def.selector;
-        if (def.operation() == ToolpathOperation::ImageEngrave || usesModel(def.operation())) {
+        if (usesBitmap(def.params) || readsModel(def.params)) {
             return inputsFingerprint(*doc_, selector, def.params);
         }
         for (const auto& [sel, fp] : memo) {
@@ -528,8 +528,8 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     const std::string bad = validateSelector(*doc_, definition.selector);
     const VectorSelector selector = bad.empty() ? normalisedSelector(definition.selector) : VectorSelector{};
     const ResolvedVectors resolved = resolveVectors(*doc_, selector);
-    const bool photo = std::holds_alternative<toolpath::ImageEngraveParams>(definition.params);
-    const bool model = usesModel(definition.operation());
+    const bool photo = usesBitmap(definition.params);
+    const bool model = readsModel(definition.params);
     // A image engrave stores its explicit selection as it is (it names the bitmap, which no vector filter keeps).
     const document::VectorSelection stored = photo ? selector.base : storedSelection(selector, resolved);
     ToolpathJob job = makeToolpathJob(definition, resolved, db_, stored);
@@ -540,6 +540,7 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
         job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);
         attachPhotoInput(job, *doc_, resolveBitmap(*doc_, selector), bitmapDecoder_);
     }
+    attachMachineLimits(job, *doc_, db_);
     if (model) {
         job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);
         attachModel(job, *doc_);

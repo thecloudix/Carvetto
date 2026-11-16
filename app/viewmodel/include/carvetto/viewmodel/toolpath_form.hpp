@@ -48,6 +48,13 @@
 //   Laser Cut / Fill  power (percent) moveSpeed (mm/min, 0 = the tool's feed rate) cutDepth passDepth (with a cut
 //               depth) repeats allowance safeZ startX startY chordal; with Hatch Fill also overscan stepover
 //               hatchAngle; choices strategy direction crossHatch fillMode outline startAt order (T-0323, ADR-0099)
+//   Laser Picture  power moveSpeed passes lineSpacing (mm) safeZ; minPower (power modulation without dither) overscan
+//               lineAngle (not for Selected Vectors) chordal (Selected Vectors only); choices strategy modulatePower
+//               (not with dither) dither invert. It reads the bitmap of the selection (T-0324, ADR-0104)
+//   Laser Sketch  power moveSpeed overscan lineThickness stepover hatchAngle safeZ; with the Vectors boundary also
+//               startX startY chordal fill order; choices source modelTone (3D model source) boundary invert
+//               machineLimitBoundary crossHatch. It reads the bitmap of the selection or the sheet's relief model
+//               (T-0324, ADR-0105)
 //   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 //   Image Engrave  maxDepth stepoverRetract safeZ lineSpacing (percent of the tool diameter) lineAngle (not for
 //               Selected Vectors) chordal (Selected Vectors only); choices strategy, invert. It reads the bitmap

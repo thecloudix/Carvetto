@@ -124,6 +124,16 @@ inline ToolpathDefinition laserDefinition(const tooling::ToolDatabase& db) {
     REQUIRE(form.setTool(db, source("end-mill-3mm")).ok);
     return form.definition();
 }
+inline ToolpathDefinition laserPictureDefinition(const tooling::ToolDatabase& db) {
+    ToolpathForm form(document::ToolpathOperation::LaserPicture, document::Units::Millimetres);
+    REQUIRE(form.setTool(db, source("end-mill-3mm")).ok);
+    return form.definition();
+}
+inline ToolpathDefinition laserSketchDefinition(const tooling::ToolDatabase& db) {
+    ToolpathForm form(document::ToolpathOperation::LaserSketch, document::Units::Millimetres);
+    REQUIRE(form.setTool(db, source("end-mill-3mm")).ok);
+    return form.definition();
+}
 inline ToolpathDefinition prismDefinition(const tooling::ToolDatabase& db) {
     ToolpathForm form(document::ToolpathOperation::Prism, document::Units::Millimetres);
     REQUIRE(form.setTool(db, source("v-bit-90")).ok);
