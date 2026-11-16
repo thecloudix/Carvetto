@@ -1550,7 +1550,7 @@ Goal: Residual (i) of T-0252 was not reproducible in T-0279 because scenes 9301_
 
 ## Phase 3 — Rotary, modules, scripting (drafted 2026-11-16; scripting compatibility with any third-party gadget SDK is NOT a goal unless the owner decides so, see PLAN §6.4)
 
-### T-0319 Rotary job: Job Setup / Material Setup pages, sheets and flat-design area (audit + complete)   [status: in-progress]
+### T-0319 Rotary job: Job Setup / Material Setup pages, sheets and flat-design area (audit + complete)   [status: verifying]
 Phase: 3   Module: core/document + app/viewmodel + app   Depends on: T-0243
 Goal: core already has JobType::Rotary, RotaryAxis, Job::rotary(length, diameter, ...) and the post ROTARY_WRAP_X/Y keys. Audit what exists, then complete the rotary job: Job Setup Rotary page (Length, Diameter, Along X / Along Y, Flip Design, Z-zero at cylinder surface or axis), Material Setup Rotary (Diameter, Gap Outside / Gap Inside Model), rotary sheets (Edit Sheet for Rotary), .carv round trip (minor bump only if new fields), self-test driving it. Flat design area = length x pi x diameter is already modelled; keep units mm/radians in core.
 Acceptance criteria:
