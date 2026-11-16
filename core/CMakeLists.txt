@@ -163,6 +163,54 @@ else()
   target_compile_options(carvetto_harfbuzz PRIVATE /bigobj)
 endif()
 
+# Lua 5.4.8 (MIT; ADR-0101) - embedded scripting language for core/scripting. Pinned release tarball by
+# SHA256 (lua.org), built as a small private static library from the plain sources (the upstream
+# Makefile, lua.c and luac.c are not used). It is compiled AS C++ so that Lua errors are C++ exceptions:
+# host callbacks and hooks may then use RAII freely. Only core/src/scripting includes its headers.
+# One configure-time edit, idempotent like the Clipper2 ones: lstrlib.c pattern matching calls
+# carvettoLuaMatchStep() on every recursive match() step, so a catastrophic pattern is stopped by a
+# budget and by cancellation (the VM instruction hook never fires inside C code).
+FetchContent_Declare(
+  lua
+  URL      https://www.lua.org/ftp/lua-5.4.8.tar.gz
+  URL_HASH SHA256=4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
+  SOURCE_SUBDIR carvetto-no-cmake  # sources only
+)
+FetchContent_MakeAvailable(lua)
+set(_lua_strlib "${lua_SOURCE_DIR}/src/lstrlib.c")
+file(READ "${_lua_strlib}" _lua_strlib_src)
+string(REPLACE "\r\n" "\n" _lua_strlib_src "${_lua_strlib_src}")
+string(FIND "${_lua_strlib_src}" "carvettoLuaMatchStep" _lua_strlib_patched)
+if(_lua_strlib_patched EQUAL -1)
+  set(_lua_old "static const char *match (MatchState *ms, const char *s, const char *p) {\n  if (l_unlikely(ms->matchdepth-- == 0))\n    luaL_error(ms->L, \"pattern too complex\");\n")
+  set(_lua_new "int carvettoLuaMatchStep (lua_State *L);  /* Carvetto T-0330 */\nstatic const char *match (MatchState *ms, const char *s, const char *p) {\n  carvettoLuaMatchStep(ms->L);\n  if (l_unlikely(ms->matchdepth-- == 0))\n    luaL_error(ms->L, \"pattern too complex\");\n")
+  string(FIND "${_lua_strlib_src}" "${_lua_old}" _lua_at)
+  if(_lua_at EQUAL -1)
+    message(FATAL_ERROR "Lua: cannot apply the T-0330 match-step hook to ${_lua_strlib} (source differs from 5.4.8)")
+  endif()
+  string(REPLACE "${_lua_old}" "${_lua_new}" _lua_strlib_src "${_lua_strlib_src}")
+  file(WRITE "${_lua_strlib}" "${_lua_strlib_src}")
+endif()
+set(_lua_sources lapi lcode lctype ldebug ldo ldump lfunc lgc llex lmem lobject lopcodes lparser lstate
+  lstring ltable ltm lundump lvm lzio lauxlib lbaselib lcorolib ldblib liolib lmathlib loadlib loslib
+  lstrlib ltablib lutf8lib linit)
+set(_lua_files "")
+foreach(_s IN LISTS _lua_sources)
+  list(APPEND _lua_files "${lua_SOURCE_DIR}/src/${_s}.c")
+endforeach()
+set_source_files_properties(${_lua_files} PROPERTIES LANGUAGE CXX)
+add_library(carvetto_lua STATIC ${_lua_files})
+target_include_directories(carvetto_lua SYSTEM PUBLIC ${lua_SOURCE_DIR}/src)
+if(NOT WIN32)
+  target_compile_definitions(carvetto_lua PRIVATE LUA_USE_POSIX)  # mkstemp/popen instead of tmpnam (granted os/io only)
+endif()
+set_target_properties(carvetto_lua PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if(NOT MSVC)
+  target_compile_options(carvetto_lua PRIVATE -w -ffp-contract=off)  # third-party; and no fma (like core)
+else()
+  target_compile_options(carvetto_lua PRIVATE /w)
+endif()
+
 add_library(carvetto_core STATIC
   src/geometry/vec2.cpp
   src/geometry/box2.cpp
@@ -278,6 +326,7 @@ add_library(carvetto_core STATIC
   src/text/layout_builder.cpp
   src/text/layout.cpp
   src/text/path_layout.cpp
+  src/scripting/script_host.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core
@@ -287,6 +336,7 @@ target_link_libraries(carvetto_core
   PRIVATE carvetto_miniz
   PRIVATE freetype
   PRIVATE carvetto_harfbuzz
+  PRIVATE carvetto_lua
 )
 # Identical floating-point arithmetic on every compiler (T-0153, ADR-0025 §11): GCC and Clang may
 # fuse a * b + c into one fma (GCC 15 at -march=x86-64-v3 does, Clang does by default), which rounds
