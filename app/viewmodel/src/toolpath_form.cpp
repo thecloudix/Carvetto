@@ -20,6 +20,7 @@
 #include "carvetto/toolpath/v_carve_inlay.hpp"
 #include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/fluting.hpp"
+#include "carvetto/toolpath/laser.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
 #include "carvetto/toolpath/prism.hpp"
@@ -616,6 +617,53 @@ Table<toolpath::FlutingParams> makeFlutingTable() {
     return t;
 }
 
+Table<toolpath::LaserCutFillParams> makeLaserCutFillTable() {
+    using P = toolpath::LaserCutFillParams;
+    const auto hatching = [](const P& p) { return p.strategy == toolpath::LaserStrategy::HatchFill; };
+    Table<P> t;
+    t.num("power", "Power (%)", "Laser", Kind::Factor, false, false, [](P& p) -> double& { return p.power; });
+    bound(t, "power", 1e-3, 100.0);
+    t.num("moveSpeed", "Move speed (mm/min, 0 = the tool's feed rate)", "Laser", Kind::Factor, false, true,
+          [](P& p) -> double& { return p.moveSpeed; });
+    bound(t, "moveSpeed", 0.0, 1.0e6);
+    t.num("cutDepth", "Cut depth (0 = one pass at the surface)", "Passes", Kind::Length, false, true,
+          [](P& p) -> double& { return p.cutDepth; });
+    bound(t, "cutDepth", 0.0, 100000.0);
+    t.num("passDepth", "Pass depth", "Passes", Kind::Length, false, true, [](P& p) -> double& { return p.passDepth; },
+          [](const P& p) { return p.cutDepth > 0.0; })
+        .fromTool = FromTool::PassDepth;
+    bound(t, "passDepth", 0.0, 100000.0);
+    t.count("repeats", "Number of repeats", "Passes", 1, 1000, [](P& p) -> int& { return p.repeats; });
+    t.num("overscan", "Overscan", "Fill", Kind::Length, false, true, [](P& p) -> double& { return p.overscan; }, hatching);
+    bound(t, "overscan", 0.0, kMaxOffsetMm);
+    t.num("allowance", "Allowance offset", "Cut", Kind::Length, true, true, [](P& p) -> double& { return p.allowance; });
+    bound(t, "allowance", -kMaxOffsetMm, kMaxOffsetMm);
+    t.num("stepover", "Hatch stepover", "Fill", Kind::Length, false, false, [](P& p) -> double& { return p.stepover; },
+          hatching);
+    bound(t, "stepover", 1e-3, 1000.0);
+    t.num("hatchAngle", "Hatch angle", "Fill", Kind::Angle, true, true, [](P& p) -> double& { return p.hatchAngle; },
+          hatching);
+    t.num("safeZ", "Safe Z", "Passes", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    t.option<toolpath::LaserStrategy>("strategy", "Strategy", "Cut",
+                                      {"Cut outside / right", "Cut inside / left", "Cut on", "Hatch fill"},
+                                      [](P& p) -> toolpath::LaserStrategy& { return p.strategy; });
+    t.option<CutDirection>("direction", "Direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; },
+                           [](const P& p) { return p.strategy != toolpath::LaserStrategy::HatchFill || p.outline; });
+    t.flag("crossHatch", "Cross hatch", "Fill", [](P& p) -> bool& { return p.crossHatch; }, hatching);
+    t.option<toolpath::LaserFillMode>("fillMode", "Fill", "Fill", {"Together", "Regionally"},
+                                      [](P& p) -> toolpath::LaserFillMode& { return p.fillMode; }, hatching);
+    t.flag("outline", "Cut the outline", "Fill", [](P& p) -> bool& { return p.outline; }, hatching);
+    t.option<toolpath::StartAt>("startAt", "Start at", "Start",
+                                {"Vector start points", "Optimise start points", "Closest on bounding box"},
+                                [](P& p) -> toolpath::StartAt& { return p.startAt; },
+                                [](const P& p) { return p.strategy != toolpath::LaserStrategy::HatchFill; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 Table<toolpath::PrismParams> makePrismTable() {
     using P = toolpath::PrismParams;
     Table<P> t;
@@ -854,6 +902,12 @@ const Table<toolpath::ThreadMillParams>& tableOf() {
 template <>
 const Table<toolpath::FlutingParams>& tableOf() {
     static const Table<toolpath::FlutingParams> t = makeFlutingTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::LaserCutFillParams>& tableOf() {
+    static const Table<toolpath::LaserCutFillParams> t = makeLaserCutFillTable();
     return t;
 }
 

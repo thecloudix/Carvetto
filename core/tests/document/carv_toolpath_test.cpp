@@ -780,8 +780,8 @@ TEST_CASE("move cache: defects are reported, never crash", "[document][toolpath]
     badMagic[0] = 'X';
     CHECK(contains(decodeError(badMagic, moves.size()), "signature"));
     Bytes badVersion = good;
-    badVersion[4] = 2;
-    CHECK(contains(decodeError(badVersion, moves.size()), "version 2"));
+    badVersion[4] = 3;
+    CHECK(contains(decodeError(badVersion, moves.size()), "version 3"));
     CHECK(contains(decodeError(Bytes(good.begin(), good.end() - 3), moves.size()), "ends early"));
     Bytes trailing = good;
     trailing.push_back(0);

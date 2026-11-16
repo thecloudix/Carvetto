@@ -265,6 +265,7 @@ add_library(carvetto_core STATIC
   src/toolpath/inlay.cpp
   src/toolpath/v_carve_inlay.cpp
   src/toolpath/fluting.cpp
+  src/toolpath/laser.cpp
   src/toolpath/image_engrave.cpp
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp

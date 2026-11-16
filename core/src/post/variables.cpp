@@ -36,6 +36,8 @@ constexpr std::array kTags{
     TagInfo{"FP", TagKind::FeedRate, false},
     TagInfo{"FI", TagKind::Number, false},
     TagInfo{"S", TagKind::Number, false},
+    // Laser (T-0323, ADR-0099): beam power in percent (0, 100]; scale it to the controller with the VAR multiplier.
+    TagInfo{"JET_POWER", TagKind::Number, false},
     // Tools and toolpaths.
     TagInfo{"T", TagKind::Number, false},
     TagInfo{"TP", TagKind::Number, false},

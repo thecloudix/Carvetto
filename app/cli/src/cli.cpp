@@ -486,6 +486,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::ThreadMill: return "thread_mill";
         case document::ToolpathOperation::Inlay: return "inlay";
         case document::ToolpathOperation::Fluting: return "fluting";
+        case document::ToolpathOperation::LaserCutFill: return "laser_cut_fill";
         case document::ToolpathOperation::Prism: return "prism";
         case document::ToolpathOperation::ImageEngrave: return "image_engrave";
         case document::ToolpathOperation::VCarveInlay: return "v_carve_inlay";

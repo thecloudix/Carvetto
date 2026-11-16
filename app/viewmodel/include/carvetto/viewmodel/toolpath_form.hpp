@@ -45,6 +45,9 @@
 //               startY chordal; choices piece, plugBoundary, clearanceStrategy, clearanceDirection, rampPlunge, order
 //   Fluting     fluteDepth rampLength|rampPercent (by the ramp basis; hidden for a ramp over the complete
 //               length) safeZ startX startY chordal
+//   Laser Cut / Fill  power (percent) moveSpeed (mm/min, 0 = the tool's feed rate) cutDepth passDepth (with a cut
+//               depth) repeats allowance safeZ startX startY chordal; with Hatch Fill also overscan stepover
+//               hatchAngle; choices strategy direction crossHatch fillMode outline startAt order (T-0323, ADR-0099)
 //   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 //   Image Engrave  maxDepth stepoverRetract safeZ lineSpacing (percent of the tool diameter) lineAngle (not for
 //               Selected Vectors) chordal (Selected Vectors only); choices strategy, invert. It reads the bitmap

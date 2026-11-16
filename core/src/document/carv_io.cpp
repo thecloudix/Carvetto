@@ -475,7 +475,15 @@ constexpr EnumName<toolpath::MouldingPosition> kMouldingPositions[] = {{toolpath
                                                                       {toolpath::MouldingPosition::End, "end"}};
 constexpr EnumName<toolpath::ProjectTipMode> kProjectTips[] = {{toolpath::ProjectTipMode::DropTool, "drop_tool"},
                                                               {toolpath::ProjectTipMode::Project, "project"}};
-constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Moulding, "moulding"},
+constexpr EnumName<toolpath::LaserStrategy> kLaserStrategies[] = {
+    {toolpath::LaserStrategy::CutOutside, "cut_outside"},
+    {toolpath::LaserStrategy::CutInside, "cut_inside"},
+    {toolpath::LaserStrategy::CutOn, "cut_on"},
+    {toolpath::LaserStrategy::HatchFill, "hatch_fill"}};
+constexpr EnumName<toolpath::LaserFillMode> kLaserFillModes[] = {{toolpath::LaserFillMode::Together, "together"},
+                                                                {toolpath::LaserFillMode::Regionally, "regionally"}};
+constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::LaserCutFill, "laser_cut_fill"},
+                                                      {ToolpathOperation::Moulding, "moulding"},
                                                       {ToolpathOperation::Project3d, "project_3d"},{ToolpathOperation::Rough3d, "rough_3d"},
                                                       {ToolpathOperation::Finish3d, "finish_3d"},{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
@@ -1217,6 +1225,32 @@ json encodeProject3dParams(const toolpath::Project3dParams& p) {
     return j;
 }
 
+json encodeLaserCutFillParams(const toolpath::LaserCutFillParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["strategy"] = nameOf(kLaserStrategies, p.strategy);
+    j["power"] = p.power;
+    j["move_speed"] = p.moveSpeed;
+    j["cut_depth"] = p.cutDepth;
+    j["pass_depth"] = p.passDepth;
+    j["repeats"] = p.repeats;
+    j["overscan"] = p.overscan;
+    j["allowance"] = p.allowance;
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["stepover"] = p.stepover;
+    j["hatch_angle_rad"] = p.hatchAngle;
+    j["cross_hatch"] = p.crossHatch;
+    j["fill_mode"] = nameOf(kLaserFillModes, p.fillMode);
+    j["outline"] = p.outline;
+    j["safe_z"] = p.safeZ;
+    j["order"] = encodeOrder(p.order);
+    j["start_at"] = nameOf(kStartAts, p.startAt);
+    j["start_anchor"] = nameOf(kBoxAnchors, p.startAnchor);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 json encodeFlutingParams(const toolpath::FlutingParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -1322,6 +1356,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeMouldingParams(*moulding);
     } else if (const auto* project = std::get_if<toolpath::Project3dParams>(&tp.params)) {
         j["params"] = encodeProject3dParams(*project);
+    } else if (const auto* laser = std::get_if<toolpath::LaserCutFillParams>(&tp.params)) {
+        j["params"] = encodeLaserCutFillParams(*laser);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -1348,6 +1384,9 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
     tool["feed_rate"] = tp.tool.feedRate;
     tool["plunge_rate"] = tp.tool.plungeRate;
     tool["spindle_speed"] = tp.tool.spindleSpeed;
+    if (tp.tool.laser) {
+        tool["laser"] = true;  // T-0323: written only when set, so other records are unchanged
+    }
     if (tp.tool.spindleOff) {
         tool["spindle_off"] = true;  // T-0154: written only when set, so other records are unchanged
     }
@@ -2565,6 +2604,11 @@ constexpr std::array<std::string_view, 25> kMouldingKeys{
     "travel",       "direction",     "reverse_steps", "vary_stepover",  "skip_flat_regions",  "machine_flat_regions",
     "flat_angle_rad", "sharp_corners", "ramp_plunge", "ramp_angle_rad", "rest_tolerance",     "tolerance",
     "profile_object"};
+// Laser cut / fill records exist only in job.json (ADR-0099).
+constexpr std::array<std::string_view, 21> kLaserCutFillKeys{
+    "name",       "strategy",       "power",     "move_speed", "cut_depth",     "pass_depth", "repeats",
+    "overscan",   "allowance",      "direction", "stepover",   "hatch_angle_rad", "cross_hatch", "fill_mode",
+    "outline",    "safe_z",         "order",     "start_at",   "start_anchor",  "start_position", "tolerance"};
 constexpr std::array<std::string_view, 10> kProject3dKeys{
     "name", "mode", "z_offset", "allowance", "outside_surface", "stock_bottom", "tolerance", "max_segment", "tabs",
     "source_toolpath"};
@@ -3330,6 +3374,60 @@ toolpath::ImageEngraveParams decodeImageEngraveParams(JsonReader& r, const Path&
     return out;
 }
 
+toolpath::LaserCutFillParams decodeLaserCutFillParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::LaserCutFillParams out;
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kLaserCutFillKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kLaserStrategies);
+        } else if (k == "power") {
+            out.power = rec.number();
+        } else if (k == "move_speed") {
+            out.moveSpeed = rec.number();
+        } else if (k == "cut_depth") {
+            out.cutDepth = rec.number();
+        } else if (k == "pass_depth") {
+            out.passDepth = rec.number();
+        } else if (k == "repeats") {
+            out.repeats = rec.integer();
+        } else if (k == "overscan") {
+            out.overscan = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "stepover") {
+            out.stepover = rec.number();
+        } else if (rec.isAngle("hatch_angle")) {
+            out.hatchAngle = rec.angle();
+        } else if (k == "cross_hatch") {
+            out.crossHatch = rec.boolean();
+        } else if (k == "fill_mode") {
+            out.fillMode = rec.choice(kLaserFillModes);
+        } else if (k == "outline") {
+            out.outline = rec.boolean();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_at") {
+            out.startAt = rec.choice(kStartAts);
+        } else if (k == "start_anchor") {
+            out.startAnchor = rec.choice(kBoxAnchors);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::FlutingParams decodeFlutingParams(JsonReader& r, const Path& p, ParamsDialect d,
                                             LegacyParamsExtras* legacy) {
     toolpath::FlutingParams out;
@@ -3450,6 +3548,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     if (operation == ToolpathOperation::Project3d) {
         return decodeProject3dParams(r, p, d);
     }
+    if (operation == ToolpathOperation::LaserCutFill) {
+        return decodeLaserCutFillParams(r, p, d);
+    }
     return decodePocketParams(r, p, d, legacy);
 }
 
@@ -3482,9 +3583,9 @@ constexpr std::array<std::string_view, 10> kToolpathKeys{"id",        "name", "o
 constexpr std::array<std::string_view, 3> kGroupKeys{"id", "role", "tools"};
 constexpr std::array<std::string_view, 3> kGroupToolKeys{"id", "machine", "material"};
 constexpr std::array<std::string_view, 3> kSelectionKeys{"all", "layers", "objects"};
-constexpr std::array<std::string_view, 11> kToolKeys{"id",          "machine",       "material",   "name",
+constexpr std::array<std::string_view, 12> kToolKeys{"id",          "machine",       "material",   "name",
                                                      "tool_number", "diameter",      "feed_rate",  "plunge_rate",
-                                                     "spindle_speed", "spindle_off", "tool_type"};
+                                                     "spindle_speed", "spindle_off", "tool_type", "laser"};
 constexpr std::array<std::string_view, 2> kMovesKeys{"count", "member"};
 
 DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
@@ -3558,6 +3659,8 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
                     tp.tool.spindleOff = readBool(r, tf);
                 } else if (tk == "tool_type") {
                     tp.tool.toolType = readStoredString(r, tf);
+                } else if (tk == "laser") {
+                    tp.tool.laser = readBool(r, tf);
                 } else {
                     tool.skip();
                 }
@@ -3694,7 +3797,8 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
     tp.params = decodeParamsOf(op, paramsText, p.field("params"), ParamsDialect::JobJson, nullptr);
     if (const std::string problem = spindleOffProblem(tp); !problem.empty()) {
         // T-0154: only Quick Engrave runs a toolpath with the spindle off (diamond-drag tools).
-        fail(where() + (tp.tool.spindleOff ? ".tool.spindle_off" : ".tool.tool_type"), problem);
+        fail(where() + (tp.tool.laser ? ".tool.laser" : tp.tool.spindleOff ? ".tool.spindle_off" : ".tool.tool_type"),
+             problem);
     }
     if (tp.selection.all && (!tp.selection.layers.empty() || !tp.selection.objects.empty())) {
         fail(where() + ".selection", "'all' cannot be combined with layers or objects");
@@ -5214,7 +5318,11 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             const auto* f = std::get_if<toolpath::Finish3dParams>(&tp.params);
             return f != nullptr && !f->priorToolpaths.empty();
         });
-        version["minor"] = usesAppearance ? kCarvFormatMinorAppearance
+        const bool usesLaser = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
+            return tp.operation() == ToolpathOperation::LaserCutFill;
+        });
+        version["minor"] = usesLaser ? kCarvFormatMinorLaser
+                           : usesAppearance ? kCarvFormatMinorAppearance
                            : (usesGroups || usesPriors) ? kCarvFormatMinorToolGroups
                            : usesEffects          ? kCarvFormatMinorLevelEffects
                            : usesRelief           ? kCarvFormatMinorRelief

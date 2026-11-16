@@ -56,6 +56,7 @@ add_executable(carvetto_viewmodel_tests
   toolpath_inlay_test.cpp
   toolpath_v_carve_inlay_test.cpp
   toolpath_fluting_test.cpp
+  toolpath_laser_test.cpp
   toolpath_prism_test.cpp
   toolpath_photo_test.cpp
   toolpath_3d_test.cpp
