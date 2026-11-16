@@ -232,3 +232,7 @@ TEST_CASE("flipMoves mirrors XY, swaps arc direction and is an involution", "[do
     CHECK(v[1].to.y == Approx(45));
     CHECK(flipMoves(v, m, FlipDirection::Vertical) == in);
 }
+
+TEST_CASE("T-0319: a cylinder-axis zero puts the surface at the radius", "[document][double-sided][rotary]") {
+    CHECK(materialTopZ(ZZero::CylinderAxis, false, 80.0, Side::Front) == 40.0);
+}

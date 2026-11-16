@@ -11,6 +11,7 @@
 
 class QComboBox;
 class QLineEdit;
+class QFormLayout;
 class QListWidget;
 class QPushButton;
 class QTreeWidget;
@@ -98,6 +99,8 @@ class SheetsPanel : public PanelBase {
     bool deleteSheet(int row);
     /// Material block of the sheet at `row`; sizes as typed (display units, "mm"/"in" suffix
     /// allowed). An empty text keeps that value. `zZero` / `datum` are choice indexes, -1 keeps.
+    /// For a rotary job the `width` text is the sheet's length along the cylinder; `height` and
+    /// `thickness` (circumference and diameter, read-only) are ignored (T-0319).
     bool setMaterial(int row, const std::string& width, const std::string& height, const std::string& thickness,
                      int zZero = -1, int datum = -1);
 
@@ -113,6 +116,7 @@ class SheetsPanel : public PanelBase {
     document::SheetId idAt(int row) const;
 
     QListWidget* list_;
+    QFormLayout* sizeForm_{nullptr};
     QLineEdit* width_;
     QLineEdit* height_;
     QLineEdit* thickness_;

@@ -2014,3 +2014,46 @@ TEST_CASE("fuzz under a per-load timeout: no hangs, no crashes", "[document][car
     CHECK(loaded == 5000);
 }
 #endif
+
+// ------------------------------------------------------------------------------------------------
+// T-0319: rotary job fields
+// ------------------------------------------------------------------------------------------------
+
+TEST_CASE("T-0319: a rotary job with flip design and model gaps round-trips; the minor bumps only for gaps",
+          "[document][carv][rotary]") {
+    Job job = Job::rotary(400.0, 60.0, Units::Inches, RotaryAxis::Y, ZZero::MaterialSurface, true);
+    Document plain(job);
+    const Bytes plainBytes = save(plain);
+    CHECK_FALSE(contains(memberText(plainBytes, "job.json"), "gap_outside_mm"));
+    CHECK(load(plainBytes).formatMinor < kCarvFormatMinorRotaryGaps);
+    CHECK(load(plainBytes).document.job() == job);
+
+    job.gapOutsideMm = 1.5;
+    job.gapInsideMm = 10.25;
+    Document gapped(job);
+    requireRoundTrip(gapped);
+    const Bytes bytes = save(gapped);
+    CHECK(load(bytes).formatMinor == kCarvFormatMinorRotaryGaps);
+    const Job back = load(bytes).document.job();
+    CHECK(back == job);
+    CHECK(back.flipDesign);
+    CHECK(back.rotaryAxis == RotaryAxis::Y);
+    CHECK(back.zZero == ZZero::MaterialSurface);
+}
+
+TEST_CASE("T-0319: hostile rotary gaps are refused", "[document][carv][rotary]") {
+    Job job = Job::rotary(100.0, 50.0, Units::Millimetres);
+    job.gapOutsideMm = 1.0;
+    job.gapInsideMm = 2.0;
+    const Bytes bytes = save(Document(job));
+    const std::string text = memberText(bytes, "job.json");
+    auto withJob = [&](const std::string& from, const std::string& to) {
+        return withMember(bytes, "job.json", replaced(text, from, to));
+    };
+    CHECK(loadError(withJob("\"gap_outside_mm\": 1.0", "\"gap_outside_mm\": -1.0")).code == Code::InvalidContent);
+    CHECK(loadError(withJob("\"gap_inside_mm\": 2.0", "\"gap_inside_mm\": \"NaN\"")).code == Code::InvalidContent);
+    CHECK(loadError(withJob("\"gap_inside_mm\": 2.0", "\"gap_inside_mm\": 24.0")).code == Code::InvalidContent);
+    CHECK(loadError(withJob("\"type\": \"rotary\"", "\"type\": \"single_sided\"")).code == Code::InvalidContent);
+    CHECK(loadError(withJob("\"gap_inside_mm\": 2.0", "\"gap_inside_mm\": 2.0, \"gap_inside_mm\": 3.0")).code ==
+          Code::InvalidContent);
+}

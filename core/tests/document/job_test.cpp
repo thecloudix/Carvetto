@@ -122,3 +122,33 @@ TEST_CASE("sheet takes size, Z-zero and datum from the job", "[document][sheet]"
     CHECK(sheet.visible);
     CHECK(sheet.materialBoundsMm() == job.materialBoundsMm());
 }
+
+TEST_CASE("T-0319: rotary helpers follow length, diameter, axis, Z-zero and gaps", "[document][job][rotary]") {
+    Job job = Job::rotary(300.0, 80.0, Units::Millimetres, RotaryAxis::X, ZZero::CylinderAxis, true);
+    CHECK(job.flipDesign);
+    CHECK_THAT(job.lengthMm(), WithinAbs(300.0, 1e-12));
+    CHECK_THAT(job.circumferenceMm(), WithinAbs(carvetto::geometry::kPi * 80.0, 1e-9));
+    CHECK_THAT(job.rotarySurfaceZ(), WithinAbs(40.0, 1e-12));
+    job.gapOutsideMm = 3.0;
+    job.gapInsideMm = 7.0;
+    CHECK_THAT(job.modelThicknessMm(), WithinAbs(30.0, 1e-12));
+    CHECK_THAT(job.rotaryModelTopZ(), WithinAbs(37.0, 1e-12));
+    CHECK_THAT(job.rotaryModelBottomZ(), WithinAbs(7.0, 1e-12));
+    CHECK(job.isValid());
+    job.zZero = ZZero::MaterialSurface;
+    CHECK_THAT(job.rotaryModelTopZ(), WithinAbs(-3.0, 1e-12));
+    CHECK_THAT(job.rotaryModelBottomZ(), WithinAbs(-33.0, 1e-12));
+
+    job.rotaryAxis = RotaryAxis::Y;
+    job.setRotaryMm(500.0, 100.0);
+    CHECK_THAT(job.sizeMm.y, WithinAbs(500.0, 1e-12));
+    CHECK_THAT(job.sizeMm.x, WithinAbs(carvetto::geometry::kPi * 100.0, 1e-9));
+    CHECK_THAT(job.lengthMm(), WithinAbs(500.0, 1e-12));
+    CHECK_THAT(job.sizeMm.z, WithinAbs(100.0, 1e-12));
+
+    job.gapOutsideMm = 30.0;
+    job.gapInsideMm = 20.0;  // 50 = radius: no model left
+    CHECK_FALSE(job.isValid());
+    job.gapInsideMm = -1.0;
+    CHECK_FALSE(job.isValid());
+}

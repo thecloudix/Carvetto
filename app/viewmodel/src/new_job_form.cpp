@@ -65,7 +65,7 @@ NewJobResult validateNewJob(const NewJobForm& form) {
             job.zeroOffSameSide = form.zeroOffSameSide;
             break;
         case JobType::Rotary:
-            job = Job::rotary(form.length, form.diameter, form.units, form.rotaryAxis, form.zZero);
+            job = Job::rotary(form.length, form.diameter, form.units, form.rotaryAxis, form.zZero, form.flipDesign);
             break;
     }
     if (form.useOffset && form.type != JobType::Rotary) {
@@ -101,6 +101,7 @@ NewJobForm formFromJob(const Job& job) {
     form.flip = job.flipDirection;
     form.zeroOffSameSide = job.zeroOffSameSide;
     form.rotaryAxis = job.rotaryAxis;
+    form.flipDesign = job.flipDesign;
     const document::JobSize size = job.displaySize();
     if (job.type == JobType::Rotary) {
         form.length = job.rotaryAxis == document::RotaryAxis::X ? size.x : size.y;

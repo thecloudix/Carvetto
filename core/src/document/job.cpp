@@ -44,21 +44,25 @@ Job Job::doubleSided(double width, double height, double thickness, Units units,
     return job;
 }
 
-Job Job::rotary(double length, double diameter, Units units, RotaryAxis axis, ZZero zero) {
+Job Job::rotary(double length, double diameter, Units units, RotaryAxis axis, ZZero zero, bool flip) {
     Job job;
     job.type = JobType::Rotary;
     job.displayUnits = units;
     job.rotaryAxis = axis;
     job.zZero = zero;
-    job.diameterMm = fromDisplay(diameter, units);
-    const double lengthMm = fromDisplay(length, units);
-    const double circumferenceMm = geometry::kPi * job.diameterMm;
-    if (axis == RotaryAxis::X) {
-        job.sizeMm = {lengthMm, circumferenceMm, job.diameterMm};
-    } else {
-        job.sizeMm = {circumferenceMm, lengthMm, job.diameterMm};
-    }
+    job.flipDesign = flip;
+    job.setRotaryMm(fromDisplay(length, units), fromDisplay(diameter, units));
     return job;
+}
+
+void Job::setRotaryMm(double lengthMmValue, double diameterMmValue) {
+    diameterMm = diameterMmValue;
+    const double circumference = geometry::kPi * diameterMmValue;
+    if (rotaryAxis == RotaryAxis::X) {
+        sizeMm = {lengthMmValue, circumference, diameterMmValue};
+    } else {
+        sizeMm = {circumference, lengthMmValue, diameterMmValue};
+    }
 }
 
 JobSize Job::displaySize() const {
@@ -84,7 +88,7 @@ bool Job::isValid() const {
         return false;
     }
     if (type == JobType::Rotary) {
-        return diameterMm > 0.0;
+        return diameterMm > 0.0 && gapOutsideMm >= 0.0 && gapInsideMm >= 0.0 && modelThicknessMm() > 0.0;
     }
     return zZero != ZZero::CylinderAxis;
 }

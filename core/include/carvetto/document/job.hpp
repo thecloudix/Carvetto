@@ -58,6 +58,10 @@ struct Job {
     double diameterMm{0.0};
     RotaryAxis rotaryAxis{RotaryAxis::X};
     bool flipDesign{false};
+    /// Rotary material setup (T-0319): radial gap between the cylinder surface and the top of the model
+    /// ("Gap Outside Model") and between the bottom of the model and the axis ("Gap Inside Model"), mm, >= 0.
+    double gapOutsideMm{0.0};
+    double gapInsideMm{0.0};
 
     bool operator==(const Job&) const = default;
 
@@ -70,7 +74,24 @@ struct Job {
                            FlipDirection flip = FlipDirection::Horizontal);
     /// Rotary job from a length and diameter in `units`; the flat design area is length × π·diameter.
     static Job rotary(double length, double diameter, Units units, RotaryAxis axis = RotaryAxis::X,
-                      ZZero zero = ZZero::CylinderAxis);
+                      ZZero zero = ZZero::CylinderAxis, bool flip = false);
+
+    /// Rotary radius (mm).
+    double radiusMm() const { return 0.5 * diameterMm; }
+    /// Rotary length along the axis (mm): the flat design area's extent along the job's axis.
+    double lengthMm() const { return rotaryAxis == RotaryAxis::X ? sizeMm.x : sizeMm.y; }
+    /// Rotary circumference (mm): the flat design area's extent around the cylinder.
+    double circumferenceMm() const { return rotaryAxis == RotaryAxis::X ? sizeMm.y : sizeMm.x; }
+    /// Radial thickness of the model band: radius minus both gaps (mm).
+    double modelThicknessMm() const { return radiusMm() - gapOutsideMm - gapInsideMm; }
+    /// Z (mm) of the cylinder surface: 0 when Z-zero is the surface, the radius when it is the axis.
+    double rotarySurfaceZ() const { return zZero == ZZero::CylinderAxis ? radiusMm() : 0.0; }
+    /// Z (mm) of the top of the model band (the surface minus the outside gap).
+    double rotaryModelTopZ() const { return rotarySurfaceZ() - gapOutsideMm; }
+    /// Z (mm) of the bottom of the model band.
+    double rotaryModelBottomZ() const { return rotaryModelTopZ() - modelThicknessMm(); }
+    /// Sets length and diameter (mm) and re-derives the flat design area for the job's axis.
+    void setRotaryMm(double lengthMm, double diameterMmValue);
 
     /// Size expressed in `displayUnits`.
     JobSize displaySize() const;

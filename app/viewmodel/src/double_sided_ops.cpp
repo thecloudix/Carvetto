@@ -1,4 +1,5 @@
 #include "carvetto/viewmodel/double_sided_ops.hpp"
+#include "carvetto/viewmodel/rotary_material.hpp"
 
 #include <algorithm>
 #include <map>
@@ -362,8 +363,20 @@ EditResult makeSingleSided(Document& doc) {
     return r;
 }
 
-EditResult applyJobSetup(Document& doc, const document::Job& job) {
+EditResult applyJobSetup(Document& doc, const document::Job& requested) {
     EditResult r;
+    document::Job job = requested;
+    if (job.type == document::JobType::Rotary) {
+        // The gaps belong to Material Setup: Job Setup keeps them (T-0319).
+        const bool wasRotary = doc.job().type == document::JobType::Rotary;
+        job.gapOutsideMm = wasRotary ? doc.job().gapOutsideMm : 0.0;
+        job.gapInsideMm = wasRotary ? doc.job().gapInsideMm : 0.0;
+        if (!job.isValid()) {
+            r.ok = false;
+            r.message = "the cylinder is too small for the gaps around the model; change them in Material Setup";
+            return r;
+        }
+    }
     const bool wasDouble = doc.job().type == document::JobType::DoubleSided;
     const bool isDouble = job.type == document::JobType::DoubleSided;
     if (!wasDouble && !isDouble && job == doc.job()) {
@@ -386,6 +399,11 @@ EditResult applyJobSetup(Document& doc, const document::Job& job) {
     if (ok && !(job == doc.job())) {
         ok = doc.execute(std::make_unique<document::SetJobCommand>(job));
         why = "the job cannot be changed";
+    }
+    if (ok && job.type == document::JobType::Rotary) {
+        // Every sheet is a piece of the one cylinder: it takes the job's length, diameter and Z-zero.
+        ok = resizeRotarySheets(doc, job, true);
+        why = "the sheets cannot follow the cylinder";
     }
     closeMacro(doc, stepsBefore, ok);
     if (!ok) {

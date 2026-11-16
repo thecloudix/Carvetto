@@ -21,6 +21,9 @@ Box2 flipBox(const Box2& material, FlipDirection direction, const Box2& box) {
 }
 
 double materialTopZ(ZZero zero, bool zeroOffSameSide, double thicknessMm, Side side) {
+    if (zero == ZZero::CylinderAxis) {
+        return 0.5 * thicknessMm;  // a rotary sheet: the thickness is the diameter; the surface is the radius up
+    }
     const bool bedZero = zero == ZZero::MachineBed;
     if (side == Side::Front || !zeroOffSameSide) {
         return bedZero ? thicknessMm : 0.0;

@@ -5,6 +5,7 @@
 #include <QStandardPaths>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -12,10 +13,12 @@
 #include "carvetto/viewmodel/double_sided_ops.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
+#include "carvetto/viewmodel/rotary_material.hpp"
 #include "carvetto/viewmodel/tool_setup.hpp"
 #include "carvetto/viewmodel/variables_model.hpp"
 #include "main_window.hpp"
 #include "new_job_dialog.hpp"
+#include "rotary_material_dialog.hpp"
 #include "tool_setup_dialog.hpp"
 #include "variables_dialog.hpp"
 #include "toolpaths_panel.hpp"
@@ -40,6 +43,26 @@ void MainWindow::jobSetupDialog() {
     const viewmodel::EditResult result = viewmodel::applyJobSetup(session_.document(), *dialog.job());
     if (!result.ok && !quiet_) {
         QMessageBox::warning(this, QStringLiteral("Job Setup"), toQ(result.message));
+    }
+    if (result.changed) {
+        toolpaths_->invalidate();
+        documentChanged();
+    }
+}
+
+void MainWindow::materialSetupDialog() {
+    const std::optional<viewmodel::RotaryMaterialForm> initial =
+        viewmodel::rotaryMaterialFromJob(session_.document().job());
+    if (!initial) {
+        return;
+    }
+    RotaryMaterialDialog dialog(*initial, this);
+    if (dialog.exec() != QDialog::Accepted || !dialog.result().has_value()) {
+        return;
+    }
+    const viewmodel::EditResult result = viewmodel::applyRotaryMaterial(session_.document(), *dialog.result());
+    if (!result.ok && !quiet_) {
+        QMessageBox::warning(this, QStringLiteral("Material Setup"), toQ(result.message));
     }
     if (result.changed) {
         toolpaths_->invalidate();

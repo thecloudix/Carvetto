@@ -69,10 +69,12 @@ inline constexpr int kCarvFormatMinorToolGroups = 11;
 /// writes and reads.
 inline constexpr int kCarvFormatMinorAppearance = 12;
 /// 1.13 (T-0323, ADR-0099) adds Laser Cut / Fill records (operation `laser_cut_fill`), the `laser` marking of a
-/// toolpath's tool and move caches of version 2 (beam power); written only when a record is a laser's. The
-/// newest minor this build writes and reads.
+/// toolpath's tool and move caches of version 2 (beam power); written only when a record is a laser's.
 inline constexpr int kCarvFormatMinorLaser = 13;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorLaser;
+/// 1.14 (T-0319, ADR-0098) adds the rotary model gaps (`job.json` job `gap_outside_mm`, `gap_inside_mm`); written
+/// only when one is non-zero. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorRotaryGaps = 14;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorRotaryGaps;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

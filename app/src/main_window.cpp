@@ -476,6 +476,9 @@ void MainWindow::buildMenus() {
     jobSetupAction_ = setup->addAction(QStringLiteral("&Job Setup..."));
     jobSetupAction_->setObjectName(QStringLiteral("jobSetupAction"));
     connect(jobSetupAction_, &QAction::triggered, this, [this]() { jobSetupDialog(); });
+    materialSetupAction_ = setup->addAction(QStringLiteral("&Material Setup (rotary)..."));
+    materialSetupAction_->setObjectName(QStringLiteral("materialSetupAction"));
+    connect(materialSetupAction_, &QAction::triggered, this, [this]() { materialSetupDialog(); });
     toolSetupAction_ = setup->addAction(QStringLiteral("&Tools, Machines and Materials..."));
     toolSetupAction_->setObjectName(QStringLiteral("toolSetupAction"));
     connect(toolSetupAction_, &QAction::triggered, this, [this]() { toolSetupDialog(); });
@@ -632,6 +635,9 @@ bool MainWindow::replaceDocument(const std::function<bool()>& swap) {
 }
 
 void MainWindow::documentChanged() {
+    if (materialSetupAction_) {
+        materialSetupAction_->setEnabled(session_.document().job().type == document::JobType::Rotary);
+    }
     if (transformMenu_) {
         transformMenu_->refresh();
     }

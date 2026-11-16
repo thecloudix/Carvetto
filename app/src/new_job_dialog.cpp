@@ -73,6 +73,12 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
     addChoice(rotaryAxis_, "Along X", RotaryAxis::X);
     addChoice(rotaryAxis_, "Along Y", RotaryAxis::Y);
 
+    rotaryAxis_->setObjectName(QStringLiteral("rotaryAxis"));
+    flipDesign_ = new QCheckBox(QStringLiteral("Flip design"), this);
+    flipDesign_->setObjectName(QStringLiteral("flipDesign"));
+    length_->setObjectName(QStringLiteral("rotaryLength"));
+    diameter_->setObjectName(QStringLiteral("rotaryDiameter"));
+
     flip_ = new QComboBox(this);
     addChoice(flip_, "Flip left-right", FlipDirection::Horizontal);
     addChoice(flip_, "Flip top-bottom", FlipDirection::Vertical);
@@ -82,7 +88,8 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
     flip_->setObjectName(QStringLiteral("flipDirection"));
 
     zZero_ = new QComboBox(this);
-    addChoice(zZero_, "Top of material", ZZero::MaterialSurface);
+    zZero_->setObjectName(QStringLiteral("zZero"));
+    addChoice(zZero_, "Top of material (rotary: cylinder surface)", ZZero::MaterialSurface);
     addChoice(zZero_, "Machine bed", ZZero::MachineBed);
     addChoice(zZero_, "Cylinder axis (rotary)", ZZero::CylinderAxis);
 
@@ -111,6 +118,7 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
     form->addRow(QStringLiteral("Rotary length:"), length_);
     form->addRow(QStringLiteral("Rotary diameter:"), diameter_);
     form->addRow(QStringLiteral("Rotary axis:"), rotaryAxis_);
+    form->addRow(QString(), flipDesign_);
     form->addRow(QStringLiteral("Second side:"), flip_);
     form->addRow(QString(), zeroOffSame_);
     form->addRow(QStringLiteral("Z zero:"), zZero_);
@@ -130,7 +138,16 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
 
     setForm(initial);
 
-    connect(type_, &QComboBox::currentIndexChanged, this, [this](int) { updateEnabledFields(); });
+    connect(type_, &QComboBox::currentIndexChanged, this, [this](int) {
+        // The Z-zero choices differ between flat and rotary jobs: move to the matching default.
+        const bool rotary = choice<JobType>(type_) == JobType::Rotary;
+        if (!updating_ && rotary && choice<ZZero>(zZero_) != ZZero::CylinderAxis) {
+            select(zZero_, ZZero::CylinderAxis);
+        } else if (!updating_ && !rotary && choice<ZZero>(zZero_) == ZZero::CylinderAxis) {
+            select(zZero_, ZZero::MaterialSurface);
+        }
+        updateEnabledFields();
+    });
     connect(useOffset_, &QCheckBox::toggled, this, [this](bool) { updateEnabledFields(); });
     connect(units_, &QComboBox::currentIndexChanged, this, [this](int) { unitsChanged(); });
 }
@@ -145,6 +162,7 @@ viewmodel::NewJobForm NewJobDialog::form() const {
     f.length = length_->value();
     f.diameter = diameter_->value();
     f.rotaryAxis = choice<RotaryAxis>(rotaryAxis_);
+    f.flipDesign = flipDesign_->isChecked();
     f.flip = choice<FlipDirection>(flip_);
     f.zeroOffSameSide = zeroOffSame_->isChecked();
     f.zZero = choice<ZZero>(zZero_);
@@ -165,6 +183,7 @@ void NewJobDialog::setForm(const viewmodel::NewJobForm& f) {
     length_->setValue(f.length);
     diameter_->setValue(f.diameter);
     select(rotaryAxis_, f.rotaryAxis);
+    flipDesign_->setChecked(f.flipDesign);
     select(flip_, f.flip);
     zeroOffSame_->setChecked(f.zeroOffSameSide);
     select(zZero_, f.zZero);
@@ -203,6 +222,7 @@ void NewJobDialog::updateEnabledFields() {
     length_->setEnabled(rotary);
     diameter_->setEnabled(rotary);
     rotaryAxis_->setEnabled(rotary);
+    flipDesign_->setEnabled(rotary);
     flip_->setEnabled(type == JobType::DoubleSided);
     zeroOffSame_->setEnabled(type == JobType::DoubleSided);
     datum_->setEnabled(!rotary);
