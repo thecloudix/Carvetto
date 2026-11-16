@@ -1624,10 +1624,11 @@ RE-SCOPED 2026-11-16 after three verifier FAILs (round 1: shared-table conversio
 Acceptance criteria:
   1. Scripts run with the documented limits and are cancellable; hostile scripts are stopped; core builds on all CI platforms; ADR with the API design for owner review.
 
-### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: verifying]
+### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: in-progress (round 4, tests only; re-scoped after 3 FAILs)]
 Phase: 3   Module: core/scripting + app/viewmodel + app   Depends on: T-0330
 Goal: Bind the designed API: read/create/modify vectors and layers, selection, document variables, create toolpaths, show simple input forms; all edits go through undoable commands (one undo step per gadget run); gadget discovery (folder of scripts with a manifest), Gadgets menu built at startup, Install New Gadget, Gadget Shortcuts (Ctrl+F-key), error dialog.
 Also (from the T-0330 verifier): make host-callback failures for oversized values report 'value too large' instead of the vague 'host function threw an unknown exception', and add the Lua MIT notice to the shipped third-party notices.
+RE-SCOPED 2026-11-17 after three verifier FAILs: functionality, hardening and sandbox all passed round 3; the remaining work is TEST ONLY: (1) the calculation-budget test uses a fake clock but the watchdog compares the REAL steady clock against `limit - bucket` (1500-3000 ns in the test), so it flakes under CPU load (1 in 150 runs): make the watchdog's real-clock trip apply only when the clock is not injected, or use large virtual values; (2) add the missing assertions: error dialog and 'not a gadget' warning textFormat PlainText, the menu tooltip call site (plainToolTip), a time bound on the Abort-cuts-calculation path, and the watchdog starting with `limit - bucket`; (3) gadget tests must use a deadline-off limits helper like T-0338's testLimits() (the T-0338 lint scans core/tests/scripting for default ScriptLimits/ScriptHost constructions and will fail otherwise).
 Acceptance criteria:
   1. A sample gadget creates vectors and a toolpath in one undo step from the Gadgets menu; sandbox limits enforced in the app; self-test.
 
@@ -1637,7 +1638,7 @@ Goal: Port the stock gadget behaviours as original scripts shipped with the app:
 Acceptance criteria:
   1. Each gadget produces the documented output on test inputs; install path works; ADR/doc per gadget.
 
-### T-0333 Clipart library browser (local folders)   [status: verifying]
+### T-0333 Clipart library browser (local folders)   [status: done — PR #207]
 Phase: 3   Module: app + core/io   Depends on: —
 Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (SVG, DXF, PNG), thumbnails generated off the UI thread and cached, search by name, drag/insert into the drawing at the cursor/centre with scale-to-fit, favourites; no online store. Thumbnail cache size bounded; hostile files refused with clear messages.
 Acceptance criteria:
