@@ -86,7 +86,7 @@ Pipeline buildPipeline(const std::string& name) {
 TEST_CASE("single file output equals carvetto-cli post for every shipped post", "[save][cli]") {
     Pipeline p = buildPipeline("single");
     const auto posts = discoverPosts(fs::path(CARVETTO_POSTS_DIR), {});
-    REQUIRE(posts.size() == 8);
+    REQUIRE(posts.size() == 9);
     REQUIRE(p.loaded.document.toolpaths().size() >= 2);
     std::size_t bytes = 0;
     for (const PostInfo& post : posts) {

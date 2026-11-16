@@ -99,7 +99,7 @@ SaveJob jobFor(Fixture& f, const PostInfo& post, OutputMode mode, const fs::path
 
 TEST_CASE("shipped posts are discovered with their declared name, units and extension", "[save]") {
     const auto posts = shipped();
-    REQUIRE(posts.size() == 8);
+    REQUIRE(posts.size() == 9);
     for (const PostInfo& p : posts) {
         CHECK(p.usable());
         CHECK(p.shipped);
@@ -116,7 +116,7 @@ TEST_CASE("shipped posts are discovered with their declared name, units and exte
     CHECK(postNamed(posts, "linuxcnc_mm.pp").extension == "ngc");
     CHECK(postNamed(posts, "marlin_mm.pp").extension == "gcode");
     CHECK(postsWithUnits(posts, post::Units::Inches).size() == 3);
-    CHECK(postsWithUnits(posts, post::Units::Millimetres).size() == 5);
+    CHECK(postsWithUnits(posts, post::Units::Millimetres).size() == 6);
 }
 
 TEST_CASE("user posts are listed after the shipped ones; bad ones carry their error", "[save]") {
@@ -128,20 +128,20 @@ TEST_CASE("user posts are listed after the shipped ones; bad ones carry their er
         fs::create_directories(user / "dir.pp");
     }
     const auto posts = discoverPosts(fs::path(CARVETTO_POSTS_DIR), user);
-    REQUIRE(posts.size() == 10);
-    CHECK_FALSE(posts[8].usable());  // broken.pp sorts before mine.pp
-    CHECK(posts[8].error.find("broken.pp") != std::string::npos);
-    CHECK_FALSE(posts[8].shipped);
-    CHECK(posts[9].name == "Mine");
-    CHECK(posts[9].extension == "abc");
-    CHECK_FALSE(posts[9].hasToolChange);
+    REQUIRE(posts.size() == 11);
+    CHECK_FALSE(posts[9].usable());  // broken.pp sorts before mine.pp
+    CHECK(posts[9].error.find("broken.pp") != std::string::npos);
+    CHECK_FALSE(posts[9].shipped);
+    CHECK(posts[10].name == "Mine");
+    CHECK(posts[10].extension == "abc");
+    CHECK_FALSE(posts[10].hasToolChange);
     CHECK(discoverPosts({}, fs::path(CARVETTO_VM_WORK_DIR) / "nonexistent").empty());
 }
 
 TEST_CASE("a machine selects its posts and default post; units filter", "[save]") {
     const auto posts = shipped();
     tooling::Machine m;
-    CHECK(postsForMachine(posts, m).size() == 8);  // lists none: all
+    CHECK(postsForMachine(posts, m).size() == 9);  // lists none: all
     CHECK_FALSE(defaultPostFor(posts, m));
     m.associatedPosts = {"mach3_mm", "Grbl (mm) (*.nc)", "nonexistent", "mach3_mm.pp"};
     m.defaultPost = "grbl_mm.pp";

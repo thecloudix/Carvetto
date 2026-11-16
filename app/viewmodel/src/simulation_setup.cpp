@@ -130,6 +130,13 @@ SimulationSetup makeSimulationSetup(ToolpathSession& session, const SimulationRe
         tp.moves = rec.moves;
         tp.tool = rec.tool;
         if (const tooling::Tool* dbTool = session.toolDatabase().findTool(rec.toolSource.toolId)) {
+            if (rec.tool.laser) {
+                const tooling::CuttingDataLookup lookup =
+                    dbTool->cuttingDataFor(rec.toolSource.machine, rec.toolSource.material);
+                if (lookup.data != nullptr) {
+                    tp.maxBurnRate = lookup.data->maxBurnRate;
+                }
+            }
             if (auto shape = simulate::ToolShape::fromTool(*dbTool)) {
                 tp.shape = *shape;
             }
@@ -144,6 +151,11 @@ SimulationSetup makeSimulationSetup(ToolpathSession& session, const SimulationRe
             tp.shape = *flat;
             setup.notes.push_back("Toolpath \"" + rec.name + "\": its tool is not in the tool database or not simulable; shown with a flat cutter of " +
                                   std::to_string(rec.tool.diameter) + " mm.");
+        }
+        if (rec.tool.laser && !(tp.maxBurnRate > 0.0)) {
+            setup.problem = "Toolpath \"" + rec.name +
+                            "\" is a laser toolpath, but its tool has no maximum burn rate: set it in the tool's cutting data.";
+            return setup;
         }
         setup.totalMoves += rec.moves->size();
         if (item->status == ToolpathStatus::NeedsRecalculation) {

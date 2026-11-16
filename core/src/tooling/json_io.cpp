@@ -80,7 +80,7 @@ json toolToJson(const Tool& t) {
 }
 
 json machineToJson(const Machine& m) {
-    return json{
+    json out{
         {"id", m.id},
         {"name", m.name},
         {"acceleration_mm_s2",
@@ -93,6 +93,8 @@ json machineToJson(const Machine& m) {
         {"max_spindle_rpm", quantise(m.maxSpindleSpeed)},
         {"max_feed_mm_min", quantise(m.maxFeedRate)},
     };
+    if (m.laser) out["laser"] = true;  // written only when set: databases without a laser machine stay byte-identical
+    return out;
 }
 
 // ------------------------------------------------------------------ import
@@ -256,6 +258,10 @@ Machine machineFromJson(const json& j, const std::string& where) {
     }
     m.maxSpindleSpeed = getNumber(j, "max_spindle_rpm", here);
     m.maxFeedRate = getNumber(j, "max_feed_mm_min", here);
+    if (const auto it = j.find("laser"); it != j.end()) {
+        if (!it->is_boolean()) fail(here, "'laser' must be true or false");
+        m.laser = it->get<bool>();
+    }
     return m;
 }
 

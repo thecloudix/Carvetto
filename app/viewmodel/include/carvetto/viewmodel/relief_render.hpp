@@ -38,4 +38,11 @@ std::uint32_t toolpathColour(std::uint32_t id);
 /// O(pixels). An empty field gives an empty raster.
 Raster renderRelief(const simulate::Heightfield& field, const ReliefOptions& options = {});
 
+/// Colour of fully burnt (darkness 1) surface in the simulation of a laser (T-0325, ADR-0107).
+inline constexpr std::uint32_t kBurnColour = 0xFF1E1410u;
+/// Darkens `raster` (as made by `renderRelief` for `field`) with the burn layer `doses` of the simulator
+/// (`Simulator::burnDoses`, one value per cell): each pixel blends towards `kBurnColour` by the largest
+/// darkness min(1, dose) of the cells it stands for. A layer of another size leaves the raster unchanged.
+void applyBurnMarks(Raster& raster, const simulate::Heightfield& field, const std::vector<float>& doses);
+
 }  // namespace carvetto::viewmodel

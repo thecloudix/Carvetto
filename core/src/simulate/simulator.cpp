@@ -22,6 +22,8 @@ constexpr double kMaxCoordinate = 1e7;  // mm; every product and sum of coordina
 constexpr double kArcRadiusSlack = 0.005;    // mm; largest accepted start/end radius mismatch of an arc ...
 constexpr double kArcRadiusRelative = 1e-6;  // ... or this fraction of the start radius, whichever is larger
 constexpr double kMinRadius = 1e-9;     // mm; smaller arc radii / distances count as zero
+constexpr std::size_t kMaxBurnChords = 100'000;  // most chords one laser arc is cut into
+constexpr float kMaxDose = 1e6f;                 // stored burn dose never exceeds this (darkness reads min(1, dose))
 
 bool coordOk(double v) {
     return std::isfinite(v) && std::fabs(v) <= kMaxCoordinate;
@@ -35,6 +37,11 @@ struct Run {
     std::uint32_t id{0};
     int toolNumber{0};
     std::optional<Vec3> from;
+    /// Laser run (T-0325, ADR-0107): marks the burn layer instead of cutting the heightfield.
+    bool laser{false};
+    double burnRate{0.0};     ///< Maximum burn rate, mm/min (> 0 for a laser run).
+    double feedRate{0.0};     ///< Snapshot rates, mm/min, for moves without an override.
+    double plungeRate{0.0};
 };
 
 void rotateBy(double ax, double ay, int dir, double phi, double& rx, double& ry) {
@@ -84,6 +91,10 @@ struct Simulator::Impl {
     StockCheck check;
     Heightfield field;
     Sweeper sweeper;
+
+    /// Burn layer: accumulated dose per cell (empty until a laser toolpath is queued).
+    std::vector<float> burn;
+    double burnWork{0.0};
 
     std::vector<Move> moves;
     std::vector<Run> runs;
@@ -212,6 +223,112 @@ struct Simulator::Impl {
         return sweeper.segment(tool, from.x, from.y, from.z, ex, ey, ez, mode);
     }
 
+    /// Adds `perMm * (length of the segment a-b inside the disc of radius r around each cell centre)` to the
+    /// dose of every cell the segment's beam footprint can reach. Exact line/circle clipping, so the doses of
+    /// the joined segments of a polyline add up to the dose of the whole path.
+    void burnSegment(double ax, double ay, double bx, double by, double r, double perMm) {
+        const double dx = bx - ax;
+        const double dy = by - ay;
+        const double len2 = dx * dx + dy * dy;
+        if (!(len2 > 0.0)) {
+            return;  // no travel, no exposure
+        }
+        const double len = std::sqrt(len2);
+        const double cs = field.cellSize();
+        const double ox = field.origin().x;
+        const double oy = field.origin().y;
+        auto lo = [&](double v, double o, std::size_t n) {
+            const double c = std::floor((v - r - o) / cs);
+            return c < 0.0 ? std::size_t{0} : (c >= static_cast<double>(n) ? n : static_cast<std::size_t>(c));
+        };
+        auto hi = [&](double v, double o, std::size_t n) {  // exclusive
+            const double c = std::floor((v + r - o) / cs) + 1.0;
+            return c < 0.0 ? std::size_t{0} : (c >= static_cast<double>(n) ? n : static_cast<std::size_t>(c));
+        };
+        const std::size_t i0 = lo(std::min(ax, bx), ox, field.nx());
+        const std::size_t i1 = hi(std::max(ax, bx), ox, field.nx());
+        const std::size_t j0 = lo(std::min(ay, by), oy, field.ny());
+        const std::size_t j1 = hi(std::max(ay, by), oy, field.ny());
+        if (i0 >= i1 || j0 >= j1) {
+            return;
+        }
+        burnWork += static_cast<double>(i1 - i0) * static_cast<double>(j1 - j0);
+        for (std::size_t j = j0; j < j1; ++j) {
+            for (std::size_t i = i0; i < i1; ++i) {
+                const geometry::Vec2 c = field.centreOf(i, j);
+                const double fx = ax - c.x;
+                const double fy = ay - c.y;
+                const double b = fx * dx + fy * dy;  // half the linear coefficient
+                const double disc = b * b - len2 * (fx * fx + fy * fy - r * r);
+                if (!(disc > 0.0)) {
+                    continue;
+                }
+                const double root = std::sqrt(disc);
+                const double t1 = std::max(0.0, (-b - root) / len2);
+                const double t2 = std::min(1.0, (-b + root) / len2);
+                if (!(t2 > t1)) {
+                    continue;
+                }
+                float& cell = burn[field.indexOf(i, j)];
+                cell = std::min(kMaxDose, cell + static_cast<float>(perMm * (t2 - t1) * len));
+            }
+        }
+    }
+
+    /// Marks the surface along a beam-on move of a laser run (ADR-0107): at a cell the beam's dose is
+    /// (power / 100) * (burn rate / speed) * (path length inside the beam disc) / (beam diameter), so one pass at full
+    /// power and the burn rate marks the centre line with dose 1.
+    void burnMove(const Run& run, const Move& m, const Vec3& from) {
+        if (!(m.jetPower > 0.0) || m.kind == MoveKind::Rapid || m.kind == MoveKind::Dwell) {
+            return;
+        }
+        const bool plungeLike = m.kind == MoveKind::Plunge || m.kind == MoveKind::Retract;
+        const double speed = m.feedOverride ? *m.feedOverride : (plungeLike ? run.plungeRate : run.feedRate);
+        if (!(speed > 0.0) || !std::isfinite(speed)) {
+            return;
+        }
+        const double r = run.tool.radius();
+        const double perMm = m.jetPower / 100.0 * run.burnRate / speed / (2.0 * r);
+        if (!isArc(m.kind)) {
+            burnSegment(from.x, from.y, m.to.x, m.to.y, r, perMm);
+            return;
+        }
+        ArcGeom g;
+        if (!makeArc(m, from, g)) {
+            return;  // zero-radius arc: no XY travel
+        }
+        double theta = detail::kTwoPi;
+        if (!g.full) {
+            const double cr = g.ax * g.by - g.ay * g.bx;
+            const double dt = g.ax * g.bx + g.ay * g.by;
+            theta = detail::atan2Det(static_cast<double>(g.dir) * cr, dt);
+            if (theta <= 0.0) {
+                theta += detail::kTwoPi;
+            }
+        }
+        const double sag = field.cellSize() / 64.0;
+        const double step = g.rho > sag ? 2.0 * std::acos(1.0 - sag / g.rho) : detail::kHalfPi;
+        const double want = std::ceil(theta / step);
+        const std::size_t n = want < 1.0 ? 1 : (want > static_cast<double>(kMaxBurnChords) ? kMaxBurnChords
+                                                                                          : static_cast<std::size_t>(want));
+        double px = from.x;
+        double py = from.y;
+        for (std::size_t k = 1; k <= n; ++k) {
+            double qx = g.cx + g.bx;
+            double qy = g.cy + g.by;
+            if (k < n) {
+                double rx = 0.0;
+                double ry = 0.0;
+                rotateBy(g.ax, g.ay, g.dir, theta * static_cast<double>(k) / static_cast<double>(n), rx, ry);
+                qx = g.cx + rx;
+                qy = g.cy + ry;
+            }
+            burnSegment(px, py, qx, qy, r, perMm);
+            px = qx;
+            py = qy;
+        }
+    }
+
     void beginRun(std::size_t idx) {
         const Run& run = runs[curRun];
         if (curRun > 0 && pos) {
@@ -250,6 +367,19 @@ struct Simulator::Impl {
         if (!known && isArc(m.kind)) {
             m.kind = MoveKind::Feed;  // no start point: the tool is stamped at the end point
         }
+        if (run.laser) {
+            // A laser does not remove material (ADR-0107): the burn layer is marked, the heightfield and the
+            // collision diagnostics are left alone. A move is marked whole when it completes.
+            burnMove(run, m, from);
+            pos = m.to;
+            if (sweeper.work() + burnWork > options.maxCellWork) {
+                error.status = SimStatus::WorkBudgetExceeded;
+                error.message = "simulation work budget exceeded";
+                error.move = idx;
+                return false;
+            }
+            return true;
+        }
         const double zlow = std::min(from.z, m.to.z);
         if (m.kind != MoveKind::Dwell) {
             // The shank above the flutes must not meet material: probed against the heights before
@@ -277,7 +407,7 @@ struct Simulator::Impl {
         }
         probedMove.reset();
         pos = m.to;
-        if (sweeper.work() > options.maxCellWork) {
+        if (sweeper.work() + burnWork > options.maxCellWork) {
             error.status = SimStatus::WorkBudgetExceeded;
             error.message = "simulation work budget exceeded";
             error.move = idx;
@@ -311,6 +441,8 @@ struct Simulator::Impl {
         probedMove.reset();
         probedTooDeep = false;
         sweeper.resetWork();
+        burnWork = 0.0;
+        std::fill(burn.begin(), burn.end(), 0.0f);
         diagnostics.clear();
         dropped = 0;
         done = 0;
@@ -346,7 +478,39 @@ const SimError& Simulator::error() const {
 bool Simulator::addToolpath(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
                             std::optional<Vec3> from) {
     try {
-        return addToolpathImpl(path, tool, id, from);
+        return addToolpathImpl(path, tool, id, from, nullptr);
+    } catch (const std::bad_alloc&) {
+        impl_->error.status = SimStatus::OutOfMemory;
+        impl_->error.message = "not enough memory to queue the toolpath";
+        impl_->error.move = std::nullopt;
+        return false;
+    }
+}
+
+bool Simulator::addLaserToolpath(const toolpath::Toolpath& path, double maxBurnRate, std::uint32_t id,
+                                 std::optional<Vec3> from) {
+    try {
+        Impl& s = *impl_;
+        if (!s.allocated) {
+            return false;
+        }
+        const auto fail = [&](std::string msg) {
+            s.error.status = SimStatus::InvalidTool;
+            s.error.message = std::move(msg);
+            s.error.move = std::nullopt;
+            return false;
+        };
+        if (!path.tool.laser) {
+            return fail("the toolpath is not a laser toolpath");
+        }
+        if (!std::isfinite(maxBurnRate) || !(maxBurnRate > 0.0)) {
+            return fail("the laser tool has no maximum burn rate (set it in the tool's cutting data)");
+        }
+        const std::optional<ToolShape> beam = ToolShape::flatEndMill(path.tool.diameter);
+        if (!beam) {
+            return fail("the laser beam diameter is not a usable number");
+        }
+        return addToolpathImpl(path, *beam, id, from, &maxBurnRate);
     } catch (const std::bad_alloc&) {
         impl_->error.status = SimStatus::OutOfMemory;
         impl_->error.message = "not enough memory to queue the toolpath";
@@ -356,7 +520,7 @@ bool Simulator::addToolpath(const toolpath::Toolpath& path, const ToolShape& too
 }
 
 bool Simulator::addToolpathImpl(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
-                                std::optional<Vec3> from) {
+                                std::optional<Vec3> from, const double* burnRate) {
     Impl& s = *impl_;
     if (!s.allocated) {
         return false;
@@ -423,6 +587,16 @@ bool Simulator::addToolpathImpl(const toolpath::Toolpath& path, const ToolShape&
     run.id = id;
     run.toolNumber = path.tool.toolNumber;
     run.from = from;
+    if (burnRate != nullptr) {
+        run.laser = true;
+        run.burnRate = *burnRate;
+        run.feedRate = path.tool.feedRate;
+        run.plungeRate = path.tool.plungeRate;
+        if (s.burn.empty()) {
+            maybeFail(4);
+            s.burn.assign(s.field.cellCount(), 0.0f);
+        }
+    }
     const std::size_t oldMoves = s.moves.size();
     const std::size_t oldTimes = s.endTimes.size();
     try {
@@ -480,7 +654,8 @@ bool Simulator::advanceToTime(double seconds) {
                 }
                 const Run& run = s.runs[s.curRun];
                 Move m = s.moves[s.done];
-                if (m.kind != MoveKind::Rapid && m.kind != MoveKind::Dwell) {
+                if (!run.laser && m.kind != MoveKind::Rapid && m.kind != MoveKind::Dwell) {
+                    // (A laser move marks the surface only when it completes: no partial dose.)
                     // The first move of a toolpath may be the one in progress: its start position
                     // is the toolpath's `from` (when given) before it runs.
                     const std::optional<Vec3> start3 = (s.done == run.first && run.from) ? run.from : s.pos;
@@ -544,7 +719,29 @@ std::size_t Simulator::droppedDiagnostics() const {
     return impl_->dropped;
 }
 double Simulator::cellWork() const {
-    return impl_->sweeper.work();
+    return impl_->sweeper.work() + impl_->burnWork;
+}
+bool Simulator::hasBurn() const {
+    return !impl_->burn.empty();
+}
+const std::vector<float>& Simulator::burnDoses() const {
+    return impl_->burn;
+}
+float Simulator::darkness(std::size_t i, std::size_t j) const {
+    const Impl& s = *impl_;
+    if (s.burn.empty() || i >= s.field.nx() || j >= s.field.ny()) {
+        return 0.0f;
+    }
+    return std::min(1.0f, s.burn[s.field.indexOf(i, j)]);
+}
+std::size_t Simulator::markedCells(float minDarkness) const {
+    std::size_t n = 0;
+    for (const float d : impl_->burn) {
+        if (d > 0.0f && std::min(1.0f, d) >= minDarkness) {
+            ++n;
+        }
+    }
+    return n;
 }
 
 }  // namespace carvetto::simulate

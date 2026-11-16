@@ -43,6 +43,9 @@ struct SimulationToolpath {
     simulate::ToolShape shape;
     /// The database tool was missing or not simulable: shown with a flat cutter of the snapshot's diameter.
     bool shapeApproximated{false};
+    /// Laser toolpath (`tool.laser`, T-0325): the tool's maximum burn rate in mm/min from its cutting data for the
+    /// toolpath's machine and material; 0 = not set. A laser toolpath goes to `Simulator::addLaserToolpath`.
+    double maxBurnRate{0.0};
 };
 
 struct SimulationSetup {
