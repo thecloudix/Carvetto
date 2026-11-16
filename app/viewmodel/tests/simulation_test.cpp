@@ -756,3 +756,80 @@ TEST_CASE("simulation controller: a cancel while preparing is honoured before th
     CHECK(c.counters().cutChunks == 0);  // not one cutting step ran
     CHECK(c.frame()->relief->pixels == directRelief(setup, 0).pixels);
 }
+
+// T-0325 (ADR-0107): a laser toolpath in a simulation setup darkens the frame where the beam burnt.
+TEST_CASE("simulation controller: a laser toolpath marks the frame; no burn rate fails", "[simulation][laser]") {
+    SimulationSetup setup;
+    setup.ok = true;
+    setup.stock.width = 20.0;
+    setup.stock.height = 10.0;
+    setup.stock.thickness = 5.0;
+    setup.stock.cellSize = 0.25;
+    SimulationToolpath tp;
+    tp.name = "Laser";
+    tp.tool.name = "Laser";
+    tp.tool.toolNumber = 1;
+    tp.tool.diameter = 1.0;
+    tp.tool.feedRate = 1000.0;
+    tp.tool.plungeRate = 1000.0;
+    tp.tool.laser = true;
+    tp.maxBurnRate = 1000.0;
+    tp.moves = document::shareMoves({Move::rapid({2, 5, 1}), Move::feed({2, 5, 0}),
+                                     Move::feed({12, 5, 0}).withJet(100.0), Move::retract({12, 5, 1})});
+    setup.toolpaths.push_back(tp);
+    setup.totalMoves = 4;
+
+    SimulationController c;
+    REQUIRE(c.start(setup));
+    REQUIRE(waitReadyAt(c, 0));
+    CHECK(c.frame()->burnedCells == 0);
+    c.seek(4);
+    REQUIRE(waitReadyAt(c, 4));
+    const auto frame = c.frame();
+    CHECK(frame->burnedCells > 100);
+    // The pixel on the line (x = 5.125, y = 4.875 -> cell 20, 19; raster row = 39 - 19 = 20) is dark, a far one is not.
+    const Raster& r = *frame->relief;
+    REQUIRE(r.stride == 1);
+    const std::uint32_t on = r.pixels[20 * r.width + 20];
+    const std::uint32_t off = r.pixels[2 * r.width + 2];
+    CHECK(off == kStockColour);
+    CHECK((on & 0xFFu) < (kStockColour & 0xFFu));
+    CHECK((on & 0xFFu) >= (kBurnColour & 0xFFu));
+    c.seek(0);
+    REQUIRE(waitReadyAt(c, 0));
+    CHECK(c.frame()->burnedCells == 0);
+    CHECK(c.frame()->relief->pixels[20 * r.width + 20] == kStockColour);
+}
+
+TEST_CASE("applyBurnMarks blends towards the burn colour by the largest darkness of the block", "[simulation][laser]") {
+    simulate::Stock stock;
+    stock.width = 4.0;
+    stock.height = 4.0;
+    stock.cellSize = 1.0;
+    simulate::Simulator sim(stock);
+    REQUIRE(sim.ok());
+    Raster r = renderRelief(sim.heightfield());
+    REQUIRE(r.width == 4);
+    CHECK(r.pixels[0] == kStockColour);
+    std::vector<float> doses(16, 0.0f);
+    doses[0 * 4 + 1] = 1.0f;   // cell (1, 0): bottom row, so raster row 3
+    doses[2 * 4 + 2] = 0.5f;   // cell (2, 2): raster row 1
+    applyBurnMarks(r, sim.heightfield(), doses);
+    CHECK(r.pixels[3 * 4 + 1] == kBurnColour);
+    const std::uint32_t half = r.pixels[1 * 4 + 2];
+    const int from = static_cast<int>(kStockColour & 0xFFu);
+    const int to = static_cast<int>(kBurnColour & 0xFFu);
+    CHECK(static_cast<int>(half & 0xFFu) == static_cast<int>(static_cast<float>(from) + static_cast<float>(to - from) * 0.5f + 0.5f));
+    CHECK(r.pixels[0] == kStockColour);
+    CHECK((r.pixels[3 * 4 + 1] >> 24) == 0xFFu);
+    // A layer of the wrong size changes nothing.
+    Raster same = renderRelief(sim.heightfield());
+    applyBurnMarks(same, sim.heightfield(), std::vector<float>(3, 1.0f));
+    CHECK(same.pixels == renderRelief(sim.heightfield()).pixels);
+    // Over-dose saturates at the burn colour.
+    doses.assign(16, 7.0f);
+    applyBurnMarks(same, sim.heightfield(), doses);
+    for (const std::uint32_t p : same.pixels) {
+        CHECK(p == kBurnColour);
+    }
+}

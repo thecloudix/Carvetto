@@ -427,3 +427,17 @@ TEST_CASE("hostile thread mill tool files are refused with a message", "[tooling
     bad(R"({"id": "t", "type": "thread_mill", "tooth_height_mm": 0.6, "included_angle_deg": 60})", "diameter");
     bad(base + R"("tooth_height_mm": 1e999})", "");
 }
+
+TEST_CASE("T-0325: a machine's laser flag reads back as written, false included", "[tooling][json]") {
+    const auto flag = [](const char* value) {
+        const std::string text =
+            std::string(R"({"format": "carvetto-tool-database", "version": 1, "groups": [], "materials": [], )") +
+            R"("machines": [{"id": "m")" + value + R"(}], "tools": []})";
+        const ImportResult r = importToolDatabaseJson(text);
+        REQUIRE(r.ok);
+        return r.database.findMachine("m")->laser;
+    };
+    CHECK_FALSE(flag(""));
+    CHECK_FALSE(flag(R"(, "laser": false)"));
+    CHECK(flag(R"(, "laser": true)"));
+}

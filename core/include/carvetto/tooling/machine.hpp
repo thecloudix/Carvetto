@@ -39,6 +39,9 @@ struct Machine {
     double maxSpindleSpeed{0.0};
     /// Feed rate limit, mm/min; 0 = not set.
     double maxFeedRate{0.0};
+    /// The machine carries a laser (T-0325, ADR-0107): laser toolpaths are post-processed for it, through a post that
+    /// declares LASER_SUPPORT (`post::laserSetupProblem`). Stored in the tool database only when set.
+    bool laser{false};
 
     bool operator==(const Machine&) const = default;
 };

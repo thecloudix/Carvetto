@@ -37,7 +37,7 @@ enum class SimStatus {
 };
 
 namespace detail {
-/// Test hook: bit 0 makes the next heightfield allocation, bit 1 the next queueing of moves, fail as
+/// Test hook: bit 0 makes the next heightfield allocation, bit 1 the next queueing of moves, bit 2 the next burn layer allocation, fail as
 /// if std::bad_alloc had been thrown (the failure is consumed). Not for production use.
 void failNextAllocation(unsigned mask);
 }  // namespace detail
@@ -117,6 +117,26 @@ public:
     bool addToolpath(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
                      std::optional<geometry::Vec3> from = std::nullopt);
 
+    /// Queues a laser toolpath (`path.tool.laser`, T-0325, ADR-0107). A laser removes no material: its beam-on
+    /// moves (`Move::jetPower` > 0) mark the burn layer (`burnDoses`, `darkness`) at the cell resolution and the
+    /// heightfield is not touched. The beam is a disc of the snapshot's diameter; at a cell the dose is the sum over
+    /// moves of power/100 * `maxBurnRate` / speed * (path length inside the disc around the cell centre) / diameter,
+    /// so a single pass along a line at full power and speed `maxBurnRate` (mm/min, the tool's cutting data)
+    /// marks the centre line with dose 1 (darkness is min(1, dose); passes and repeats add up). Speed is the
+    /// move's feed override or the snapshot's feed (plunge) rate. `maxBurnRate` must be finite and > 0 (else
+    /// InvalidTool). A move marks the surface when it completes (no partial dose in `advanceToTime`). Same
+    /// refusals, queueing and timing as `addToolpath`; laser and cutting toolpaths may be mixed.
+    bool addLaserToolpath(const toolpath::Toolpath& path, double maxBurnRate, std::uint32_t id,
+                          std::optional<geometry::Vec3> from = std::nullopt);
+
+    /// Burn layer: dose per cell, same indexing as the heightfield; empty until a laser toolpath is queued.
+    bool hasBurn() const;
+    const std::vector<float>& burnDoses() const;
+    /// Darkness in [0, 1] of cell (i, j): min(1, dose); 0 outside the stock or without a burn layer.
+    float darkness(std::size_t i, std::size_t j) const;
+    /// Cells whose darkness is > 0 and at least `minDarkness`.
+    std::size_t markedCells(float minDarkness = 0.0f) const;
+
     /// Number of queued moves (all toolpaths) and the number completely cut so far.
     std::size_t moveCount() const;
     std::size_t movesDone() const;
@@ -154,7 +174,7 @@ public:
 
 private:
     bool addToolpathImpl(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
-                         std::optional<geometry::Vec3> from);
+                         std::optional<geometry::Vec3> from, const double* burnRate);
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };

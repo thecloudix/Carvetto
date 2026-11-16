@@ -92,7 +92,11 @@ void worker(std::shared_ptr<SimulationShared> shp) {
                 path.tool = tp.tool;
                 path.moves.assign(all.begin() + static_cast<std::ptrdiff_t>(at),
                                   all.begin() + static_cast<std::ptrdiff_t>(at + n));  // transient copy of one slice
-                if (!sim.addToolpath(path, tp.shape, static_cast<std::uint32_t>(i + 1))) {
+                const std::uint32_t id = static_cast<std::uint32_t>(i + 1);
+                // A later slice continues from the end of the previous one (`from` defaults to it).
+                const bool queued = tp.tool.laser ? sim.addLaserToolpath(path, tp.maxBurnRate, id)
+                                                  : sim.addToolpath(path, tp.shape, id);
+                if (!queued) {
                     fail(sh, sim.error().message.empty() ? std::string("The simulator refused toolpath \"") + tp.name + "\"."
                                                           : sim.error().message);
                     return;
@@ -218,7 +222,12 @@ void worker(std::shared_ptr<SimulationShared> shp) {
             frame->move = sim.movesDone();
             frame->seconds = sim.currentSeconds();
             frame->cutCells = sim.heightfield().cutCells();
-            frame->relief = std::make_shared<const Raster>(renderRelief(sim.heightfield(), relief));
+            Raster picture = renderRelief(sim.heightfield(), relief);
+            if (sim.hasBurn()) {
+                applyBurnMarks(picture, sim.heightfield(), sim.burnDoses());  // a laser's marks (T-0325)
+                frame->burnedCells = sim.markedCells();
+            }
+            frame->relief = std::make_shared<const Raster>(std::move(picture));
             frame->diagnostics = sim.diagnostics();
             frame->droppedDiagnostics = sim.droppedDiagnostics();
             frame->workSeconds = secondsSince(t0);

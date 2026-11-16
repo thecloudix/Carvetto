@@ -81,6 +81,7 @@ add_executable(carvetto_tests
   simulate/round2_test.cpp
   simulate/sweep_exact_test.cpp
   simulate/tool_shape_test.cpp
+  simulate/laser_burn_test.cpp
   tooling/starter_tools_test.cpp
   document/job_test.cpp
   document/double_sided_test.cpp
@@ -196,6 +197,7 @@ add_executable(carvetto_tests
   toolpath/laser_picture_test.cpp
   toolpath/laser_sketch_test.cpp
   post/jet_blocks_test.cpp
+  post/laser_post_test.cpp
   toolpath/image_engrave_test.cpp
   toolpath/engrave_test.cpp
   toolpath/engrave_post_test.cpp

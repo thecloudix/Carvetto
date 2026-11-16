@@ -269,6 +269,7 @@ add_library(carvetto_core STATIC
   src/post/variables.cpp
   src/post/parser.cpp
   src/post/interpreter.cpp
+  src/post/laser_setup.cpp
   src/simulate/stock.cpp
   src/simulate/sweep.cpp
   src/simulate/simulator.cpp

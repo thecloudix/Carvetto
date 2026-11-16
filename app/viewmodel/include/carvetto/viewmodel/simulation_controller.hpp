@@ -64,6 +64,8 @@ struct SimulationFrame {
     std::size_t move{0};
     double seconds{0.0};
     std::size_t cutCells{0};
+    /// Cells marked by a laser so far (T-0325); 0 when no laser toolpath is queued.
+    std::size_t burnedCells{0};
     std::shared_ptr<const Raster> relief;
     std::vector<simulate::SimDiagnostic> diagnostics;
     std::size_t droppedDiagnostics{0};

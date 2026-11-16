@@ -127,4 +127,40 @@ Raster renderRelief(const simulate::Heightfield& field, const ReliefOptions& opt
     return out;
 }
 
+void applyBurnMarks(Raster& raster, const simulate::Heightfield& field, const std::vector<float>& doses) {
+    const std::size_t nx = field.nx();
+    const std::size_t ny = field.ny();
+    if (doses.size() != nx * ny || raster.stride == 0 || raster.pixels.size() != raster.width * raster.height) {
+        return;
+    }
+    for (std::size_t py = 0; py < raster.height; ++py) {
+        const std::size_t row = raster.height - 1 - py;  // the raster is drawn top row first
+        const std::size_t j0 = row * raster.stride;
+        const std::size_t j1 = std::min(ny, j0 + raster.stride);
+        for (std::size_t px = 0; px < raster.width; ++px) {
+            const std::size_t i0 = px * raster.stride;
+            const std::size_t i1 = std::min(nx, i0 + raster.stride);
+            float dark = 0.0f;
+            for (std::size_t j = j0; j < j1; ++j) {
+                for (std::size_t i = i0; i < i1; ++i) {
+                    dark = std::max(dark, doses[j * nx + i]);
+                }
+            }
+            dark = std::min(1.0f, dark);
+            if (!(dark > 0.0f)) {
+                continue;
+            }
+            std::uint32_t& pixel = raster.pixels[py * raster.width + px];
+            std::uint32_t out = pixel & 0xFF000000u;
+            for (int shift = 0; shift <= 16; shift += 8) {
+                const float from = static_cast<float>((pixel >> shift) & 0xFFu);
+                const float to = static_cast<float>((kBurnColour >> shift) & 0xFFu);
+                const float v = from + (to - from) * dark;
+                out |= static_cast<std::uint32_t>(v + 0.5f) << shift;
+            }
+            pixel = out;
+        }
+    }
+}
+
 }  // namespace carvetto::viewmodel

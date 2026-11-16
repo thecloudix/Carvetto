@@ -863,7 +863,12 @@ class Interpreter {
             }
 
             if (tool_.laser) {
-                // T-0323: a laser toolpath needs the post's beam switching blocks (JET_TOOL_POWER is optional).
+                // T-0325 (ADR-0107): a laser toolpath needs a post that declares LASER_SUPPORT = "YES" ...
+                if (!s_.laserSupport) {
+                    return Error{0, "cannot write G-code: toolpath " + quoted(tp.name) +
+                                        " is a laser toolpath, but the post does not declare LASER_SUPPORT = \"YES\""};
+                }
+                // ... and, from T-0323, the beam switching blocks (JET_TOOL_POWER is optional).
                 for (const char* name : {"JET_TOOL_ON", "JET_TOOL_OFF"}) {
                     if (!has(name)) {
                         return Error{0, "cannot write G-code: toolpath " + quoted(tp.name) +

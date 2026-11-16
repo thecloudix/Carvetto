@@ -48,7 +48,9 @@ PreviewComponentOutcome createComponentFromToolpathPreview(document::Document& d
         path.name = tp.name;
         path.tool = tp.tool;
         path.moves = *tp.moves;
-        if (!simulator.addToolpath(path, tp.shape, static_cast<std::uint32_t>(i + 1))) {
+        const std::uint32_t id = static_cast<std::uint32_t>(i + 1);
+        if (!(tp.tool.laser ? simulator.addLaserToolpath(path, tp.maxBurnRate, id)
+                            : simulator.addToolpath(path, tp.shape, id))) {
             return refused(simulator.error().message.empty()
                                ? "the simulator refused toolpath \"" + tp.name + "\""
                                : simulator.error().message);

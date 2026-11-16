@@ -17,6 +17,7 @@ vendor's or community post file.
 | `linuxcnc_mm.pp` | LinuxCNC | mm | `.ngc` |
 | `linuxcnc_inch.pp` | LinuxCNC | inch | `.ngc` |
 | `marlin_mm.pp` | Marlin 2.x (spindle build) | mm | `.gcode` |
+| `grbl_laser_mm.pp` | Grbl 1.1 in laser mode (`$32=1`) | mm | `.nc` |
 
 ## How the posts are tested
 
@@ -36,6 +37,11 @@ A second fixture (T-0154) runs diamond-drag toolpaths, which run with the spindl
 toolpath first in the job, a second one with the same tool, a profile with the end mill, and a
 drag toolpath again after the tool change. Its output must match
 `core/tests/golden/post/<post>_drag.nc` byte for byte.
+
+`grbl_laser_mm.pp` (T-0325) is for laser toolpaths: it declares `LASER_SUPPORT`, writes the beam power as an
+`S` word (percent x 10, i.e. `$30=1000`) and switches the beam with `M4` / `M5` (JET blocks, ADR-0099, ADR-0107).
+It is tested separately (`core/tests/post/laser_post_test.cpp`, golden `grbl_laser_mm_laser.nc`) and is not in the
+spindle fixture above. See `docs/laser-post-guide.md` for adapting a post to another laser controller.
 
 ## Machine-safety checklist
 
