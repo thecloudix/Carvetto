@@ -28,6 +28,9 @@ constexpr std::uint8_t kSameY = 0x20;
 constexpr std::uint8_t kSameZ = 0x40;
 constexpr std::uint8_t kSameFeed = 0x80;
 constexpr int kKindCount = 7;  // Rapid .. Dwell
+constexpr std::uint8_t kJetFlag = 0x01;      // version 2: a power follows (or repeats)
+constexpr std::uint8_t kJetSame = 0x02;      // version 2: the power equals the last one written
+constexpr double kMaxJetPower = 100.0;
 
 std::uint64_t bitsOf(double v) {
     return std::bit_cast<std::uint64_t>(v);
@@ -107,15 +110,18 @@ class Reader {
 }  // namespace
 
 std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t>& out) {
+    const bool laser = std::any_of(moves.begin(), moves.end(), [](const Move& m) { return m.jetPower != 0.0; });
+    const std::uint32_t version = laser ? kMovesFormatVersionLaser : kMovesFormatVersion;
     out.insert(out.end(), kMagic.begin(), kMagic.end());
     for (int i = 0; i < 4; ++i) {
-        out.push_back(static_cast<std::uint8_t>(kMovesFormatVersion >> (8 * i)));
+        out.push_back(static_cast<std::uint8_t>(version >> (8 * i)));
     }
     putU64(out, moves.size());
     double px = 0.0;
     double py = 0.0;
     double pz = 0.0;
     std::optional<double> lastFeed;
+    std::optional<double> lastJet;
     for (std::size_t i = 0; i < moves.size(); ++i) {
         const Move& m = moves[i];
         const int kind = static_cast<int>(m.kind);
@@ -138,6 +144,12 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
         if (hasFeed && !(*m.feedOverride > 0.0)) {
             return "move " + std::to_string(i + 1) + ": feed override must be greater than zero";
         }
+        const bool hasJet = m.jetPower != 0.0;
+        if (hasJet && !(std::isfinite(m.jetPower) && m.jetPower > 0.0 && m.jetPower <= kMaxJetPower &&
+                        toolpath::isCutting(m.kind))) {
+            return "move " + std::to_string(i + 1) +
+                   ": beam power must be above zero and at most 100 percent, on a cutting move";
+        }
         auto tag = static_cast<std::uint8_t>(kind);
         const bool sameX = bitsOf(m.to.x) == bitsOf(px);
         const bool sameY = bitsOf(m.to.y) == bitsOf(py);
@@ -146,6 +158,12 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
         tag = static_cast<std::uint8_t>(tag | (hasFeed ? kHasFeed : 0) | (sameX ? kSameX : 0) |
                                         (sameY ? kSameY : 0) | (sameZ ? kSameZ : 0) | (sameFeed ? kSameFeed : 0));
         out.push_back(tag);
+        std::uint8_t jetByte = 0;
+        const bool sameJet = hasJet && lastJet && bitsOf(m.jetPower) == bitsOf(*lastJet);
+        if (laser) {
+            jetByte = static_cast<std::uint8_t>((hasJet ? kJetFlag : 0) | (sameJet ? kJetSame : 0));
+            out.push_back(jetByte);
+        }
         if (!sameX) {
             putDouble(out, m.to.x);
         }
@@ -166,6 +184,12 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
                 putDouble(out, *m.feedOverride);
             }
             lastFeed = *m.feedOverride;
+        }
+        if (hasJet) {
+            if (!sameJet) {
+                putDouble(out, m.jetPower);
+            }
+            lastJet = m.jetPower;
         }
         px = m.to.x;
         py = m.to.y;
@@ -191,7 +215,7 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
     const std::uint32_t v = static_cast<std::uint32_t>(version[0]) | (static_cast<std::uint32_t>(version[1]) << 8) |
                             (static_cast<std::uint32_t>(version[2]) << 16) |
                             (static_cast<std::uint32_t>(version[3]) << 24);
-    if (v != kMovesFormatVersion) {
+    if (v != kMovesFormatVersion && v != kMovesFormatVersionLaser) {
         return "unsupported move cache version " + std::to_string(v);
     }
     if (count != expectedCount) {
@@ -206,6 +230,8 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
     double py = 0.0;
     double pz = 0.0;
     std::optional<double> lastFeed;
+    std::optional<double> lastJet;
+    const bool laser = v == kMovesFormatVersionLaser;
     for (std::uint64_t i = 0; i < count; ++i) {
         // Moves are numbered from 1, as in the post's errors.
         const auto bad = [i](const char* what) { return "move " + std::to_string(i + 1) + ": " + what; };
@@ -217,8 +243,23 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
         if (kind >= kKindCount) {
             return bad("invalid move kind");
         }
+        std::uint8_t jetByte = 0;
+        if (laser && !r.byte(jetByte)) {
+            return bad("the move cache ends early");
+        }
+        if ((jetByte & ~(kJetFlag | kJetSame)) != 0 || ((jetByte & kJetSame) != 0 && (jetByte & kJetFlag) == 0)) {
+            return bad("invalid laser flags");
+        }
+        const bool hasJet = (jetByte & kJetFlag) != 0;
+        const bool sameJet = (jetByte & kJetSame) != 0;
         Move m;
         m.kind = static_cast<MoveKind>(kind);
+        if (hasJet && !toolpath::isCutting(m.kind)) {
+            return bad("beam power on a rapid or dwell");
+        }
+        if (sameJet && !lastJet) {
+            return bad("refers to a previous beam power that does not exist");
+        }
         const bool hasFeed = (tag & kHasFeed) != 0;
         const bool sameFeed = (tag & kSameFeed) != 0;
         if (hasFeed && !toolpath::isCutting(m.kind)) {
@@ -251,8 +292,19 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
             m.feedOverride = feed;
             lastFeed = feed;
         }
+        if (hasJet) {
+            double power = sameJet ? *lastJet : 0.0;
+            if (!sameJet) {
+                ok = ok && r.real(power);
+            }
+            m.jetPower = power;
+            lastJet = power;
+        }
         if (!ok) {
             return bad("the move cache ends early");
+        }
+        if (hasJet && !(std::isfinite(m.jetPower) && m.jetPower > 0.0 && m.jetPower <= kMaxJetPower)) {
+            return bad("beam power must be above zero and at most 100 percent");
         }
         if (!std::isfinite(m.to.x) || !std::isfinite(m.to.y) || !std::isfinite(m.to.z) ||
             !std::isfinite(m.centre.x) || !std::isfinite(m.centre.y) || !std::isfinite(m.dwellSeconds) ||

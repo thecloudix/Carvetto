@@ -124,6 +124,7 @@ add_executable(carvetto_tests
   document/carv_moulding_project_record_test.cpp
   document/carv_tool_group_test.cpp
   document/carv_fluting_record_test.cpp
+  document/carv_laser_record_test.cpp
   document/carv_prism_record_test.cpp
   document/carv_engrave_record_test.cpp
   document/carv_v_carve_record_test.cpp
@@ -182,6 +183,8 @@ add_executable(carvetto_tests
   toolpath/inlay_test.cpp
   toolpath/v_carve_inlay_test.cpp
   toolpath/fluting_test.cpp
+  toolpath/laser_test.cpp
+  post/jet_blocks_test.cpp
   toolpath/image_engrave_test.cpp
   toolpath/engrave_test.cpp
   toolpath/engrave_post_test.cpp

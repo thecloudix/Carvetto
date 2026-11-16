@@ -62,8 +62,19 @@ struct Move {
     double dwellSeconds{0.0};
     /// Keep-out detour role of a Rapid (see `RapidRoute`); `None` for every other move.
     RapidRoute route{RapidRoute::None};
+    /// Beam power in percent (0, 100] while this move runs, for a laser toolpath (T-0323, ADR-0099);
+    /// 0 = the beam is off. Only Feed/Plunge/Retract/Arc moves may carry power; rapids and dwells run
+    /// with the beam off. Always 0 for a toolpath whose tool snapshot is not `laser`.
+    double jetPower{0.0};
 
     bool operator==(const Move&) const = default;
+
+    /// This move with the beam on at `percent` (see `jetPower`).
+    Move withJet(double percent) const {
+        Move m = *this;
+        m.jetPower = percent;
+        return m;
+    }
 
     static Move rapid(Vec3 to, RapidRoute route = RapidRoute::None) {
         return {MoveKind::Rapid, to, {}, {}, 0.0, route};

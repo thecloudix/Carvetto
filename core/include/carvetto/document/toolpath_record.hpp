@@ -17,6 +17,7 @@
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/fluting.hpp"
+#include "carvetto/toolpath/laser.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
@@ -91,16 +92,18 @@ inline constexpr std::size_t kMaxGroupTools = 64;
 /// ADR-0085) machine the composed relief model of the record's sheet; their `vectors` (boundary
 /// polylines) and `priors` are not part of a record: the vectors come from the selection. A moulding
 /// (T-0311, ADR-0091) reads its profile and rails from the selection too (`profileObject` names the profile);
-/// a projection onto the model reads the moves of the record `sourceToolpath` names.
+/// a projection onto the model reads the moves of the record `sourceToolpath` names. A laser cut / fill (T-0323,
+/// ADR-0099) takes its tool and cutting data as arguments; its tool snapshot is marked `laser`.
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
                                     toolpath::EngraveParams, toolpath::VCarvingParams, toolpath::ChamferParams,
                                     toolpath::ThreadMillParams, toolpath::PrismParams, toolpath::FlutingParams,
                                     toolpath::InlayParams, toolpath::ImageEngraveParams,
                                     toolpath::VCarveInlayParams, toolpath::Rough3dParams,
-                                    toolpath::Finish3dParams, toolpath::MouldingParams, toolpath::Project3dParams>;
+                                    toolpath::Finish3dParams, toolpath::MouldingParams, toolpath::Project3dParams,
+                                    toolpath::LaserCutFillParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay, Rough3d, Finish3d, Moulding, Project3d };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay, Rough3d, Finish3d, Moulding, Project3d, LaserCutFill };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;

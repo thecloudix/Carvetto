@@ -102,6 +102,7 @@ std::string toolFor(ToolpathOperation op, Rng& rng) {
         case ToolpathOperation::Finish3d:
         case ToolpathOperation::Moulding:
         case ToolpathOperation::Project3d:
+        case ToolpathOperation::LaserCutFill:
         case ToolpathOperation::Fluting: return "end-mill-3mm";
     }
     return "end-mill-3mm";
@@ -489,6 +490,7 @@ TEST_CASE("robustness: degenerate and hostile vectors", "[toolpath][robust]") {
                 case ToolpathOperation::ThreadMill: def = threadMillDefinition(db); break;
                 case ToolpathOperation::Inlay: def = inlayDefinition(db); break;
                 case ToolpathOperation::Fluting: def = flutingDefinition(db); break;
+                case ToolpathOperation::LaserCutFill: def = laserDefinition(db); break;
                 case ToolpathOperation::Prism: def = prismDefinition(db); break;
                 case ToolpathOperation::ImageEngrave: def = photoDefinition(db); break;
                 case ToolpathOperation::VCarveInlay: def = vCarveInlayDefinition(db); break;

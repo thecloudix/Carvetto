@@ -817,7 +817,8 @@ class Interpreter {
             // Going from a spindle-off toolpath to a spinning one (or back) with the same tool is a
             // tool change too, so the spindle is restarted only through TOOLCHANGE + SPINDLE_ON.
             const bool toolChanged = i > 0 && (tp.tool.toolNumber != tool_.toolNumber || tp.tool.name != tool_.name ||
-                                               tp.tool.spindleOff != tool_.spindleOff);
+                                               tp.tool.spindleOff != tool_.spindleOff ||
+                                               tp.tool.laser != tool_.laser);
             if (toolChanged && tool_.spindleOff && !tp.tool.spindleOff) {
                 // End of a drag section (T-0154): still in the context of the last spindle-off
                 // toolpath ([T], [TOOLNAME] are the drag tool's; no spindle word may be written).
@@ -855,11 +856,29 @@ class Interpreter {
                 return *failure_;
             }
 
+            if (tool_.laser) {
+                // T-0323: a laser toolpath needs the post's beam switching blocks (JET_TOOL_POWER is optional).
+                for (const char* name : {"JET_TOOL_ON", "JET_TOOL_OFF"}) {
+                    if (!has(name)) {
+                        return Error{0, "cannot write G-code: toolpath " + quoted(tp.name) +
+                                            " is a laser toolpath, but the post has no " + name +
+                                            " block (is it a laser-capable post?)"};
+                    }
+                }
+            }
+            jetOn_ = false;
+            jetPowerKnown_ = false;
             moveIndex_ = 0;
             for (const Move& m : tp.moves) {
                 ++moveIndex_;
                 if (auto err = validateMove(m)) {
                     return *err;
+                }
+                if (auto err = jetBefore(m)) {
+                    return *err;
+                }
+                if (failure_) {
+                    return *failure_;
                 }
                 if (auto err = doMove(m)) {
                     return *err;
@@ -869,6 +888,15 @@ class Interpreter {
                 }
             }
             moveIndex_ = 0;
+            if (jetOn_) {
+                setStationary();
+                jetValue_ = jetPowerSet_;
+                emit("JET_TOOL_OFF");
+                jetOn_ = false;
+                if (failure_) {
+                    return *failure_;
+                }
+            }
         }
 
         if (tool_.spindleOff && !active.empty()) {
@@ -1061,8 +1089,8 @@ class Interpreter {
     /// written: checked wherever [S] is written and before SPINDLE_ON (owner decision
     /// 2026-11-02, ADR-0020). A manual spindle takes any positive nominal speed.
     bool acceptSpindleSpeed() {
-        if (toolpath_ == nullptr || (std::isfinite(tool_.spindleSpeed) && tool_.spindleSpeed > 0.0)) {
-            return true;
+        if (toolpath_ == nullptr || tool_.laser || (std::isfinite(tool_.spindleSpeed) && tool_.spindleSpeed > 0.0)) {
+            return true;  // a laser has no spindle (T-0323)
         }
         fail(0, "tool " + quoted(tool_.name) + " has spindle speed " + describeValue(tool_.spindleSpeed) +
                     " rpm; it must be greater than zero (for a manual spindle, set any positive nominal speed)");
@@ -1107,6 +1135,46 @@ class Interpreter {
                  written + "; it is above zero but too small for the post's " +
                  std::to_string(def.format.decimals) + "-decimal format");
         return false;
+    }
+
+    /// Beam switching of a laser toolpath before move `m` (T-0323, ADR-0099): JET_TOOL_POWER when the power
+    /// differs from the one last set, JET_TOOL_ON when the beam starts, JET_TOOL_OFF when it stops. Rapids and
+    /// dwells run with the beam off.
+    std::optional<Error> jetBefore(const Move& m) {
+        const double want = toolpath::isCutting(m.kind) ? m.jetPower : 0.0;
+        if (want != 0.0 || m.jetPower != 0.0) {
+            if (!tool_.laser) {
+                return Error{0, "cannot write G-code: toolpath " + quoted(toolpath_->name) + ", move " +
+                                    std::to_string(moveIndex_) + ": the move has beam power, but its tool is not a laser's"};
+            }
+            if (!std::isfinite(m.jetPower) || !(m.jetPower > 0.0) || m.jetPower > 100.0 ||
+                !toolpath::isCutting(m.kind)) {
+                return Error{0, "cannot write G-code: toolpath " + quoted(toolpath_->name) + ", move " +
+                                    std::to_string(moveIndex_) + ": beam power " + describeValue(m.jetPower) +
+                                    " must be above 0 and at most 100 percent, on a cutting move"};
+            }
+        }
+        if (want > 0.0) {
+            if (!jetPowerKnown_ || want != jetPowerSet_) {
+                jetPowerSet_ = want;
+                jetPowerKnown_ = true;
+                jetValue_ = want;
+                setStationary();
+                emit("JET_TOOL_POWER");
+            }
+            if (!jetOn_) {
+                jetValue_ = want;
+                setStationary();
+                emit("JET_TOOL_ON");
+                jetOn_ = true;
+            }
+        } else if (jetOn_) {
+            jetValue_ = jetPowerSet_;
+            setStationary();
+            emit("JET_TOOL_OFF");
+            jetOn_ = false;
+        }
+        return std::nullopt;
     }
 
     /// True while the toolpath being written (from its HEADER, TOOLCHANGE or NEW_SEGMENT to its
@@ -1361,6 +1429,9 @@ class Interpreter {
         if (blockName == "SPINDLE_ON" && off) {
             return;  // T-0154: the spindle stays off; SPINDLE_OFF_PAUSE follows instead
         }
+        if (blockName == "SPINDLE_ON" && toolpath_ != nullptr && !inFooter_ && tool_.laser) {
+            return;  // T-0323: a laser has no spindle to start
+        }
         // Blocks that start the spindle of the shipped posts on a line of its own (T-0154).
         const bool dropSpindleLines =
             off && (blockName == "HEADER" || blockName == "TOOLCHANGE" || blockName == "NEW_SEGMENT");
@@ -1569,6 +1640,7 @@ class Interpreter {
         if (tag == "FP") return tool_.plungeRate;
         if (tag == "FI") return frame_.inverseTime;
         if (tag == "S") return tool_.spindleSpeed;
+        if (tag == "JET_POWER") return jetValue_;
         if (tag == "T") return static_cast<double>(tool_.toolNumber);
         if (tag == "TP") return static_cast<double>(previousToolNumber_);
         if (tag == "TDIA") return tool_.diameter;
@@ -1737,6 +1809,11 @@ class Interpreter {
     std::string_view block_{"the program"};  // block being expanded, for error messages
     std::size_t moveIndex_{0};         // 1-based move of the current toolpath; 0 = none
     bool inFooter_{false};
+    // Laser beam state of the toolpath being written (T-0323).
+    bool jetOn_{false};
+    bool jetPowerKnown_{false};
+    double jetPowerSet_{0.0};
+    double jetValue_{0.0};
     bool radiusOnlyArcs_{false};
     bool semicolonComments_{false};  // the post's comment style is ';' (T-0154)
     bool firstRapid_{true};

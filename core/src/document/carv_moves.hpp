@@ -30,10 +30,15 @@ class CharSource;
 
 /// Bytes of the header.
 inline constexpr std::size_t kMovesHeaderBytes = 16;
-/// Most bytes one move can take (an arc with a feed override).
-inline constexpr std::size_t kMaxMoveBytes = 49;
-/// Format version in the header.
+/// Most bytes one move can take (an arc with a feed override, plus in version 2 the laser byte and power).
+inline constexpr std::size_t kMaxMoveBytes = 58;
+/// Format version of a cache without laser moves (the only one written before T-0323).
 inline constexpr std::uint32_t kMovesFormatVersion = 1;
+/// Format version of a cache with at least one laser move (T-0323, ADR-0099): every move is followed by
+/// one flag byte (bit 0 = a power follows, bit 1 = the power equals the last one written) and the power
+/// (a double) unless it is repeated. `encodeMoves` writes version 1 when no move has power, so existing
+/// files are byte-identical.
+inline constexpr std::uint32_t kMovesFormatVersionLaser = 2;
 
 /// Appends the cache encoding of `moves` to `out`. Returns an empty string on success, otherwise
 /// what is wrong (a non-finite value or an invalid kind, naming the move); `out` is then

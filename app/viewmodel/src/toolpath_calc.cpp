@@ -20,6 +20,7 @@
 #include "carvetto/toolpath/rough3d.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/fluting.hpp"
+#include "carvetto/toolpath/laser.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/v_carve_inlay.hpp"
@@ -228,6 +229,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::ThreadMill: def.params = toolpath::ThreadMillParams{}; break;
         case ToolpathOperation::Inlay: def.params = toolpath::InlayParams{}; break;
         case ToolpathOperation::Fluting: def.params = toolpath::FlutingParams{}; break;
+        case ToolpathOperation::LaserCutFill: def.params = toolpath::LaserCutFillParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
         case ToolpathOperation::ImageEngrave: def.params = toolpath::ImageEngraveParams{}; break;
         case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
@@ -312,6 +314,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::ThreadMill: return "thread_mill";
         case ToolpathOperation::Inlay: return "inlay";
         case ToolpathOperation::Fluting: return "fluting";
+        case ToolpathOperation::LaserCutFill: return "laser_cut_fill";
         case ToolpathOperation::Prism: return "prism";
         case ToolpathOperation::ImageEngrave: return "image_engrave";
         case ToolpathOperation::VCarveInlay: return "v_carve_inlay";
@@ -333,6 +336,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::ThreadMill: return toolpath::threadMillToolAllowed(type);
         case ToolpathOperation::Inlay: return toolpath::inlayToolAllowed(type);
         case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
+        case ToolpathOperation::LaserCutFill: return toolpath::laserToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::ImageEngrave: return toolpath::imageEngraveToolAllowed(type);
         case ToolpathOperation::Rough3d:
@@ -1051,6 +1055,15 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         } else if (op == ToolpathOperation::Fluting) {
             toolpath::FlutingResult r = toolpath::flutingToolpath(
                 contours, tool->tool, tool->data, std::get<toolpath::FlutingParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::LaserCutFill) {
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            toolpath::LaserCutFillResult r = toolpath::laserCutFillToolpath(
+                contours, tool->tool, tool->data, std::get<toolpath::LaserCutFillParams>(definition.params), control);
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});

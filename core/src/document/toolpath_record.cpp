@@ -56,6 +56,7 @@ SharedMoves shareMoves(std::vector<toolpath::Move> moves) {
         }
         if (!toolpath::isCutting(m.kind)) {
             m.feedOverride.reset();
+            m.jetPower = 0.0;
         }
     }
     return std::make_shared<const std::vector<toolpath::Move>>(std::move(moves));
@@ -243,6 +244,20 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                {"rest_tolerance", r->restTolerance},
                                {"tolerance", r->tolerance}});
     }
+    if (const auto* l = std::get_if<toolpath::LaserCutFillParams>(&params)) {
+        std::string key = firstNonFinite({{"power", l->power},
+                                          {"move_speed", l->moveSpeed},
+                                          {"cut_depth", l->cutDepth},
+                                          {"pass_depth", l->passDepth},
+                                          {"overscan", l->overscan},
+                                          {"allowance", l->allowance},
+                                          {"stepover", l->stepover},
+                                          {"hatch_angle_rad", l->hatchAngle},
+                                          {"safe_z", l->safeZ},
+                                          {"start_position[0]", l->startPosition.x},
+                                          {"start_position[1]", l->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(l->tolerance) : key;
+    }
     if (const auto* r = std::get_if<toolpath::Project3dParams>(&params)) {
         return firstNonFinite({{"z_offset", r->zOffset},
                                {"allowance", r->allowance},
@@ -267,6 +282,16 @@ std::string nonFiniteParam(const ToolpathParams& params) {
 
 std::string spindleOffProblem(const ToolpathRecord& record) {
     const toolpath::ToolSnapshot& t = record.tool;
+    if (t.laser) {
+        // T-0323: the laser marking belongs to Laser Cut / Fill alone and excludes the spindle-off marking.
+        if (record.operation() != ToolpathOperation::LaserCutFill) {
+            return "only laser toolpaths may be marked as a laser's";
+        }
+        if (t.spindleOff || !t.toolType.empty()) {
+            return "a laser toolpath has no spindle: it is not spindle-off and records no tool type";
+        }
+        return {};
+    }
     if (!t.spindleOff) {
         return t.toolType.empty() ? std::string() : "a tool type is only recorded for spindle-off (diamond-drag) tools";
     }

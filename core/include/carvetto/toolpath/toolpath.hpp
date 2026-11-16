@@ -35,6 +35,10 @@ struct ToolSnapshot {
     /// The record checks and the post refuse a spindle-off snapshot of any other type, and a
     /// type on a snapshot that is not spindle-off. Empty otherwise.
     std::string toolType{};
+    /// The toolpath is a laser's (T-0323, ADR-0099): there is no spindle (the post writes no spindle
+    /// start and accepts spindle speed 0) and the beam is switched by the post's JET_TOOL_* blocks
+    /// from each move's `jetPower`. Only Laser Cut / Fill sets it.
+    bool laser{false};
 
     bool operator==(const ToolSnapshot&) const = default;
 };
