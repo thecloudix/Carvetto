@@ -1580,7 +1580,7 @@ Goal: Laser tool (maximum burn rate already in cutting data) with power, move sp
 Acceptance criteria:
   1. Cut and Fill toolpaths verified on test shapes (kerf side, hatch spacing/angle, cross hatch, overscan moves, pass count); post output uses the jet blocks with correct power values; round trip and hostile-record tests; ADR.
 
-### T-0324 Laser Picture and Sketch Engraving (bitmap/model source, dithering)   [status: in-progress]
+### T-0324 Laser Picture and Sketch Engraving (bitmap/model source, dithering)   [status: verifying (self-test -> T-0326)]
 Phase: 3   Module: core/toolpath + app   Depends on: T-0323, T-0250
 Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither image, power modulation, overscan) and Laser Sketch Engraving (bitmap or 3D-model source, line thickness, stepover, hatch angle, fill together/regionally/between vectors, cross hatch, machine-limit boundary). Reuse the image pipeline from Image Engrave.
 Acceptance criteria:
