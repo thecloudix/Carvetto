@@ -1626,6 +1626,7 @@ Acceptance criteria:
 ### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: blocked — waits on T-0330]
 Phase: 3   Module: core/scripting + app/viewmodel + app   Depends on: T-0330
 Goal: Bind the designed API: read/create/modify vectors and layers, selection, document variables, create toolpaths, show simple input forms; all edits go through undoable commands (one undo step per gadget run); gadget discovery (folder of scripts with a manifest), Gadgets menu built at startup, Install New Gadget, Gadget Shortcuts (Ctrl+F-key), error dialog.
+Also (from the T-0330 verifier): make host-callback failures for oversized values report 'value too large' instead of the vague 'host function threw an unknown exception', and add the Lua MIT notice to the shipped third-party notices.
 Acceptance criteria:
   1. A sample gadget creates vectors and a toolpath in one undo step from the Gadgets menu; sandbox limits enforced in the app; self-test.
 
