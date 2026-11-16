@@ -43,6 +43,7 @@ class DoubleSidedMenu;
 class DimensionMenu;
 class NodeEditMenu;
 class PreviewPanel;
+class ClipartPanel;
 class KeepOutPanel;
 class ReliefView;
 class ComponentTreePanel;
@@ -97,6 +98,8 @@ class MainWindow : public QMainWindow {
     DimensionMenu* dimensions() const { return dimensions_.get(); }
     /// Keep-out zones dock and Edit submenu (T-0256).
     KeepOutPanel* keepOutPanel() const { return keepOut_; }
+    ClipartPanel* clipartPanel() const { return clipart_; }
+    QDockWidget* libraryDock() const { return libraryDock_; }
     QDockWidget* keepOutDock() const { return keepOutDock_; }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     /// File > Save Toolpaths... (T-0224): posts the enabled, calculated toolpaths.
@@ -257,6 +260,7 @@ class MainWindow : public QMainWindow {
     QDockWidget* previewDock_{nullptr};
     QDockWidget* keepOutDock_{nullptr};
     KeepOutPanel* keepOut_{nullptr};
+    ClipartPanel* clipart_{nullptr};
     QDockWidget* propertiesDock_{nullptr};
     QDockWidget* historyDock_{nullptr};
 

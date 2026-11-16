@@ -1,6 +1,11 @@
 #include "canvas_widget.hpp"
 
 #include <QBrush>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
 #include <QByteArray>
 #include <QElapsedTimer>
 #include <QEvent>
@@ -25,6 +30,7 @@
 
 #include "carvetto/viewmodel/bitmap_trace.hpp"
 #include "carvetto/viewmodel/canvas_scene.hpp"
+#include "carvetto/viewmodel/clipart_files.hpp"
 #include "carvetto/viewmodel/layers_sheets.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 
@@ -50,6 +56,7 @@ CanvasWidget::CanvasWidget(QWidget* parent) : QWidget(parent) {
     setFocusPolicy(Qt::WheelFocus);
     setMinimumSize(200, 150);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
+    setAcceptDrops(true);
 }
 
 void CanvasWidget::setDocument(document::Document* doc) {
@@ -1039,6 +1046,50 @@ void CanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
         return;
     }
     QWidget::mouseReleaseEvent(event);
+}
+
+}  // namespace carvetto::app
+
+namespace carvetto::app {
+
+namespace {
+
+/// The first local file of `mime` whose extension names a clipart type; empty when none.
+QString droppedClipartFile(const QMimeData* mime) {
+    if (mime == nullptr || !mime->hasUrls()) {
+        return {};
+    }
+    for (const QUrl& url : mime->urls()) {
+        if (url.isLocalFile() && viewmodel::clipartKindFromExtension(url.toLocalFile().toStdString()).has_value()) {
+            return url.toLocalFile();
+        }
+    }
+    return {};
+}
+
+}  // namespace
+
+void CanvasWidget::dragEnterEvent(QDragEnterEvent* event) {
+    if (onFileDropped && !droppedClipartFile(event->mimeData()).isEmpty()) {
+        event->acceptProposedAction();
+    }
+}
+
+void CanvasWidget::dragMoveEvent(QDragMoveEvent* event) {
+    if (onFileDropped && !droppedClipartFile(event->mimeData()).isEmpty()) {
+        event->acceptProposedAction();
+    }
+}
+
+void CanvasWidget::dropEvent(QDropEvent* event) {
+    const QString file = droppedClipartFile(event->mimeData());
+    if (!onFileDropped || file.isEmpty()) {
+        return;
+    }
+    const QPointF pos = event->position();
+    const geometry::Vec2 mm = view_.screenToWorld(geometry::Vec2{pos.x(), pos.y()});
+    event->acceptProposedAction();
+    onFileDropped(file.toStdString(), mm);
 }
 
 }  // namespace carvetto::app

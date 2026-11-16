@@ -73,6 +73,7 @@
 #include "transform_menu.hpp"
 #include "trace_dialog.hpp"
 #include "texture_menu.hpp"
+#include "clipart_panel.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
 
@@ -86,14 +87,6 @@ const char* const kStateKey = "mainWindow/state";
 
 QString qs(const std::string& s) {
     return QString::fromStdString(s);
-}
-
-QLabel* placeholder(const char* text, QWidget* parent) {
-    auto* label = new QLabel(QString::fromUtf8(text), parent);
-    label->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-    label->setWordWrap(true);
-    label->setMargin(8);
-    return label;
 }
 
 }  // namespace
@@ -287,7 +280,11 @@ void MainWindow::buildDocks() {
         }
     };
     sculptDock_ = makeDock("Sculpt", "sculptDock", sculpt_);
-    libraryDock_ = makeDock("Library", "libraryDock", placeholder("Clipart and project library.", this));
+    clipart_ = new ClipartPanel(currentDoc, this);
+    clipart_->onEdited = [this]() { documentChanged(); };
+    clipart_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
+    canvas_->onFileDropped = [this](const std::string& path, geometry::Vec2 mm) { clipart_->dropOnCanvas(path, mm); };
+    libraryDock_ = makeDock("Library", "libraryDock", clipart_);
     toolpaths_ = new ToolpathsPanel(&session_.document(), this);
     toolpaths_->onDocumentEdited = [this]() { documentChanged(); };
     toolpaths_->onSelectionChanged = [this]() {
@@ -786,6 +783,9 @@ void MainWindow::newJob() {
 
 void MainWindow::setPersistLayout(bool persist) {
     persistLayout_ = persist;
+    if (clipart_ != nullptr) {
+        clipart_->setPersist(persist);
+    }
     if (persist) {
         QSettings settings;
         loadUserSetup(settings.value(QStringLiteral("activeMachine")).toString());

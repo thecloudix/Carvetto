@@ -91,6 +91,9 @@ qt_add_executable(carvetto
   src/texture_menu.hpp
   src/transform_menu.cpp
   src/transform_menu.hpp
+  src/clipart_panel.cpp
+  src/clipart_panel.hpp
+  src/clipart_self_test.cpp
   src/keepout_panel.cpp
   src/keepout_self_test.cpp
   src/job_sheet_self_test.cpp
