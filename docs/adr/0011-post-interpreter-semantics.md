@@ -24,3 +24,6 @@ Settings stored but not yet acted on (kept in `PostSettings::raw`): PRINT_DIRECT
 - `+` lines are comments and quoted lines are output, matching existing community posts (ADR-0004). The T-0030 card was amended by the director to say the same.
 - `[TOOLPATH_NAME]` and Y/Z material tags (`YMIN` … `ZLENGTH`) are accepted in addition to the inventory list.
 - Golden tests compare the shipped `posts/grbl_mm.pp` against `core/tests/golden/post/grbl_square.nc`.
+
+## Amendment (T-0327, ADR-0100)
+CUTTER_COMP_LEFT / RIGHT / OFF are now emitted: moves flagged `Move::comp` are written with their programmed path (derived by `cutterCompProgram`), the block of the new state is written as its own block before the first move that needs it, and `[CUTTER_COMP]` expands to LEFT, RIGHT or OFF. A post lacking a needed block refuses the toolpath. Uncompensated toolpaths are unchanged.

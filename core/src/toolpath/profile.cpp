@@ -29,6 +29,7 @@
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/clearance.hpp"
+#include "carvetto/toolpath/cutter_comp.hpp"
 #include "carvetto/toolpath/path_walk.hpp"
 #include "block_settle.hpp"
 #include "enclosed_pieces.hpp"
@@ -946,6 +947,12 @@ class ProfileBuilder {
     std::map<std::size_t, std::size_t> tabsEmpty_;      // of those: the cut leaves nothing for them to hold
     std::map<std::size_t, std::size_t> tabsOnCorner_;
     void emit(const Cut& cut, const std::vector<double>& levels, bool finishing);
+    /// Cutter compensation (T-0327, ADR-0100): the up-front checks, the check of the vectors' arcs,
+    /// and a refusal (one diagnostic, nothing cut).
+    bool cutterCompAllowed();
+    void checkCompInputs();
+    void refuseComp(std::optional<std::size_t> contour, const std::string& message);
+    bool compRefused_{false};
     /// A lead-out as emitted (T-0252): its path and the height along it, for the loose-piece
     /// search (which runs after emit, so it sees the leads that were really made).
     struct LeadRec {
@@ -1078,6 +1085,9 @@ bool ProfileBuilder::validate() {
     }
     sharpExternal_ = vbit_ && p_.corners.sharpExternal;
     sharpInternal_ = vbit_ && p_.corners.sharpInternal;
+    if (p_.cutterComp && !cutterCompAllowed()) {
+        return false;
+    }
     if (sharpInternal_) {
         vbitTan_ = std::tan(0.5 * tool_.includedAngle);
         if (!(vbitTan_ > 0.0) || !std::isfinite(vbitTan_)) {
@@ -1086,6 +1096,69 @@ bool ProfileBuilder::validate() {
         }
     }
     return true;
+}
+
+// T-0327 (ADR-0100): refusals of cutter compensation. Everything here reads parameters or inputs;
+// what only the finished cuts show (a corner that does not meet, an arc smaller than the tool, a
+// lead too short) is checked per cut in emit by deriving the programmed path of its moves.
+void ProfileBuilder::refuseComp(std::optional<std::size_t> contour, const std::string& message) {
+    compRefused_ = true;
+    diag(ProfileIssue::CutterCompRefused, contour, "cutter compensation: " + message + "; nothing is cut");
+}
+
+bool ProfileBuilder::cutterCompAllowed() {
+    const auto refuse = [&](const std::string& why) {
+        refuseComp(std::nullopt, why);
+        return false;
+    };
+    if (p_.side == ProfileSide::On) {
+        return refuse("the controller offsets the tool to one side of the programmed path, so On the vector has no side; "
+                      "use Outside or Inside (Left or Right for open vectors)");
+    }
+    if (tool_.type != tooling::ToolType::EndMill) {
+        return refuse("it needs a plain end mill (the controller's radius is the tool's constant half diameter)");
+    }
+    if (p_.leads.type != LeadType::Straight || !p_.leads.leadOut) {
+        return refuse("the controller engages and releases the compensation on a straight move, so Leads must be "
+                      "Straight line with a lead-out");
+    }
+    if (!(p_.leads.length >= radius_)) {
+        return refuse("the straight lead length (" + mmText(p_.leads.length) + " mm) must be at least the tool radius (" +
+                      mmText(radius_) + " mm)");
+    }
+    if (p_.ramp.type == RampType::ZigZag) {
+        return refuse("a zig-zag ramp reverses direction, which flips the compensated side; use a smooth or spiral ramp");
+    }
+    if (hasBezier(raw_)) {
+        return refuse("the vectors must be lines and arcs (convert curves to arcs first): the controller cannot follow "
+                      "a polygon of the curve");
+    }
+    return true;
+}
+
+// Arcs concave to the tool whose radius the tool (with the allowance) fills: the exact offset drops
+// them, so the toolpath would look fine while the controller, given the programmed arc, has no path.
+void ProfileBuilder::checkCompInputs() {
+    const bool toolRight = p_.side == ProfileSide::Outside;  // of the oriented vector (ADR-0016 section 4)
+    const double d = radius_ + p_.allowance + (p_.separateLastPass ? p_.lastPassAllowance : 0.0);
+    for (std::size_t i = 0; i < in_.contours.size() && !compRefused_; ++i) {
+        if (!in_.valid[i]) {
+            continue;
+        }
+        for (const geometry::Span& span : in_.contours[i].spans) {
+            const auto* arc = std::get_if<geometry::ArcSpan>(&span);
+            if (arc == nullptr) {
+                continue;
+            }
+            const bool centreRight = arc->direction == geometry::ArcDirection::CW;
+            if (centreRight == toolRight && !(arc->radius > d)) {
+                refuseComp(i, vecName(i) + ": an arc of radius " + mmText(arc->radius) +
+                                  " mm is not larger than the tool radius plus allowance (" + mmText(d) +
+                                  " mm), so the controller would have no path along it");
+                return;
+            }
+        }
+    }
 }
 
 // T-0129 (owner decision 2026-11-01): an allowance below minus the tool radius puts the tool
@@ -4181,6 +4254,26 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
 
     const Contour& in = cut.leadIn;  // planned and checked by planLeadIns
     const Vec2 entry = in.isEmpty() ? walk.pointAt(0.0) : in.startPoint();
+    if (compRefused_) {
+        return;
+    }
+    if (p_.cutterComp) {
+        if (in.isEmpty()) {
+            refuseComp(src, vecName(src) + ": no lead-in fits, and the compensation is engaged on it");
+            return;
+        }
+        if (!walk.closed() && levels.size() > 1) {
+            refuseComp(src, vecName(src) + ": an open vector in several passes reverses direction at its end, which flips "
+                                            "the compensated side; cut it in one pass");
+            return;
+        }
+        if (ArcLengthPath(in, offTol_).length() < radius_ - 1e-9) {
+            refuseComp(src, vecName(src) + ": the lead-in had to be shortened below the tool radius to fit");
+            return;
+        }
+    }
+    const std::size_t rapidIndex = out.moves.size();
+    std::size_t compEnd = std::numeric_limits<std::size_t>::max();  // first move after the compensated run
     out.append(Move::rapid(Vec3{entry, p_.safeZ}));
     if (!in.isEmpty()) {
         const ArcLengthPath lw(in, offTol_);
@@ -4232,11 +4325,35 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
             if (z > out.moves.back().to.z) {
                 out.append(Move::feed(Vec3{out.moves.back().to.xy(), z}));  // up out of the way of a tab
             }
+            compEnd = out.moves.size();
+            if (p_.cutterComp && lw.length() < radius_ - 1e-9) {
+                refuseComp(src, vecName(src) + ": the lead-out had to be shortened below the tool radius to fit");
+                return;
+            }
             appendLeg(lw, 0.0, lw.length(), ZProfile::flat(z), out);
             leadRecs_.push_back(LeadRec{lo, z});
         }
     }
     out.append(Move::retract(Vec3{out.moves.back().to.xy(), p_.safeZ}));
+    if (p_.cutterComp) {
+        // The compensated run: from the move after the plunge (the lead-in engages the compensation
+        // there) to the move before the lead-out (which releases it). The vector lies on the left of
+        // the travel when the tool is on its right.
+        if (compEnd == std::numeric_limits<std::size_t>::max()) {
+            refuseComp(src, vecName(src) + ": no lead-out fits, and the compensation is released on it");
+            return;
+        }
+        const CutterComp side = cut.contourOnLeft ? CutterComp::Right : CutterComp::Left;
+        for (std::size_t k = rapidIndex + 2; k < compEnd; ++k) {
+            out.moves[k].comp = side;
+        }
+        const std::vector<Move> slice(out.moves.begin() + static_cast<std::ptrdiff_t>(rapidIndex), out.moves.end());
+        const CutterCompProgram program = cutterCompProgram(slice, radius_, Vec3{});
+        if (!program.ok()) {
+            refuseComp(src, vecName(src) + ": " + program.error);
+            return;
+        }
+    }
     chargeMoves();
 }
 
@@ -4249,6 +4366,12 @@ ProfileResult ProfileBuilder::run() {
 
     prepareInputs();
     detail::pollCancel();
+    if (p_.cutterComp) {
+        checkCompInputs();
+        if (compRefused_) {
+            return std::move(result_);
+        }
+    }
     const std::vector<double> levels = passes_.levels();
     const bool separate = p_.separateLastPass;
     std::vector<Cut> rough = buildCuts(separate ? p_.lastPassAllowance : 0.0, false);
@@ -4257,6 +4380,11 @@ ProfileResult ProfileBuilder::run() {
         finish = buildCuts(0.0, true);
     }
     detail::pollCancel();
+    if (p_.cutterComp && hasIssue(result_.diagnostics, ProfileIssue::MergedWithNeighbour)) {
+        refuseComp(std::nullopt, "vectors lie so close that their cuts merge into one polygonal cut, which is not the "
+                                 "offset of any programmed path the controller could follow");
+        return std::move(result_);
+    }
     chooseStarts(rough);
     reportVanished(separate ? "roughing" : "cutting");
     chooseStarts(finish);
@@ -4500,6 +4628,10 @@ ProfileResult ProfileBuilder::run() {
     for (std::size_t i : finishOrder) {
         emit(finish[i], {levels.back()}, true);
         detail::pollCancel();
+    }
+    if (compRefused_) {
+        result_.toolpath.moves.clear();  // nothing partial (ADR-0100)
+        return std::move(result_);
     }
     // After emit: the search sees the lead moves that were made (T-0252).
     if (loosePrimary != nullptr) {

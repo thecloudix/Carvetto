@@ -30,6 +30,13 @@ enum class MoveKind {
 /// when a toolpath is routed for posting and is not stored in `.carv` move caches.
 enum class RapidRoute : unsigned char { None, DetourFirst, DetourNext };
 
+/// Controller-side cutter compensation in force while a move runs (T-0327, ADR-0100). `Left` and
+/// `Right` are the side of the programmed path the tool is on, looking along the direction of travel
+/// (the post blocks CUTTER_COMP_LEFT / CUTTER_COMP_RIGHT); `Off` is no compensation. The coordinates
+/// of a move are always where the tool centre goes (so simulation and preview are unchanged); the
+/// programmed path the post writes is derived from them (`cutterCompProgram`).
+enum class CutterComp : unsigned char { Off, Left, Right };
+
 /// True for Feed/Plunge/Retract/ArcCW/ArcCCW: moves that travel at a programmed feed rate.
 constexpr bool isCutting(MoveKind k) {
     return k != MoveKind::Rapid && k != MoveKind::Dwell;
@@ -66,6 +73,9 @@ struct Move {
     /// 0 = the beam is off. Only Feed/Plunge/Retract/Arc moves may carry power; rapids and dwells run
     /// with the beam off. Always 0 for a toolpath whose tool snapshot is not `laser`.
     double jetPower{0.0};
+    /// Cutter compensation in force during this move (T-0327): `Off` for every move that is not
+    /// part of a compensated run. Only cutting moves (not Rapid, not Dwell) may carry it.
+    CutterComp comp{CutterComp::Off};
 
     bool operator==(const Move&) const = default;
 
@@ -77,25 +87,25 @@ struct Move {
     }
 
     static Move rapid(Vec3 to, RapidRoute route = RapidRoute::None) {
-        return {MoveKind::Rapid, to, {}, {}, 0.0, route};
+        return {MoveKind::Rapid, to, {}, {}, 0.0, route, 0.0, CutterComp::Off};
     }
     static Move feed(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Feed, to, {}, feedOverride, 0.0, RapidRoute::None};
+        return {MoveKind::Feed, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
     }
     static Move plunge(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Plunge, to, {}, feedOverride, 0.0, RapidRoute::None};
+        return {MoveKind::Plunge, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
     }
     static Move retract(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Retract, to, {}, feedOverride, 0.0, RapidRoute::None};
+        return {MoveKind::Retract, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
     }
     static Move arcCW(Vec3 to, Vec2 centre, std::optional<double> feedOverride = {}) {
-        return {MoveKind::ArcCW, to, centre, feedOverride, 0.0, RapidRoute::None};
+        return {MoveKind::ArcCW, to, centre, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
     }
     static Move arcCCW(Vec3 to, Vec2 centre, std::optional<double> feedOverride = {}) {
-        return {MoveKind::ArcCCW, to, centre, feedOverride, 0.0, RapidRoute::None};
+        return {MoveKind::ArcCCW, to, centre, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
     }
     /// Dwell at `at` (the previous move's end point) for `seconds`.
-    static Move dwell(Vec3 at, double seconds) { return {MoveKind::Dwell, at, {}, {}, seconds, RapidRoute::None}; }
+    static Move dwell(Vec3 at, double seconds) { return {MoveKind::Dwell, at, {}, {}, seconds, RapidRoute::None, 0.0, CutterComp::Off}; }
 };
 
 /// Radius of an arc move, measured from `from` (its start point) to the centre.

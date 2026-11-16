@@ -194,6 +194,7 @@ add_library(carvetto_core STATIC
   src/geometry/validator.cpp
   src/geometry/medial_axis.cpp
   src/toolpath/move.cpp
+  src/toolpath/cutter_comp.cpp
   src/toolpath/toolpath.cpp
   src/toolpath/pass_plan.cpp
   src/toolpath/linking.cpp

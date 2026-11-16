@@ -1116,3 +1116,6 @@ Confirmed as proposed: tab length is the material left (raised path = length + t
 the inner one a hole (4); climb assumes an M3 spindle (9); ramps run at feed rate (13); 3D tabs
 ramp at 45° (14); leads only on the first entry and last exit (15); left-to-right orders column
 by column (10).
+
+## Amendment (T-0327, ADR-0100)
+`ProfileParams::cutterComp` outputs controller-side compensation: same tool-centre moves, the cut flagged `Move::comp`, programmed path derived at post time; refusals are listed in ADR-0100 section 4. Output without the option is unchanged.

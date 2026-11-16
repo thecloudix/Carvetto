@@ -61,6 +61,8 @@ enum class ToolpathIssue {
     Cancelled,            ///< The caller cancelled the run; nothing produced (Profile).
     ContourRefused,       ///< A vector's polygon cannot meet the chordal tolerance within the work bounds (an arc
                           ///< far beyond CNC size): that vector is not cut, the others are (Profile, Pocket, V-Carve).
+    CutterCompRefused,    ///< Controller cutter compensation cannot follow the toolpath asked for; nothing is cut
+                          ///< (Profile, T-0327).
 };
 
 /// What a caller can control about one run of an operation (T-0186, ADR-0016 section 19).

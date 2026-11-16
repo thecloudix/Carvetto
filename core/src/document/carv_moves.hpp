@@ -30,15 +30,27 @@ class CharSource;
 
 /// Bytes of the header.
 inline constexpr std::size_t kMovesHeaderBytes = 16;
-/// Most bytes one move can take (an arc with a feed override, plus in version 2 the laser byte and power).
+/// Most bytes one move can take (an arc with a feed override, plus in versions 2 and 3 the laser flag byte
+/// and power).
 inline constexpr std::size_t kMaxMoveBytes = 58;
-/// Format version of a cache without laser moves (the only one written before T-0323).
+/// Format version of a cache without laser or compensated moves (the only one written before T-0323).
 inline constexpr std::uint32_t kMovesFormatVersion = 1;
-/// Format version of a cache with at least one laser move (T-0323, ADR-0099): every move is followed by
-/// one flag byte (bit 0 = a power follows, bit 1 = the power equals the last one written) and the power
-/// (a double) unless it is repeated. `encodeMoves` writes version 1 when no move has power, so existing
-/// files are byte-identical.
+/// Format version of a cache with at least one laser move and no compensated move (T-0323, ADR-0099): every
+/// move is followed by one flag byte (bit 0 = a power follows, bit 1 = the power equals the last one written)
+/// and the power (a double) unless it is repeated. `encodeMoves` writes version 1 when no move has power or
+/// compensation, so existing files are byte-identical.
 inline constexpr std::uint32_t kMovesFormatVersionLaser = 2;
+/// Format version of a cache with at least one compensated move (T-0327, ADR-0100): exactly the version 2
+/// layout (the per-move flag bytes and powers, which a cutter-compensated toolpath leaves at zero but a
+/// toolpath that is both laser and compensated fills in), followed by the cutter-compensation runs: a u64
+/// run count (at least 1), then per run a u64 first move (0-based), a u64 move count (at least 1) and a byte
+/// for the side (1 = left, 2 = right). Runs are in order, do not overlap, and a run never follows another of
+/// the same side without a gap (so every move list has one encoding). Written only when some move is
+/// compensated; a version 2 cache never carries a trailer.
+inline constexpr std::uint32_t kMovesFormatVersionCutterComp = 3;
+/// Bytes after the moves of a version 3 cache: the run count, and at most one run per move.
+inline constexpr std::size_t kMovesRunCountBytes = 8;
+inline constexpr std::size_t kMovesRunBytes = 17;
 
 /// Appends the cache encoding of `moves` to `out`. Returns an empty string on success, otherwise
 /// what is wrong (a non-finite value or an invalid kind, naming the move); `out` is then

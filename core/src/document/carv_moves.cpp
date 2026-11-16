@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "carv_json_reader.hpp"
+#include "carvetto/toolpath/cutter_comp.hpp"
 
 namespace carvetto::document::detail {
 
@@ -110,8 +111,13 @@ class Reader {
 }  // namespace
 
 std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t>& out) {
-    const bool laser = std::any_of(moves.begin(), moves.end(), [](const Move& m) { return m.jetPower != 0.0; });
-    const std::uint32_t version = laser ? kMovesFormatVersionLaser : kMovesFormatVersion;
+    const bool laserMoves = std::any_of(moves.begin(), moves.end(), [](const Move& m) { return m.jetPower != 0.0; });
+    const bool compensated = toolpath::usesCutterComp(moves);
+    // The lowest version that holds the moves; version 3 is version 2's per-move layout plus the runs.
+    const std::uint32_t version = compensated   ? kMovesFormatVersionCutterComp
+                                  : laserMoves ? kMovesFormatVersionLaser
+                                               : kMovesFormatVersion;
+    const bool laser = version != kMovesFormatVersion;  // the per-move flag byte is present
     out.insert(out.end(), kMagic.begin(), kMagic.end());
     for (int i = 0; i < 4; ++i) {
         out.push_back(static_cast<std::uint8_t>(version >> (8 * i)));
@@ -195,6 +201,30 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
         py = m.to.y;
         pz = m.to.z;
     }
+    if (compensated) {
+        // Runs of equal side (cutter compensation, version 3).
+        std::vector<std::uint8_t> runs;
+        std::uint64_t runCount = 0;
+        std::size_t i = 0;
+        while (i < moves.size()) {
+            if (moves[i].comp == toolpath::CutterComp::Off) {
+                ++i;
+                continue;
+            }
+            const toolpath::CutterComp side = moves[i].comp;
+            std::size_t j = i;
+            while (j < moves.size() && moves[j].comp == side) {
+                ++j;
+            }
+            putU64(runs, i);
+            putU64(runs, j - i);
+            runs.push_back(side == toolpath::CutterComp::Left ? 1 : 2);
+            ++runCount;
+            i = j;
+        }
+        putU64(out, runCount);
+        out.insert(out.end(), runs.begin(), runs.end());
+    }
     return {};
 }
 
@@ -215,7 +245,7 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
     const std::uint32_t v = static_cast<std::uint32_t>(version[0]) | (static_cast<std::uint32_t>(version[1]) << 8) |
                             (static_cast<std::uint32_t>(version[2]) << 16) |
                             (static_cast<std::uint32_t>(version[3]) << 24);
-    if (v != kMovesFormatVersion && v != kMovesFormatVersionLaser) {
+    if (v != kMovesFormatVersion && v != kMovesFormatVersionLaser && v != kMovesFormatVersionCutterComp) {
         return "unsupported move cache version " + std::to_string(v);
     }
     if (count != expectedCount) {
@@ -226,12 +256,13 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
     if (out) {
         out->reserve(out->size() + static_cast<std::size_t>(count));
     }
+    const std::size_t base = out ? out->size() : 0;
     double px = 0.0;
     double py = 0.0;
     double pz = 0.0;
     std::optional<double> lastFeed;
     std::optional<double> lastJet;
-    const bool laser = v == kMovesFormatVersionLaser;
+    const bool laser = v != kMovesFormatVersion;  // versions 2 and 3 carry the flag byte
     for (std::uint64_t i = 0; i < count; ++i) {
         // Moves are numbered from 1, as in the post's errors.
         const auto bad = [i](const char* what) { return "move " + std::to_string(i + 1) + ": " + what; };
@@ -323,6 +354,45 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
         pz = m.to.z;
         if (out) {
             out->push_back(m);
+        }
+    }
+    if (v == kMovesFormatVersionCutterComp) {
+        std::uint64_t runs = 0;
+        if (!r.u64(runs)) {
+            return "the move cache ends before its cutter compensation runs";
+        }
+        if (runs == 0) {
+            return "a version 3 move cache without cutter compensation runs";
+        }
+        std::uint64_t nextFree = 0;  // first move no earlier run has covered
+        std::uint8_t lastSide = 0;
+        for (std::uint64_t k = 0; k < runs; ++k) {
+            std::uint64_t first = 0;
+            std::uint64_t length = 0;
+            std::uint8_t side = 0;
+            if (!r.u64(first) || !r.u64(length) || !r.byte(side)) {
+                return "the move cache ends inside its cutter compensation runs";
+            }
+            const auto badRun = [k](const char* what) {
+                return "cutter compensation run " + std::to_string(k + 1) + ": " + what;
+            };
+            if (side != 1 && side != 2) {
+                return badRun("an invalid side");
+            }
+            if (length == 0 || first < nextFree || first > count || length > count - first) {
+                return badRun("outside the moves or overlapping the run before it");
+            }
+            if (k > 0 && first == nextFree && side == lastSide) {
+                return badRun("follows a run of the same side without a gap (runs are written whole)");
+            }
+            if (out) {
+                for (std::uint64_t m = first; m < first + length; ++m) {
+                    (*out)[base + static_cast<std::size_t>(m)].comp =
+                        side == 1 ? toolpath::CutterComp::Left : toolpath::CutterComp::Right;
+                }
+            }
+            nextFree = first + length;
+            lastSide = side;
         }
     }
     if (!r.atEnd()) {
