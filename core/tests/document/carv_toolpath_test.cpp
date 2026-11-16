@@ -2248,7 +2248,7 @@ TEST_CASE("cutter comp cache: compensation and beam power together are version 3
 TEST_CASE("cutter comp: the minor ladder puts compensation above rotary gaps and laser", "[document][toolpath][carv][cuttercomp]") {
     CHECK(kCarvFormatMinorCutterComp > kCarvFormatMinorRotaryGaps);
     CHECK(kCarvFormatMinorRotaryGaps > kCarvFormatMinorLaser);
-    CHECK(kCarvFormatMinor == kCarvFormatMinorCutterComp);
+    CHECK(kCarvFormatMinor >= kCarvFormatMinorCutterComp);
     Job job = Job::rotary(400.0, 60.0, Units::Millimetres);
     job.gapOutsideMm = 1.5;  // a rotary gap alone is minor 14
     Document doc(job);

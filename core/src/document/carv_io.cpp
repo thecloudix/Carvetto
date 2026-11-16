@@ -483,7 +483,18 @@ constexpr EnumName<toolpath::LaserStrategy> kLaserStrategies[] = {
     {toolpath::LaserStrategy::HatchFill, "hatch_fill"}};
 constexpr EnumName<toolpath::LaserFillMode> kLaserFillModes[] = {{toolpath::LaserFillMode::Together, "together"},
                                                                 {toolpath::LaserFillMode::Regionally, "regionally"}};
-constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::LaserCutFill, "laser_cut_fill"},
+constexpr EnumName<toolpath::SketchSource> kSketchSources[] = {{toolpath::SketchSource::Bitmap, "bitmap"},
+                                                              {toolpath::SketchSource::Model, "model"}};
+constexpr EnumName<toolpath::SketchModelTone> kSketchModelTones[] = {{toolpath::SketchModelTone::Depth, "depth"},
+                                                                    {toolpath::SketchModelTone::Shaded, "shaded"}};
+constexpr EnumName<toolpath::SketchBoundary> kSketchBoundaries[] = {{toolpath::SketchBoundary::Source, "source"},
+                                                                   {toolpath::SketchBoundary::Vectors, "vectors"}};
+constexpr EnumName<toolpath::SketchFill> kSketchFills[] = {{toolpath::SketchFill::Together, "together"},
+                                                          {toolpath::SketchFill::Regionally, "regionally"},
+                                                          {toolpath::SketchFill::BetweenVectors, "between_vectors"}};
+constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::LaserPicture, "laser_picture"},
+                                                      {ToolpathOperation::LaserSketch, "laser_sketch"},
+                                                      {ToolpathOperation::LaserCutFill, "laser_cut_fill"},
                                                       {ToolpathOperation::Moulding, "moulding"},
                                                       {ToolpathOperation::Project3d, "project_3d"},{ToolpathOperation::Rough3d, "rough_3d"},
                                                       {ToolpathOperation::Finish3d, "finish_3d"},{ToolpathOperation::Profile, "profile"},
@@ -1259,6 +1270,48 @@ json encodeLaserCutFillParams(const toolpath::LaserCutFillParams& p) {
     return j;
 }
 
+json encodeLaserPictureParams(const toolpath::LaserPictureParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["strategy"] = nameOf(kPhotoStrategies, p.strategy);
+    j["power"] = p.power;
+    j["modulate_power"] = p.modulatePower;
+    j["min_power"] = p.minPower;
+    j["dither"] = p.dither;
+    j["invert"] = p.invert;
+    j["move_speed"] = p.moveSpeed;
+    j["passes"] = p.passes;
+    j["overscan"] = p.overscan;
+    j["line_spacing"] = p.lineSpacing;
+    j["line_angle_rad"] = p.lineAngle;
+    j["safe_z"] = p.safeZ;
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
+json encodeLaserSketchParams(const toolpath::LaserSketchParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["source"] = nameOf(kSketchSources, p.source);
+    j["model_tone"] = nameOf(kSketchModelTones, p.modelTone);
+    j["boundary"] = nameOf(kSketchBoundaries, p.boundary);
+    j["invert"] = p.invert;
+    j["power"] = p.power;
+    j["move_speed"] = p.moveSpeed;
+    j["overscan"] = p.overscan;
+    j["machine_limit_boundary"] = p.machineLimitBoundary;
+    j["line_thickness"] = p.lineThickness;
+    j["stepover"] = p.stepover;
+    j["hatch_angle_rad"] = p.hatchAngle;
+    j["cross_hatch"] = p.crossHatch;
+    j["fill"] = nameOf(kSketchFills, p.fill);
+    j["safe_z"] = p.safeZ;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 json encodeFlutingParams(const toolpath::FlutingParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -1366,6 +1419,10 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeProject3dParams(*project);
     } else if (const auto* laser = std::get_if<toolpath::LaserCutFillParams>(&tp.params)) {
         j["params"] = encodeLaserCutFillParams(*laser);
+    } else if (const auto* picture = std::get_if<toolpath::LaserPictureParams>(&tp.params)) {
+        j["params"] = encodeLaserPictureParams(*picture);
+    } else if (const auto* sketch = std::get_if<toolpath::LaserSketchParams>(&tp.params)) {
+        j["params"] = encodeLaserSketchParams(*sketch);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2637,6 +2694,14 @@ constexpr std::array<std::string_view, 21> kLaserCutFillKeys{
     "name",       "strategy",       "power",     "move_speed", "cut_depth",     "pass_depth", "repeats",
     "overscan",   "allowance",      "direction", "stepover",   "hatch_angle_rad", "cross_hatch", "fill_mode",
     "outline",    "safe_z",         "order",     "start_at",   "start_anchor",  "start_position", "tolerance"};
+// Laser picture and sketch records exist only in job.json (ADR-0104, ADR-0105).
+constexpr std::array<std::string_view, 14> kLaserPictureKeys{
+    "name",     "strategy", "power",        "modulate_power", "min_power", "dither",         "invert",
+    "move_speed", "passes", "overscan",     "line_spacing",   "line_angle_rad", "safe_z",    "tolerance"};
+constexpr std::array<std::string_view, 18> kLaserSketchKeys{
+    "name",     "source",   "model_tone", "boundary",        "invert",     "power",    "move_speed",
+    "overscan", "machine_limit_boundary", "line_thickness",  "stepover",   "hatch_angle_rad", "cross_hatch",
+    "fill",     "safe_z",   "order",      "start_position",  "tolerance"};
 constexpr std::array<std::string_view, 10> kProject3dKeys{
     "name", "mode", "z_offset", "allowance", "outside_surface", "stock_bottom", "tolerance", "max_segment", "tabs",
     "source_toolpath"};
@@ -3458,6 +3523,94 @@ toolpath::LaserCutFillParams decodeLaserCutFillParams(JsonReader& r, const Path&
     return out;
 }
 
+toolpath::LaserPictureParams decodeLaserPictureParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::LaserPictureParams out;
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kLaserPictureKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kPhotoStrategies);
+        } else if (k == "power") {
+            out.power = rec.number();
+        } else if (k == "modulate_power") {
+            out.modulatePower = rec.boolean();
+        } else if (k == "min_power") {
+            out.minPower = rec.number();
+        } else if (k == "dither") {
+            out.dither = rec.boolean();
+        } else if (k == "invert") {
+            out.invert = rec.boolean();
+        } else if (k == "move_speed") {
+            out.moveSpeed = rec.number();
+        } else if (k == "passes") {
+            out.passes = rec.integer();
+        } else if (k == "overscan") {
+            out.overscan = rec.number();
+        } else if (k == "line_spacing") {
+            out.lineSpacing = rec.number();
+        } else if (rec.isAngle("line_angle")) {
+            out.lineAngle = rec.angle();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
+toolpath::LaserSketchParams decodeLaserSketchParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::LaserSketchParams out;
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kLaserSketchKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "source") {
+            out.source = rec.choice(kSketchSources);
+        } else if (k == "model_tone") {
+            out.modelTone = rec.choice(kSketchModelTones);
+        } else if (k == "boundary") {
+            out.boundary = rec.choice(kSketchBoundaries);
+        } else if (k == "invert") {
+            out.invert = rec.boolean();
+        } else if (k == "power") {
+            out.power = rec.number();
+        } else if (k == "move_speed") {
+            out.moveSpeed = rec.number();
+        } else if (k == "overscan") {
+            out.overscan = rec.number();
+        } else if (k == "machine_limit_boundary") {
+            out.machineLimitBoundary = rec.boolean();
+        } else if (k == "line_thickness") {
+            out.lineThickness = rec.number();
+        } else if (k == "stepover") {
+            out.stepover = rec.number();
+        } else if (rec.isAngle("hatch_angle")) {
+            out.hatchAngle = rec.angle();
+        } else if (k == "cross_hatch") {
+            out.crossHatch = rec.boolean();
+        } else if (k == "fill") {
+            out.fill = rec.choice(kSketchFills);
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::FlutingParams decodeFlutingParams(JsonReader& r, const Path& p, ParamsDialect d,
                                             LegacyParamsExtras* legacy) {
     toolpath::FlutingParams out;
@@ -3580,6 +3733,12 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::LaserCutFill) {
         return decodeLaserCutFillParams(r, p, d);
+    }
+    if (operation == ToolpathOperation::LaserPicture) {
+        return decodeLaserPictureParams(r, p, d);
+    }
+    if (operation == ToolpathOperation::LaserSketch) {
+        return decodeLaserSketchParams(r, p, d);
     }
     return decodePocketParams(r, p, d, legacy);
 }
@@ -5358,7 +5517,11 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             const auto* p = std::get_if<toolpath::ProfileParams>(&tp.params);
             return (p != nullptr && p->cutterComp) || (tp.moves && toolpath::usesCutterComp(*tp.moves));
         });
-        version["minor"] = usesCutterComp ? kCarvFormatMinorCutterComp
+        const bool usesLaserImages = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
+            return tp.operation() == ToolpathOperation::LaserPicture || tp.operation() == ToolpathOperation::LaserSketch;
+        });
+        version["minor"] = usesLaserImages ? kCarvFormatMinorLaserImages
+                           : usesCutterComp ? kCarvFormatMinorCutterComp
                            : usesRotaryGaps ? kCarvFormatMinorRotaryGaps
                            : usesLaser ? kCarvFormatMinorLaser
                            : usesAppearance ? kCarvFormatMinorAppearance

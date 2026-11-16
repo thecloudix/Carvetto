@@ -76,9 +76,12 @@ inline constexpr int kCarvFormatMinorLaser = 13;
 inline constexpr int kCarvFormatMinorRotaryGaps = 14;
 /// 1.15 (T-0327, ADR-0100) adds cutter compensation: a Profile record's `cutter_comp` parameter and the
 /// compensation side of moves in the binary move cache (move cache version 3); written only when a
-/// Profile record has the option or a move is compensated. The newest minor this build writes and reads.
+/// Profile record has the option or a move is compensated.
 inline constexpr int kCarvFormatMinorCutterComp = 15;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorCutterComp;
+/// 1.16 (T-0324, ADR-0104, ADR-0105) adds Laser Picture and Laser Sketch Engraving records (operations `laser_picture`
+/// and `laser_sketch`); written only when a record is one of them. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorLaserImages = 16;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorLaserImages;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

@@ -64,6 +64,10 @@ const char* operationLabel(ToolpathOperation op) {
             return "Moulding";
         case ToolpathOperation::Project3d:
             return "Project onto Model";
+        case ToolpathOperation::LaserPicture:
+            return "Laser Picture";
+        case ToolpathOperation::LaserSketch:
+            return "Laser Sketch Engraving";
         case ToolpathOperation::LaserCutFill:
             return "Laser Cut / Fill";
     }

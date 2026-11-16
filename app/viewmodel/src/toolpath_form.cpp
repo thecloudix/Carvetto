@@ -21,6 +21,8 @@
 #include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/laser.hpp"
+#include "carvetto/toolpath/laser_picture.hpp"
+#include "carvetto/toolpath/laser_sketch.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
 #include "carvetto/toolpath/prism.hpp"
@@ -665,6 +667,77 @@ Table<toolpath::LaserCutFillParams> makeLaserCutFillTable() {
     return t;
 }
 
+Table<toolpath::LaserPictureParams> makeLaserPictureTable() {
+    using P = toolpath::LaserPictureParams;
+    const auto modulated = [](const P& p) { return p.modulatePower && !p.dither; };
+    const auto lined = [](const P& p) { return p.strategy != toolpath::PhotoStrategy::SelectedVectors; };
+    Table<P> t;
+    t.num("power", "Power (%)", "Laser", Kind::Factor, false, false, [](P& p) -> double& { return p.power; });
+    bound(t, "power", 1e-3, 100.0);
+    t.num("minPower", "Minimum power (%)", "Laser", Kind::Factor, false, true, [](P& p) -> double& { return p.minPower; },
+          modulated);
+    bound(t, "minPower", 0.0, 100.0);
+    t.num("moveSpeed", "Move speed (mm/min, 0 = the tool's feed rate)", "Laser", Kind::Factor, false, true,
+          [](P& p) -> double& { return p.moveSpeed; });
+    bound(t, "moveSpeed", 0.0, 1.0e6);
+    t.count("passes", "Number of passes", "Laser", 1, 1000, [](P& p) -> int& { return p.passes; });
+    t.num("overscan", "Overscan", "Lines", Kind::Length, false, true, [](P& p) -> double& { return p.overscan; }, lined);
+    bound(t, "overscan", 0.0, kMaxOffsetMm);
+    t.num("lineSpacing", "Line spacing", "Lines", Kind::Length, false, false, [](P& p) -> double& { return p.lineSpacing; });
+    bound(t, "lineSpacing", 1e-3, 1000.0);
+    t.num("lineAngle", "Line angle", "Lines", Kind::Angle, true, true, [](P& p) -> double& { return p.lineAngle; }, lined);
+    t.num("safeZ", "Safe Z", "Laser", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    t.num("chordal", "Chordal tolerance", "Tolerance", Kind::Length, false, false,
+          [](P& p) -> double& { return p.tolerance.chordal; },
+          [](const P& p) { return p.strategy == toolpath::PhotoStrategy::SelectedVectors; });
+    bound(t, "chordal", 1e-4, 1.0);
+    t.option<toolpath::PhotoStrategy>("strategy", "Strategy", "Lines", {"Raster", "Hatch", "Selected vectors"},
+                                      [](P& p) -> toolpath::PhotoStrategy& { return p.strategy; });
+    t.flag("modulatePower", "Power modulation", "Laser", [](P& p) -> bool& { return p.modulatePower; },
+           [](const P& p) { return !p.dither; });
+    t.flag("dither", "Dither image", "Laser", [](P& p) -> bool& { return p.dither; });
+    t.flag("invert", "Invert (light pixels burn)", "Laser", [](P& p) -> bool& { return p.invert; });
+    return t;
+}
+
+Table<toolpath::LaserSketchParams> makeLaserSketchTable() {
+    using P = toolpath::LaserSketchParams;
+    const auto vectors = [](const P& p) { return p.boundary == toolpath::SketchBoundary::Vectors; };
+    Table<P> t;
+    t.num("power", "Power (%)", "Laser", Kind::Factor, false, false, [](P& p) -> double& { return p.power; });
+    bound(t, "power", 1e-3, 100.0);
+    t.num("moveSpeed", "Move speed (mm/min, 0 = the tool's feed rate)", "Laser", Kind::Factor, false, true,
+          [](P& p) -> double& { return p.moveSpeed; });
+    bound(t, "moveSpeed", 0.0, 1.0e6);
+    t.num("overscan", "Overscan", "Laser", Kind::Length, false, true, [](P& p) -> double& { return p.overscan; });
+    bound(t, "overscan", 0.0, kMaxOffsetMm);
+    t.num("lineThickness", "Line thickness", "Lines", Kind::Length, false, false,
+          [](P& p) -> double& { return p.lineThickness; });
+    bound(t, "lineThickness", 1e-3, 1000.0);
+    t.num("stepover", "Stepover", "Lines", Kind::Length, false, false, [](P& p) -> double& { return p.stepover; });
+    bound(t, "stepover", 1e-3, 1000.0);
+    t.num("hatchAngle", "Hatch angle", "Lines", Kind::Angle, true, true, [](P& p) -> double& { return p.hatchAngle; });
+    t.num("safeZ", "Safe Z", "Laser", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; }, vectors);
+    t.num("chordal", "Chordal tolerance", "Tolerance", Kind::Length, false, false,
+          [](P& p) -> double& { return p.tolerance.chordal; }, vectors);
+    bound(t, "chordal", 1e-4, 1.0);
+    t.option<toolpath::SketchSource>("source", "Source", "Source", {"Bitmap", "3D model"},
+                                     [](P& p) -> toolpath::SketchSource& { return p.source; });
+    t.option<toolpath::SketchModelTone>("modelTone", "Model tone", "Source", {"Depth", "Shaded"},
+                                        [](P& p) -> toolpath::SketchModelTone& { return p.modelTone; },
+                                        [](const P& p) { return p.source == toolpath::SketchSource::Model; });
+    t.option<toolpath::SketchBoundary>("boundary", "Sketch inside", "Source", {"The whole source", "The selected vectors"},
+                                       [](P& p) -> toolpath::SketchBoundary& { return p.boundary; });
+    t.flag("invert", "Invert (light areas burn)", "Source", [](P& p) -> bool& { return p.invert; });
+    t.flag("machineLimitBoundary", "Machine limit boundary", "Laser", [](P& p) -> bool& { return p.machineLimitBoundary; });
+    t.flag("crossHatch", "Cross hatch", "Lines", [](P& p) -> bool& { return p.crossHatch; });
+    t.option<toolpath::SketchFill>("fill", "Fill", "Lines", {"Together", "Regionally", "Regionally between vectors"},
+                                   [](P& p) -> toolpath::SketchFill& { return p.fill; }, vectors);
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 Table<toolpath::PrismParams> makePrismTable() {
     using P = toolpath::PrismParams;
     Table<P> t;
@@ -909,6 +982,18 @@ const Table<toolpath::FlutingParams>& tableOf() {
 template <>
 const Table<toolpath::LaserCutFillParams>& tableOf() {
     static const Table<toolpath::LaserCutFillParams> t = makeLaserCutFillTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::LaserPictureParams>& tableOf() {
+    static const Table<toolpath::LaserPictureParams> t = makeLaserPictureTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::LaserSketchParams>& tableOf() {
+    static const Table<toolpath::LaserSketchParams> t = makeLaserSketchTable();
     return t;
 }
 

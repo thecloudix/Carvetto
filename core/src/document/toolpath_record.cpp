@@ -258,6 +258,28 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", l->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(l->tolerance) : key;
     }
+    if (const auto* l = std::get_if<toolpath::LaserPictureParams>(&params)) {
+        std::string key = firstNonFinite({{"power", l->power},
+                                          {"min_power", l->minPower},
+                                          {"move_speed", l->moveSpeed},
+                                          {"overscan", l->overscan},
+                                          {"line_spacing", l->lineSpacing},
+                                          {"line_angle_rad", l->lineAngle},
+                                          {"safe_z", l->safeZ}});
+        return key.empty() ? nonFiniteTolerance(l->tolerance) : key;
+    }
+    if (const auto* l = std::get_if<toolpath::LaserSketchParams>(&params)) {
+        std::string key = firstNonFinite({{"power", l->power},
+                                          {"move_speed", l->moveSpeed},
+                                          {"overscan", l->overscan},
+                                          {"line_thickness", l->lineThickness},
+                                          {"stepover", l->stepover},
+                                          {"hatch_angle_rad", l->hatchAngle},
+                                          {"safe_z", l->safeZ},
+                                          {"start_position[0]", l->startPosition.x},
+                                          {"start_position[1]", l->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(l->tolerance) : key;
+    }
     if (const auto* r = std::get_if<toolpath::Project3dParams>(&params)) {
         return firstNonFinite({{"z_offset", r->zOffset},
                                {"allowance", r->allowance},
@@ -284,7 +306,7 @@ std::string spindleOffProblem(const ToolpathRecord& record) {
     const toolpath::ToolSnapshot& t = record.tool;
     if (t.laser) {
         // T-0323: the laser marking belongs to Laser Cut / Fill alone and excludes the spindle-off marking.
-        if (record.operation() != ToolpathOperation::LaserCutFill) {
+        if (!isLaserOperation(record.operation())) {
             return "only laser toolpaths may be marked as a laser's";
         }
         if (t.spindleOff || !t.toolType.empty()) {

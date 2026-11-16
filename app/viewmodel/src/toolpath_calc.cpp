@@ -21,6 +21,8 @@
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/laser.hpp"
+#include "carvetto/toolpath/laser_picture.hpp"
+#include "carvetto/toolpath/laser_sketch.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/v_carve_inlay.hpp"
@@ -231,6 +233,8 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Inlay: def.params = toolpath::InlayParams{}; break;
         case ToolpathOperation::Fluting: def.params = toolpath::FlutingParams{}; break;
         case ToolpathOperation::LaserCutFill: def.params = toolpath::LaserCutFillParams{}; break;
+        case ToolpathOperation::LaserPicture: def.params = toolpath::LaserPictureParams{}; break;
+        case ToolpathOperation::LaserSketch: def.params = toolpath::LaserSketchParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
         case ToolpathOperation::ImageEngrave: def.params = toolpath::ImageEngraveParams{}; break;
         case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
@@ -316,6 +320,8 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Inlay: return "inlay";
         case ToolpathOperation::Fluting: return "fluting";
         case ToolpathOperation::LaserCutFill: return "laser_cut_fill";
+        case ToolpathOperation::LaserPicture: return "laser_picture";
+        case ToolpathOperation::LaserSketch: return "laser_sketch";
         case ToolpathOperation::Prism: return "prism";
         case ToolpathOperation::ImageEngrave: return "image_engrave";
         case ToolpathOperation::VCarveInlay: return "v_carve_inlay";
@@ -337,7 +343,9 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::ThreadMill: return toolpath::threadMillToolAllowed(type);
         case ToolpathOperation::Inlay: return toolpath::inlayToolAllowed(type);
         case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
-        case ToolpathOperation::LaserCutFill: return toolpath::laserToolAllowed(type);
+        case ToolpathOperation::LaserCutFill:
+        case ToolpathOperation::LaserPicture:
+        case ToolpathOperation::LaserSketch: return toolpath::laserToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::ImageEngrave: return toolpath::imageEngraveToolAllowed(type);
         case ToolpathOperation::Rough3d:
@@ -370,14 +378,39 @@ bool usesModel(ToolpathOperation operation) {
            operation == ToolpathOperation::Project3d;
 }
 
+bool usesBitmap(const document::ToolpathParams& params) {
+    if (const auto* s = std::get_if<toolpath::LaserSketchParams>(&params)) {
+        return s->source == toolpath::SketchSource::Bitmap;
+    }
+    return std::holds_alternative<toolpath::ImageEngraveParams>(params) ||
+           std::holds_alternative<toolpath::LaserPictureParams>(params);
+}
+
+bool readsModel(const document::ToolpathParams& params) {
+    if (const auto* s = std::get_if<toolpath::LaserSketchParams>(&params)) {
+        return s->source == toolpath::SketchSource::Model;
+    }
+    return usesModel(static_cast<ToolpathOperation>(params.index()));
+}
+
 namespace {
-/// True when a 3D toolpath's boundary is the selected vectors.
+/// True when the selected vectors are an input of a bitmap or model operation: a 3D toolpath's Vectors boundary,
+/// the Selected Vectors strategy of an image engrave or laser picture, a laser sketch's Vectors boundary.
 bool boundaryUsesVectors(const document::ToolpathParams& params) {
     if (const auto* r = std::get_if<toolpath::Rough3dParams>(&params)) {
         return r->boundary == toolpath::Rough3dBoundary::Vectors;
     }
     if (const auto* f = std::get_if<toolpath::Finish3dParams>(&params)) {
         return f->boundary == toolpath::Rough3dBoundary::Vectors;
+    }
+    if (const auto* i = std::get_if<toolpath::ImageEngraveParams>(&params)) {
+        return i->strategy == toolpath::PhotoStrategy::SelectedVectors;
+    }
+    if (const auto* l = std::get_if<toolpath::LaserPictureParams>(&params)) {
+        return l->strategy == toolpath::PhotoStrategy::SelectedVectors;
+    }
+    if (const auto* k = std::get_if<toolpath::LaserSketchParams>(&params)) {
+        return k->boundary == toolpath::SketchBoundary::Vectors;
     }
     return false;
 }
@@ -453,7 +486,7 @@ std::string modelProblem(const document::Document& doc) {
 }
 
 void attachModel(ToolpathJob& job, const document::Document& doc) {
-    if (!usesModel(job.definition.operation())) {
+    if (!readsModel(job.definition.params)) {
         return;
     }
     const auto refuse = [&](std::string why) {
@@ -722,21 +755,20 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
         job.notes.push_back(note(MessageSeverity::Info, std::to_string(vectors.skippedOtherSheet) +
                                                             " vector(s) on other sheets are not machined"));
     }
-    const auto* photoParams = std::get_if<toolpath::ImageEngraveParams>(&job.definition.params);
-    const bool photoWithoutVectors = photoParams != nullptr && photoParams->strategy != toolpath::PhotoStrategy::SelectedVectors;
-    if (photoWithoutVectors) {
+    const bool bitmapOp = usesBitmap(job.definition.params);
+    const bool modelSource = readsModel(job.definition.params);
+    if (bitmapOp && !boundaryUsesVectors(job.definition.params)) {
         return job;  // reads the bitmap only (see attachPhotoInput)
     }
-    const bool modelOnly = usesModel(job.definition.operation()) && !boundaryUsesVectors(job.definition.params);
-    if (modelOnly) {
+    if (modelSource && !boundaryUsesVectors(job.definition.params)) {
         return job;  // reads the relief model only (see attachModel)
     }
     if (vectors.contours.empty()) {
-        refuse(photoParams != nullptr
-                   ? "Selected Vectors needs vectors to follow: select some besides the bitmap"
-                   : usesModel(job.definition.operation())
-                       ? "the Vectors boundary needs closed vectors: select some"
-                   : "there are no vectors to machine (the selection is empty, or hidden, locked or on another sheet)");
+        const bool sketch = std::holds_alternative<toolpath::LaserSketchParams>(job.definition.params);
+        refuse(sketch ? "the Vectors boundary needs closed vectors: select some" + std::string(bitmapOp ? " besides the bitmap" : "")
+               : bitmapOp ? "Selected Vectors needs vectors to follow: select some besides the bitmap"
+               : modelSource ? "the Vectors boundary needs closed vectors: select some"
+                             : "there are no vectors to machine (the selection is empty, or hidden, locked or on another sheet)");
         return job;
     }
     if (vectors.spanCount > kMaxToolpathSpans) {
@@ -781,6 +813,48 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
     return job;
 }
 
+std::optional<geometry::Box2> machineLimitsOf(const document::Document& doc, const tooling::Machine* machine) {
+    const document::Sheet* sheet = doc.findSheet(doc.activeSheet());
+    if (sheet == nullptr) {
+        return std::nullopt;
+    }
+    geometry::Box2 box = sheet->materialBoundsMm();
+    if (machine != nullptr && machine->workAreaX > 0.0 && machine->workAreaY > 0.0) {
+        box.max.x = std::min(box.max.x, box.min.x + machine->workAreaX);
+        box.max.y = std::min(box.max.y, box.min.y + machine->workAreaY);
+    }
+    if (!(box.max.x > box.min.x) || !(box.max.y > box.min.y)) {
+        return std::nullopt;
+    }
+    return box;
+}
+
+std::uint64_t machineLimitsFingerprint(const document::Document& doc) {
+    Fingerprint fp;
+    const std::optional<geometry::Box2> box = machineLimitsOf(doc, nullptr);
+    fp.add(static_cast<std::uint64_t>(box.has_value()));
+    if (box.has_value()) {
+        fp.add(box->min.x);
+        fp.add(box->min.y);
+        fp.add(box->max.x);
+        fp.add(box->max.y);
+    }
+    return fp.value();
+}
+
+void attachMachineLimits(ToolpathJob& job, const document::Document& doc, const tooling::ToolDatabase& db) {
+    const auto* sketch = std::get_if<toolpath::LaserSketchParams>(&job.definition.params);
+    if (sketch == nullptr || !sketch->machineLimitBoundary) {
+        return;
+    }
+    const tooling::Machine* machine =
+        job.definition.tool.machine.empty() ? nullptr : db.findMachine(job.definition.tool.machine);
+    job.machineLimits = machineLimitsOf(doc, machine);
+    if (!job.machineLimits.has_value() && job.refusal.empty()) {
+        job.refusal = "the machine limit boundary needs a material area: the sheet has no size";
+    }
+}
+
 void attachPlugSheet(ToolpathJob& job, const document::Document& doc) {
     const auto* params = std::get_if<toolpath::VCarveInlayParams>(&job.definition.params);
     if (params == nullptr || params->piece != toolpath::VCarveInlayPiece::Plug) {
@@ -808,7 +882,7 @@ void attachPlugSheet(ToolpathJob& job, const document::Document& doc) {
 
 void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
                       const document::BitmapDecoder& decoder) {
-    if (!std::holds_alternative<toolpath::ImageEngraveParams>(job.definition.params)) {
+    if (!usesBitmap(job.definition.params)) {
         return;
     }
     const auto refuse = [&](std::string why) {
@@ -907,9 +981,13 @@ std::uint64_t sourceFingerprint(const document::Document& doc, std::uint64_t sou
 
 std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
                                 const document::ToolpathParams& params) {
-    if (const ToolpathOperation op = static_cast<ToolpathOperation>(params.index()); usesModel(op)) {
+    if (readsModel(params)) {
         Fingerprint m;
         m.add(modelFingerprint(doc, doc.activeSheet()));
+        if (const auto* sketch = std::get_if<toolpath::LaserSketchParams>(&params);
+            sketch != nullptr && sketch->machineLimitBoundary) {
+            m.add(machineLimitsFingerprint(doc));
+        }
         if (const auto* project = std::get_if<toolpath::Project3dParams>(&params)) {
             m.add(sourceFingerprint(doc, project->sourceToolpath));
         }
@@ -923,14 +1001,17 @@ std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelec
         }
         return m.value();
     }
-    const auto* photo = std::get_if<toolpath::ImageEngraveParams>(&params);
-    if (photo == nullptr) {
+    if (!usesBitmap(params)) {
         return fingerprint(resolveVectors(doc, selector));
     }
     Fingerprint fp;
     fp.add(fingerprint(resolveBitmap(doc, selector)));
-    if (photo->strategy == toolpath::PhotoStrategy::SelectedVectors) {
+    if (boundaryUsesVectors(params)) {
         fp.add(fingerprint(resolveVectors(doc, selector)));
+    }
+    if (const auto* sketch = std::get_if<toolpath::LaserSketchParams>(&params);
+        sketch != nullptr && sketch->machineLimitBoundary) {
+        fp.add(machineLimitsFingerprint(doc));
     }
     return fp.value();
 }
@@ -976,12 +1057,11 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         return out;
     }
     const auto* photoParams = std::get_if<toolpath::ImageEngraveParams>(&definition.params);
-    const bool modelOp = usesModel(definition.operation());
+    const bool bitmapOp = usesBitmap(definition.params);
+    const bool modelOp = readsModel(definition.params);
     const bool projectOp = definition.operation() == ToolpathOperation::Project3d;
-    const bool needsContours = modelOp ? boundaryUsesVectors(definition.params)
-                                       : photoParams == nullptr ||
-                                             photoParams->strategy == toolpath::PhotoStrategy::SelectedVectors;
-    if (!tool.has_value() || (needsContours && contours.empty()) || (photoParams != nullptr && !photo.has_value()) ||
+    const bool needsContours = (bitmapOp || modelOp) ? boundaryUsesVectors(definition.params) : true;
+    if (!tool.has_value() || (needsContours && contours.empty()) || (bitmapOp && !photo.has_value()) ||
         (modelOp && model == nullptr) || (projectOp && !source.has_value()) ||
         (std::holds_alternative<toolpath::Finish3dParams>(definition.params) &&
          std::get<toolpath::Finish3dParams>(definition.params).priorToolpaths.size() != priors.size()) ||
@@ -1097,6 +1177,49 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::LaserPicture || op == ToolpathOperation::LaserSketch) {
+            toolpath::GrayImage gray;
+            geometry::Box2 placement;
+            const auto* sketch = std::get_if<toolpath::LaserSketchParams>(&definition.params);
+            if (sketch != nullptr && sketch->source == toolpath::SketchSource::Model) {
+                gray = toolpath::toneFromHeightField(*model, sketch->modelTone, placement);
+                if (!gray.valid()) {
+                    out.messages.push_back(note(MessageSeverity::Error, "the relief model has nothing to sketch"));
+                    return out;
+                }
+            } else {
+                geometry::ShapeResult<io::RasterImage> raster =
+                    document::decodeBitmapBytes(std::span<const std::uint8_t>(photo->bytes), photo->decoder);
+                if (!raster.ok()) {
+                    out.messages.push_back(note(MessageSeverity::Error, "the bitmap cannot be read: " + raster.error()));
+                    return out;
+                }
+                gray = toolpath::grayFromRaster(raster.value());
+                placement = photo->placement;
+            }
+            if (cancelled()) {
+                out.cancelled = true;
+                out.messages.push_back(note(MessageSeverity::Info, "the calculation was cancelled"));
+                return out;
+            }
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            toolpath::Toolpath result;
+            if (sketch != nullptr) {
+                toolpath::LaserSketchResult r = toolpath::laserSketchToolpath(gray, placement, tool->tool, tool->data,
+                                                                              *sketch, contours, machineLimits, control);
+                diagnostics = r.diagnostics;
+                result = std::move(r.toolpath);
+            } else {
+                toolpath::LaserPictureResult r = toolpath::laserPictureToolpath(
+                    gray, placement, tool->tool, tool->data, std::get<toolpath::LaserPictureParams>(definition.params),
+                    contours, control);
+                diagnostics = r.diagnostics;
+                result = std::move(r.toolpath);
+            }
+            if (!result.isEmpty()) {
+                items.push_back({-1, makeRecord(*this, std::move(result), definition.tool)});
             }
         } else if (op == ToolpathOperation::Rough3d || op == ToolpathOperation::Finish3d) {
             std::vector<geometry::Polyline> vectors;
