@@ -1666,3 +1666,9 @@ Phase: 3   Module: core/geometry + app   Depends on: T-0329
 Goal: The feature inventory lists Nest Parts (rotate to best fit by step angle, mirror, allow parts inside other parts, nest boundary, start corner/direction, nesting sheets). T-0329 found core has no nesting and added only a deterministic rectangle shelf nester (io::nestRectangles). Implement a real polygon nester behind the same interface with operation-counter budgets, deterministic results and tests against the shelf nester for rectangles, then the app form.
 Acceptance criteria:
   1. Arbitrary closed vectors nest within boundary/sheets with rotation and containment options; deterministic; bounded; form and self-test.
+
+### T-0338 Scripting tests flake under load: deterministic-budget tests run with the real 5 s wall-clock deadline active   [status: in-progress]
+Phase: 3   Module: core/tests/scripting   Depends on: T-0330
+Goal: Observed on a machine at load ~59: 'scripting: hostile scripts - memory and string bombs' and 'scripting: string functions on huge operands are charged' fail because the default 5 s deadline (T-0330 backstop) fires first and the status is Timeout instead of InstructionLimit/MemoryLimit. The same can happen on loaded CI runners (stress repeat). Make every scripting/gadget test that asserts a deterministic stop set deadlineMillis = 0 (or an injected fake clock) so it cannot depend on wall time; keep real-clock tests only for the smoke test with generous margins. Audit ALL tests in core/tests/scripting and app/viewmodel gadget tests for default-ScriptLimits runs; add a guard (e.g. a test helper that builds limits with the deadline off) so new tests cannot forget. Prove under load (run the scripting tests with a CPU hog in parallel) that they pass repeatedly.
+Acceptance criteria:
+  1. No scripting/gadget test depends on wall-clock time except the one real-clock smoke test; 20 consecutive runs under artificial load pass; mutants of the helper killed.
