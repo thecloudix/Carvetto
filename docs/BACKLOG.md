@@ -1556,7 +1556,7 @@ Goal: core already has JobType::Rotary, RotaryAxis, Job::rotary(length, diameter
 Acceptance criteria:
   1. A rotary job can be created, edited, saved and reloaded with all fields; the design area and Z-zero follow Length/Diameter/orientation; app self-test drives the pages; ADR.
 
-### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: verifying (post, wrapped view core, wrapped sim; app wiring -> T-0334)]
+### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: verified round 2, landing (app wiring -> T-0334)]
 Phase: 3   Module: core/post + core/simulate + app   Depends on: T-0319
 Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/Y with the job diameter, sign, A-axis angle in the right units, feed handling for the rotary axis, MAXIMUM_ROTATION handling) correct and golden-tested for X and Y axes; add an Auto-Wrapping View (wrapped preview of vectors, toolpaths and the model on a cylinder, with a wrapped/flat toggle) and wrapped material-removal simulation for rotary jobs. Cover rotary refusals (tool longer than radius, etc.) with diagnostics.
 Acceptance criteria:
@@ -1605,7 +1605,7 @@ Goal: Profile option to output controller-side cutter compensation: lead-in/out 
 Acceptance criteria:
   1. Compensated Profile output is correct on test parts (left/right, climb/conventional, corners, tabs) and post blocks appear in the right order; simulation matches the uncompensated result; hostile/refusal cases; ADR.
 
-### T-0328 Drill Bank toolpath   [status: in-progress]
+### T-0328 Drill Bank toolpath   [status: verifying (subset; per-spindle detail -> T-0335)]
 Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0243
 Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-spindle drill bank (spindle spacing, which spindles are active, holes matched to the bank pattern, rows/columns offsets, per-hole depth, peck/dwell reuse of Drilling), with a refusal when holes cannot be matched. .carv record, form, self-test.
 Acceptance criteria:
@@ -1648,3 +1648,9 @@ Phase: 3   Module: app + app/viewmodel   Depends on: T-0320
 Goal: T-0320 delivered the wrapped post, CylinderMap, the Qt-free wrapped view (flat/wrapped state, software renderer, path builders) and wrapped simulation core. Wire them into the app: a View-menu entry and flat/wrapped toggle for rotary jobs, drawing the wrapped raster in the Model/2D views, wrapped playback in the simulation panel, a dialog presenting the rotary post refusals/warnings, and --self-test coverage driving them offscreen.
 Acceptance criteria:
   1. For a rotary job the user can toggle flat/wrapped, see vectors, toolpaths and the model wrapped, play the wrapped simulation, and see rotary refusals; self-test drives all of it.
+
+### T-0335 Drill Bank per-stroke spindle list: simulation of every spindle's hole and the post's drill-bank blocks (T-0328 follow-up)   [status: ready]
+Phase: 3   Module: core/toolpath + core/document + core/post + core/simulate + app   Depends on: T-0328
+Goal: T-0328 emits the head's (reference spindle's) path only; DrillBankResult::placements carries the per-spindle detail but the toolpath record does not. Add a per-stroke spindle list to the toolpath (schema + .carv bump only when used, hostile caps), make preview and simulation drill one hole per active spindle per stroke, and write the post's drill-bank blocks (the SETUP_DRILL_BANK family parsed by the post interpreter; audit what is parsed vs acted on) with golden tests; Add-menu entry and per-spindle list editor in the app with a self-test.
+Acceptance criteria:
+  1. A drill-bank job simulates one hole per active spindle, posts with the drill-bank blocks, and round-trips through .carv; app drives it.
