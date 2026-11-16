@@ -495,6 +495,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::LaserPicture: return "laser_picture";
         case document::ToolpathOperation::LaserSketch: return "laser_sketch";
         case document::ToolpathOperation::DrillBank: return "drill_bank";
+        case document::ToolpathOperation::Rounding: return "rounding";
         case document::ToolpathOperation::Prism: return "prism";
         case document::ToolpathOperation::ImageEngrave: return "image_engrave";
         case document::ToolpathOperation::VCarveInlay: return "v_carve_inlay";

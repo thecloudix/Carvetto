@@ -24,6 +24,7 @@
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/image_engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
+#include "carvetto/toolpath/rounding.hpp"
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/v_carve_inlay.hpp"
 #include "carvetto/toolpath/prism.hpp"
@@ -107,10 +108,11 @@ using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketPar
                                     toolpath::VCarveInlayParams, toolpath::Rough3dParams,
                                     toolpath::Finish3dParams, toolpath::MouldingParams, toolpath::Project3dParams,
                                     toolpath::LaserCutFillParams, toolpath::LaserPictureParams,
-                                    toolpath::LaserSketchParams, toolpath::DrillBankParams>;
+                                    toolpath::LaserSketchParams, toolpath::DrillBankParams,
+                                    toolpath::RoundingParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay, Rough3d, Finish3d, Moulding, Project3d, LaserCutFill, LaserPicture, LaserSketch, DrillBank };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay, Rough3d, Finish3d, Moulding, Project3d, LaserCutFill, LaserPicture, LaserSketch, DrillBank, Rounding };
 
 /// True for the operations that drive a laser (their tool snapshot is marked `laser`): Laser Cut / Fill (T-0323), Laser
 /// Picture and Laser Sketch Engraving (T-0324).

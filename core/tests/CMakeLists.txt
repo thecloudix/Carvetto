@@ -72,6 +72,7 @@ add_executable(carvetto_tests
   post/line_length_test.cpp
   post/rotary_wrap_test.cpp
   geometry/cylinder_map_test.cpp
+  geometry/wrapped_layout_test.cpp
   simulate/determinism_test.cpp
   simulate/drill_bank_sim_test.cpp
   simulate/diagnostics_test.cpp
@@ -198,6 +199,9 @@ add_executable(carvetto_tests
   toolpath/v_carve_inlay_test.cpp
   toolpath/fluting_test.cpp
   toolpath/laser_test.cpp
+  toolpath/rounding_test.cpp
+  post/rounding_wrap_test.cpp
+  document/carv_rounding_record_test.cpp
   toolpath/laser_picture_test.cpp
   toolpath/laser_sketch_test.cpp
   post/jet_blocks_test.cpp

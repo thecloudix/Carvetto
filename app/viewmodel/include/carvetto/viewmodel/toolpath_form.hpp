@@ -59,6 +59,10 @@
 //               startX startY chordal fill order; choices source modelTone (3D model source) boundary invert
 //               machineLimitBoundary crossHatch. It reads the bitmap of the selection or the sheet's relief model
 //               (T-0324, ADR-0105)
+//   Rounding    blankRadius targetRadius startRadius (0 = none) allowance passDepth stepover (both 0 = the tool's)
+//               alongStart alongEnd circStart surfaceZ safeZ; choices method, blank, alongX (T-0322, ADR-0115). It
+//               machines the rotary cylinder, so it takes no vectors (`needsVectors`); a new form of a rotary job starts
+//               from the job's radius, length and surface.
 //   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 //   Image Engrave  maxDepth stepoverRetract safeZ lineSpacing (percent of the tool diameter) lineAngle (not for
 //               Selected Vectors) chordal (Selected Vectors only); choices strategy, invert. It reads the bitmap

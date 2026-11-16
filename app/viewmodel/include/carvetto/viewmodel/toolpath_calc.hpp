@@ -252,6 +252,9 @@ bool usesModel(document::ToolpathOperation operation);
 /// sketch with the bitmap source (T-0324).
 bool usesBitmap(const document::ToolpathParams& params);
 
+/// False for a Rounding toolpath (T-0322): it machines the rotary cylinder itself, so no vectors are selected.
+bool needsVectors(const document::ToolpathParams& params);
+
 /// True when the toolpath of `params` reads the sheet's composed relief model: `usesModel`, and a laser sketch with
 /// the model source (T-0324).
 bool readsModel(const document::ToolpathParams& params);

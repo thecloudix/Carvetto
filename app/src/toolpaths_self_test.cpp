@@ -454,6 +454,43 @@ std::string toolpaths3dSelfTest(MainWindow& window) {
 
 namespace carvetto::app {
 
+std::string roundingSelfTest(MainWindow& window) {
+    window.setQuiet(true);
+    window.setDocument(std::make_unique<document::Document>(
+        document::Job::rotary(120.0, 50.0, document::Units::Millimetres)));
+    document::Document& doc = window.currentDocument();
+    ToolpathsPanel* panel = window.toolpaths();
+    ST_REQUIRE(panel != nullptr, "rounding: the dock holds no ToolpathsPanel");
+    ST_REQUIRE(panel->addAction(document::ToolpathOperation::Rounding) != nullptr,
+               "rounding: the Add menu has no Rounding entry");
+    window.documentChanged();
+    ST_REQUIRE(panel->addAction(document::ToolpathOperation::Rounding)->isEnabled(), "rounding: Add Rounding is disabled");
+    panel->addAction(document::ToolpathOperation::Rounding)->trigger();
+    ToolpathFormDialog* dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr, "rounding: Add Rounding opened no form");
+    {
+        // The form starts from the job's cylinder.
+        const auto& p = std::get<toolpath::RoundingParams>(dlg->form().definition().params);
+        ST_REQUIRE(std::fabs(p.blankRadius - 25.0) < 1e-9 && std::fabs(p.alongEnd - 120.0) < 1e-9 &&
+                       std::fabs(p.surfaceZ - 25.0) < 1e-9,
+                   "rounding: the form does not start from the job's cylinder");
+    }
+    ST_REQUIRE(dlg->pickTool("end-mill-6mm"), "rounding: the end mill cannot be picked");
+    ST_REQUIRE(dlg->typeField("targetRadius", "15") && dlg->typeField("passDepth", "5") && dlg->typeField("stepover", "6") &&
+                   dlg->chooseOption("method", 1),
+               "rounding: the fields were refused");
+    const std::size_t stepsBefore = doc.undoStack().index();
+    ST_REQUIRE(accept(panel), "rounding: accepting the form failed (no vectors are needed): " + dlg->message().toStdString());
+    ST_REQUIRE(panel->waitIdle(120000), "rounding: the calculation did not finish");
+    ST_REQUIRE(doc.toolpaths().size() == 1 && doc.undoStack().index() == stepsBefore + 1,
+               "rounding: adding it was not exactly one undo step: " + panel->statusText().toStdString());
+    const document::ToolpathRecord& rec = doc.toolpaths().front();
+    ST_REQUIRE(rec.operation() == document::ToolpathOperation::Rounding && rec.hasMoves() && rec.selection.objects.empty(),
+               "rounding: no rounding toolpath");
+    ST_REQUIRE(doc.undo() && doc.toolpaths().empty(), "rounding: undo did not remove it");
+    return {};
+}
+
 std::string drillBankSelfTest(MainWindow& window) {
     window.setQuiet(true);
     window.setDocument(std::make_unique<document::Document>(
