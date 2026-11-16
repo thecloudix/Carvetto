@@ -1650,7 +1650,7 @@ Goal: T-0320 delivered the wrapped post, CylinderMap, the Qt-free wrapped view (
 Acceptance criteria:
   1. For a rotary job the user can toggle flat/wrapped, see vectors, toolpaths and the model wrapped, play the wrapped simulation, and see rotary refusals; self-test drives all of it.
 
-### T-0335 Drill Bank per-stroke spindle list: simulation of every spindle's hole and the post's drill-bank blocks (T-0328 follow-up)   [status: verifying]
+### T-0335 Drill Bank per-stroke spindle list: simulation of every spindle's hole and the post's drill-bank blocks (T-0328 follow-up)   [status: done — PR #208]
 Phase: 3   Module: core/toolpath + core/document + core/post + core/simulate + app   Depends on: T-0328
 Goal: T-0328 emits the head's (reference spindle's) path only; DrillBankResult::placements carries the per-spindle detail but the toolpath record does not. Add a per-stroke spindle list to the toolpath (schema + .carv bump only when used, hostile caps), make preview and simulation drill one hole per active spindle per stroke, and write the post's drill-bank blocks (the SETUP_DRILL_BANK family parsed by the post interpreter; audit what is parsed vs acted on) with golden tests; Add-menu entry and per-spindle list editor in the app with a self-test.
 Acceptance criteria:
