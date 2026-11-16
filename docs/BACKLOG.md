@@ -1230,7 +1230,7 @@ Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImag
 Acceptance criteria:
   1. In the real app a user traces a bitmap into vectors in one undo step; oversize/hostile images refused with a message; self-test drives it.
 
-### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: in-progress]
+### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: done — PR #132]
 Phase: 1   Module: app + app/viewmodel + core/document + core/toolpath   Depends on: T-0243, T-0224
 Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view drawing (from multiSidedView), Copy/Move to Other Side for objects (mirroring transform) and toolpaths (sheet link on toolpath records), apply shiftMovesZ(sheetTopZ) in Save Toolpaths so each side posts with the correct Z zero, switching back to single-sided, Preview All Sides. Needs owner confirmation of the 'Zero off same side' interpretation (T-0243 ADR) before dispatch if the coder cannot settle it from the inventory.
 Acceptance criteria:
