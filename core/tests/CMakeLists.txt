@@ -217,6 +217,7 @@ target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src
 target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
+  CARVETTO_SCRIPTING_TEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scripting"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
   CARVETTO_TEXT_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/text"
