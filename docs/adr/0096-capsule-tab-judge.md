@@ -1,6 +1,6 @@
 # ADR-0096: an exact capsule-union judge for the tab layer's "no waste near" answer
 
-Status: accepted (T-0279; closes ADR-0016 section 14 residuals (i), (j), (l) as far as they are judge defects)
+Status: accepted (T-0279; closes ADR-0016 section 14 residual (l); (i) moved to T-0318; (j) argued, not measured)
 
 ## Context
 `ProfileBuilder::tabHolds` (Inside/Outside, allowance >= 0) decides on a raster (0.05 mm cells) whether
@@ -47,36 +47,40 @@ Replace the "no waste near" answer by an exact judgement, and only that answer (
 ## Residuals (i), (j), (l)
 - (l) the notch's bottom-corner tab: fixed by the above (the test builds the U part; the oracle's verdict
   and the product's agree).
-- (j): argued not to be a defect of this judge (the verdict the judge gives agrees with the oracle's on the
-  scene; the remaining difference lies elsewhere in the loose-piece reporting); not changed here.
-- (i): not reproduced. The scenes the card names (9301_153, 9308_412) are absent from the archive the
-  harness had, so nothing could be measured or tested; the residual stays open.
+- (i): moved to T-0318. Scenes 9301_153 and 9308_412 are absent from the harness archive, so it could not be
+  reproduced here; a 650-scene V-bit SHARP screen still shows three oracle-severed kept tabs (9308 scenes
+  13, 63, 69), identical on main and on this branch, so they are not caused or cured by this judge.
+- (j): tabs left out where another place would hold (mmrg_001_tabs_all_out, m1_272009_9). The argument that
+  this is not a judge defect is: the judge answers only the "no waste near" case and only ever returns
+  holds or severed in the oracle's own world, so it cannot leave out a tab the oracle finds holding; a tab
+  left out where another place would hold is the placement's choice. This was not measured in this round: the
+  two scenes are not in the archive, and no harness output is on hand that shows it; treat (j) as argued,
+  not measured. It stays listed in ADR-0016 section 14.
 - ADR-0016 section 14's other residual (f) is unchanged (9302_2199 gives the same result as before).
 
+## Testing the judge
+The judge is a free function (`detail::exactNoWasteHolds`, `exact_tab_judge.hpp`) taking the window, an
+`ExactTools` (a plain data struct), the tab-layer radius and the tolerances, and the choice of which side a
+sample goes to is `detail::classifyTool`. `exact_tab_judge_test.cpp` drives both with hand-built fixtures: two
+bands with a gap, which a disc of the full radius seals and one of half does not. The scene tests of
+`profile_tab_layer_test.cpp` pin the integration.
+
 ## Mutants
-Fifteen one-line mutants of `exactNoWasteHolds` and `exactTools` were applied by hand-driven scripts
-(`scratch-t0279/mut2.sh`, not committed), each run against the T-0279 tests and, if those passed, `[tabs]`.
-
-Killed (test failures):
-- m01 (`after >= before`), m02 (verdict always false), m03 (verdict always true), m08 (no linking of samples
-  into runs), m12 (`after < before`), m13 (own runs not added when lowered), m15 (bands 0.03 mm too wide):
-  the three first T-0279 tests.
-- m04 (`before < 3` for `< 2`), m05 (other live tabs' raised stretches counted as material), m09 (bands 0.03
-  mm too narrow), m10 (minimum piece 0.1 mm2 for 0.01), m11 (frame without its bottom bar): the fourth test,
-  "the judge's inputs", one scene each (found by running each mutant over 2400 U-family scenes and keeping a
-  scene whose result differs and in which the flood oracle sides with the unmutated judge).
-
-Not killed (all tests pass): m06 (the tab's own V-bit corner moves counted already in the world before the
-tab is lowered), m07 (corner moves covered by another live tab counted), m14 (a lone open sample's disc
-shrunk to half the radius).
-- m07: unreachable in the corpus. The branch needs a V-bit corner move covered by another live tab inside the
-  raster window of a tab that sees no waste; the counter hit 0 times in 12000 sharp-corner V-bit U scenes
-  (seeds 9741-9780 x 300) and the mutant changed no result in them or in 2400 + 2400 others.
-- m06: own corner moves occurred in 12 of 12000 such scenes (hundreds of discs each), and the mutant changed
-  no result in them: there the tab either holds or is judged with no other piece regardless.
-- m14: a lone open sample occurred 14 times in the same 12000 scenes and the mutant changed no result.
-No sound equivalence argument was found for m06 and m14, and no small scene was built that kills them; they
-are left as open and reported to the director rather than claimed equivalent.
+Seventeen one-line mutants of the judge and its inputs were applied by hand-driven scripts
+(`scratch-t0279/mut3.sh`, not committed), each run against the T-0279 tests and, if those passed, `[tabs]`.
+All are killed:
+- m01 (`after >= before`), m02 (verdict always false), m03 (always true), m12 (`after < before`), m13 (own
+  runs not added when lowered), m16 (own corner discs not added), m17 (cut corner discs not added), m14 (a
+  lone sample's disc of half the radius), m06 (the tab's own corner moves counted before it is lowered) and
+  m07 (corner moves covered by another live tab counted): the hand-built fixtures and the classification test.
+- m08 (no linking of samples into runs), m15 (bands 0.03 mm too wide), m04 (`before < 3`), m05 (other live
+  tabs' raised stretches counted as material), m09 (bands 0.03 mm too narrow), m10 (minimum piece 0.1 mm2),
+  m11 (frame without its bottom bar): the scene test "the judge's inputs", one scene each (a scene found by
+  running each mutant over 2400 U-family scenes and keeping one whose result differs and in which the flood
+  oracle sides with the unmutated judge).
+In an earlier round m06, m07 and m14 survived the scene tests (the corpus rarely reaches those branches: a
+counter hit 0 times for m07 and 12 and 14 times for m06 and m14 in 12000 scenes) and were only argued
+unreachable; they are now killed by hand-built fixtures instead of argued.
 
 ## Results
 (Run by the harness of the verifier's flood oracle o11, end mill unless stated, Outside, leads off.)
@@ -85,4 +89,7 @@ are left as open and reported to the director rather than claimed equivalent.
 - U family, seeds 9731-9738 x 500: scenes keeping a tab the oracle finds severed fell from 209 to 30; the
   remaining 30 keep it by other paths (not the "no waste near" answer).
 - Seed 9735 scene 49 (the part the widened-cells rule freed): stays held together.
-- ADR-0016 section 14: (l) fixed; (j) not a judge defect; (i) not reproduced (scenes absent); (f) unchanged.
+- ADR-0016 section 14: (l) fixed; (i) moved to T-0318; (j) argued not a judge defect, not measured; (f) unchanged.
+- The flood-oracle numbers above (209 -> 30, about 24.7k scenes) come from the earlier harness runs and were
+  not re-measured in round 2; the round 2 change only moves code into `exact_tab_judge.cpp` (the lone-sample
+  disc is the same polygon) and adds tests.
