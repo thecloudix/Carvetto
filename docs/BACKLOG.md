@@ -1574,7 +1574,7 @@ Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turn
 Acceptance criteria:
   1. Each tool produces the expected vectors/toolpath on test cylinders (counts, spacing, pitch exact); app forms drive them; ADR.
 
-### T-0323 Laser: laser tool power model and Laser Cut / Fill toolpath   [status: in-progress]
+### T-0323 Laser: laser tool power model and Laser Cut / Fill toolpath   [status: verifying]
 Phase: 3   Module: core/toolpath + core/tooling + core/post + app/viewmodel   Depends on: T-0243
 Goal: Laser tool (maximum burn rate already in cutting data) with power, move speed, passes (cut depth -> number of passes), repeats and overscan; Laser Cut/Fill toolpath: Cut Outside/Right, Cut Inside/Left (kerf compensated), Cut On, Hatch Fill (stepover, angle, cross hatch, fill together/regionally, outline), allowance. Output through the post's JET_TOOL_POWER/ON/OFF blocks (already parsed; make them act). .carv record (job.json-only, minor bump rules as ADR-0021), viewmodel form, self-test.
 Acceptance criteria:
