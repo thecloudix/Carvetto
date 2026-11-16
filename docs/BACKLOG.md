@@ -1616,7 +1616,7 @@ Goal: Import a parts list (CSV/XML) describing rectangular panels with holes/dad
 Acceptance criteria:
   1. A sample parts file imports into nested panels and toolpaths; bad mappings give clear diagnostics; ADR with the mapping schema.
 
-### T-0330 Scripting host: embedded Lua (sandboxed), ScriptHost and API design   [status: in-progress]
+### T-0330 Scripting host: embedded Lua (sandboxed), ScriptHost and API design   [status: verifying]
 Phase: 3   Module: core/scripting   Depends on: —
 Goal: Embed Lua (MIT; pinned release via FetchContent like the other dependencies; ADR on licence and size) behind ScriptHost in core/scripting with no Qt: a sandbox (no io/os/debug/package unless granted, instruction and memory limits, cancellation, wall-clock-free budget by instruction count), error reporting with line numbers, and our OWN documented API design (ADR-0098+) - do not copy any vendor SDK shapes. Deliver the host, the API surface design document, and tests including hostile scripts (infinite loops, memory bombs, string bombs).
 Acceptance criteria:
