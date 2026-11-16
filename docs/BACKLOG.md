@@ -1342,11 +1342,12 @@ Goal: The job sheet is a single document for the whole job. For double-sided job
 Acceptance criteria:
   1. A double-sided job's sheet lists each side with its own toolpaths and zero reference; single-sided output unchanged byte-for-byte; self-test; changelog fragment; CI green.
 
-### T-0279 Profile: exact capsule-union tab judge (T-0252 residuals i, j, l; T-0167 retry)   [status: in-progress]
+### T-0279 Profile: exact capsule-union tab judge (T-0252 residuals i, j, l; T-0167 retry)   [status: in-progress (round 2)]
 Phase: 1   Module: core/toolpath   Depends on: T-0252
 Goal: The remaining loose-piece/tab residuals (i, j, l) need an exact capsule-union judge for the tab layer; T-0167's cell-widening attempt failed the acceptance criteria on the U-part family. Design a bounded exact judge (ADR first), with the flood oracle as the reference and mutants killed. Optional: lead-in modelling if a witness scene is ever found; undiagnosed (f) 9302_2199 (1 of 3 tabs left out).
 Acceptance criteria:
   1. Residuals i, j, l fixed against the flood oracle over >=10k scenes with no new false reports; mutants killed or soundly argued; CI green. Owner may defer this card indefinitely.
+  RE-SCOPED 2026-11-16: this card now closes residual (l) (fixed), records (j) as not a judge defect (with the measurement pointer), and kills or removes the survivors m06/m07/m14; residual (i) is split to T-0318 (open: scenes 9301_153/9308_412 must be regenerated).
 
 ### T-0280 Small test gaps from T-0230 / T-0252 verification   [status: done — PR #157]
 Phase: 1   Module: app/viewmodel + core/toolpath   Depends on: T-0230, T-0252
@@ -1542,3 +1543,7 @@ Goal: Sculpt preview currently shows the working component alone. Compose the re
 ### T-0317 Preview/simulation leftovers from T-0231: cancellable simulation start, first-paint and zoom scan cost, summary cost   [status: done — PR #194]
 Phase: 2   Module: core/simulate + app   Depends on: T-0231
 Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancellable (no UI freeze; cancel token honoured before the first step); (2) cut the first-paint and zoom scan cost of the preview (profile first, then fix the hot spot; operation counters, not timing, in tests); (3) cut the cost of the simulation summary. Tests by operation counters; ADR with measurements.
+
+### T-0318 Profile residual (i): reproduce and fix the V-bit SHARP severed kept tabs (T-0279 split)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath   Depends on: T-0279
+Goal: Residual (i) of T-0252 was not reproducible in T-0279 because scenes 9301_153 and 9308_412 are absent from the harness archive; a 650-scene V-bit SHARP screen still shows three oracle-severed kept tabs (9308 scenes 13, 63, 69), identical on main and the T-0279 branch. Regenerate the scenes, diagnose, fix with ADR, mutants killed. Owner may defer indefinitely.
