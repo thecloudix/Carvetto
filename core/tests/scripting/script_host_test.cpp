@@ -3,6 +3,9 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <regex>
 #include <stdexcept>
 #include <string>
 
@@ -12,8 +15,19 @@ using namespace carvetto::scripting;
 
 namespace {
 
+// Every ScriptLimits / ScriptHost in this file MUST start from testLimits(): the default limits
+// carry a real 5 s wall-clock deadline, which under heavy machine load fires before the
+// deterministic budget a test asserts (Timeout instead of InstructionLimit). Only the deadline
+// tests set deadlineMillis themselves (fake clock; one real-clock smoke test). A lint test at the
+// end of this file rejects default-constructed ScriptLimits / ScriptHost.
+ScriptLimits testLimits() {
+    ScriptLimits l;  // lint-ok: the helper itself
+    l.deadlineMillis = 0;
+    return l;
+}
+
 ScriptLimits smallLimits() {
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxInstructions = 200'000;
     l.maxPatternSteps = 200'000;
     l.maxMemoryBytes = 4u * 1024u * 1024u;
@@ -29,7 +43,7 @@ bool contains(const std::string& s, const char* part) {
 }  // namespace
 
 TEST_CASE("scripting: returns values and captures print", "[scripting]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     const auto r = host.run("print('hi', 1, 2.5, true, nil)\nreturn 1 + 2, 'x', 2.5, {1, 2, {3}}, true", "t");
     REQUIRE(r.ok());
     REQUIRE(r.output.size() == 1);
@@ -46,7 +60,7 @@ TEST_CASE("scripting: returns values and captures print", "[scripting]") {
 }
 
 TEST_CASE("scripting: errors carry chunk name and line number", "[scripting]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     SECTION("runtime error") {
         const auto r = host.run("local a = 1\n\nlocal b = nil + 1\n", "gadget.lua");
         CHECK(r.status == ScriptStatus::RuntimeError);
@@ -78,7 +92,7 @@ TEST_CASE("scripting: errors carry chunk name and line number", "[scripting]") {
 }
 
 TEST_CASE("scripting: sandbox removes io os debug package and file loading", "[scripting][sandbox]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     for (const char* name : {"io", "os", "debug", "package", "require", "dofile", "loadfile", "loadstring"}) {
         const auto r = host.run(std::string("return ") + name + " == nil", "t");
         INFO(name);
@@ -117,7 +131,7 @@ TEST_CASE("scripting: sandbox removes io os debug package and file loading", "[s
         ScriptGrants g;
         g.os = true;
         g.debug = true;
-        ScriptHost granted({}, g);
+        ScriptHost granted(testLimits(), g);
         const auto r = granted.run("return type(os.time()), type(debug.getinfo), io, package", "t");
         REQUIRE(r.ok());
         CHECK(r.returned.at(0).asString() == "number");
@@ -142,7 +156,7 @@ TEST_CASE("scripting: each run has a fresh state and fresh budgets", "[scripting
 }
 
 TEST_CASE("scripting: math.random is deterministic until the script seeds it", "[scripting]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     const auto a = host.run("return math.random(1, 1000000)", "t");
     const auto b = host.run("return math.random(1, 1000000)", "t");
     REQUIRE(a.ok());
@@ -294,7 +308,7 @@ TEST_CASE("scripting: output limit", "[scripting][hostile]") {
 }
 
 TEST_CASE("scripting: cancellation", "[scripting][cancel]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     SECTION("flag already set: nothing runs") {
         std::atomic<bool> flag{true};
         const auto r = host.run("x = 1", "t", &flag);
@@ -303,7 +317,7 @@ TEST_CASE("scripting: cancellation", "[scripting][cancel]") {
     }
     SECTION("flag raised by a host function in the middle of a loop") {
         std::atomic<bool> flag{false};
-        ScriptHost h2;
+        ScriptHost h2(testLimits());
         h2.registerFunction("", "stop", [&flag](const ScriptValues&) {
             flag.store(true);
             return ScriptValues{};
@@ -315,7 +329,7 @@ TEST_CASE("scripting: cancellation", "[scripting][cancel]") {
     }
     SECTION("flag raised inside a pattern match") {
         std::atomic<bool> flag{false};
-        ScriptHost h2;
+        ScriptHost h2(testLimits());
         h2.registerFunction("", "stop", [&flag](const ScriptValues&) {
             flag.store(true);
             return ScriptValues{};
@@ -325,7 +339,7 @@ TEST_CASE("scripting: cancellation", "[scripting][cancel]") {
     }
     SECTION("cancel cannot be swallowed by pcall") {
         std::atomic<bool> flag{false};
-        ScriptHost h2;
+        ScriptHost h2(testLimits());
         h2.registerFunction("", "stop", [&flag](const ScriptValues&) {
             flag.store(true);
             return ScriptValues{};
@@ -336,7 +350,7 @@ TEST_CASE("scripting: cancellation", "[scripting][cancel]") {
 }
 
 TEST_CASE("scripting: host functions and values", "[scripting]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     host.setValue("carvetto", "answer", 42);
     host.setValue("", "greeting", "hello");
     host.registerFunction("math2", "add", [](const ScriptValues& a) {
@@ -405,7 +419,7 @@ TEST_CASE("scripting: host functions and values", "[scripting]") {
 }
 
 TEST_CASE("scripting: a very small heap limit fails cleanly", "[scripting][hostile]") {
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxMemoryBytes = 2048;
     ScriptHost host(l);
     const auto r = host.run("return 1", "t");
@@ -414,7 +428,7 @@ TEST_CASE("scripting: a very small heap limit fails cleanly", "[scripting][hosti
 
 TEST_CASE("scripting: hostile values crossing the boundary are budgeted", "[scripting][hostile]") {
     // Every case below used to expand to ~60^15 copies (or hang) before the element/byte budget.
-    ScriptHost host;
+    ScriptHost host(testLimits());
     host.registerFunction("", "id", [](const ScriptValues& a) { return a; });
     const char* dag =
         "local l = {1} for i = 1, 15 do local n = {} for j = 1, 60 do n[j] = l end l = n end ";
@@ -442,7 +456,7 @@ TEST_CASE("scripting: hostile values crossing the boundary are budgeted", "[scri
         CHECK_FALSE(r2.ok());
     }
     SECTION("wide table") {
-        ScriptLimits l;
+        ScriptLimits l = testLimits();
         l.maxValueElements = 1000;
         ScriptHost h2(l);
         const auto r = h2.run("local t = {} for i = 1, 5000 do t[i] = i end return t", "t");
@@ -452,7 +466,7 @@ TEST_CASE("scripting: hostile values crossing the boundary are budgeted", "[scri
         CHECK(ok.ok());
     }
     SECTION("long strings inside a table") {
-        ScriptLimits l;
+        ScriptLimits l = testLimits();
         l.maxValueBytes = 100'000;
         ScriptHost h2(l);
         h2.registerFunction("", "id", [](const ScriptValues& a) { return a; });
@@ -465,7 +479,7 @@ TEST_CASE("scripting: hostile values crossing the boundary are budgeted", "[scri
     }
     SECTION("cancellation is polled while converting") {
         std::atomic<bool> flag{false};
-        ScriptHost h2;
+        ScriptHost h2(testLimits());
         h2.registerFunction("", "stop", [&flag](const ScriptValues&) {
             flag.store(true);
             return ScriptValues{};
@@ -478,7 +492,7 @@ TEST_CASE("scripting: hostile values crossing the boundary are budgeted", "[scri
 TEST_CASE("scripting: conversion work is charged to the instruction budget", "[scripting][hostile]") {
     // Host calls that convert big values used to cost ~4 VM instructions each however much they
     // copied, so a loop of them ran for minutes. Conversion in both directions is now paid for.
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxInstructions = 2'000'000;
     ScriptHost host(l);
     std::size_t calls = 0;
@@ -525,7 +539,7 @@ TEST_CASE("scripting: conversion work is charged to the instruction budget", "[s
         CHECK(calls == 0);
     }
     SECTION("the returned value is charged after the run") {
-        ScriptLimits l2;
+        ScriptLimits l2 = testLimits();
         l2.maxInstructions = 100'000;
         ScriptHost h2(l2);
         const auto r = h2.run("local t = {} for i = 1, 8000 do t[i] = i end return t", "t");
@@ -542,7 +556,7 @@ TEST_CASE("scripting: conversion work is charged to the instruction budget", "[s
 }
 
 TEST_CASE("scripting: host function throwing a non-std exception is contained", "[scripting]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     host.registerFunction("", "weird", [](const ScriptValues&) -> ScriptValues { throw 42; });
     const auto r = host.run("local ok, e = pcall(weird) return ok, e", "t");
     REQUIRE(r.ok());
@@ -553,7 +567,7 @@ TEST_CASE("scripting: host function throwing a non-std exception is contained", 
 
 TEST_CASE("scripting: string functions on huge operands are charged", "[scripting][hostile]") {
     // 1000 upper() calls on a 10 MB string must hit the instruction budget quickly.
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxStringBytes = 16u * 1024u * 1024u;
     l.maxAllocationBytes = 32u * 1024u * 1024u;
     ScriptHost host(l);
@@ -584,7 +598,7 @@ struct FakeClock {
 };
 
 ScriptLimits hugeBudgets(FakeClock& clock, std::uint64_t deadlineMs) {
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxInstructions = ~std::uint64_t{0} / 4;
     l.maxPatternSteps = ~std::uint64_t{0} / 4;
     l.maxValueElements = 1u << 24;
@@ -676,7 +690,7 @@ TEST_CASE("scripting: wall-clock deadline backstop (fake clock)", "[scripting][h
 }
 
 TEST_CASE("scripting: per-operation caps keep single C-side operations short", "[scripting][hostile][caps]") {
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxStringBytes = 1u << 20;
     ScriptHost host(l);
     SECTION("concatenation cannot build a string above maxStringBytes") {
@@ -702,7 +716,7 @@ TEST_CASE("scripting: per-operation caps keep single C-side operations short", "
         CHECK(r.status == ScriptStatus::MemoryLimit);
     }
     SECTION("a single block above maxAllocationBytes is refused") {
-        ScriptLimits l2;
+        ScriptLimits l2 = testLimits();
         l2.maxAllocationBytes = 64u * 1024u;
         ScriptHost h2(l2);
         const auto r = h2.run("local t = {} for i = 1, 100000 do t[i] = i end return #t", "t");
@@ -717,7 +731,7 @@ TEST_CASE("scripting: per-operation caps keep single C-side operations short", "
         CHECK(r.returned.at(1).asInt() == 50000);
     }
     SECTION("load refuses a chunk above maxLoadBytes") {
-        ScriptLimits l2;
+        ScriptLimits l2 = testLimits();
         l2.maxLoadBytes = 1000;
         ScriptHost h2(l2);
         const auto r = h2.run(
@@ -732,7 +746,7 @@ TEST_CASE("scripting: per-operation caps keep single C-side operations short", "
 }
 
 TEST_CASE("scripting: real-clock deadline smoke test", "[scripting][hostile][deadline]") {
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxInstructions = ~std::uint64_t{0} / 4;
     l.deadlineMillis = 150;
     ScriptHost host(l);
@@ -742,4 +756,28 @@ TEST_CASE("scripting: real-clock deadline smoke test", "[scripting][hostile][dea
     CHECK(r.status == ScriptStatus::Timeout);
     CHECK(ms >= 100);
     CHECK(ms < 20'000);  // generous: only proves the deadline ends the run
+}
+
+// Guard: scripting tests must not run with default limits (real 5 s wall-clock deadline).
+TEST_CASE("scripting: tests never use default ScriptLimits", "[scripting][lint]") {
+    namespace fs = std::filesystem;
+    const std::regex bad(R"(ScriptLimits\s*\{\s*\}|ScriptLimits\s+\w+\s*;|ScriptHost\s+\w+\s*;|ScriptHost\s*\w*\s*\(\s*\)|ScriptHost\s+\w+\s*\(\s*\{\s*\})");
+    int scanned = 0;
+    std::string offences;
+    for (const auto& e : fs::directory_iterator(CARVETTO_SCRIPTING_TEST_DIR)) {
+        if (e.path().extension() != ".cpp") continue;
+        ++scanned;
+        std::ifstream in(e.path());
+        std::string line;
+        int n = 0;
+        while (std::getline(in, line)) {
+            ++n;
+            if (line.find("lint-ok") != std::string::npos) continue;
+            if (std::regex_search(line, bad))
+                offences += e.path().filename().string() + ":" + std::to_string(n) + ": " + line + "\n";
+        }
+    }
+    CHECK(scanned >= 1);
+    INFO("Use testLimits() (deadlineMillis = 0) instead of default limits:\n" << offences);
+    CHECK(offences.empty());
 }
