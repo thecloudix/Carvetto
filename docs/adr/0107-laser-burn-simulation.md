@@ -78,6 +78,12 @@ the post's dialect open. This ADR records the readings.
 - The interpreter's `LASER_SUPPORT` refusal removed: the NO test fails; the refusal applied to non-laser
   toolpaths: the mill job in the same test fails.
 - `"laser"` written when false: the single-occurrence and absent-key checks.
+- Equivalent survivors: dropping the Dwell clause in `burnMove` (a dwell has zero XY length and no power, so it adds
+  dose 0); dropping the `jetPower > 0` guard (zero power multiplies the dose by 0); `markedCells` using the raw dose
+  rather than min(1, d) (the threshold is at most 1, so both comparisons agree).
+- Open arcs over 180 degrees: the 270-degree CW and CCW test checks doses against a dense-sampling oracle.
+- Laser moves stamped as cuts in time playback: the playback test compares heights with an untouched simulator.
+- Machine `"laser": false` read as true: the machine JSON test.
 - Survivor accepted: the `disc > 0` equivalence above; the 100 000-chord cap of one laser arc is a safety bound not
   reached by a test (an arc of that fineness needs a radius of 1e7 mm on a 1e-3 mm grid).
 

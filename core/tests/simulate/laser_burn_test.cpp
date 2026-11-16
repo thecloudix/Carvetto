@@ -219,6 +219,50 @@ TEST_CASE("T-0325: an arc is marked along its circle", "[simulate][laser]") {
     CHECK(q.darkness(iq, jq) == 0.0f);
 }
 
+TEST_CASE("T-0325: open arcs over 180 degrees, either direction, match a dense-sampling oracle", "[simulate][laser]") {
+    // Centre (10, 5), radius 4. CCW from (14, 5) through north and west to (10, 1): 270 degrees.
+    // CW from (14, 5) through south and west to (10, 9): 270 degrees.
+    constexpr double kPi = 3.14159265358979323846;
+    for (const bool ccw : {true, false}) {
+        Simulator sim(stock());
+        const Move arc = ccw ? Move::arcCCW({10, 1, 0}, {10, 5}) : Move::arcCW({10, 9, 0}, {10, 5});
+        REQUIRE(sim.addLaserToolpath(laserPath({Move::rapid({14, 5, 1}), Move::feed({14, 5, 0}), arc.withJet(100.0)}), kRate, 1));
+        REQUIRE(sim.advanceAll());
+        const auto& hf = sim.heightfield();
+        const auto oracle = [&](std::size_t i, std::size_t j) {
+            const geometry::Vec2 c = hf.centreOf(i, j);
+            constexpr int kSteps = 150000;
+            const double sweep = 1.5 * kPi;
+            const double step = sweep * 4.0 / kSteps;
+            double length = 0.0;
+            for (int k = 0; k < kSteps; ++k) {
+                const double a = (ccw ? 1.0 : -1.0) * sweep * (k + 0.5) / kSteps;
+                const double x = 10.0 + 4.0 * std::cos(a) - c.x;
+                const double y = 5.0 + 4.0 * std::sin(a) - c.y;
+                if (x * x + y * y <= kBeam * kBeam / 4.0) {
+                    length += step;
+                }
+            }
+            return length / kBeam;
+        };
+        // On the 270-degree part (west side, and the quadrant on the far side), on the missing quarter, and on the start.
+        const geometry::Vec2 on = ccw ? geometry::Vec2{6.125, 5.125} : geometry::Vec2{6.125, 4.875};
+        const geometry::Vec2 north = ccw ? geometry::Vec2{10.125, 8.875} : geometry::Vec2{10.125, 1.125};
+        const geometry::Vec2 off = ccw ? geometry::Vec2{12.875, 2.125} : geometry::Vec2{12.875, 7.875};  // the missing quarter
+        const geometry::Vec2 start = {13.875, 5.125};
+        std::size_t covered = 0;
+        for (const geometry::Vec2 p : {on, north, off, start}) {
+            std::size_t i = 0;
+            std::size_t j = 0;
+            REQUIRE(hf.cellAt(p, i, j));
+            const double expected = oracle(i, j);
+            CHECK_THAT(static_cast<double>(sim.burnDoses()[hf.indexOf(i, j)]), WithinAbs(expected, 0.01));
+            covered += expected > 0.05 ? 1 : 0;
+        }
+        CHECK(covered == 3);  // the missing quarter's cell has oracle dose 0
+    }
+}
+
 TEST_CASE("T-0325: playback marks whole moves; seeking back clears; time playback has no partial dose", "[simulate][laser]") {
     Simulator sim(stock());
     REQUIRE(sim.addLaserToolpath(laserPath(line(100.0)), kRate, 1));  // moves: rapid, feed, burn, retract
@@ -236,6 +280,19 @@ TEST_CASE("T-0325: playback marks whole moves; seeking back clears; time playbac
     REQUIRE(t.advanceToTime(0.5 * (t2 + t3)));
     CHECK(t.movesDone() == 2);
     CHECK(t.markedCells() == 0);
+    {
+        // ... and no cut either: with the beam moving below the stock top (a cutter would cut there) the
+        // heightfield stays equal to an untouched simulator's.
+        Simulator deep(stock());
+        REQUIRE(deep.addLaserToolpath(laserPath({Move::rapid({2, 5, 1}), Move::feed({2, 5, -1}),
+                                                 Move::feed({12, 5, -1}).withJet(100.0)}), kRate, 1));
+        const double d1 = deep.moveEndTimes()[1];
+        const double d2 = deep.moveEndTimes()[2];
+        REQUIRE(deep.advanceToTime(0.5 * (d1 + d2)));
+        const Simulator untouched(stock());
+        CHECK(deep.heightfield().cutCells() == 0);
+        CHECK(deep.heightfield().heights() == untouched.heightfield().heights());
+    }
     REQUIRE(t.advanceToTime(t3 + 1e-9));
     CHECK(t.markedCells() == marked);
     // Seek back resets the layer; seeking forward again reproduces it exactly.
