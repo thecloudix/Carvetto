@@ -426,11 +426,47 @@ TEST_CASE("gadget: per-run caps are exact", "[gadget][t0331]") {
             abort = true;
             return spin(q);
         };
+        const auto abortBegin = std::chrono::steady_clock::now();
         const GadgetRunResult r2 = runGadget(doc, tp,
             "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) carvetto.toolpath.create('drill', {i}, {})",
             "g", o);
+        // The polling calculation would run its natural 20 s; the watchdog ends it on Abort.
+        CHECK(std::chrono::steady_clock::now() - abortBegin < std::chrono::seconds(10));
         CHECK(r2.script.status == ScriptStatus::Cancelled);
         CHECK(doc.toolpaths().empty());
+    }
+    SECTION("the watchdog starts with what is LEFT of the calculation budget") {
+        // Real clock, generous margins: budget 1000 ms; the first calculation really uses ~600 ms,
+        // so the second one must be cut after ~400 ms (not after a fresh 1000 ms).
+        o.limits.clockNanos = nullptr;
+        o.gadgetLimits.maxCalculationNanos = 1'000'000'000;
+        GadgetServices tp = fakeToolpathService(doc);
+        int calls = 0;
+        std::chrono::steady_clock::duration secondRan{};
+        tp.createToolpath = [&](const ToolpathRequest& q) {
+            const auto start = std::chrono::steady_clock::now();
+            ++calls;
+            if (calls == 1) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(600));
+            } else {
+                while (q.cancel != nullptr && !q.cancel->load() &&
+                       std::chrono::steady_clock::now() - start < std::chrono::seconds(20)) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                secondRan = std::chrono::steady_clock::now() - start;
+            }
+            ToolpathCreated c;
+            c.message = "not done";
+            return c;
+        };
+        const GadgetRunResult r = runGadget(doc, tp,
+            "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) "
+            "pcall(carvetto.toolpath.create, 'drill', {i}, {}) pcall(carvetto.toolpath.create, 'drill', {i}, {})",
+            "g", o);
+        CHECK(calls == 2);
+        CHECK_FALSE(r.ok());
+        CHECK(contains(r.script.message, "toolpath calculations"));
+        CHECK(secondRan < std::chrono::milliseconds(800));  // a watchdog started with the full limit would take ~1000 ms
     }
     SECTION("the log keeps whole lines up to its byte cap") {
         o.gadgetLimits.maxLogBytes = 10;

@@ -785,7 +785,7 @@ TEST_CASE("scripting: tests never use default ScriptLimits", "[scripting][lint]"
 // ---- T-0331: string-keyed tables, dotted modules, oversized host results ---------------------------
 
 TEST_CASE("scripting: string-keyed tables cross the boundary both ways", "[scripting][t0331]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     host.registerFunction("", "echo", [](const ScriptValues& a) { return a; });
     SECTION("a nested map comes back equal, keys sorted when read") {
         const auto r = host.run("local r = echo({b = 1, a = {x = 2.5, y = 'z'}}) return r.b, r.a.x, r.a.y", "t");
@@ -835,7 +835,7 @@ TEST_CASE("scripting: string-keyed tables cross the boundary both ways", "[scrip
         CHECK(r.returned[1].asString() == "hi");
     }
     SECTION("depth is limited for maps too") {
-        ScriptLimits l;
+        ScriptLimits l = testLimits();
         l.maxValueDepth = 3;
         ScriptHost shallow(l);
         shallow.registerFunction("", "echo", [](const ScriptValues& a) { return a; });
@@ -843,7 +843,7 @@ TEST_CASE("scripting: string-keyed tables cross the boundary both ways", "[scrip
         CHECK(shallow.run("echo({a = {b = 1}})", "t").ok());
     }
     SECTION("a wide map is charged to the budget, a shared one cannot blow up") {
-        ScriptLimits l;
+        ScriptLimits l = testLimits();
         l.maxInstructions = 100'000;
         ScriptHost small(l);
         small.registerFunction("", "echo", [](const ScriptValues& a) { return a; });
@@ -854,7 +854,7 @@ TEST_CASE("scripting: string-keyed tables cross the boundary both ways", "[scrip
 }
 
 TEST_CASE("scripting: dotted module names create nested tables", "[scripting][t0331]") {
-    ScriptHost host;
+    ScriptHost host(testLimits());
     host.registerFunction("a.b", "f", [](const ScriptValues&) { return ScriptValues{ScriptValue(7)}; });
     host.registerFunction("a", "g", [](const ScriptValues&) { return ScriptValues{ScriptValue(8)}; });
     host.setValue("a.b", "k", ScriptValue(9));
@@ -866,7 +866,7 @@ TEST_CASE("scripting: dotted module names create nested tables", "[scripting][t0
 }
 
 TEST_CASE("scripting: an oversized host result says 'value too large'", "[scripting][t0331]") {
-    ScriptLimits l;
+    ScriptLimits l = testLimits();
     l.maxStringBytes = 64u * 1024u;
     l.maxAllocationBytes = 256u * 1024u;
     ScriptHost host(l);

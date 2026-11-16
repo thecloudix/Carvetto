@@ -50,9 +50,10 @@ vendor SDK.
    checked before and after every such call; crossing either, and crossing the dialog cap, fails the run
    and cannot be swallowed by `pcall` (the Session remembers the overrun and fails the run at the end
    whatever the script did). A dialog itself is not interruptible (the user has Abort); a toolpath
-   calculation is: while it runs a watchdog thread (real steady clock, 20 ms poll) raises
-   `ToolpathRequest::cancel` when the calculation outlives what is left of its budget or the user's
-   cancel flag is set, and the session passes that token to `ToolpathJob::run` (the operations that poll
+   calculation is: while it runs a watchdog thread (20 ms poll) raises
+   `ToolpathRequest::cancel` when the calculation outlives what is left of its budget (real steady
+   clock; only when the run does NOT use an injected clock, so tests on the fake clock are fully
+   deterministic) or the user's cancel flag is set, and the session passes that token to `ToolpathJob::run` (the operations that poll
    a cancel token stop; an operation that does not poll one still runs to its end and the run then
    fails at the next check). Every app dialog a gadget opens (message, confirmation, form) has an "Abort gadget" button that
    sets the run's cancel flag (`GadgetRunOptions::cancel`): when the call returns the run ends as
@@ -157,6 +158,17 @@ different-gadget check removed; in the Qt self-test: `makePlain` dropped from th
 install/confirm box, a form label built as a default (AutoText) label, and `setTextFormat` removed from
 `makePlainLabel`. Not covered by a test: the real-time watchdog under a calculation that never polls its
 token (documented above: it then runs to its end and the run fails at the next check).
+
+Round 4 (tests only, plus one fix): the watchdog no longer trips on the real clock when a clock is
+injected (a 3000 ns fake-clock budget was tripped by any preemption; 1 failure in 150 runs under a CPU
+hog, now 0 in 200 under a hog on all cores). Survivors of round 3, each now applied by hand, seen
+failing, reverted: the watchdog ignoring the user's Abort (`|| s_.cancelled()` removed; the Abort test
+now bounds the run well under the calculation's natural 20 s), the watchdog started with the full
+limit instead of what is left (real-clock test: 1000 ms budget, 600 ms used, the second calculation
+must be cut well before 800 ms); in the Qt self-test: `makePlain` removed from the gadget error dialog
+(summary and details of a hostile report must be literal, no links), `makePlain` removed from the
+"not a gadget" warning, and the Gadgets menu tooltip set without `plainToolTip` (hostile `<a>` in a
+manifest description).
 
 The verifier of round 1 found four survivors that round 1 had wrongly counted as killed or never tried,
 all now killed (each applied by hand, test seen failing, reverted): removing the pause around

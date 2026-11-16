@@ -249,19 +249,50 @@ std::string gadgetsSelfTest(MainWindow& window) {
                "the error report does not name line 3");
     GD_REQUIRE(snapshot() == before, "a failing gadget changed the document");
     {
+        // The report text comes from the gadget (script output, error messages): it must be literal.
+        viewmodel::GadgetErrorReport hostile = *bad.error;
+        hostile.summary = "<a href=\"https://example.com\">click</a> <b>bold</b>";
+        hostile.detail = "gadget.lua:3: <img src=\"file:///etc/hostname\">";
         QString shownText;
         QString shownDetail;
+        bool shownPlain = false;
+        bool shownNoLinks = false;
+        bool shownDialog = false;
         QTimer::singleShot(100, [&]() {
             if (auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget())) {
                 if (box->objectName() == QStringLiteral("gadgetErrorDialog")) {
+                    shownDialog = true;
                     shownText = box->text();
                     shownDetail = box->detailedText();
+                    shownPlain = box->textFormat() == Qt::PlainText;
+                    shownNoLinks = true;
+                    for (QLabel* label : box->findChildren<QLabel*>()) {
+                        const Qt::TextInteractionFlags flags = label->textInteractionFlags();
+                        if (label->objectName() == QStringLiteral("qt_msgbox_label") &&
+                            ((flags & Qt::LinksAccessibleByMouse) != 0 || (flags & Qt::LinksAccessibleByKeyboard) != 0)) {
+                            shownNoLinks = false;
+                        }
+                    }
                 }
                 box->accept();
             }
         });
+        showGadgetError(&window, hostile);
+        GD_REQUIRE(shownDialog && shownText == QString::fromStdString(hostile.summary) && shownDetail == QString::fromStdString(hostile.detail),
+                   "the error dialog does not show the summary and the details literally");
+        GD_REQUIRE(shownPlain && shownNoLinks, "the error dialog interprets markup or offers links");
+        // and the real report of the broken gadget reads as before
+        QString realText;
+        QString realDetail;
+        QTimer::singleShot(100, [&]() {
+            if (auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget())) {
+                realText = box->text();
+                realDetail = box->detailedText();
+                box->accept();
+            }
+        });
         showGadgetError(&window, *bad.error);
-        GD_REQUIRE(shownText.contains(QStringLiteral("Your drawing was not changed")) && shownDetail.contains(QStringLiteral("gadget.lua:3:")),
+        GD_REQUIRE(realText.contains(QStringLiteral("Your drawing was not changed")) && realDetail.contains(QStringLiteral("gadget.lua:3:")),
                    "the error dialog does not show the summary and the details");
     }
 
@@ -435,6 +466,22 @@ std::string gadgetsSelfTest(MainWindow& window) {
         GD_REQUIRE(sawBox && plain && noLinks && seenText.contains(QStringLiteral("<b>Evil</b>")) &&
                        seenText.contains(QStringLiteral("<a href='https://example.com'>go</a>")) && !declined.has_value(),
                    "the install question does not show the manifest text literally");
+
+        // a folder that is not a gadget: the warning shows the folder's own text literally too
+        sawBox = false;
+        inspect("OK");
+        const auto notGadget = installGadgetDialog(&window, gadgets->manager(), root / "junk", {});
+        GD_REQUIRE(sawBox && !notGadget.has_value() && seenText.startsWith(QStringLiteral("This folder is not a gadget")),
+                   "the 'not a gadget' warning was not shown");
+        GD_REQUIRE(plain && noLinks, "the 'not a gadget' warning does not show its text literally");
+
+        // the menu tooltip of an installed gadget escapes the manifest description
+        const auto evilInstalled = gadgets->installGadget(evil);  // quiet: confirmations answer yes
+        GD_REQUIRE(evilInstalled.has_value() && evilInstalled->ok, "the hostile-description gadget was not installed");
+        QAction* evilAction = actionNamed(*gadgets, QStringLiteral("Evil"));
+        GD_REQUIRE(evilAction != nullptr, "the hostile-description gadget is not in the menu");
+        GD_REQUIRE(evilAction->toolTip().contains(QStringLiteral("&lt;a href")) && !evilAction->toolTip().contains(QStringLiteral("<a ")),
+                   "the menu tooltip renders the manifest description as markup");
     }
 
     gadgets->setUiOverride(std::nullopt);

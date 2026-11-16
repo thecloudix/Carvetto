@@ -80,6 +80,7 @@ struct Session {
     Session(Document& d, const GadgetServices& se, const GadgetLimits& g) : doc(d), sv(se), gl(g) {}
 
     std::function<std::uint64_t()> base;
+    bool clockInjected{false};  ///< the run uses `ScriptLimits::clockNanos` (tests): no real-clock watchdog trip
     std::uint64_t pausedNs{0};   ///< all time spent in host callbacks: stopped on the deadline clock
     std::uint64_t dialogNs{0};   ///< ... of which dialogs (user time; budget `maxPausedNanos`)
     std::uint64_t calcNs{0};     ///< ... of which toolpath calculation (budget `maxCalculationNanos`)
@@ -115,7 +116,10 @@ struct Session {
     /// budget is still done on the injected clock by `Pause`.
     class Watchdog {
     public:
-        Watchdog(Session& s, std::uint64_t remainingNs) : s_(s), remaining_(remainingNs) {
+        /// `timed` is false when the run uses an injected clock: then the budget is accounted
+        /// exactly (and deterministically) by `Pause` on that clock and only the user's Abort is
+        /// watched here; the real steady clock must not decide anything.
+        Watchdog(Session& s, std::uint64_t remainingNs, bool timed) : s_(s), remaining_(remainingNs), timed_(timed) {
             thread_ = std::thread([this] { loop(); });
         }
         ~Watchdog() {
@@ -138,7 +142,7 @@ struct Session {
                 const auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(
                                          std::chrono::steady_clock::now() - start)
                                          .count();
-                const bool over = static_cast<std::uint64_t>(elapsed) > remaining_;
+                const bool over = timed_ && static_cast<std::uint64_t>(elapsed) > remaining_;
                 if (over || s_.cancelled()) {
                     if (over) {
                         tripped_ = true;
@@ -151,6 +155,7 @@ struct Session {
         }
         Session& s_;
         std::uint64_t remaining_;
+        bool timed_;
         std::mutex m_;
         std::condition_variable cv_;
         bool done_{false};
@@ -184,7 +189,7 @@ struct Session {
             Pause pause(*this, bucket);
             if (kind == Wait::Calculation) {
                 calcCancel = false;
-                Watchdog dog(*this, limit - bucket);
+                Watchdog dog(*this, limit - bucket, !clockInjected);
                 struct Done {
                     Watchdog& d;
                     bool& flag;
@@ -851,6 +856,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
     s.cancel = options.cancel;
     ScriptLimits limits = options.limits;
     if (limits.clockNanos) {
+        s.clockInjected = true;
         s.base = limits.clockNanos;
     } else {
         s.base = [] {
