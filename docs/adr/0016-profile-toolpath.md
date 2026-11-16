@@ -405,6 +405,7 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     kerf, and the distance to the vectors is computed for blocks of 4 × 4 cells whose centre lies
     further than the block's radius from the thresholds (the distance is 1-Lipschitz; results are
     unchanged, cost is not: below). End mills are unchanged, moves and diagnostics byte-identical.
+    **(l) fixed by T-0279 (ADR-0096):** the "no waste near" answer is now exact; the paragraph below is kept as the history.
     **Not fixed (T-0177 (l)):** a tab round the bottom corner of a notch whose two kerfs leave a
     sliver of waste narrower than three raster cells is kept as holding "a hole smaller than the
     kerf" although the tools at its ends seal it off (m0_271016_20 at VectorStart/Outside: a 6.8 mm
@@ -619,6 +620,10 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     that would hold costs a tab, not a part), and the replacement is a change of the tab check's
     resolution for a handful of scenes in a 123,274-scene screen. Open for the project owner if
     it matters: the exact capsule-union judge for (i), (j), (l).
+    **T-0279 (ADR-0096):** (l) is fixed by an exact capsule-union judge for the raster's "no waste near" answer;
+    (i) is split off to T-0318 (open: its scenes are not in the archive); (j) is argued not to be a judge defect
+    (where another place would hold is the placement's business) but was not measured; (f) 9302_2199 is
+    unchanged (sided judge).
     **Triage of the T-0158 verifier's repros (T-0167, on main after T-0156, whole-scene flood of
     the moves, leads off unless said).** Fixed: m2_1330000_9 (V-bit tabs judged at the top
     radius, Tab layer above; both starts). Not fixed, as on main: m0_271016_20 at VectorStart/Outside

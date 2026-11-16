@@ -32,6 +32,7 @@
 #include "carvetto/toolpath/path_walk.hpp"
 #include "block_settle.hpp"
 #include "enclosed_pieces.hpp"
+#include "exact_tab_judge.hpp"
 #include "carvetto/geometry/cancel.hpp"
 #include "work_meter.hpp"
 
@@ -62,11 +63,8 @@ struct Taper {
 /// The sharp-internal-corner moves of a V-bit at one inside corner of a cut (cornerMoves), planned
 /// before the tabs are judged so the tab check and the loose-piece search see the cuts they make.
 /// It happens only where the cut is at full depth, so not within a kept tab's footprint.
-/// A tool position that cuts a disc smaller than the tab-layer radius (a V-bit's corner moves).
-struct ToolDisc {
-    Vec2 p{};
-    double rho{0.0};
-};
+using detail::ExactTools;
+using detail::ToolDisc;
 
 struct Excursion {
     std::size_t kink{0};        // index in cut.walk.kinks(1e-3)
@@ -891,7 +889,7 @@ class ProfileBuilder {
                 bool coverOnly = false) const;
     std::vector<TabSection> tabSections(const Cut& c, const TabSpan& t, bool coverOnly = false, double kerf = -1.0) const;
     bool tabHolds(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools,
-                  const std::vector<ToolDisc>& toolsX) const;
+                  const std::vector<ToolDisc>& toolsX, const std::function<ExactTools()>& exact) const;
     /// What becomes of a tab: it holds, the tools cut it through, or it would hold nothing (the
     /// cut leaves fewer than two pieces of material near it).
     enum class TabFate { Holds, Severed, Empty };
@@ -2230,7 +2228,7 @@ ProfileBuilder::MatchExtras ProfileBuilder::matchRoughingTabs(std::vector<Cut>& 
 // than the kerf). So a tab whose material the tools seal off from the waste (both ends of a short
 // raised stretch round a sharp turn of the cut, or a narrow arm) does not hold.
 bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools,
-                              const std::vector<ToolDisc>& toolsX) const {
+                              const std::vector<ToolDisc>& toolsX, const std::function<ExactTools()>& exact) const {
     const double h = std::max(0.05, radius_ / 40.0);
     // The tool at the tab layer (T-0167: a V-bit's cone there, not its radius at the top of the cut).
     const double rk = tabLayerRadius();
@@ -2321,7 +2319,9 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
         }
     }
     if (!anyWaste) {
-        return true;  // no waste beyond the kerf near the tab: nothing to hold on to
+        // No waste beyond the kerf that the cells can see: a hole smaller than the kerf (nothing to hold
+        // on to), or a sliver between two kerfs that the tools at the tab's ends may seal off (T-0279).
+        return detail::exactNoWasteHolds(box, exact(), rk, offTol_, p_.corners.mitreLimit);
     }
     // Cut cells, a row of each tool's disc at a time.
     auto stamp = [&](Vec2 q, double rr) {
@@ -3148,7 +3148,55 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                 }
             }
         }
-        return tabHolds(ownCut, own.span, tools, toolsX) ? TabFate::Holds : TabFate::Severed;
+        // The exact view of the same tools, built only when the raster needs it (T-0279): runs of
+        // consecutive samples as capsules; the other live tabs' raised stretches count as cut, the
+        // corner moves a live tab of another group covers are not made, this tab's own are added when
+        // it is lowered.
+        auto exactTools = [&]() {
+            ExactTools ex;
+            std::vector<std::size_t> cutIdx;
+            std::vector<std::size_t> ownIdx;
+            for (long cx = cellOf(rb.min.x); cx <= cellOf(rb.max.x); ++cx) {
+                for (long cy = cellOf(rb.min.y); cy <= cellOf(rb.max.y); ++cy) {
+                    const auto it = grid.find({cx, cy});
+                    if (it == grid.end()) continue;
+                    for (std::size_t i : it->second) {
+                        const Sample& q = samples[i];
+                        switch (detail::classifyTool(q.rho >= 0.0, q.coveredBy, g, alive)) {
+                            case detail::ToolSide::Skip: break;
+                            case detail::ToolSide::Own:
+                                if (q.rho >= 0.0) ex.ownX.push_back({q.p, q.rho}); else ownIdx.push_back(i);
+                                break;
+                            case detail::ToolSide::Cut:
+                                if (q.rho >= 0.0) ex.cutX.push_back({q.p, q.rho}); else cutIdx.push_back(i);
+                                break;
+                        }
+                    }
+                }
+            }
+            auto runs = [&](std::vector<std::size_t>& idx, std::vector<std::vector<Vec2>>& out) {
+                std::sort(idx.begin(), idx.end(), [&](std::size_t x, std::size_t y) {
+                    const Sample& a = samples[x];
+                    const Sample& b = samples[y];
+                    return std::tie(a.second, a.cut, a.u, x) < std::tie(b.second, b.cut, b.u, y);
+                });
+                for (std::size_t k = 0; k < idx.size(); ++k) {
+                    const Sample& q = samples[idx[k]];
+                    if (k > 0) {
+                        const Sample& pq = samples[idx[k - 1]];
+                        if (pq.second == q.second && pq.cut == q.cut && q.u - pq.u <= h + 1e-9) {
+                            out.back().push_back(q.p);
+                            continue;
+                        }
+                    }
+                    out.push_back({q.p});
+                }
+            };
+            runs(cutIdx, ex.cutRuns);
+            runs(ownIdx, ex.ownRuns);
+            return ex;
+        };
+        return tabHolds(ownCut, own.span, tools, toolsX, exactTools) ? TabFate::Holds : TabFate::Severed;
     };
     // Worklist, lowest group first: dropping a group exposes the samples its raised stretches
     // protected, so the live groups whose material lies within reach of them are checked again.
