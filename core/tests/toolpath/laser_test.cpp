@@ -306,6 +306,41 @@ TEST_CASE("T-0323: overscan runs the beam off before and after each hatch line",
     CHECK(run({line({0, 0}, {10, 0})}, c).toolpath.moves.size() == 3);
 }
 
+TEST_CASE("T-0323: a hatch allowance insets the filled region", "[toolpath][laser]") {
+    LaserCutFillParams p = hatchParams();
+    p.allowance = 1.4;
+    const LaserCutFillResult r = run({square(0, 0, 10, 10)}, p);
+    REQUIRE(r.ok());
+    // Inset by beam radius 0.1 plus allowance 1.4 = 1.5: region 1.5..8.5, lines at y = 2..8.
+    CHECK(r.strokes == 7);
+    const std::vector<Move> ms = beamMoves(r);
+    REQUIRE(ms.size() == 7);
+    for (std::size_t i = 0; i < ms.size(); ++i) {
+        CHECK(ms[i].to.y == Approx(static_cast<double>(i + 2)).margin(1e-9));
+        CHECK(ms[i].to.x == Approx(i % 2 == 0 ? 8.5 : 1.5).margin(1e-6));
+    }
+    const Box2 b = boundsOf(ms);
+    CHECK(b.min.x == Approx(1.5).margin(1e-6));
+    CHECK(b.max.x == Approx(8.5).margin(1e-6));
+}
+
+TEST_CASE("T-0323: a small overscan still adds the overscan moves", "[toolpath][laser]") {
+    LaserCutFillParams p = hatchParams();
+    p.overscan = 0.2;
+    const LaserCutFillResult r = run({square(0, 0, 10, 10)}, p);
+    REQUIRE(r.ok());
+    const std::vector<Move>& m = r.toolpath.moves;
+    REQUIRE(m.size() == 9 * 4 + 1);
+    CHECK(m[0].kind == MoveKind::Rapid);
+    CHECK(m[0].to.x == Approx(0.1 - 0.2).margin(1e-6));
+    CHECK(m[1].jetPower == 0.0);
+    CHECK(m[1].to.x == Approx(0.1).margin(1e-6));
+    CHECK(m[2].jetPower == 40.0);
+    CHECK(m[2].to.x == Approx(9.9).margin(1e-6));
+    CHECK(m[3].jetPower == 0.0);
+    CHECK(m[3].to.x == Approx(10.1).margin(1e-6));
+}
+
 TEST_CASE("T-0323: cut depth sets the number of passes and repeats rerun each pass", "[toolpath][laser]") {
     LaserCutFillParams p;
     p.strategy = LaserStrategy::CutOn;

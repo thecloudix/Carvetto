@@ -85,3 +85,11 @@ parsed but never emitted. The card leaves open how the beam is represented in a 
 - T-0324/T-0325 build on `Move::jetPower`, `ToolSnapshot::laser`, the `JET_POWER` tag and `laserCutFillToolpath`.
 - Product readings to confirm with the owner: the end-mill beam model, repeats at the same Z, overscan on hatch only,
   the inset by beam radius for hatch fill, outline after fill.
+
+
+## Mutation notes
+Two hand mutants survived the first verification and are now killed by tests in `laser_test.cpp`:
+- Hatch inset sign (`r + allowance` read as `r - allowance`): "a hatch allowance insets the filled region" fills a
+  10 mm square with allowance 1.4 and asserts seven lines (y = 2..8) spanning x 1.5..8.5.
+- Overscan gate (`overscan > 0.0` read as `> 0.5`): "a small overscan still adds the overscan moves" uses 0.2 mm
+  and asserts the four-moves-per-stroke layout with 0.2 mm off-beam runs.
