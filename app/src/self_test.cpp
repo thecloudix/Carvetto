@@ -66,6 +66,7 @@
 #include "transform_menu.hpp"
 #include "trace_dialog.hpp"
 #include "texture_menu.hpp"
+#include "clipart_panel.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
 
@@ -1079,6 +1080,12 @@ int runSelfTest() {
 
     // 14. Create Job Sheet (T-0259): HTML, text and PDF files, hostile paths refused.
     if (const std::string why = jobSheetSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 15. Clipart library browser (T-0333): folders, worker-thread thumbnails, search, favourites,
+    // insert and drop as single undo steps, hostile files refused.
+    if (const std::string why = clipartSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

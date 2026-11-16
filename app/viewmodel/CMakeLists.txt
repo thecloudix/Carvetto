@@ -56,6 +56,10 @@ add_library(carvetto_viewmodel STATIC
   src/dxf_exchange.cpp
   src/parts_import_form.cpp
   src/bitmap_import.cpp
+  src/clipart_files.cpp
+  src/clipart_thumbnail.cpp
+  src/clipart_library.cpp
+  src/clipart_insert.cpp
   src/file_session.cpp
   src/node_edit.cpp
   src/node_ops.cpp

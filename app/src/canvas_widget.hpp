@@ -21,6 +21,9 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 
+class QDragEnterEvent;
+class QDragMoveEvent;
+class QDropEvent;
 class QEvent;
 class QKeyEvent;
 class QMouseEvent;
@@ -123,6 +126,9 @@ class CanvasWidget : public QWidget {
     std::function<void()> onToolStateChanged;
     /// Called with the document position under the mouse.
     std::function<void(geometry::Vec2)> onCursorMoved;
+    /// Clipart (T-0333): an SVG, DXF or PNG file was dropped on the canvas (from the clipart browser
+    /// or the file manager); the path (UTF-8) and the drop point in document millimetres.
+    std::function<void(const std::string& path, geometry::Vec2 mm)> onFileDropped;
     /// NodeEdit tool (T-0206): a right click without drag at a widget position (global position,
     /// widget pixels); the window shows the span / node menu.
     std::function<void(const QPoint& globalPos, geometry::Vec2 px)> onNodeContextMenu;
@@ -139,6 +145,9 @@ class CanvasWidget : public QWidget {
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     bool focusNextPrevChild(bool next) override;
