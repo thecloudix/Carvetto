@@ -1623,7 +1623,7 @@ RE-SCOPED 2026-11-16 after three verifier FAILs (round 1: shared-table conversio
 Acceptance criteria:
   1. Scripts run with the documented limits and are cancellable; hostile scripts are stopped; core builds on all CI platforms; ADR with the API design for owner review.
 
-### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: ready]
+### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: in-progress]
 Phase: 3   Module: core/scripting + app/viewmodel + app   Depends on: T-0330
 Goal: Bind the designed API: read/create/modify vectors and layers, selection, document variables, create toolpaths, show simple input forms; all edits go through undoable commands (one undo step per gadget run); gadget discovery (folder of scripts with a manifest), Gadgets menu built at startup, Install New Gadget, Gadget Shortcuts (Ctrl+F-key), error dialog.
 Also (from the T-0330 verifier): make host-callback failures for oversized values report 'value too large' instead of the vague 'host function threw an unknown exception', and add the Lua MIT notice to the shipped third-party notices.
@@ -1636,7 +1636,7 @@ Goal: Port the stock gadget behaviours as original scripts shipped with the app:
 Acceptance criteria:
   1. Each gadget produces the documented output on test inputs; install path works; ADR/doc per gadget.
 
-### T-0333 Clipart library browser (local folders)   [status: ready — LOW]
+### T-0333 Clipart library browser (local folders)   [status: in-progress]
 Phase: 3   Module: app + core/io   Depends on: —
 Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (SVG, DXF, PNG), thumbnails generated off the UI thread and cached, search by name, drag/insert into the drawing at the cursor/centre with scale-to-fit, favourites; no online store. Thumbnail cache size bounded; hostile files refused with clear messages.
 Acceptance criteria:
