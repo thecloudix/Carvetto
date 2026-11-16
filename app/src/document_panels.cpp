@@ -6,6 +6,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QFormLayout>
+#include <QLabel>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLineEdit>
@@ -286,6 +287,7 @@ SheetsPanel::SheetsPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
     outer->addLayout(row);
 
     auto* form = new QFormLayout();
+    sizeForm_ = form;
     width_ = new QLineEdit(this);
     height_ = new QLineEdit(this);
     thickness_ = new QLineEdit(this);
@@ -394,11 +396,28 @@ void SheetsPanel::fillForm() {
     }
     const document::Sheet& sheet = d->sheets()[static_cast<std::size_t>(row)];
     const document::Units u = d->job().displayUnits;
+    const bool rotary = d->job().type == document::JobType::Rotary;
+    const char* labels[3] = {rotary ? "Length (along the cylinder)" : "Material width",
+                             rotary ? "Circumference (flat design height)" : "Material height",
+                             rotary ? "Diameter (set in Material Setup)" : "Thickness"};
+    int labelIndex = 0;
+    for (QLineEdit* edit : {width_, height_, thickness_}) {
+        if (auto* label = qobject_cast<QLabel*>(sizeForm_->labelForField(edit))) {
+            label->setText(QString::fromLatin1(labels[labelIndex]));
+        }
+        ++labelIndex;
+    }
+    height_->setReadOnly(rotary);
+    thickness_->setReadOnly(rotary);
     const QString suffix = QStringLiteral(" ") + QString::fromUtf8(document::unitSuffix(u).data());
     const bool wasRefreshing = refreshing_;
     refreshing_ = true;
-    width_->setText(qs(viewmodel::formatLength(sheet.sizeMm.x, u)) + suffix);
-    height_->setText(qs(viewmodel::formatLength(sheet.sizeMm.y, u)) + suffix);
+    const double lengthMm =
+        rotary && d->job().rotaryAxis == document::RotaryAxis::Y ? sheet.sizeMm.y : sheet.sizeMm.x;
+    const double circumferenceMm =
+        rotary && d->job().rotaryAxis == document::RotaryAxis::Y ? sheet.sizeMm.x : sheet.sizeMm.y;
+    width_->setText(qs(viewmodel::formatLength(lengthMm, u)) + suffix);
+    height_->setText(qs(viewmodel::formatLength(circumferenceMm, u)) + suffix);
     thickness_->setText(qs(viewmodel::formatLength(sheet.sizeMm.z, u)) + suffix);
     zZero_->setCurrentIndex(static_cast<int>(sheet.zZero));
     datum_->setCurrentIndex(static_cast<int>(sheet.datum));
@@ -450,8 +469,11 @@ bool SheetsPanel::setMaterial(int row, const std::string& width, const std::stri
         *out = n.value;
         return true;
     };
-    if (!parse(width, &edit.widthMm, "width") || !parse(height, &edit.heightMm, "height") ||
-        !parse(thickness, &edit.thicknessMm, "thickness")) {
+    const bool rotary = d->job().type == document::JobType::Rotary;
+    const bool parsed = rotary ? parse(width, &edit.lengthMm, "length")
+                               : parse(width, &edit.widthMm, "width") && parse(height, &edit.heightMm, "height") &&
+                                     parse(thickness, &edit.thicknessMm, "thickness");
+    if (!parsed) {
         fillForm();
         return false;
     }

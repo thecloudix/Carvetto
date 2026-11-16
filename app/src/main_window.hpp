@@ -117,8 +117,10 @@ class MainWindow : public QMainWindow {
     /// Setup > Job Setup... (edits the open job, one undo step) and Setup > Tools, Machines and
     /// Materials... (T-0235). The dialogs are modal; the self-test drives the dialog classes directly.
     QAction* jobSetupAction() const { return jobSetupAction_; }
+    QAction* materialSetupAction() const { return materialSetupAction_; }
     QAction* toolSetupAction() const { return toolSetupAction_; }
     void jobSetupDialog();
+    void materialSetupDialog();
     void toolSetupDialog();
     /// Edit > Document Variables... (T-0257): the variables dialog (modal); every edit is one undo step.
     QAction* variablesAction() const { return variablesAction_; }
@@ -222,6 +224,7 @@ class MainWindow : public QMainWindow {
     QAction* saveToolpathsAction_{nullptr};
     QAction* createJobSheetAction_{nullptr};
     QAction* jobSetupAction_{nullptr};
+    QAction* materialSetupAction_{nullptr};
     QAction* toolSetupAction_{nullptr};
     QAction* variablesAction_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;

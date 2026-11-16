@@ -20,6 +20,8 @@ struct NewJobForm {
     double length{300.0};
     double diameter{50.0};
     document::RotaryAxis rotaryAxis{document::RotaryAxis::X};
+    /// Rotary jobs: "Flip Design" (T-0319).
+    bool flipDesign{false};
     document::FlipDirection flip{document::FlipDirection::Horizontal};
     /// Double-sided jobs: "Zero off same side" (T-0261).
     bool zeroOffSameSide{false};

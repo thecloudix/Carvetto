@@ -44,6 +44,7 @@ add_executable(carvetto_viewmodel_tests
   array_copies_test.cpp
   pixel_probe_test.cpp
   new_job_form_test.cpp
+  rotary_material_test.cpp
   file_session_test.cpp
   node_edit_fuzz_test.cpp
   node_edit_test.cpp

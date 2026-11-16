@@ -56,8 +56,11 @@ struct SheetMaterialEdit {
     std::optional<double> thicknessMm;
     std::optional<document::ZZero> zZero;
     std::optional<document::Datum> datum;
+    /// Rotary jobs only (T-0319): the sheet's length along the cylinder axis. A rotary sheet's diameter
+    /// is the job's (Material Setup); the width, height and thickness edits are refused for it.
+    std::optional<double> lengthMm;
 };
-/// Edits the per-sheet material block. Sizes must be finite, positive and at most `kMaxSheetSizeMm`.
+/// Edits the per-sheet material block (for a rotary job: length, Z-zero cylinder surface/axis and datum). Sizes must be finite, positive and at most `kMaxSheetSizeMm`.
 EditResult setSheetMaterial(document::Document& doc, document::SheetId id, const SheetMaterialEdit& edit);
 
 // --- Double-sided jobs (T-0243) ---------------------------------------------------------------

@@ -45,6 +45,7 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
+#include "rotary_self_test.hpp"
 #include "main_window.hpp"
 #include "job_sheet_self_test.hpp"
 #include "node_edit_menu.hpp"
@@ -832,6 +833,11 @@ int runSelfTest() {
 
     // 9c. Double-sided jobs: setup, swap sides, copy across, per-side posts (T-0261).
     if (const std::string why = doubleSidedSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c2. Rotary jobs: Job Setup, Material Setup, Edit Sheet and a save/reload (T-0319).
+    if (const std::string why = rotarySelfTest(window); !why.empty()) {
         return fail(why);
     }
 

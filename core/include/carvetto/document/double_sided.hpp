@@ -28,7 +28,7 @@ geometry::Box2 flipBox(const geometry::Box2& material, FlipDirection direction, 
 /// job puts it. `MaterialSurface`: the face being cut is at 0. `MachineBed`: the face against the
 /// bed is at 0, so the cut face is at `thicknessMm`. With `zeroOffSameSide` both sides share one
 /// physical zero face, the one the front side used: after the flip it is the bed face (surface
-/// zero) or the cut face (bed zero). `CylinderAxis` is treated as the surface.
+/// zero) or the cut face (bed zero). `CylinderAxis` (rotary; `thicknessMm` is the diameter) gives the radius.
 double materialTopZ(ZZero zero, bool zeroOffSameSide, double thicknessMm, Side side);
 
 /// `moves` with `dz` added to every Z (toolpaths are computed with the cut face at Z = 0).

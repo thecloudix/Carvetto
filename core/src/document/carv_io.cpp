@@ -666,6 +666,10 @@ json encodeJob(const Job& job) {
     j["diameter_mm"] = job.diameterMm;
     j["rotary_axis"] = nameOf(kAxes, job.rotaryAxis);
     j["flip_design"] = job.flipDesign;
+    if (job.gapOutsideMm != 0.0 || job.gapInsideMm != 0.0) {
+        j["gap_outside_mm"] = job.gapOutsideMm;
+        j["gap_inside_mm"] = job.gapInsideMm;
+    }
     return j;
 }
 
@@ -1750,10 +1754,13 @@ class Record {
     std::uint64_t seen_{0};
 };
 
-constexpr std::array<std::string_view, 11> kJobKeys{
+constexpr std::array<std::string_view, 13> kJobKeys{
     "type",        "size_mm",         "display_units",  "z_zero",
     "datum",       "datum_offset_mm", "flip_direction", "zero_off_same_side",
-    "diameter_mm", "rotary_axis",     "flip_design"};
+    "diameter_mm", "rotary_axis",     "flip_design",
+    // Optional (1.14, T-0319): the rotary model gaps, written only when non-zero.
+    "gap_outside_mm", "gap_inside_mm"};
+constexpr std::size_t kJobRequiredKeys = 11;
 
 Job decodeJob(JsonReader& r, const Path& p, ExtraMap& unknown) {
     Record rec(r, p, kJobKeys);
@@ -1783,11 +1790,27 @@ Job decodeJob(JsonReader& r, const Path& p, ExtraMap& unknown) {
             job.rotaryAxis = readEnum(r, f, kAxes);
         } else if (k == "flip_design") {
             job.flipDesign = readBool(r, f);
+        } else if (k == "gap_outside_mm" || k == "gap_inside_mm") {
+            const double v = readFinite(r, f);
+            if (!(v >= 0.0)) {
+                fail(f, "must be a finite number of at least zero");
+            }
+            (k == "gap_outside_mm" ? job.gapOutsideMm : job.gapInsideMm) = v;
         } else {
             rec.keep(unknown);
         }
     }
-    rec.requireAll();
+    for (std::size_t i = 0; i < kJobRequiredKeys; ++i) {
+        rec.require(kJobKeys[i]);
+    }
+    if (job.gapOutsideMm != 0.0 || job.gapInsideMm != 0.0) {
+        if (job.type != JobType::Rotary) {
+            fail(p, "the model gaps belong to a rotary job");
+        }
+        if (!(job.modelThicknessMm() > 0.0)) {
+            fail(p, "the model gaps leave no model thickness inside the cylinder");
+        }
+    }
     return job;
 }
 
@@ -5289,7 +5312,7 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                 }
             }
         }
-        // The minor is the highest one any used feature requires: relief (1.9, T-0282), toolpath calculation expressions (1.8, T-0271), toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
+        // The minor is the highest one any used feature requires: rotary model gaps (1.14, T-0319), relief (1.9, T-0282), toolpath calculation expressions (1.8, T-0271), toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
         // dimension objects (1.3, T-0246), text/fonts (1.2); otherwise the base minor.
         const bool usesKeepOut =
             !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible() ||
@@ -5312,6 +5335,7 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                        return c.data.appearance.kind != relief::AppearanceKind::SameAsParent;
                    });
         });
+        const bool usesRotaryGaps = doc.job().gapOutsideMm != 0.0 || doc.job().gapInsideMm != 0.0;
         const bool usesGroups = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(),
                                             [](const ToolpathRecord& tp) { return tp.group.id != 0; });
         const bool usesPriors = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
@@ -5321,7 +5345,8 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         const bool usesLaser = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
             return tp.operation() == ToolpathOperation::LaserCutFill;
         });
-        version["minor"] = usesLaser ? kCarvFormatMinorLaser
+        version["minor"] = usesRotaryGaps ? kCarvFormatMinorRotaryGaps
+                           : usesLaser ? kCarvFormatMinorLaser
                            : usesAppearance ? kCarvFormatMinorAppearance
                            : (usesGroups || usesPriors) ? kCarvFormatMinorToolGroups
                            : usesEffects          ? kCarvFormatMinorLevelEffects

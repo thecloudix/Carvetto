@@ -287,6 +287,41 @@ EditResult setSheetMaterial(Document& doc, document::SheetId id, const SheetMate
         return refused("the sheet no longer exists");
     }
     document::Sheet next = *sheet;
+    const document::Job& job = doc.job();
+    if (job.type == document::JobType::Rotary) {
+        if (edit.widthMm || edit.heightMm || edit.thicknessMm) {
+            return refused("a rotary sheet is edited by its length; the diameter is set in Material Setup");
+        }
+        if (edit.zZero && *edit.zZero == document::ZZero::MachineBed) {
+            return refused("a rotary sheet zeroes on the cylinder surface or the cylinder axis");
+        }
+        if (edit.lengthMm) {
+            if (!sizeOk(*edit.lengthMm)) {
+                return refused("the length must be a positive number of at most " +
+                               std::to_string(static_cast<long long>(kMaxSheetSizeMm)) + " mm");
+            }
+            document::Job shape = job;
+            shape.setRotaryMm(*edit.lengthMm, job.diameterMm);
+            next.sizeMm = shape.sizeMm;
+        }
+        if (edit.zZero) {
+            next.zZero = *edit.zZero;
+        }
+        if (edit.datum) {
+            next.datum = *edit.datum;
+        }
+        if (next == *sheet) {
+            return {};
+        }
+        return run(doc, std::make_unique<document::SetSheetPropertiesCommand>(std::move(next)),
+                   "the material cannot be changed");
+    }
+    if (edit.lengthMm) {
+        return refused("only a rotary sheet has a length");
+    }
+    if (edit.zZero && *edit.zZero == document::ZZero::CylinderAxis) {
+        return refused("only a rotary sheet can zero on the cylinder axis");
+    }
     if (edit.widthMm) {
         next.sizeMm.x = *edit.widthMm;
     }
