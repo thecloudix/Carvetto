@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QVariant>
 #include <QVBoxLayout>
 #include <algorithm>
@@ -109,6 +110,13 @@ GadgetFormDialog::GadgetFormDialog(const scripting::FormSpec& spec, const Gadget
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    abort_ = buttons->addButton(QStringLiteral("Abort gadget"), QDialogButtonBox::DestructiveRole);
+    connect(abort_, &QPushButton::clicked, this, [this] {
+        if (onAbort) {
+            onAbort();
+        }
+        reject();
+    });
     layout->addWidget(buttons);
 }
 

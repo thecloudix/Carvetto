@@ -15,6 +15,7 @@
 
 class QComboBox;
 class QLabel;
+class QPushButton;
 class QVBoxLayout;
 class QWidget;
 
@@ -33,6 +34,11 @@ class GadgetFormDialog : public QDialog {
    public:
     GadgetFormDialog(const scripting::FormSpec& spec, const GadgetFormChoices& choices, QWidget* parent = nullptr);
 
+    /// Called when the user presses "Abort gadget" (the dialog then closes as cancelled).
+    std::function<void()> onAbort;
+    /// The "Abort gadget" button (scripted entry for the self-test).
+    QPushButton* abortButton() const { return abort_; }
+
     /// Name -> value of every field, as the spec promised (numbers as double, layers as the layer id).
     scripting::ScriptValue::Map values() const;
     /// Scripted entry for the self-test: sets the widget of field `name`; false for an unknown name
@@ -45,6 +51,7 @@ class GadgetFormDialog : public QDialog {
         QWidget* widget{nullptr};
     };
     std::vector<Row> rows_;
+    QPushButton* abort_{nullptr};
 };
 
 /// Shows the error dialog of a failed run: title, summary, and the script's message and traceback

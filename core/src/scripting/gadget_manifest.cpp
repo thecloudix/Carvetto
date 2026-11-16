@@ -1,5 +1,7 @@
 #include "carvetto/scripting/gadget_manifest.hpp"
 
+#include <cstdint>
+#include <cstdio>
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -65,22 +67,6 @@ std::string readFile(const fs::path& path, std::size_t maxBytes, std::string& ou
     return {};
 }
 
-std::string folderNameFor(const std::string& name) {
-    std::string out;
-    for (const char ch : name) {
-        const unsigned char c = static_cast<unsigned char>(ch);
-        if (std::isalnum(c) != 0 && c < 0x80) {
-            out += static_cast<char>(std::tolower(c));
-        } else if (!out.empty() && out.back() != '-') {
-            out += '-';
-        }
-    }
-    while (!out.empty() && out.back() == '-') {
-        out.pop_back();
-    }
-    return out.empty() ? std::string("gadget") : out.substr(0, 60);
-}
-
 GadgetInfo infoFor(const fs::path& folder, GadgetManifest manifest) {
     GadgetInfo g;
     g.folder = folder;
@@ -95,6 +81,53 @@ GadgetInfo infoFor(const fs::path& folder, GadgetManifest manifest) {
 }
 
 }  // namespace
+
+std::string gadgetFolderName(const std::string& name) {
+    std::string out;
+    bool lossy = false;
+    for (const char ch : name) {
+        const unsigned char c = static_cast<unsigned char>(ch);
+        if (c >= 0x80) {
+            lossy = true;
+        }
+        if (std::isalnum(c) != 0 && c < 0x80) {
+            out += static_cast<char>(std::tolower(c));
+        } else if (!out.empty() && out.back() != '-') {
+            out += '-';
+        }
+    }
+    while (!out.empty() && out.back() == '-') {
+        out.pop_back();
+    }
+    if (out.size() > 50) {
+        out.resize(50);
+        while (!out.empty() && out.back() == '-') {
+            out.pop_back();
+        }
+    }
+    if (out.empty() || lossy) {
+        // Names that lose characters (non-ASCII) or vanish entirely get a stable hash of the whole
+        // name, so two different such gadgets never share a folder.
+        std::uint32_t h = 2166136261u;
+        for (const char ch : name) {
+            h = (h ^ static_cast<unsigned char>(ch)) * 16777619u;
+        }
+        char hex[16];
+        std::snprintf(hex, sizeof hex, "%08x", static_cast<unsigned>(h));
+        return (out.empty() ? std::string("gadget") : out) + "-" + hex;
+    }
+    // Windows device names are not usable as folder names.
+    static const char* const reserved[] = {"con", "prn", "aux", "nul"};
+    bool isReserved = false;
+    for (const char* r : reserved) {
+        isReserved = isReserved || out == r;
+    }
+    if ((out.size() == 4 && (out.compare(0, 3, "com") == 0 || out.compare(0, 3, "lpt") == 0) && out[3] >= '1' &&
+         out[3] <= '9')) {
+        isReserved = true;
+    }
+    return isReserved ? out + "-gadget" : out;
+}
 
 ManifestParse parseGadgetManifest(std::string_view text) {
     ManifestParse r;
@@ -333,7 +366,8 @@ InstallResult inspectGadgetFolder(const fs::path& folder, std::size_t maxScriptB
     return r;
 }
 
-InstallResult installGadget(const fs::path& source, const fs::path& root, std::size_t maxScriptBytes, bool replace) {
+InstallResult installGadget(const fs::path& source, const fs::path& root, std::size_t maxScriptBytes, bool replace,
+                            const RenameFn& rename) {
     InstallResult r = inspectGadgetFolder(source, maxScriptBytes);
     if (!r.ok) {
         return r;
@@ -349,7 +383,7 @@ InstallResult installGadget(const fs::path& source, const fs::path& root, std::s
         r.error = "cannot create the gadgets folder: " + ec.message();
         return r;
     }
-    const std::string base = folderNameFor(r.gadget.manifest.name);
+    const std::string base = gadgetFolderName(r.gadget.manifest.name);
     const fs::path dest = root / base;
     if (fs::exists(fs::symlink_status(dest, ec)) && !replace) {
         r.error = "\"" + r.gadget.manifest.name + "\" is already installed";
@@ -370,14 +404,39 @@ InstallResult installGadget(const fs::path& source, const fs::path& root, std::s
             return r;
         }
     }
-    if (replace) {
-        fs::remove_all(dest, ec);
+    const auto doRename = [&rename](const fs::path& from, const fs::path& to) {
+        if (rename) {
+            return rename(from, to);
+        }
+        std::error_code e;
+        fs::rename(from, to, e);
+        return e;
+    };
+    // Replacing: the old gadget is moved aside first and deleted only once the new one is in place;
+    // if the move into place fails the old one is put back.
+    fs::path aside;
+    if (fs::exists(fs::symlink_status(dest, ec))) {
+        aside = root / (".replaced-" + base);
+        fs::remove_all(aside, ec);
+        const std::error_code e = doRename(dest, aside);
+        if (e) {
+            r.error = "cannot replace the installed gadget: " + e.message();
+            fs::remove_all(tmp, ec);
+            return r;
+        }
     }
-    fs::rename(tmp, dest, ec);
-    if (ec) {
-        r.error = "cannot move the gadget into place: " + ec.message();
+    const std::error_code moved = doRename(tmp, dest);
+    if (moved) {
+        r.error = "cannot move the gadget into place: " + moved.message();
         fs::remove_all(tmp, ec);
+        if (!aside.empty()) {
+            fs::remove_all(dest, ec);  // never exists after a failed rename, but be certain
+            fs::rename(aside, dest, ec);  // the real rename: restoring must not hit the injected failure
+        }
         return r;
+    }
+    if (!aside.empty()) {
+        fs::remove_all(aside, ec);
     }
     GadgetInfo g = infoFor(dest, r.gadget.manifest);
     r.gadget = std::move(g);

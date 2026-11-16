@@ -227,6 +227,17 @@ void sortMenu(std::vector<GadgetMenuItem>& level, const std::vector<GadgetInfo>&
 
 }  // namespace
 
+std::string escapeMenuMnemonics(const std::string& label) {
+    std::string out;
+    for (const char c : label) {
+        out += c;
+        if (c == '&') {
+            out += '&';
+        }
+    }
+    return out;
+}
+
 GadgetErrorReport describeFailure(const scripting::GadgetRunResult& run, const std::string& gadgetName) {
     GadgetErrorReport r;
     r.status = run.script.status;
@@ -407,11 +418,12 @@ scripting::InstallResult GadgetManager::install(const std::filesystem::path& fol
 
 GadgetRunReport GadgetManager::runSource(const std::string& source, const std::string& name, document::Document& doc,
                                          ToolpathSession& session, scripting::GadgetUi ui,
-                                         scripting::ScriptLimits limits) {
+                                         scripting::ScriptLimits limits, const std::atomic<bool>* cancel) {
     GadgetRunReport report;
     scripting::GadgetRunOptions opt;
     opt.undoText = name;
     opt.limits = std::move(limits);
+    opt.cancel = cancel;
     const scripting::GadgetServices services = makeGadgetServices(doc, session, std::move(ui));
     session.invalidate();
     report.run = scripting::runGadget(doc, services, source, "gadget.lua", opt);
@@ -429,7 +441,8 @@ GadgetRunReport GadgetManager::runSource(const std::string& source, const std::s
 }
 
 GadgetRunReport GadgetManager::run(std::size_t index, document::Document& doc, ToolpathSession& session,
-                                   scripting::GadgetUi ui, scripting::ScriptLimits limits) const {
+                                   scripting::GadgetUi ui, scripting::ScriptLimits limits,
+                                   const std::atomic<bool>* cancel) const {
     GadgetRunReport report;
     if (index >= discovery_.gadgets.size()) {
         report.error = GadgetErrorReport{"Gadget not found", "This gadget is no longer in the gadgets folder.", "",
@@ -449,7 +462,7 @@ GadgetRunReport GadgetManager::run(std::size_t index, document::Document& doc, T
                                          "gadget.lua: " + err + ".", "", ScriptStatus::RuntimeError, 0};
         return report;
     }
-    return runSource(source, g.manifest.name, doc, session, std::move(ui), std::move(limits));
+    return runSource(source, g.manifest.name, doc, session, std::move(ui), std::move(limits), cancel);
 }
 
 }  // namespace carvetto::viewmodel

@@ -2,6 +2,7 @@
 // the toolpath session (one undo step, rollback, toolpath parameters, failure wording).
 #include <catch2/catch_test_macros.hpp>
 
+#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -383,4 +384,26 @@ TEST_CASE("gadget run: from the gadgets folder", "[gadget][viewmodel][t0331]") {
     r = m.run(indexOf("circle"), f.doc, f.session, {}, f.limits());
     REQUIRE(r.ok);
     CHECK(f.doc.objectCount() == 2);
+}
+
+TEST_CASE("gadget manager: menu strings are escaped for Qt mnemonics", "[gadget][viewmodel][t0331]") {
+    CHECK(escapeMenuMnemonics("Plain") == "Plain");
+    CHECK(escapeMenuMnemonics("&Hack") == "&&Hack");
+    CHECK(escapeMenuMnemonics("Fish & Chips") == "Fish && Chips");
+    CHECK(escapeMenuMnemonics("a&&b") == "a&&&&b");
+    CHECK(escapeMenuMnemonics("") == "");
+}
+
+TEST_CASE("gadget manager: an Abort pressed in a dialog cancels the run and rolls it back", "[gadget][viewmodel][t0331]") {
+    Fixture f;
+    std::atomic<bool> abort{false};
+    scripting::GadgetUi ui;
+    ui.message = [&abort](const std::string&) { abort = true; };
+    const GadgetRunReport r = GadgetManager::runSource("carvetto.layer.create('x') carvetto.ui.message('hi')", "Dialogs",
+                                                       f.doc, f.session, ui, f.limits(), &abort);
+    CHECK_FALSE(r.ok);
+    CHECK(r.run.script.status == scripting::ScriptStatus::Cancelled);
+    REQUIRE(r.error.has_value());
+    CHECK(contains(r.error->summary, "not changed"));
+    CHECK(f.doc.layers().size() == 1);
 }

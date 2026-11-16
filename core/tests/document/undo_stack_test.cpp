@@ -392,7 +392,9 @@ TEST_CASE("undo stack: abortMacro reverts what the macro collected and records n
         REQUIRE(doc.execute(std::make_unique<SetDocumentVariableCommand>("B", 2.0)));
         REQUIRE(doc.execute(std::make_unique<SetDocumentVariableCommand>("C", 3.0)));
         REQUIRE(doc.variables().contains("B"));
+        const std::uint64_t genInside = stack.generation();  // the edits themselves already bumped it
         REQUIRE(stack.abortMacro(doc));
+        CHECK(stack.generation() != genInside);  // the revert is a change caches must see
         CHECK_FALSE(doc.variables().contains("B"));
         CHECK_FALSE(doc.variables().contains("C"));
         CHECK_FALSE(stack.inMacro());

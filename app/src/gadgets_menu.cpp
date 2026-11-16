@@ -6,6 +6,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QStatusBar>
@@ -91,11 +92,11 @@ void GadgetsMenu::storeOverrides() {
 void GadgetsMenu::addItems(QMenu* into, const std::vector<viewmodel::GadgetMenuItem>& items) {
     for (const viewmodel::GadgetMenuItem& item : items) {
         if (item.gadget < 0) {
-            QMenu* sub = into->addMenu(qs(item.label));
+            QMenu* sub = into->addMenu(qs(viewmodel::escapeMenuMnemonics(item.label)));
             addItems(sub, item.children);
             continue;
         }
-        QAction* action = into->addAction(qs(item.label));
+        QAction* action = into->addAction(qs(viewmodel::escapeMenuMnemonics(item.label)));
         action->setEnabled(item.enabled);
         if (!item.tooltip.empty()) {
             action->setToolTip(qs(item.tooltip));
@@ -145,18 +146,31 @@ scripting::GadgetUi GadgetsMenu::realUi() {
             choices.tools.emplace_back(kv.first, kv.second.name);
         }
         GadgetFormDialog dialog(spec, choices, parent);
+        dialog.onAbort = [this] { cancel_.store(true); };
         if (dialog.exec() != QDialog::Accepted) {
             return std::nullopt;
         }
         return dialog.values();
     };
-    ui.message = [parent](const std::string& text) {
-        QMessageBox::information(parent, QStringLiteral("Gadget"), qs(text));
+    // Every box has an "Abort gadget" button: the deadline does not run while a box is open, so this
+    // (with the per-run caps of GadgetLimits) is how the user ends a gadget that keeps asking.
+    const auto box = [this, parent](const std::string& text, QMessageBox::Icon icon, bool yesNo) {
+        QMessageBox mb(icon, QStringLiteral("Gadget"), qs(text), QMessageBox::NoButton, parent);
+        QPushButton* yes = mb.addButton(yesNo ? QMessageBox::Yes : QMessageBox::Ok);
+        if (yesNo) {
+            mb.addButton(QMessageBox::No);
+        }
+        QPushButton* abort = mb.addButton(QStringLiteral("Abort gadget"), QMessageBox::DestructiveRole);
+        mb.setDefaultButton(yes);
+        mb.exec();
+        if (mb.clickedButton() == abort) {
+            cancel_.store(true);
+            return false;
+        }
+        return mb.clickedButton() == yes;
     };
-    ui.confirm = [parent](const std::string& text) {
-        return QMessageBox::question(parent, QStringLiteral("Gadget"), qs(text), QMessageBox::Yes | QMessageBox::No) ==
-               QMessageBox::Yes;
-    };
+    ui.message = [box](const std::string& text) { box(text, QMessageBox::Information, false); };
+    ui.confirm = [box](const std::string& text) { return box(text, QMessageBox::Question, true); };
     return ui;
 }
 
@@ -172,7 +186,9 @@ viewmodel::GadgetRunReport GadgetsMenu::runGadget(std::size_t index) {
         return report;
     }
     scripting::GadgetUi ui = uiOverride_ ? *uiOverride_ : realUi();
-    report = manager_.run(index, window_.currentDocument(), window_.toolpaths()->session(), std::move(ui), limits_);
+    cancel_.store(false);
+    report = manager_.run(index, window_.currentDocument(), window_.toolpaths()->session(), std::move(ui), limits_,
+                          &cancel_);
     window_.documentChanged();
     if (report.ok) {
         if (!window_.quiet()) {

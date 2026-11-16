@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
+#include <system_error>
 #include <map>
 #include <optional>
 #include <string>
@@ -93,7 +95,17 @@ InstallResult inspectGadgetFolder(const std::filesystem::path& folder, std::size
 /// Copies the gadget in `source` (its manifest and script only) to a new folder in `root`, named
 /// after the gadget. Refuses a gadget that is already installed unless `replace`. The copy is
 /// made in a temporary folder and renamed, so a failure leaves nothing half-installed.
+/// An installed gadget is replaced safely: the old folder is moved aside, the new one moved in, and
+/// the old one deleted only on success (restored when the move in fails).
+/// `rename` replaces the filesystem rename for the two moves (tests inject failures); empty = real.
+using RenameFn = std::function<std::error_code(const std::filesystem::path& from, const std::filesystem::path& to)>;
 InstallResult installGadget(const std::filesystem::path& source, const std::filesystem::path& root,
-                            std::size_t maxScriptBytes, bool replace = false);
+                            std::size_t maxScriptBytes, bool replace = false, const RenameFn& rename = {});
+
+/// The folder name an installed gadget gets: lower-case ASCII letters, digits and '-' only (at most
+/// ~60 characters, never empty, never ending in '.' or ' '). A name with non-ASCII characters, or one
+/// that sanitises to nothing, gets a short stable hash of the whole name appended, so different names
+/// do not collide; Windows device names (CON, NUL, COM1, LPT1, ...) get "-gadget" appended.
+std::string gadgetFolderName(const std::string& name);
 
 }  // namespace carvetto::scripting

@@ -43,7 +43,14 @@ vendor SDK.
    subtracted. Otherwise a user reading a dialog for six seconds, or a big pocket, would time the gadget
    out and roll everything back. The instruction, string and value budgets still bound what the script
    itself does between host calls, and `GadgetLimits` caps what a script can ask the host for per run
-   (objects 100 000 including layers, toolpaths 64, custom moves 500 000, log lines and bytes).
+   (objects 100 000 including layers, layers 1 000, changed variables 10 000, toolpaths 64, custom moves
+   500 000, dialogs 100, log lines and bytes). Waiting is bounded too: the combined time in dialogs and
+   toolpath calculation is capped at 30 minutes (`maxPausedNanos`, checked before and after every such
+   call; a blocking call itself is not interrupted, and the core operations are not interruptible, so
+   the bound is "the run that crosses it ends at the next call"; a script cannot `pcall` its way out of
+   it). Every app dialog a gadget opens (message, confirmation, form) has an "Abort gadget" button that
+   sets the run's cancel flag (`GadgetRunOptions::cancel`): when the call returns the run ends as
+   `Cancelled` and is rolled back, even if the script was about to finish.
 7. **Failure wording.** `describeFailure` gives each status a title and a sentence a user can act on, always
    "Your drawing was not changed". A Timeout is "took too long on this machine" and says it is not
    necessarily a mistake in the gadget (ADR-0102 question 4, as proposed there). The script's own message
@@ -62,8 +69,13 @@ vendor SDK.
    user settings (real runs only; the self-test never touches settings) and win over the manifest.
 10. **Install New Gadget** takes a folder (folder picker), shows the manifest, the menu path, the shortcut
     and a trust warning, then copies ONLY `manifest.json` and `gadget.lua` into a new folder named after
-    the gadget (sanitised to `[a-z0-9-]`, so a name cannot escape the gadgets folder) via a temporary
-    folder and a rename; an installed gadget is replaced only after a second confirmation.
+    the gadget (sanitised to `[a-z0-9-]`, so a name cannot escape the gadgets folder; a name with
+    non-ASCII characters, or one that sanitises to nothing, gets an 8-hex-digit FNV-1a hash of the whole
+    name appended so different names never share a folder; Windows device names get `-gadget`) via a
+    temporary folder and a rename; an installed gadget is replaced only after a second confirmation, and
+    safely: the old folder is renamed aside, the new one renamed in, the old one deleted only on
+    success and put back if the rename in fails. Menu strings from a manifest are shown literally: `&`
+    is doubled before Qt sees it, so `&Hack` is not a mnemonic marker.
 11. **Toolpaths.** `toolpath.create(kind, objects, params)`: kinds `profile`, `pocket`, `drill`, `engrave`.
     `params` uses the field and choice ids of the operation's own form (`cutDepth`, `passDepth`,
     `startDepth`, `safeZ`, `allowance`, `side`, `direction`, `strategy`, ... see `toolpath_form.hpp`) plus
@@ -87,7 +99,12 @@ vendor SDK.
   (`tan(sweep / 4)`, positive counter-clockwise; an arc over half a turn is cut into equal pieces so no
   bulge is infinite) and Beziers are flattened at the default chordal tolerance. `create_contour` takes
   the same bulges in a fourth argument.
-* **Edits on a locked layer are refused** (`create_*`, `set_layer`); hidden layers are fine.
+* **Locked layers are protected**, as in the app: `create_*` and `set_layer` onto a locked layer, and
+  `move`, `rotate`, `scale`, `delete`, `set_layer` of an object that sits on one, are errors (one
+  locked object refuses a whole call); `layer.set` cannot unlock a locked layer (locking, renaming,
+  recolouring and hiding are allowed). Hidden layers are fine. The id counter of the document is not
+  rolled back by a rolled-back run (the same as undoing an add), so ids of later objects skip the
+  numbers a failed run used.
 * **`toolpath.create_custom` stores an engrave-operation record** with an empty vector selection and the
   computed moves: the record format (`ToolpathParams`) has no "custom" operation. Recalculation of such
   a toolpath would run the engrave operation on an empty selection; the toolpath panel lists it as a
@@ -104,13 +121,24 @@ vendor SDK.
   business (the manager takes one folder; two would be a small change).
 
 ## Mutants considered
-New logic was attacked with the mutants below; each is killed by a named test unless argued. Fifteen of
-them were also applied to the source by hand and the tests re-run (none committed): paused time ignored,
-pause not accumulated, object cap `>=`, toolpath cap `>=` (in `create` and in `create_custom`), bulge side
+New logic was attacked with the mutants below; each is killed by a named test unless argued. Round 1
+applied fifteen by hand and re-ran the tests (none committed): paused time ignored, pause not
+accumulated, object cap `>=`, toolpath cap `>=` (in `create` and in `create_custom`), bulge side
 flipped, abort replaced by commit, selection not restored, rotation centre at the origin, `sy` default 1,
 form maximum exclusive, locked layers allowed, log byte cap removed, feed `< 0` instead of `<= 0`, dwell
-seconds without the lower bound. All were killed; one (the toolpath cap in `create`) first SURVIVED a
-test that only reached the cap through `create_custom`, and led to the stronger "caps are exact" test above. A third reading, the paused-clock term for a pause
+seconds without the lower bound. One (the toolpath cap in `create`) first SURVIVED a test that only
+reached the cap through `create_custom`, and led to the stronger "caps are exact" test.
+
+The verifier of round 1 found four survivors that round 1 had wrongly counted as killed or never tried,
+all now killed (each applied by hand, test seen failing, reverted): removing the pause around
+`ui.form` and around `toolpath.create` (the test only exercised message and confirm; "time spent in a
+dialog does not count" now also has a form and a toolpath calculation that each take an hour);
+`maxCustomMoves` `>` to `>=` (exact boundary test, "custom moves: the limit itself is allowed"); and
+`abortMacro` not bumping the edit generation (the old check was satisfied by the bump of the edits
+inside the macro; the test now compares with the value read just before the abort). Round 2 added the
+dialog, layer, variable and paused-time caps, each with a boundary test ON the cap and one past it, the
+locked-layer refusals, the safe replace, folder names and mnemonic escaping, with their own tests.
+A third reading, the paused-clock term for a pause
 in progress, was removed rather than tested: the script thread is the only reader of the clock and it
 sits inside the host callback during a pause, so no read can observe it.
 * `now()` ignoring the paused time, or `Pause` not accumulating: killed by "time spent in a dialog does

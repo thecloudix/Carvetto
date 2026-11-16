@@ -249,5 +249,94 @@ TEST_CASE("gadget install: the folder name cannot escape the gadgets folder", "[
     makeGadget(src.root, "q", manifest("..."), "return 1");
     const InstallResult q = installGadget(src.root / "q", dst.root / "g", 1000);
     REQUIRE(q.ok);
-    CHECK(q.gadget.folderName == "gadget");
+    CHECK(q.gadget.folderName.rfind("gadget-", 0) == 0);  // a name that vanishes gets a hash
+}
+
+TEST_CASE("gadget install: folder names are unique, stable, ASCII and safe on Windows", "[gadget][manifest][t0331]") {
+    // plain names keep the readable folder
+    CHECK(gadgetFolderName("Weave Creator") == "weave-creator");
+    // two different non-ASCII names do not share a folder, and the name is stable
+    const std::string a = gadgetFolderName("\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB");
+    const std::string b = gadgetFolderName("\xE3\x82\xAE\xE3\x83\xA3\xE3\x83\x89\xE3\x82\xB8\xE3\x82\xA7");
+    CHECK(a != b);
+    CHECK(a == gadgetFolderName("\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB"));
+    CHECK(gadgetFolderName("Caf\xC3\xA9") != gadgetFolderName("Caf\xC3\xA8"));
+    CHECK(gadgetFolderName("Caf\xC3\xA9").rfind("caf-", 0) == 0);
+    for (const std::string& n : {a, b, gadgetFolderName("Caf\xC3\xA9"), gadgetFolderName("..."), gadgetFolderName("")}) {
+        INFO(n);
+        CHECK_FALSE(n.empty());
+        for (const char c : n) {
+            CHECK(((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'));
+        }
+        CHECK(n.back() != '-');
+    }
+    // Windows device names, whatever the case; trailing dots and spaces vanish
+    for (const char* n : {"CON", "nul", "Prn", "AUX", "com1", "COM9", "LPT1", "lpt9", "con.", "NUL  "}) {
+        INFO(n);
+        const std::string f = gadgetFolderName(n);
+        CHECK(f.size() > 3);
+        CHECK(f.find("-gadget") != std::string::npos);
+    }
+    CHECK(gadgetFolderName("com0") == "com0");  // not a device name
+    CHECK(gadgetFolderName("COM10") == "com10");
+    CHECK(gadgetFolderName("Name. ") == "name");
+    // two different non-ASCII gadgets install side by side
+    Scratch src("install-unicode-src");
+    Scratch dst("install-unicode-dst");
+    makeGadget(src.root, "p", manifest("\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB"), "return 1");
+    makeGadget(src.root, "q", manifest("\xE3\x82\xAE\xE3\x83\xA3\xE3\x83\x89"), "return 2");
+    CHECK(installGadget(src.root / "p", dst.root, 1000).ok);
+    const InstallResult second = installGadget(src.root / "q", dst.root, 1000);
+    INFO(second.error);
+    CHECK(second.ok);
+    CHECK(discoverGadgets(dst.root).gadgets.size() == 2);
+}
+
+TEST_CASE("gadget install: a failed replace keeps the old gadget", "[gadget][manifest][t0331]") {
+    Scratch src("install-replace-src");
+    Scratch dst("install-replace-dst");
+    makeGadget(src.root, "pkg", manifest("Keep Me"), "return 'old'");
+    REQUIRE(installGadget(src.root / "pkg", dst.root, 1000).ok);
+    write(src.root / "pkg" / kGadgetScriptFile, "return 'new'");
+
+    const auto scriptOf = [&](std::string* text) {
+        const GadgetDiscovery d = discoverGadgets(dst.root);
+        REQUIRE(d.gadgets.size() == 1);
+        return readGadgetSource(d.gadgets[0], 1000, text);
+    };
+    // the move of the new gadget into place fails: the old one is still there, nothing is left over
+    int calls = 0;
+    const RenameFn failSecond = [&calls](const fs::path& from, const fs::path& to) {
+        if (++calls == 2) {
+            return std::make_error_code(std::errc::permission_denied);
+        }
+        std::error_code ec;
+        fs::rename(from, to, ec);
+        return ec;
+    };
+    InstallResult r = installGadget(src.root / "pkg", dst.root, 1000, true, failSecond);
+    CHECK_FALSE(r.ok);
+    CHECK(contains(r.error, "cannot move the gadget into place"));
+    std::string text;
+    CHECK(scriptOf(&text).empty());
+    CHECK(text == "return 'old'");
+    for (const auto& e : fs::directory_iterator(dst.root)) {
+        CHECK(e.path().filename().string()[0] != '.');
+    }
+    // moving the old one aside fails: the old one is untouched
+    const RenameFn failFirst = [](const fs::path&, const fs::path&) {
+        return std::make_error_code(std::errc::permission_denied);
+    };
+    r = installGadget(src.root / "pkg", dst.root, 1000, true, failFirst);
+    CHECK_FALSE(r.ok);
+    CHECK(scriptOf(&text).empty());
+    CHECK(text == "return 'old'");
+    // and a good replace still works and leaves nothing behind
+    r = installGadget(src.root / "pkg", dst.root, 1000, true);
+    REQUIRE(r.ok);
+    CHECK(scriptOf(&text).empty());
+    CHECK(text == "return 'new'");
+    for (const auto& e : fs::directory_iterator(dst.root)) {
+        CHECK(e.path().filename().string()[0] != '.');
+    }
 }

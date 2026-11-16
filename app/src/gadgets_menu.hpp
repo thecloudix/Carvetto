@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -52,6 +53,9 @@ class GadgetsMenu {
     /// Replaces the dialogs a gadget run shows (forms, messages) with `ui`; the self-test scripts the
     /// answers. Without it the real dialogs are used.
     void setUiOverride(std::optional<scripting::GadgetUi> ui) { uiOverride_ = std::move(ui); }
+    /// What the "Abort gadget" button of a dialog does: the running gadget ends as cancelled and is
+    /// rolled back. (Public so the self-test can press it from a scripted dialog.)
+    void requestAbort() { cancel_.store(true); }
     /// Limits of a gadget run (default: the host's defaults).
     void setLimits(scripting::ScriptLimits limits) { limits_ = std::move(limits); }
 
@@ -75,6 +79,7 @@ class GadgetsMenu {
     viewmodel::GadgetRunReport last_;
     std::optional<scripting::GadgetUi> uiOverride_;
     scripting::ScriptLimits limits_;
+    std::atomic<bool> cancel_{false};  ///< set by the "Abort gadget" button of a dialog
     bool persist_{false};
 };
 

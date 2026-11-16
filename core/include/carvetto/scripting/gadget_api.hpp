@@ -100,6 +100,19 @@ struct GadgetLimits {
     std::size_t maxLogBytes = 256u * 1024u;
     /// Moves one custom toolpath may hold.
     std::size_t maxCustomMoves = 500'000;
+    /// `ui.message`, `ui.confirm` and `ui.form` calls one run may make in total (a gadget cannot bury
+    /// the user under modal boxes: the deadline does not run while a box is open).
+    std::size_t maxDialogs = 100;
+    /// Layers one run may create (each costs time proportional to the layers already there).
+    std::size_t maxCreatedLayers = 1000;
+    /// Executed `doc.set_variable` calls (that change a value) one run may make.
+    std::size_t maxVariableEdits = 10'000;
+    /// Combined time one run may spend inside host callbacks that block the script (dialogs and
+    /// toolpath calculation), in nanoseconds (default 30 minutes). The deadline does not run during
+    /// those calls, so this is what keeps a gadget from sitting in them forever. Checked before and
+    /// after every such call: the run that crosses it fails, rolled back (a blocking call itself is
+    /// not interrupted; the user ends a dialog with Abort, see `GadgetRunOptions::cancel`).
+    std::uint64_t maxPausedNanos = 30ull * 60ull * 1'000'000'000ull;
 };
 
 struct GadgetRunOptions {
@@ -107,6 +120,9 @@ struct GadgetRunOptions {
     std::string undoText{"Run gadget"};
     ScriptLimits limits;
     GadgetLimits gadgetLimits;
+    /// Polled by the script host, and after every dialog or toolpath calculation: a run in which this
+    /// flag was set ends as `Cancelled` and is rolled back, even if the script was about to finish.
+    /// The app sets it from the "Abort gadget" button of its dialogs.
     const std::atomic<bool>* cancel{nullptr};
 };
 

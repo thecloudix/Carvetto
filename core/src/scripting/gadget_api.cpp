@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <memory>
 #include <set>
+#include <type_traits>
+#include <atomic>
 #include <utility>
 
 #include "carvetto/document/command.hpp"
@@ -64,6 +66,11 @@ struct Session {
     std::vector<ToolpathId> createdToolpaths;
     std::vector<std::string> log;
     std::size_t logBytes{0};
+    std::size_t dialogCalls{0};
+    std::size_t layerCalls{0};
+    std::size_t variableEdits{0};
+    bool pausedOver{false};  ///< the waiting budget was crossed (a script cannot pcall its way out of it)
+    const std::atomic<bool>* cancel{nullptr};
 
     Session(Document& d, const GadgetServices& se, const GadgetLimits& g) : doc(d), sv(se), gl(g) {}
 
@@ -84,6 +91,46 @@ struct Session {
         Pause(const Pause&) = delete;
         Pause& operator=(const Pause&) = delete;
     };
+
+    bool cancelled() const { return cancel != nullptr && cancel->load(std::memory_order_relaxed); }
+
+    /// Runs host code the script waits for (a dialog, a toolpath calculation) with the deadline clock
+    /// stopped. The combined time of all such calls is capped (`maxPausedNanos`), and a cancel
+    /// request (the user's Abort) ends the run when the call returns.
+    template <class F>
+    auto paused(const std::string& fn, F&& call) {
+        const auto check = [&] {
+            if (pausedNs > gl.maxPausedNanos) {
+                pausedOver = true;
+                fail(fn, "this gadget spent too long waiting for dialogs and calculations (limit " +
+                             std::to_string(gl.maxPausedNanos / 1'000'000'000ull) + " seconds)");
+            }
+            if (cancelled()) {
+                fail(fn, "script cancelled");
+            }
+        };
+        check();
+        if constexpr (std::is_void_v<decltype(call())>) {
+            {
+                Pause pause(*this);
+                call();
+            }
+            check();
+        } else {
+            auto r = [&] {
+                Pause pause(*this);
+                return call();
+            }();
+            check();
+            return r;
+        }
+    }
+
+    void countDialog(const std::string& fn) {
+        if (++dialogCalls > gl.maxDialogs) {
+            fail(fn, "this gadget opened too many dialogs (limit " + std::to_string(gl.maxDialogs) + ")");
+        }
+    }
 };
 
 // ---- argument helpers -------------------------------------------------------------------------
@@ -193,6 +240,16 @@ LayerId writableLayer(Session& s, const std::string& fn, const ScriptValue& v) {
         fail(fn, "layer \"" + s.doc.findLayer(id)->name + "\" is locked");
     }
     return id;
+}
+
+/// Existing objects a script edits must not sit on a locked layer (the app refuses such edits too).
+void requireUnlocked(Session& s, const std::string& fn, const std::vector<ObjectId>& ids) {
+    for (const ObjectId id : ids) {
+        const document::Layer* l = s.doc.findLayer(s.doc.findObject(id)->layer);
+        if (l != nullptr && l->locked) {
+            fail(fn, "object " + std::to_string(id.value) + " is on the locked layer \"" + l->name + "\"");
+        }
+    }
 }
 
 /// Reads the keys of a parameter table; `finish` rejects the keys nobody asked for (a typo must
@@ -712,6 +769,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
     }
 
     Session s(doc, services, options.gadgetLimits);
+    s.cancel = options.cancel;
     ScriptLimits limits = options.limits;
     if (limits.clockNanos) {
         s.base = limits.clockNanos;
@@ -796,6 +854,9 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         if (s.doc.variables().get(name) == value) {
             return ScriptValues{};
         }
+        if (++s.variableEdits > s.gl.maxVariableEdits) {
+            fail(fn, "this gadget changed too many variables (limit " + std::to_string(s.gl.maxVariableEdits) + ")");
+        }
         execute(s, fn, std::make_unique<document::SetDocumentVariableCommand>(name, value));
         return ScriptValues{};
     });
@@ -847,6 +908,9 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         if (!arg(a, 1).isNil()) {
             l.colour = parseColour(fn, arg(a, 1));
         }
+        if (++s.layerCalls > s.gl.maxCreatedLayers) {
+            fail(fn, "this gadget created too many layers (limit " + std::to_string(s.gl.maxCreatedLayers) + ")");
+        }
         countCreated(s, fn);
         auto cmd = std::make_unique<document::AddLayerCommand>(l);
         const document::AddLayerCommand* raw = cmd.get();
@@ -875,6 +939,9 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
             if (const ScriptValue* v = arg(a, 1).asMap().find("locked")) {
                 if (!v->isBool()) {
                     fail(fn, "locked must be true or false");
+                }
+                if (!v->asBool() && l.locked) {
+                    fail(fn, "a gadget cannot unlock a locked layer");
                 }
                 l.locked = v->asBool();
             }
@@ -992,6 +1059,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
     reg("carvetto.object", "move", [&s](const ScriptValues& a) {
         const std::string fn = "carvetto.object.move";
         const auto ids = objectList(s, fn, arg(a, 0));
+        requireUnlocked(s, fn, ids);
         const double dx = numberArg(fn, a, 1, "dx");
         const double dy = numberArg(fn, a, 2, "dy");
         execute(s, fn,
@@ -1014,6 +1082,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
     reg("carvetto.object", "rotate", [&s, centreOf](const ScriptValues& a) {
         const std::string fn = "carvetto.object.rotate";
         const auto ids = objectList(s, fn, arg(a, 0));
+        requireUnlocked(s, fn, ids);
         const double angle = numberArg(fn, a, 1, "angle (radians)");
         const Vec2 c = centreOf(s, fn, ids, a, 2);
         execute(s, fn, std::make_unique<document::TransformObjectsCommand>(ids, geometry::Transform2::rotation(angle, c)));
@@ -1022,6 +1091,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
     reg("carvetto.object", "scale", [&s, centreOf](const ScriptValues& a) {
         const std::string fn = "carvetto.object.scale";
         const auto ids = objectList(s, fn, arg(a, 0));
+        requireUnlocked(s, fn, ids);
         const double sx = numberArg(fn, a, 1, "sx");
         const double sy = numberArgOr(fn, a, 2, "sy", sx);
         if (sx == 0.0 || sy == 0.0 || std::fabs(sx) > 1.0e6 || std::fabs(sy) > 1.0e6) {
@@ -1034,12 +1104,15 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
     });
     reg("carvetto.object", "delete", [&s](const ScriptValues& a) {
         const std::string fn = "carvetto.object.delete";
-        execute(s, fn, std::make_unique<document::RemoveObjectsCommand>(objectList(s, fn, arg(a, 0))));
+        const auto ids = objectList(s, fn, arg(a, 0));
+        requireUnlocked(s, fn, ids);
+        execute(s, fn, std::make_unique<document::RemoveObjectsCommand>(ids));
         return ScriptValues{};
     });
     reg("carvetto.object", "set_layer", [&s](const ScriptValues& a) {
         const std::string fn = "carvetto.object.set_layer";
         const auto ids = objectList(s, fn, arg(a, 0));
+        requireUnlocked(s, fn, ids);
         const LayerId layer = writableLayer(s, fn, arg(a, 1));
         execute(s, fn, std::make_unique<document::MoveObjectsToLayerCommand>(ids, layer));
         return ScriptValues{};
@@ -1105,11 +1178,7 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         if (++s.toolpathCalls > s.gl.maxToolpaths) {
             fail(fn, "this gadget created too many toolpaths (limit " + std::to_string(s.gl.maxToolpaths) + ")");
         }
-        ToolpathCreated r;
-        {
-            Session::Pause pause(s);
-            r = s.sv.createToolpath(req);
-        }
+        const ToolpathCreated r = s.paused(fn, [&] { return s.sv.createToolpath(req); });
         if (!r.ok) {
             fail(fn, r.message.empty() ? std::string("the toolpath could not be calculated") : r.message);
         }
@@ -1162,11 +1231,8 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         if (!s.sv.ui.form) {
             fail(fn, "no user interface available");
         }
-        std::optional<ScriptValue::Map> got;
-        {
-            Session::Pause pause(s);
-            got = s.sv.ui.form(spec);
-        }
+        s.countDialog(fn);
+        std::optional<ScriptValue::Map> got = s.paused(fn, [&] { return s.sv.ui.form(spec); });
         if (!got) {
             return one(ScriptValue());
         }
@@ -1181,8 +1247,8 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         if (!s.sv.ui.message) {
             fail(fn, "no user interface available");
         }
-        Session::Pause pause(s);
-        s.sv.ui.message(text);
+        s.countDialog(fn);
+        s.paused(fn, [&] { s.sv.ui.message(text); });
         return ScriptValues{};
     });
     reg("carvetto.ui", "confirm", [&s](const ScriptValues& a) {
@@ -1194,8 +1260,8 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         if (!s.sv.ui.confirm) {
             fail(fn, "no user interface available");
         }
-        Session::Pause pause(s);
-        return one(ScriptValue(s.sv.ui.confirm(text)));
+        s.countDialog(fn);
+        return one(ScriptValue(s.paused(fn, [&] { return s.sv.ui.confirm(text); })));
     });
 
     // ---- run -----------------------------------------------------------------------------------
@@ -1204,6 +1270,17 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
     undo.breakCoalescing();
     undo.beginMacro(options.undoText);
     result.script = host.run(source, chunkName, options.cancel);
+    if (s.cancelled() && result.script.status != ScriptStatus::Cancelled) {
+        // The user pressed Abort in a dialog: the run is cancelled whatever else happened (a script
+        // that was about to finish, or one that stopped on the cancel it saw as an error).
+        result.script.status = ScriptStatus::Cancelled;
+        result.script.message = "script cancelled";
+    }
+    if (s.pausedOver && result.script.ok()) {
+        result.script.status = ScriptStatus::RuntimeError;
+        result.script.chunkName = std::string(chunkName);
+        result.script.message = "this gadget spent too long waiting for dialogs and calculations";
+    }
     if (result.script.ok()) {
         undo.endMacro();
         result.committed = undo.count() > stepsBefore;

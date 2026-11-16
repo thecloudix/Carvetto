@@ -268,6 +268,88 @@ TEST_CASE("gadget: per-run caps are exact", "[gadget][t0331]") {
                                "carvetto.toolpath.create('drill', {i}, {}) carvetto.toolpath.create('drill', {i}, {})", "g", o);
         CHECK(contains(r.script.message, "too many toolpaths"));
     }
+    SECTION("custom moves: the limit itself is allowed, one more is not") {
+        o.gadgetLimits.maxCustomMoves = 3;
+        const auto withMoves = [](int n) {
+            return "local t = {} for i = 1, " + std::to_string(n) +
+                   " do t[i] = {kind = 'rapid', x = i, y = 0, z = 0} end "
+                   "carvetto.toolpath.create_custom('m', 'em3', t)";
+        };
+        CHECK(runGadget(doc, sv, withMoves(3), "g", o).ok());
+        const GadgetRunResult r = runGadget(doc, sv, withMoves(4), "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK(doc.toolpaths().size() == 1);
+    }
+    SECTION("dialogs: the limit itself is allowed, one more is not") {
+        o.gadgetLimits.maxDialogs = 3;
+        GadgetServices ui;
+        ui.ui.message = [](const std::string&) {};
+        ui.ui.confirm = [](const std::string&) { return true; };
+        ui.ui.form = [](const FormSpec&) { return std::optional<ScriptValue::Map>(ScriptValue::Map{}); };
+        const std::string three =
+            "carvetto.ui.message('a') carvetto.ui.confirm('b') carvetto.ui.form({title = 't', fields = {}}) ";
+        CHECK(runGadget(doc, ui, three, "g", o).ok());  // the cap is per run, not per process
+        GadgetRunResult r = runGadget(doc, ui, "carvetto.layer.create('x') " + three + "carvetto.ui.message('d')", "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK(contains(r.script.message, "too many dialogs"));
+        CHECK(doc.layers().size() == 1);  // rolled back
+        // a loop of boxes is stopped by the cap, not only by the instruction budget
+        o.gadgetLimits.maxDialogs = 100;
+        int shown = 0;
+        ui.ui.message = [&shown](const std::string&) { ++shown; };
+        r = runGadget(doc, ui, "while true do carvetto.ui.message('x') end", "g", o);
+        CHECK(contains(r.script.message, "too many dialogs"));
+        CHECK(shown == 100);
+    }
+    SECTION("layers and variable edits: the limit itself is allowed, one more is not") {
+        o.gadgetLimits.maxCreatedLayers = 2;
+        const std::string two = "carvetto.layer.create('a') carvetto.layer.create('b') ";
+        CHECK(runGadget(doc, sv, two, "g", o).ok());
+        CHECK(doc.layers().size() == 3);
+        GadgetRunResult r = runGadget(doc, sv, two + "carvetto.layer.create('c')", "g", o);
+        CHECK(contains(r.script.message, "too many layers"));
+        CHECK(doc.layers().size() == 3);
+
+        o.gadgetLimits.maxVariableEdits = 2;
+        const std::string vars = "carvetto.doc.set_variable('A', 1) carvetto.doc.set_variable('B', 2) ";
+        CHECK(runGadget(doc, sv, vars, "g", o).ok());
+        // a set that changes nothing is not an edit
+        CHECK(runGadget(doc, sv, vars + "carvetto.doc.set_variable('A', 1) carvetto.doc.set_variable('B', 2)", "g", o).ok());
+        r = runGadget(doc, sv, "carvetto.doc.set_variable('A', 5) carvetto.doc.set_variable('B', 6) carvetto.doc.set_variable('C', 7)", "g", o);
+        CHECK(contains(r.script.message, "too many variables"));
+        CHECK(doc.variables().get("A") == 1.0);
+        CHECK_FALSE(doc.variables().contains("C"));
+    }
+    SECTION("waiting: the combined paused time is capped, exactly") {
+        std::uint64_t t = 0;
+        o.limits.clockNanos = [&t] { return t; };
+        o.limits.deadlineMillis = 0;
+        o.gadgetLimits.maxPausedNanos = 3000;
+        GadgetServices ui;
+        ui.ui.message = [&t](const std::string&) { t += 1000; };
+        const std::string two = "carvetto.ui.message('a') carvetto.ui.message('b') ";
+        CHECK(runGadget(doc, ui, two + "carvetto.ui.message('c')", "g", o).ok());  // 3000 = the cap: allowed
+        GadgetRunResult r = runGadget(doc, ui, two + "carvetto.layer.create('x') carvetto.ui.message('c') carvetto.ui.message('d')", "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK(contains(r.script.message, "too long waiting"));
+        CHECK(doc.layers().size() == 1);
+        // a script cannot pcall its way out of the budget
+        r = runGadget(doc, ui, "pcall(carvetto.ui.message, 'a') pcall(carvetto.ui.message, 'b') pcall(carvetto.ui.message, 'c') "
+                               "pcall(carvetto.ui.message, 'd') carvetto.layer.create('x')", "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK(doc.layers().size() == 1);
+        // toolpath calculation counts as waiting too
+        GadgetServices tp = fakeToolpathService(doc);
+        const auto inner = tp.createToolpath;
+        tp.createToolpath = [&t, inner](const ToolpathRequest& q) {
+            t += 2000;
+            return inner(q);
+        };
+        r = runGadget(doc, tp, "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) "
+                               "carvetto.toolpath.create('drill', {i}, {}) carvetto.toolpath.create('drill', {i}, {})", "g", o);
+        CHECK_FALSE(r.ok());
+        CHECK(doc.toolpaths().empty());
+    }
     SECTION("the log keeps whole lines up to its byte cap") {
         o.gadgetLimits.maxLogBytes = 10;
         const GadgetRunResult r = runGadget(doc, sv, "carvetto.log('aaaa') carvetto.log('bbbb') carvetto.log('cccc')", "g", o);
@@ -490,6 +572,50 @@ TEST_CASE("gadget: locked layers cannot be drawn on, hidden ones can", "[gadget]
     CHECK(r.script.returned[2].asString() == "Frozen");
     CHECK_FALSE(r.script.returned[3].asBool());
     CHECK(doc.objectCount() == 1);
+}
+
+TEST_CASE("gadget: objects on a locked layer cannot be edited and a gadget cannot unlock", "[gadget][t0331]") {
+    Document doc;
+    const GadgetRunResult setup = runGadget(doc, noServices(), R"(
+        local l = carvetto.doc.layers()[1]
+        local other = carvetto.layer.create("Other")
+        local a = carvetto.object.create_shape(l, "rect", {width = 10, height = 10})
+        local b = carvetto.object.create_shape(other, "rect", {width = 4, height = 4})
+        carvetto.layer.set(l, {locked = true})
+        return a, b
+    )", "g", quick());
+    REQUIRE(setup.ok());
+    const std::string a = std::to_string(setup.script.returned[0].asInt());  // on the locked layer
+    const std::string b = std::to_string(setup.script.returned[1].asInt());
+    const State before = stateOf(doc);
+    const std::string attempts[] = {
+        "carvetto.object.move(" + a + ", 5, 5)",
+        "carvetto.object.rotate({" + a + "}, 1)",
+        "carvetto.object.scale(" + a + ", 2)",
+        "carvetto.object.delete(" + a + ")",
+        "carvetto.object.set_layer(" + a + ", carvetto.doc.layers()[2])",
+        "carvetto.layer.set(carvetto.doc.layers()[1], {locked = false})",
+        "carvetto.object.move({" + b + ", " + a + "}, 1, 1)",  // one locked object refuses the whole call
+    };
+    for (const std::string& src : attempts) {
+        INFO(src);
+        const GadgetRunResult r = runGadget(doc, noServices(), src, "g", quick());
+        CHECK_FALSE(r.ok());
+        CHECK((contains(r.script.message, "locked layer") || contains(r.script.message, "cannot unlock")));
+        CHECK(stateOf(doc) == before);
+    }
+    // the unlocked layer, and moving onto/off nothing locked, still work; locking is allowed; so are
+    // name/colour/visibility of a locked layer
+    std::string okSrc = R"(
+        local layers = carvetto.doc.layers()
+        carvetto.object.move(%B%, 1, 0)
+        carvetto.layer.set(layers[2], {locked = true})
+        carvetto.layer.set(layers[1], {name = "Renamed", visible = false, locked = true})
+    )";
+    okSrc.replace(okSrc.find("%B%"), 3, b);
+    const GadgetRunResult ok = runGadget(doc, noServices(), okSrc, "g", quick());
+    INFO(ok.script.message);
+    CHECK(ok.ok());
 }
 
 TEST_CASE("gadget: selection", "[gadget][t0331]") {
@@ -819,16 +945,47 @@ TEST_CASE("gadget: hostile gadgets are stopped and rolled back", "[gadget][t0331
             t += 3'600'000'000'000ull;
             return true;
         };
+        sv.ui.form = [&t](const FormSpec&) {
+            t += 3'600'000'000'000ull;
+            return std::optional<ScriptValue::Map>(ScriptValue::Map{});
+        };
+        sv.toolSnapshot = [](const std::string&) { return std::optional<toolpath::ToolSnapshot>(); };
+        sv.createToolpath = [&t](const ToolpathRequest&) {
+            t += 3'600'000'000'000ull;  // a long calculation
+            ToolpathCreated c;
+            c.ok = true;
+            return c;
+        };
         GadgetRunOptions o = quick();
         o.limits.deadlineMillis = 1000;
         o.limits.clockNanos = [&t] { return t += 1'000; };
+        o.gadgetLimits.maxPausedNanos = ~0ull;  // this case is about the deadline; the budget has its own
         const GadgetRunResult r = runGadget(doc, sv,
                                             "carvetto.ui.message('a') for i = 1, 2000 do end carvetto.ui.confirm('b') "
+                                            "carvetto.ui.form({title = 't', fields = {}}) for i = 1, 2000 do end "
+                                            "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) "
+                                            "carvetto.toolpath.create('drill', {i}, {}) "
                                             "carvetto.layer.create('x') for i = 1, 2000 do end",
                                             "g", o);
         INFO(r.script.message);
         CHECK(r.ok());
         CHECK(doc.layers().size() == 2);
+    }
+    SECTION("Abort in a dialog cancels the run and rolls it back, even at the end of the script") {
+        std::atomic<bool> abort{false};
+        GadgetServices sv;
+        sv.ui.message = [&abort](const std::string&) { abort = true; };
+        GadgetRunOptions o = quick();
+        o.cancel = &abort;
+        GadgetRunResult r = runGadget(doc, sv, "carvetto.layer.create('x') carvetto.ui.message('a')", "g", o);
+        CHECK(r.script.status == ScriptStatus::Cancelled);
+        CHECK_FALSE(r.committed);
+        CHECK(stateOf(doc) == before);
+        abort = false;
+        // a script that swallows the error and finishes is still cancelled
+        r = runGadget(doc, sv, "carvetto.layer.create('x') pcall(carvetto.ui.message, 'a')", "g", o);
+        CHECK(r.script.status == ScriptStatus::Cancelled);
+        CHECK(stateOf(doc) == before);
     }
     SECTION("but time between dialogs does") {
         std::uint64_t t = 0;
@@ -838,6 +995,7 @@ TEST_CASE("gadget: hostile gadgets are stopped and rolled back", "[gadget][t0331
         o.limits.maxInstructions = 500'000'000;
         o.limits.deadlineMillis = 100;
         o.limits.clockNanos = [&t] { return t += 1'000'000; };
+        o.gadgetLimits.maxPausedNanos = ~0ull;  // the waiting budget has its own test
         const GadgetRunResult r = runGadget(doc, sv, "carvetto.ui.message('a') while true do end", "g", o);
         CHECK(r.script.status == ScriptStatus::Timeout);
     }

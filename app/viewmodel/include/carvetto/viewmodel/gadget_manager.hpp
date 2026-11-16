@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <filesystem>
 #include <optional>
@@ -41,6 +42,10 @@ struct GadgetErrorReport {
     /// Line in `gadget.lua`, 0 if unknown.
     int line{0};
 };
+
+/// A manifest menu string as menu text: every '&' doubled so Qt shows it instead of reading it as a
+/// mnemonic marker ("&Hack" must show as "&Hack", not underline the H).
+std::string escapeMenuMnemonics(const std::string& label);
 
 /// Words a failed run for the dialog. A Timeout is not a script bug: it says the gadget took too long
 /// on this machine (ADR-0102 question 4). Always states that the drawing was not changed.
@@ -104,11 +109,11 @@ class GadgetManager {
     /// as saved). Nothing changes in `doc` unless the run succeeds; success is ONE undo step named
     /// after the gadget.
     GadgetRunReport run(std::size_t index, document::Document& doc, ToolpathSession& session, scripting::GadgetUi ui,
-                        scripting::ScriptLimits limits = {}) const;
+                        scripting::ScriptLimits limits = {}, const std::atomic<bool>* cancel = nullptr) const;
     /// Runs script text directly (tests and the self-test): same rules, undo text `name`.
     static GadgetRunReport runSource(const std::string& source, const std::string& name, document::Document& doc,
                                      ToolpathSession& session, scripting::GadgetUi ui,
-                                     scripting::ScriptLimits limits = {});
+                                     scripting::ScriptLimits limits = {}, const std::atomic<bool>* cancel = nullptr);
 
    private:
     std::filesystem::path folder_;

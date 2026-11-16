@@ -8,6 +8,7 @@
 #include <QKeySequence>
 #include <QMenu>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <filesystem>
@@ -103,12 +104,14 @@ std::string gadgetsSelfTest(MainWindow& window) {
                 "while true do carvetto.object.create_shape(nil, 'circle', {radius = 2}) end\n");
     writeGadget(root, "broken", R"({"name": "Broken", "api_version": 1, "menu": "Hostile/Broken"})",
                 "local a = 1\ncarvetto.object.create_shape(nil, 'circle', {radius = 2})\nlocal b = nil + a\n");
+    writeGadget(root, "dialogs", R"({"name": "Dialog spam", "api_version": 1, "menu": "Hostile/&Dialogs"})",
+                "carvetto.layer.create('spam')\nwhile true do carvetto.ui.message('again') end\n");
     writeGadget(root, "future", R"({"name": "From the future", "api_version": 9})", "return 1");
     writeFile(root / "junk" / "manifest.json", "not json");
 
     // 1. The menu is built from the folder: submenus, shortcuts, a disabled gadget.
     gadgets->setFolder(root);
-    GD_REQUIRE(gadgets->manager().gadgets().size() == 5 && gadgets->manager().skipped().size() == 1,
+    GD_REQUIRE(gadgets->manager().gadgets().size() == 6 && gadgets->manager().skipped().size() == 1,
                "the gadgets folder was not scanned as expected");
     QAction* sample = actionNamed(*gadgets, QStringLiteral("Box with pocket"));
     GD_REQUIRE(sample != nullptr, "the sample gadget is not in the menu");
@@ -169,6 +172,37 @@ std::string gadgetsSelfTest(MainWindow& window) {
     sample->trigger();
     GD_REQUIRE(gadgets->lastReport().ok && !gadgets->lastReport().run.committed && doc.undoStack().count() == stepsBefore,
                "a cancelled form changed the document");
+    gadgets->setUiOverride(ui);
+
+    // 3b. A '&' in a manifest menu string is shown as '&', not taken as a mnemonic marker; the
+    // "Abort gadget" button of a dialog ends a gadget that keeps asking, and the run is rolled back.
+    QAction* dialogs = actionNamed(*gadgets, QStringLiteral("&&Dialogs"));
+    GD_REQUIRE(dialogs != nullptr, "the menu text '&Dialogs' was not escaped to '&&Dialogs'");
+    int boxes = 0;
+    scripting::GadgetUi spamUi;
+    spamUi.message = [&boxes, gadgets](const std::string&) {
+        if (++boxes == 3) {
+            gadgets->requestAbort();  // what the "Abort gadget" button does
+        }
+    };
+    gadgets->setUiOverride(spamUi);
+    const std::size_t layersBeforeSpam = doc.layers().size();
+    const std::size_t stepsBeforeSpam = doc.undoStack().count();
+    dialogs->trigger();
+    GD_REQUIRE(boxes == 3 && gadgets->lastReport().run.script.status == scripting::ScriptStatus::Cancelled,
+               "Abort gadget did not end a gadget that keeps opening dialogs");
+    GD_REQUIRE(doc.layers().size() == layersBeforeSpam && doc.undoStack().count() == stepsBeforeSpam,
+               "an aborted gadget changed the document");
+    {
+        scripting::FormSpec spec;
+        spec.title = "t";
+        GadgetFormDialog form(spec, GadgetFormChoices{});
+        bool aborted = false;
+        form.onAbort = [&aborted] { aborted = true; };
+        GD_REQUIRE(form.abortButton() != nullptr, "the form dialog has no Abort gadget button");
+        form.abortButton()->click();
+        GD_REQUIRE(aborted && form.result() == QDialog::Rejected, "Abort gadget in a form did not abort and close it");
+    }
     gadgets->setUiOverride(ui);
 
     // 4. Sandbox limits are enforced in the app; a failure leaves the document as it was.
@@ -287,7 +321,7 @@ std::string gadgetsSelfTest(MainWindow& window) {
             if (g.folderName == "sample") sampleRow = i;
             if (g.folderName == "loop") loopRow = i;
         }
-        GD_REQUIRE(dlg.rowCount() == 5 && dlg.shortcutOf(sampleRow) == "Ctrl+F7", "the shortcuts dialog does not list the gadgets");
+        GD_REQUIRE(dlg.rowCount() == 6 && dlg.shortcutOf(sampleRow) == "Ctrl+F7", "the shortcuts dialog does not list the gadgets");
         GD_REQUIRE(!dlg.setShortcut(loopRow, "Ctrl+F7").empty() && !dlg.message().isEmpty() && changes == 0,
                    "a shortcut another gadget uses was accepted");
         GD_REQUIRE(dlg.setShortcut(loopRow, "Ctrl+F8").empty() && changes == 1, "a free shortcut was refused");
@@ -316,7 +350,7 @@ std::string gadgetsSelfTest(MainWindow& window) {
         GD_REQUIRE(again.has_value() && again->ok, "re-installing (replace) failed");
         const auto junk = gadgets->installGadget(root / "junk");
         GD_REQUIRE(!junk.has_value(), "a folder with no usable manifest was installed");
-        GD_REQUIRE(gadgets->manager().gadgets().size() == 6, "the gadget count is wrong after installs");
+        GD_REQUIRE(gadgets->manager().gadgets().size() == 7, "the gadget count is wrong after installs");
     }
 
     gadgets->setUiOverride(std::nullopt);
