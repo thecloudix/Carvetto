@@ -1556,7 +1556,7 @@ Goal: core already has JobType::Rotary, RotaryAxis, Job::rotary(length, diameter
 Acceptance criteria:
   1. A rotary job can be created, edited, saved and reloaded with all fields; the design area and Z-zero follow Length/Diameter/orientation; app self-test drives the pages; ADR.
 
-### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: verified round 2, landing (app wiring -> T-0334)]
+### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: done — PR #202 (app wiring -> T-0334)]
 Phase: 3   Module: core/post + core/simulate + app   Depends on: T-0319
 Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/Y with the job diameter, sign, A-axis angle in the right units, feed handling for the rotary axis, MAXIMUM_ROTATION handling) correct and golden-tested for X and Y axes; add an Auto-Wrapping View (wrapped preview of vectors, toolpaths and the model on a cylinder, with a wrapped/flat toggle) and wrapped material-removal simulation for rotary jobs. Cover rotary refusals (tool longer than radius, etc.) with diagnostics.
 Acceptance criteria:
@@ -1568,7 +1568,7 @@ Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around th
 Acceptance criteria:
   1. Wrapping effect composes and bakes equal to the direct wrapped surface on test models; unwrapper round-trips a known cross-section; rotary import places a mesh on the cylinder; ADR with the readings for owner review.
 
-### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: blocked — waits on T-0320]
+### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: ready]
 Phase: 3   Module: core/toolpath + core/geometry + app   Depends on: T-0320
 Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turns a cylinder down to a radius, and wrapped fluting and spiral layouts that generate vectors (flute count, length, start/end, spiral pitch) on the flat design area ready for the existing toolpaths. Forms, undo, self-test.
 Acceptance criteria:
