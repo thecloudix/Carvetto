@@ -1556,7 +1556,7 @@ Goal: core already has JobType::Rotary, RotaryAxis, Job::rotary(length, diameter
 Acceptance criteria:
   1. A rotary job can be created, edited, saved and reloaded with all fields; the design area and Z-zero follow Length/Diameter/orientation; app self-test drives the pages; ADR.
 
-### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: in-progress]
+### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: verifying (post, wrapped view core, wrapped sim; app wiring -> T-0334)]
 Phase: 3   Module: core/post + core/simulate + app   Depends on: T-0319
 Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/Y with the job diameter, sign, A-axis angle in the right units, feed handling for the rotary axis, MAXIMUM_ROTATION handling) correct and golden-tested for X and Y axes; add an Auto-Wrapping View (wrapped preview of vectors, toolpaths and the model on a cylinder, with a wrapped/flat toggle) and wrapped material-removal simulation for rotary jobs. Cover rotary refusals (tool longer than radius, etc.) with diagnostics.
 Acceptance criteria:
@@ -1640,3 +1640,9 @@ Phase: 3   Module: app + core/io   Depends on: —
 Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (SVG, DXF, PNG), thumbnails generated off the UI thread and cached, search by name, drag/insert into the drawing at the cursor/centre with scale-to-fit, favourites; no online store. Thumbnail cache size bounded; hostile files refused with clear messages.
 Acceptance criteria:
   1. Browsing a folder of mixed files shows thumbnails; insert is one undo step; self-test; ADR.
+
+### T-0334 App wiring for the Auto-Wrapping View, wrapped simulation playback and rotary refusal dialogs (T-0320 follow-up)   [status: ready]
+Phase: 3   Module: app + app/viewmodel   Depends on: T-0320
+Goal: T-0320 delivered the wrapped post, CylinderMap, the Qt-free wrapped view (flat/wrapped state, software renderer, path builders) and wrapped simulation core. Wire them into the app: a View-menu entry and flat/wrapped toggle for rotary jobs, drawing the wrapped raster in the Model/2D views, wrapped playback in the simulation panel, a dialog presenting the rotary post refusals/warnings, and --self-test coverage driving them offscreen.
+Acceptance criteria:
+  1. For a rotary job the user can toggle flat/wrapped, see vectors, toolpaths and the model wrapped, play the wrapped simulation, and see rotary refusals; self-test drives all of it.
