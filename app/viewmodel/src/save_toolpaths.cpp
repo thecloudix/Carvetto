@@ -38,6 +38,7 @@
 #endif
 
 #include "carvetto/document/double_sided.hpp"
+#include "carvetto/post/laser_setup.hpp"
 #include "carvetto/toolpath/keepout.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/layers_sheets.hpp"
@@ -670,6 +671,18 @@ SaveJob prepareSave(const SaveSource& source, const PostInfo& post, const SaveOp
         const std::string err = readSmallFile(post.path, kMaxPostBytes, job.postText);
         if (!err.empty()) {
             job.error = "post-processor: " + err;
+        }
+    }
+    if (job.error.empty() && job.options.checkLaserSetup &&
+        std::any_of(job.records.begin(), job.records.end(),
+                    [](const document::ToolpathRecord& r) { return r.tool.laser && r.hasMoves(); })) {
+        // A post that does not parse is reported by generateOutput; here only a parsed one is asked.
+        if (auto pp = post::PostProcessor::parse(job.postText)) {
+            const std::string problem = post::laserSetupProblem(
+                job.options.machine.has_value() ? &*job.options.machine : nullptr, pp.value());
+            if (!problem.empty()) {
+                job.error = "this job has a laser toolpath, but " + problem;
+            }
         }
     }
     if (job.error.empty() && job.options.tiling && !job.records.empty()) {

@@ -10,6 +10,7 @@
 #include <string>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/viewmodel/save_toolpaths.hpp"
 #include "toolpath_test_support.hpp"
 
 using namespace carvetto;
@@ -127,4 +128,81 @@ TEST_CASE("laser session: add, undo, save, load and recalculate", "[toolpath][se
 
     REQUIRE(doc.undo());
     CHECK(doc.toolpaths().empty());
+}
+
+TEST_CASE("T-0326: saving a laser toolpath checks the machine's laser flag and the post", "[toolpath][session][laser][save]") {
+    namespace fs = std::filesystem;
+    Document doc;
+    const tooling::ToolDatabase db = cliToolDatabase();
+    ToolpathSession session(&doc);
+    session.setToolDatabase(db);
+    addVector(doc, geometry::Contour::circle({20, 20}, 10.0));
+    ToolpathForm laser(ToolpathOperation::LaserCutFill, Units::Millimetres);
+    REQUIRE(laser.setTool(db, source("end-mill-3mm")).ok);
+    REQUIRE(session.add(laser.definition()).ok);
+    const SaveSource laserSource = makeSaveSource(session);
+
+    const std::vector<PostInfo> posts = discoverPosts(fs::path(CARVETTO_POSTS_DIR), {});
+    const auto postNamed = [&](const char* file) {
+        for (const PostInfo& p : posts) {
+            if (p.path.filename() == file) {
+                return p;
+            }
+        }
+        FAIL("no post " << file);
+        return posts.front();
+    };
+    const fs::path dir = fs::path(CARVETTO_VM_WORK_DIR) / "laser_save";
+    fs::create_directories(dir);
+    SaveOptions opt;
+    opt.directory = dir;
+    opt.checkLaserSetup = true;
+    tooling::Machine machine;
+    machine.id = "m";
+    machine.name = "Diode";
+
+    // A post without laser support is refused with the setup message, a laser post is accepted.
+    CHECK(prepareSave(laserSource, postNamed("grbl_mm.pp"), opt).error.find("LASER_SUPPORT") != std::string::npos);
+    CHECK(prepareSave(laserSource, postNamed("grbl_laser_mm.pp"), opt).error.empty());
+    // A machine without the flag is refused even with the laser post; flagged, it passes.
+    opt.machine = machine;
+    const SaveJob unflagged = prepareSave(laserSource, postNamed("grbl_laser_mm.pp"), opt);
+    CHECK(unflagged.error.find("this job has a laser toolpath") == 0);
+    CHECK(unflagged.error.find("\"Diode\" is not marked as a laser machine") != std::string::npos);
+    CHECK_FALSE(generateOutput(unflagged).ok);
+    opt.machine->laser = true;
+    const SaveJob flagged = prepareSave(laserSource, postNamed("grbl_laser_mm.pp"), opt);
+    CHECK(flagged.error.empty());
+    CHECK(generateOutput(flagged).ok);
+    // The check is off unless asked for (the command line is unchanged), and a job without a laser toolpath is
+    // not checked at all.
+    opt.machine->laser = false;
+    opt.checkLaserSetup = false;
+    CHECK(prepareSave(laserSource, postNamed("grbl_laser_mm.pp"), opt).error.empty());
+    opt.checkLaserSetup = true;
+    Document plain;
+    ToolpathSession plainSession(&plain);
+    plainSession.setToolDatabase(db);
+    addVector(plain, geometry::Contour::circle({20, 20}, 10.0));
+    ToolpathForm profile(ToolpathOperation::Profile, Units::Millimetres);
+    REQUIRE(profile.setTool(db, source("end-mill-3mm")).ok);
+    REQUIRE(profile.setField("cutDepth", "2").ok);
+    REQUIRE(plainSession.add(profile.definition()).ok);
+    CHECK(prepareSave(makeSaveSource(plainSession), postNamed("grbl_mm.pp"), opt).error.empty());
+}
+
+TEST_CASE("T-0326: which laser settings make the selected vectors an input", "[toolpath][laser]") {
+    toolpath::LaserPictureParams picture;
+    CHECK_FALSE(boundaryUsesVectors(picture));
+    picture.strategy = toolpath::PhotoStrategy::SelectedVectors;
+    CHECK(boundaryUsesVectors(picture));
+    toolpath::LaserSketchParams sketch;
+    CHECK_FALSE(boundaryUsesVectors(sketch));
+    sketch.boundary = toolpath::SketchBoundary::Vectors;
+    CHECK(boundaryUsesVectors(sketch));
+    sketch.source = toolpath::SketchSource::Model;  // a model sketch inside the vectors reads them too
+    CHECK(boundaryUsesVectors(sketch));
+    CHECK(readsModel(sketch));
+    CHECK_FALSE(usesBitmap(sketch));
+    CHECK_FALSE(boundaryUsesVectors(toolpath::LaserCutFillParams{}));
 }

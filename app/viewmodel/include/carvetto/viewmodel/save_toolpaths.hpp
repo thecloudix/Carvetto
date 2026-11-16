@@ -93,6 +93,11 @@ struct SaveOptions {
     /// Machine work area in mm (0 = not set): a tile larger than it makes the job fail.
     double workAreaX{0.0};
     double workAreaY{0.0};
+    /// Laser setup check (T-0326, ADR-0113): when set and a record has a laser tool, `prepareSave` refuses the job
+    /// unless `post::laserSetupProblem(machine, post)` is empty. `machine` is the machine the job is saved for
+    /// (none: only the post is checked). Off by default, so the CLI and older callers are unchanged.
+    bool checkLaserSetup{false};
+    std::optional<tooling::Machine> machine;
 };
 
 /// A face of a double-sided job as far as posting is concerned (T-0261, ADR-0039): toolpaths are

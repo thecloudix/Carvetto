@@ -199,6 +199,10 @@ std::string toolpathsSelfTest(MainWindow& window);
 /// Image Engrave end to end (T-0275): import a PNG, see it on the canvas, add a Image Engrave through
 /// the form, edit it, stale after moving the bitmap, save and reload. Replaces the window's document.
 std::string imageSelfTest(MainWindow& window);
+/// Laser Cut / Fill, Laser Picture and Laser Sketch Engraving (T-0326): the Add menu entries, the forms, calculation,
+/// edit, stale, the burn marks of the simulation, the laser setup check of Save Toolpaths, save and reload. Replaces
+/// the window's document.
+std::string laserSelfTest(MainWindow& window);
 /// 3D Rough and 3D Finish (T-0303): the forms, calculation on the sheet's relief model, the toolpaths drawn
 /// in the Model view, undo, and the simulation. Replaces the window's document.
 std::string toolpaths3dSelfTest(MainWindow& window);

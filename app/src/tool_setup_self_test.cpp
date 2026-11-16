@@ -3,6 +3,7 @@
 // setup file round trip and a hostile file.
 
 #include <QAction>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDir>
@@ -116,6 +117,14 @@ std::string toolSetupSelfTest(MainWindow& window) {
                    machine->workAreaX == 900.0 && machine->defaultPost == "grbl" && machine->associatedPosts.size() == 2,
                "the machine form did not reach the database");
     TS_REQUIRE(dialog.activeMachineId() == machineId, "Use this machine did not select the machine");
+    // The laser flag (T-0326): off by default, set by the check box, kept by the database.
+    auto* laserBox = child<QCheckBox>(dialog, "machineLaser");
+    TS_REQUIRE(laserBox != nullptr && !laserBox->isChecked() && !machine->laser, "the laser flag is not off for a new machine");
+    laserBox->setChecked(true);
+    TS_REQUIRE(dialog.database().findMachine(machineId)->laser, "the laser check box did not reach the database");
+    laserBox->setChecked(false);
+    TS_REQUIRE(!dialog.database().findMachine(machineId)->laser, "clearing the laser check box did not reach the database");
+    laserBox->setChecked(true);
 
     child<QPushButton>(dialog, "materialAdd")->click();
     const std::string materialId = viewmodel::newMaterialId(original);

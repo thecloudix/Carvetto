@@ -300,6 +300,8 @@ void ToolpathFormDialog::buildStatic() {
     // Vectors (the selector).
     auto* vbox = new QGroupBox(isPhoto() ? QStringLiteral("Bitmap") : QStringLiteral("Vectors"), this);
     auto* vform = new QFormLayout(vbox);
+    vectorsBox_ = vbox;
+    vectorsForm_ = vform;
     baseCombo_ = new QComboBox(vbox);
     baseCombo_->setObjectName(QStringLiteral("vectorBase"));
     baseCombo_->addItems({QStringLiteral("All vectors"), QStringLiteral("Selected objects"), QStringLiteral("Layers")});
@@ -328,17 +330,6 @@ void ToolpathFormDialog::buildStatic() {
     countLabel_->setObjectName(QStringLiteral("vectorCount"));
     vform->addRow(countLabel_);
     outer->addWidget(vbox);
-    if (isPhoto()) {
-        // The source is the selected bitmap (and, for Selected Vectors, the selected vectors): no
-        // layer or open/closed/circle choices.
-        for (QWidget* w : std::initializer_list<QWidget*>{baseCombo_, layerList_, openCheck_, closedCheck_,
-                                                          circlesCheck_, diameterEdit_}) {
-            w->hide();
-        }
-        vform->labelForField(baseCombo_)->hide();
-        vform->labelForField(diameterEdit_)->hide();
-    }
-
     const viewmodel::VectorSelector& sel = form_.selector();
     openCheck_->setChecked(sel.includeOpen);
     closedCheck_->setChecked(sel.includeClosed);
@@ -510,15 +501,30 @@ void ToolpathFormDialog::applyClearance() {
 }
 
 void ToolpathFormDialog::refreshVectors() {
+    if (isPhoto() && form_.selector().base.all) {
+        // The source became a bitmap (a laser sketch's source choice): start from the current selection.
+        form_.setSelector(viewmodel::VectorSelector::fromObjects(info_.selection));
+        const bool was = building_;
+        building_ = true;
+        baseCombo_->setCurrentIndex(BaseObjects);
+        building_ = was;
+    }
     const int base = baseCombo_->currentIndex();
-    layerList_->setVisible(base == BaseLayers);
+    // The source of a bitmap toolpath is the selected bitmap (and, for Selected Vectors, the selected vectors): no
+    // layer or open/closed/circle choices.
+    const bool photo = isPhoto();
+    vectorsBox_->setTitle(photo ? QStringLiteral("Bitmap") : QStringLiteral("Vectors"));
+    for (QWidget* w : std::initializer_list<QWidget*>{baseCombo_, openCheck_, closedCheck_, circlesCheck_, diameterEdit_}) {
+        w->setVisible(!photo);
+    }
+    vectorsForm_->labelForField(baseCombo_)->setVisible(!photo);
+    vectorsForm_->labelForField(diameterEdit_)->setVisible(!photo);
+    layerList_->setVisible(!photo && base == BaseLayers);
     diameterEdit_->setEnabled(circlesCheck_->isChecked());
     if (isPhoto()) {
         const std::string problem = info_.bitmapProblem ? info_.bitmapProblem(form_.selector()) : std::string();
         QString text = problem.empty() ? QStringLiteral("A bitmap is selected.") : qs(problem);
-        if (info_.countVectors && problem.empty() &&
-            std::get<toolpath::ImageEngraveParams>(form_.definition().params).strategy ==
-                toolpath::PhotoStrategy::SelectedVectors) {
+        if (info_.countVectors && problem.empty() && viewmodel::boundaryUsesVectors(form_.definition().params)) {
             text += QStringLiteral(" %1 vector(s) to follow.")
                         .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
         }
@@ -903,10 +909,11 @@ std::string ToolpathFormDialog::sourceProblem() const {
                 return bad;
             }
         }
-        const auto& p = std::get<toolpath::ImageEngraveParams>(form_.definition().params);
-        if (p.strategy == toolpath::PhotoStrategy::SelectedVectors && info_.countVectors &&
+        if (viewmodel::boundaryUsesVectors(form_.definition().params) && info_.countVectors &&
             info_.countVectors(form_.selector()) == 0) {
-            return "Selected Vectors needs vectors to follow: select some besides the bitmap";
+            return std::holds_alternative<toolpath::LaserSketchParams>(form_.definition().params)
+                       ? "the Vectors boundary needs closed vectors: select some besides the bitmap"
+                       : "Selected Vectors needs vectors to follow: select some besides the bitmap";
         }
         return {};
     }
@@ -919,17 +926,7 @@ std::string ToolpathFormDialog::sourceProblem() const {
         if (form_.operation() == document::ToolpathOperation::Project3d) {
             return {};  // the vectors are not used; the form reports a missing source
         }
-        const auto boundary = std::visit(
-            [](const auto& p) -> toolpath::Rough3dBoundary {
-                using P = std::decay_t<decltype(p)>;
-                if constexpr (std::is_same_v<P, toolpath::Rough3dParams> || std::is_same_v<P, toolpath::Finish3dParams>) {
-                    return p.boundary;
-                } else {
-                    return toolpath::Rough3dBoundary::Material;
-                }
-            },
-            form_.definition().params);
-        if (boundary == toolpath::Rough3dBoundary::Vectors && info_.countVectors &&
+        if (viewmodel::boundaryUsesVectors(form_.definition().params) && info_.countVectors &&
             info_.countVectors(form_.selector()) == 0) {
             return "the Selected vectors boundary needs closed vectors: select some";
         }

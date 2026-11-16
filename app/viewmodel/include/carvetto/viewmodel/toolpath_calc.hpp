@@ -259,6 +259,11 @@ bool needsVectors(const document::ToolpathParams& params);
 /// the model source (T-0324).
 bool readsModel(const document::ToolpathParams& params);
 
+/// True when the selected vectors are an input of a bitmap or model operation (T-0326: public for the form): a 3D
+/// toolpath's Vectors boundary, the Selected Vectors strategy of an image engrave or laser picture, a laser
+/// sketch's Vectors boundary.
+bool boundaryUsesVectors(const document::ToolpathParams& params);
+
 /// The machine limits a laser sketch honours (ADR-0105): the active sheet's material rectangle, cut down to the
 /// machine's work area measured from the rectangle's lower-left corner when `machine` states one. Empty when the
 /// sheet has no area.

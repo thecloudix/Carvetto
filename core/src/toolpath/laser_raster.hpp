@@ -211,13 +211,37 @@ void buildStrokes(const std::vector<Span>& spans, Vec2 dir, const PowerOf& power
     close();
 }
 
+/// How far (0 .. `overscan`) the point `p` can run along the unit direction `d` and stay inside `limits`
+/// (all of `overscan` without limits); 0 or less when there is no room (a point on or outside the border).
+inline double overscanWithin(Vec2 p, Vec2 d, double overscan, const Box2* limits) {
+    if (limits == nullptr) {
+        return overscan;
+    }
+    double t = overscan;
+    if (d.x > 0.0) {
+        t = std::min(t, (limits->max.x - p.x) / d.x);
+    } else if (d.x < 0.0) {
+        t = std::min(t, (limits->min.x - p.x) / d.x);
+    }
+    if (d.y > 0.0) {
+        t = std::min(t, (limits->max.y - p.y) / d.y);
+    } else if (d.y < 0.0) {
+        t = std::min(t, (limits->min.y - p.y) / d.y);
+    }
+    return t;
+}
+
 /// Appends the moves of `strokes` at Z 0: rapid to the start (to the overscan point first, then a beam-off feed to
-/// the start), the pieces with their power, then the beam-off overscan run. Returns the end position.
+/// the start), the pieces with their power, then the beam-off overscan run. Returns the end position. With `limits`
+/// (the machine limit boundary, ADR-0113) each overscan run is shortened so that its far end stays inside them; one
+/// that would be empty is left out (the rapid goes straight to the start).
 inline Vec2 emitStrokes(const std::vector<Stroke>& strokes, double overscan, double z, std::vector<Move>& moves,
-                        Vec2 last) {
+                        Vec2 last, const Box2* limits = nullptr) {
     for (const Stroke& s : strokes) {
-        if (overscan > 0.0) {
-            moves.push_back(Move::rapid({s.start.x - s.dir.x * overscan, s.start.y - s.dir.y * overscan, z}));
+        const double before =
+            overscan > 0.0 ? overscanWithin(s.start, {-s.dir.x, -s.dir.y}, overscan, limits) : 0.0;
+        if (before > 0.0) {
+            moves.push_back(Move::rapid({s.start.x - s.dir.x * before, s.start.y - s.dir.y * before, z}));
             moves.push_back(Move::feed({s.start.x, s.start.y, z}));
         } else {
             moves.push_back(Move::rapid({s.start.x, s.start.y, z}));
@@ -229,8 +253,9 @@ inline Vec2 emitStrokes(const std::vector<Stroke>& strokes, double overscan, dou
             moves.push_back(m);
             last = p.to;
         }
-        if (overscan > 0.0) {
-            last = {last.x + s.dir.x * overscan, last.y + s.dir.y * overscan};
+        const double after = overscan > 0.0 ? overscanWithin(last, s.dir, overscan, limits) : 0.0;
+        if (after > 0.0) {
+            last = {last.x + s.dir.x * after, last.y + s.dir.y * after};
             moves.push_back(Move::feed({last.x, last.y, z}));
         }
     }

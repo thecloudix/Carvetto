@@ -405,7 +405,6 @@ bool readsModel(const document::ToolpathParams& params) {
     return usesModel(static_cast<ToolpathOperation>(params.index()));
 }
 
-namespace {
 /// True when the selected vectors are an input of a bitmap or model operation: a 3D toolpath's Vectors boundary,
 /// the Selected Vectors strategy of an image engrave or laser picture, a laser sketch's Vectors boundary.
 bool boundaryUsesVectors(const document::ToolpathParams& params) {
@@ -427,6 +426,7 @@ bool boundaryUsesVectors(const document::ToolpathParams& params) {
     return false;
 }
 
+namespace {
 std::uint64_t mixWord(std::uint64_t h, std::uint64_t w) {
     h ^= w + 0x9E3779B97F4A7C15ULL + (h << 6) + (h >> 2);
     return h * 1099511628211ULL;

@@ -167,7 +167,8 @@ void ToolpathsPanel::build() {
                                  ToolpathOperation::ThreadMill, ToolpathOperation::Prism, ToolpathOperation::Fluting,
                                  ToolpathOperation::Inlay, ToolpathOperation::ImageEngrave, ToolpathOperation::VCarveInlay,
                                  ToolpathOperation::Rough3d, ToolpathOperation::Finish3d, ToolpathOperation::Moulding,
-                                 ToolpathOperation::Project3d, ToolpathOperation::Rounding}) {
+                                 ToolpathOperation::Project3d, ToolpathOperation::Rounding, ToolpathOperation::LaserCutFill,
+                                 ToolpathOperation::LaserPicture, ToolpathOperation::LaserSketch}) {
         QAction* a = addMenu->addAction(QString::fromUtf8(operationLabel(op)));
         a->setObjectName(QStringLiteral("add%1").arg(QString::fromUtf8(operationLabel(op))));
         a->setToolTip(QStringLiteral("Add a %1 toolpath").arg(QString::fromUtf8(operationLabel(op))));

@@ -140,6 +140,7 @@ class ToolSetupDialog : public QDialog {
     QDoubleSpinBox* accelAngular_{nullptr};
     QDoubleSpinBox* maxSpindle_{nullptr};
     QDoubleSpinBox* maxFeed_{nullptr};
+    QCheckBox* machineLaser_{nullptr};
     QLineEdit* posts_{nullptr};
     QComboBox* defaultPost_{nullptr};
 

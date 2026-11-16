@@ -585,7 +585,9 @@ LaserSketchResult laserSketchToolpath(const GrayImage& tone, const geometry::Box
     result.strokes = strokes.size();
     std::vector<Move>& moves = result.toolpath.moves;
     moves.reserve(static_cast<std::size_t>(pieceCount + 4.0 * static_cast<double>(strokes.size())) + 1);
-    const Vec2 last = emitStrokes(strokes, params.overscan, 0.0, moves, {});
+    // The beam-off overscan runs stay inside the machine limits too (ADR-0113).
+    const bool limited = params.machineLimitBoundary && machineLimits.has_value();
+    const Vec2 last = emitStrokes(strokes, params.overscan, 0.0, moves, {}, limited ? &*machineLimits : nullptr);
     moves.push_back(Move::rapid({last.x, last.y, params.safeZ}));
     return result;
 }

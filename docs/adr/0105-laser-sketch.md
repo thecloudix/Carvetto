@@ -39,7 +39,9 @@ the readings. It uses ADR-0099 (beam power per move, laser marking, jet blocks) 
    neighbouring runs line up), the upper edge exclusive, angles that are multiples of a right angle exact; run as a
    serpentine, direction alternating after every track line that burns; **Cross Hatch** adds the same at +90 degrees after the
    first set, per region. Beam-off gaps of 5 mm or more split a track line into strokes (ADR-0104).
-7. **Overscan.** As ADR-0104 on every stroke (rapid before, beam-off feed in, out, beam-off feed past the end).
+7. **Overscan.** As ADR-0104 on every stroke (rapid before, beam-off feed in, out, beam-off feed past the end). With the
+   machine limit boundary the overscan runs are cut down to stay inside the limits too (T-0326, ADR-0113 §4; the T-0324
+   verifier found they could leave them).
 8. **Machine Limit Boundary.** When set, nothing is burned outside the machine limits the caller gives
    (`machineLimits`, a rectangle in document mm); a source wholly outside gives nothing (`NoRegion`). The viewmodel
    reading of the limits (`machineLimitsOf`): the **active sheet's material rectangle**, cut down to the tool's machine
