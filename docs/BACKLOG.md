@@ -1586,13 +1586,13 @@ Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither ima
 Acceptance criteria:
   1. Power/dither output verified against reference rasters; model source works with the relief engine; forms and self-test; ADR.
 
-### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: verified round 2, landing]
+### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: done — PR #204]
 Phase: 3   Module: core/simulate + core/tooling + core/post + app   Depends on: T-0323
 Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (power x speed vs burn rate -> mark depth/darkness); machine flag for laser-capable posts; post-adaptation guide (power variable, laser blocks) in docs; ship our own laser-capable GRBL-style post with golden tests.
 Acceptance criteria:
   1. Burn marks match the model on test paths (counter-based, no timing); laser post golden test; ADR.
 
-### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: blocked — waits on T-0324, T-0325]
+### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: ready]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0324, T-0325
 Goal: Wire Laser Cut/Fill, Picture and Sketch Engraving into the Toolpaths panel (entries, dialogs, recalculation, staleness, preview and simulation overlay, job-sheet rows) following the T-0303/T-0311 pattern.
 Also: with the machine-limit boundary on, overscan strokes can still leave the limits (the burn is clipped, the beam-off overscan moves are not): clamp overscan to the limits or note it in ADR-0105 (T-0324 verifier). Call post::laserSetupProblem(machine, post) from the UI (T-0325) and add the machine laser flag to the tool/machine setup dialog. Self-tests for Picture and Sketch entries belong here.
@@ -1667,7 +1667,7 @@ Goal: The feature inventory lists Nest Parts (rotate to best fit by step angle, 
 Acceptance criteria:
   1. Arbitrary closed vectors nest within boundary/sheets with rotation and containment options; deterministic; bounded; form and self-test.
 
-### T-0338 Scripting tests flake under load: deterministic-budget tests run with the real 5 s wall-clock deadline active   [status: in-progress]
+### T-0338 Scripting tests flake under load: deterministic-budget tests run with the real 5 s wall-clock deadline active   [status: done — PR #205]
 Phase: 3   Module: core/tests/scripting   Depends on: T-0330
 Goal: Observed on a machine at load ~59: 'scripting: hostile scripts - memory and string bombs' and 'scripting: string functions on huge operands are charged' fail because the default 5 s deadline (T-0330 backstop) fires first and the status is Timeout instead of InstructionLimit/MemoryLimit. The same can happen on loaded CI runners (stress repeat). Make every scripting/gadget test that asserts a deterministic stop set deadlineMillis = 0 (or an injected fake clock) so it cannot depend on wall time; keep real-clock tests only for the smoke test with generous margins. Audit ALL tests in core/tests/scripting and app/viewmodel gadget tests for default-ScriptLimits runs; add a guard (e.g. a test helper that builds limits with the deadline off) so new tests cannot forget. Prove under load (run the scripting tests with a CPU hog in parallel) that they pass repeatedly.
 Acceptance criteria:
