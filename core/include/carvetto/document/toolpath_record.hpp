@@ -10,6 +10,7 @@
 
 #include "carvetto/document/ids.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/drill_bank.hpp"
 #include "carvetto/toolpath/finish3d.hpp"
 #include "carvetto/toolpath/moulding.hpp"
 #include "carvetto/toolpath/project3d.hpp"
@@ -97,6 +98,8 @@ inline constexpr std::size_t kMaxGroupTools = 64;
 /// a projection onto the model reads the moves of the record `sourceToolpath` names. A laser cut / fill (T-0323,
 /// ADR-0099) takes its tool and cutting data as arguments; its tool snapshot is marked `laser`; so do a laser picture (T-0324,
 /// ADR-0104, reads the bitmap of its selection) and a laser sketch (ADR-0105, reads the bitmap or the sheet's relief model).
+/// A drill bank (T-0328, ADR-0106) takes them as arguments too, like Drilling; it extends `DrillParams`, so a
+/// `DrillParams` visitor does not see it.
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
                                     toolpath::EngraveParams, toolpath::VCarvingParams, toolpath::ChamferParams,
                                     toolpath::ThreadMillParams, toolpath::PrismParams, toolpath::FlutingParams,
@@ -104,10 +107,10 @@ using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketPar
                                     toolpath::VCarveInlayParams, toolpath::Rough3dParams,
                                     toolpath::Finish3dParams, toolpath::MouldingParams, toolpath::Project3dParams,
                                     toolpath::LaserCutFillParams, toolpath::LaserPictureParams,
-                                    toolpath::LaserSketchParams>;
+                                    toolpath::LaserSketchParams, toolpath::DrillBankParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay, Rough3d, Finish3d, Moulding, Project3d, LaserCutFill, LaserPicture, LaserSketch };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Prism, Fluting, Inlay, ImageEngrave, VCarveInlay, Rough3d, Finish3d, Moulding, Project3d, LaserCutFill, LaserPicture, LaserSketch, DrillBank };
 
 /// True for the operations that drive a laser (their tool snapshot is marked `laser`): Laser Cut / Fill (T-0323), Laser
 /// Picture and Laser Sketch Engraving (T-0324).

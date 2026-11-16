@@ -45,6 +45,10 @@
 //               startY chordal; choices piece, plugBoundary, clearanceStrategy, clearanceDirection, rampPlunge, order
 //   Fluting     fluteDepth rampLength|rampPercent (by the ramp basis; hidden for a ramp over the complete
 //               length) safeZ startX startY chordal
+//   Drill Bank  startDepth cutDepth safeZ retractGap dwellTime horizontalDrills verticalDrills pitch rowOffset
+//               columnOffset referenceDrill pitchTolerance diameterTolerance (with matchDiameters) minHoles startX
+//               startY distance chordal; choices peck peckRetract matchDiameters unmatched order; the per-spindle
+//               lists through `setBankSpindles` (T-0328, ADR-0106)
 //   Laser Cut / Fill  power (percent) moveSpeed (mm/min, 0 = the tool's feed rate) cutDepth passDepth (with a cut
 //               depth) repeats allowance safeZ startX startY chordal; with Hatch Fill also overscan stepover
 //               hatchAngle; choices strategy direction crossHatch fillMode outline startAt order (T-0323, ADR-0099)
@@ -170,6 +174,12 @@ class ToolpathForm {
     /// repeated or null id. A different operation refuses.
     FieldResult setPriorToolpaths(const std::vector<std::uint64_t>& ids);
     std::vector<std::uint64_t> priorToolpaths() const;
+    /// Drill bank only (T-0328, ADR-0106): the per-spindle settings, in mm - the numbers of the switched-off drills,
+    /// the diameters (empty = every drill has the tool's) and the hole depths (empty = the cut depth) of drills 1..n
+    /// in number order. All or nothing; a different operation refuses. Whether the lists fit the head is checked
+    /// by `problems`.
+    FieldResult setBankSpindles(const std::vector<int>& inactive, const std::vector<double>& diameters,
+                                const std::vector<double>& depths);
     const document::ToolSource& tool() const { return definition_.tool; }
     const std::vector<document::ToolSource>& clearanceTools() const { return definition_.clearanceTools; }
     /// The chosen tool and the cutting data it brings (feed, plunge, spindle, pass depth, stepover).

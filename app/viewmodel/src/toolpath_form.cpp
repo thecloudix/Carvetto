@@ -19,6 +19,7 @@
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/v_carve_inlay.hpp"
 #include "carvetto/toolpath/image_engrave.hpp"
+#include "carvetto/toolpath/drill_bank.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/laser.hpp"
 #include "carvetto/toolpath/laser_picture.hpp"
@@ -334,6 +335,51 @@ Table<toolpath::DrillParams> makeDrillTable() {
     t.option<toolpath::PeckRetract>("peckRetract", "Retract between passes", "Peck", {"Above start", "Above previous pass"},
                                     [](P& p) -> toolpath::PeckRetract& { return p.peckRetract; },
                                     [](const P& p) { return p.peck; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    bound(t, "retractGap", -kMaxOffsetMm, kMaxOffsetMm);
+    return t;
+}
+
+Table<toolpath::DrillBankParams> makeDrillBankTable() {
+    using P = toolpath::DrillBankParams;
+    Table<P> t;
+    t.num("startDepth", "Start depth", "Depth", Kind::Length, false, true, [](P& p) -> double& { return p.startDepth; });
+    t.num("cutDepth", "Cut depth (drills without their own depth)", "Depth", Kind::Length, false, false,
+          [](P& p) -> double& { return p.cutDepth; });
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    t.num("retractGap", "Retract gap", "Peck", Kind::Length, false, false, [](P& p) -> double& { return p.retractGap; },
+          [](const P& p) { return p.peck; });
+    t.num("dwellTime", "Dwell time", "Peck", Kind::Seconds, false, true, [](P& p) -> double& { return p.dwellTime; });
+    t.count("horizontalDrills", "Horizontal drills", "Bank", 0, 32, [](P& p) -> int& { return p.horizontalDrills; });
+    t.count("verticalDrills", "Vertical drills", "Bank", 0, 32, [](P& p) -> int& { return p.verticalDrills; });
+    t.num("pitch", "Pitch", "Bank", Kind::Length, false, false, [](P& p) -> double& { return p.pitch; });
+    bound(t, "pitch", 1e-3, 1.0e6);
+    t.num("rowOffset", "Row offset", "Bank", Kind::Length, true, true, [](P& p) -> double& { return p.rowOffset; });
+    t.num("columnOffset", "Column offset", "Bank", Kind::Length, true, true,
+          [](P& p) -> double& { return p.columnOffset; });
+    t.count("referenceDrill", "Reference drill", "Bank", 1, 64, [](P& p) -> int& { return p.referenceDrill; });
+    t.num("pitchTolerance", "Pitch tolerance", "Matching", Kind::Length, false, false,
+          [](P& p) -> double& { return p.pitchTolerance; });
+    bound(t, "pitchTolerance", 1e-6, 1.0e6);
+    t.num("diameterTolerance", "Diameter tolerance", "Matching", Kind::Length, false, true,
+          [](P& p) -> double& { return p.diameterTolerance; }, [](const P& p) { return p.matchDiameters; });
+    t.count("minHoles", "Fewest holes per stroke", "Matching", 1, 64, [](P& p) -> int& { return p.minHoles; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    {
+        NumDef<P>& d = t.num("distance", "Merge holes closer than", "Tolerance", Kind::Length, false, false,
+                             [](P& p) -> double& { return p.tolerance.distance; });
+        d.lo = 1e-6;
+        d.hi = 1.0;
+    }
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    t.flag("peck", "Peck drilling", "Peck", [](P& p) -> bool& { return p.peck; });
+    t.option<toolpath::PeckRetract>("peckRetract", "Retract between passes", "Peck", {"Above start", "Above previous pass"},
+                                    [](P& p) -> toolpath::PeckRetract& { return p.peckRetract; },
+                                    [](const P& p) { return p.peck; });
+    t.flag("matchDiameters", "Match hole diameters to the drills", "Matching",
+           [](P& p) -> bool& { return p.matchDiameters; });
+    t.option<toolpath::BankUnmatched>("unmatched", "Holes that fit no stroke", "Matching", {"Refuse the toolpath", "Skip them"},
+                                      [](P& p) -> toolpath::BankUnmatched& { return p.unmatched; });
     addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
     bound(t, "retractGap", -kMaxOffsetMm, kMaxOffsetMm);
     return t;
@@ -954,6 +1000,11 @@ const Table<toolpath::PocketParams>& tableOf() {
 template <>
 const Table<toolpath::DrillParams>& tableOf() {
     static const Table<toolpath::DrillParams> t = makeDrillTable();
+    return t;
+}
+template <>
+const Table<toolpath::DrillBankParams>& tableOf() {
+    static const Table<toolpath::DrillBankParams> t = makeDrillBankTable();
     return t;
 }
 template <>
@@ -1588,6 +1639,44 @@ FieldResult ToolpathForm::setPriorToolpaths(const std::vector<std::uint64_t>& id
     return res;
 }
 
+FieldResult ToolpathForm::setBankSpindles(const std::vector<int>& inactive, const std::vector<double>& diameters,
+                                          const std::vector<double>& depths) {
+    FieldResult res;
+    auto* bank = std::get_if<toolpath::DrillBankParams>(&definition_.params);
+    const auto refuse = [&res](const std::string& why) {
+        res.ok = false;
+        res.message = why;
+        return res;
+    };
+    if (bank == nullptr) {
+        return refuse("only a drill bank has spindles");
+    }
+    constexpr std::size_t kMax = 64;
+    if (inactive.size() > kMax || diameters.size() > kMax || depths.size() > kMax) {
+        return refuse("a drill bank has at most 64 spindles");
+    }
+    std::set<int> seen;
+    for (const int n : inactive) {
+        if (n < 1 || n > static_cast<int>(kMax) || !seen.insert(n).second) {
+            return refuse("inactive drills must be drill numbers, each listed once");
+        }
+    }
+    for (const double d : diameters) {
+        if (!(std::isfinite(d) && d > 0.0 && d <= kMaxLength)) {
+            return refuse("drill diameters must be greater than zero");
+        }
+    }
+    for (const double d : depths) {
+        if (!(std::isfinite(d) && d >= 0.0 && d <= kMaxLength)) {
+            return refuse("drill depths must not be negative");
+        }
+    }
+    bank->inactiveSpindles = inactive;
+    bank->spindleDiameters = diameters;
+    bank->spindleDepths = depths;
+    return res;
+}
+
 std::vector<std::uint64_t> ToolpathForm::priorToolpaths() const {
     const auto* finish = std::get_if<toolpath::Finish3dParams>(&definition_.params);
     return finish != nullptr ? finish->priorToolpaths : std::vector<std::uint64_t>{};
@@ -1628,7 +1717,8 @@ std::vector<std::string> ToolpathForm::problems() const {
             if constexpr (std::is_same_v<P, toolpath::ProfileParams>) {
                 needsDepth = true;
                 depth = p.passes.cutDepth;
-            } else if constexpr (std::is_same_v<P, toolpath::PocketParams> || std::is_same_v<P, toolpath::DrillParams>) {
+            } else if constexpr (std::is_same_v<P, toolpath::PocketParams> || std::is_same_v<P, toolpath::DrillParams> ||
+                                 std::is_same_v<P, toolpath::DrillBankParams>) {
                 needsDepth = true;
                 depth = p.cutDepth;
             } else if constexpr (std::is_same_v<P, toolpath::EngraveParams>) {
@@ -1659,6 +1749,11 @@ std::vector<std::string> ToolpathForm::problems() const {
                         out.emplace_back("the prior toolpaths must be existing toolpaths, each listed once");
                         break;
                     }
+                }
+            }
+            if constexpr (std::is_same_v<P, toolpath::DrillBankParams>) {
+                if (const std::string bad = toolpath::drillBankParamProblem(p); !bad.empty()) {
+                    out.push_back(bad);
                 }
             }
             if constexpr (std::is_same_v<P, toolpath::Project3dParams>) {

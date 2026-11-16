@@ -93,6 +93,21 @@ std::optional<geometry::Vec2> drillCentre(const geometry::Contour& contour, cons
 /// True for the tool types a drilling toolpath accepts: `Drill` and `EndMill` (ADR-0022).
 bool drillToolAllowed(tooling::ToolType type);
 
+/// The holes `contours` make (the first steps of `drillToolpath`, shared with the drill bank, ADR-0106): the
+/// `drillCentre` of every usable closed vector in vector order, with the diagnostics `drillToolpath` gives for
+/// the rest (`EmptyContour`, `DiscontinuousContour`, `NoRegion`, `CentreOutsideVector`, `OpenContourIgnored`) and
+/// `DuplicateHole` for a hole within `tol.distance` of an earlier one (dropped). `HoleWiderThanVector` is reported
+/// for tool radius `toolRadius` > 0 (0 skips the check). Diagnostics are appended to `diagnostics`.
+std::vector<DrillHole> drillHoles(const std::vector<geometry::Contour>& contours, double toolRadius,
+                                  const geometry::Tolerance& tol, std::vector<ToolpathDiagnostic>& diagnostics);
+
+/// What is wrong with `p` (non-finite value, depth, safe Z, dwell, retract gap, tolerance); empty when usable.
+std::string drillParamProblem(const DrillParams& p);
+
+/// What is wrong with the tool for a drilling toolpath (type, geometry, plunge/feed rate, pass depth when pecking
+/// with `p.peck`); empty when usable. `pt` is the tool as `passTool` converts it.
+std::string drillToolProblem(const tooling::Tool& tool, const PassTool& pt, const DrillParams& p);
+
 /// Computes a drilling toolpath: one hole at `drillCentre` of every closed vector of `contours`.
 ///
 /// - Open vectors are ignored (`OpenContourIgnored`); vectors without spans (`EmptyContour`),

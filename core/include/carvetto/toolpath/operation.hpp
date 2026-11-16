@@ -63,6 +63,10 @@ enum class ToolpathIssue {
                           ///< far beyond CNC size): that vector is not cut, the others are (Profile, Pocket, V-Carve).
     CutterCompRefused,    ///< Controller cutter compensation cannot follow the toolpath asked for; nothing is cut
                           ///< (Profile, T-0327).
+    BankHoleUnmatched,    ///< A hole fits no placement of the drill bank (diameter or pattern); with the refuse
+                          ///< setting nothing is cut (Drill Bank, T-0328).
+    BankHoleMoved,        ///< Holes are drilled where the bank's spindles are, off their centres by up to the pitch
+                          ///< tolerance (Drill Bank, T-0328).
 };
 
 /// What a caller can control about one run of an operation (T-0186, ADR-0016 section 19).

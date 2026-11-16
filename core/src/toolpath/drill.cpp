@@ -117,7 +117,9 @@ geometry::Span translated(const geometry::Span& s, Vec2 by) {
 }
 
 /// Every parameter finite, depths and times in range; an empty string when valid.
-std::string paramProblem(const DrillParams& p) {
+}  // namespace
+
+std::string drillParamProblem(const DrillParams& p) {
     const double values[] = {p.startDepth,         p.cutDepth,         p.safeZ,
                              p.retractGap,         p.dwellTime,        p.startPosition.x,
                              p.startPosition.y,    p.tolerance.distance, p.tolerance.chordal,
@@ -149,6 +151,8 @@ std::string paramProblem(const DrillParams& p) {
     return {};
 }
 
+namespace {
+
 const char* toolTypeText(tooling::ToolType type) {
     switch (type) {
         case tooling::ToolType::EndMill: return "an end mill";
@@ -166,7 +170,9 @@ const char* toolTypeText(tooling::ToolType type) {
 }
 
 /// What is wrong with the tool for this toolpath; empty when usable.
-std::string toolProblem(const tooling::Tool& tool, const PassTool& pt, const DrillParams& p) {
+}  // namespace
+
+std::string drillToolProblem(const tooling::Tool& tool, const PassTool& pt, const DrillParams& p) {
     const std::string label = "tool '" + tool.name + "'";
     if (!drillToolAllowed(tool.type)) {
         return label + " is " + toolTypeText(tool.type) + "; drilling needs a drill or an end mill";
@@ -189,6 +195,8 @@ std::string toolProblem(const tooling::Tool& tool, const PassTool& pt, const Dri
     }
     return {};
 }
+
+namespace {
 
 bool centreInside(const Contour& c, Vec2 centre, const geometry::Tolerance& tol) {
     switch (geometry::locatePoint(c, centre, geometry::FillRule::EvenOdd, tol)) {
@@ -251,54 +259,11 @@ std::optional<Vec2> drillCentre(const Contour& contour, const geometry::Toleranc
     return c;
 }
 
-DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::Tool& tool,
-                          const std::optional<tooling::CuttingData>& cuttingData, const DrillParams& params) {
-    DrillResult result;
-    result.toolpath.name = params.name;
-    auto say = [&result](ToolpathIssue issue, std::optional<std::size_t> contour, std::string message) {
-        result.diagnostics.push_back(ToolpathDiagnostic{issue, contour, std::move(message), std::nullopt});
+std::vector<DrillHole> drillHoles(const std::vector<Contour>& contours, double toolRadius,
+                                  const geometry::Tolerance& tol, std::vector<ToolpathDiagnostic>& diagnostics) {
+    auto say = [&diagnostics](ToolpathIssue issue, std::optional<std::size_t> contour, std::string message) {
+        diagnostics.push_back(ToolpathDiagnostic{issue, contour, std::move(message), std::nullopt});
     };
-
-    if (const std::string bad = paramProblem(params); !bad.empty()) {
-        say(ToolpathIssue::InvalidParameters, std::nullopt, bad);
-        return result;
-    }
-    const geometry::Tolerance& tol = params.tolerance;
-    const double bottomDepth = params.startDepth + params.cutDepth;
-    const PassTool pt = passTool(tool, effectiveCuttingData(tool, cuttingData), bottomDepth);
-    result.toolpath.tool = pt.snapshot;
-    if (const std::string bad = toolProblem(tool, pt, params); !bad.empty()) {
-        say(ToolpathIssue::InvalidTool, std::nullopt, bad);
-        return result;
-    }
-
-    PassPlan plan;
-    plan.startDepth = params.startDepth;
-    plan.cutDepth = params.cutDepth;
-    plan.passDepth = params.peck ? pt.passDepth : 0.0;  // 0: one pass to the bottom
-    plan.maintainExactStep = true;
-    // The cap is on the passes PassPlan actually makes: exactly kMaxLevels passes are allowed,
-    // one more is refused (T-0143). The estimate ceil(cut/pass) can exceed the true count by one
-    // (PassPlan's relative 1e-9 round-off guard), so it only screens out plans far too large to build.
-    const auto tooManyPasses = [&] {
-        say(ToolpathIssue::WorkLimitExceeded, std::nullopt,
-            "more than " + num(kMaxLevels) + " passes per hole (pass depth " + num(pt.passDepth) +
-                " mm too small for the cut depth)");
-    };
-    if (params.peck && !(std::ceil(params.cutDepth / pt.passDepth) <= kMaxLevels + 1.0)) {
-        tooManyPasses();
-        return result;
-    }
-    const std::vector<double> levels = plan.levels();
-    if (static_cast<double>(levels.size()) > kMaxLevels) {
-        tooManyPasses();
-        return result;
-    }
-    if (levels.empty()) {
-        say(ToolpathIssue::InvalidParameters, std::nullopt, "the cut depth yields no passes");
-        return result;
-    }
-
     // Holes: the centre of every usable closed vector.
     std::vector<DrillHole> candidates;
     std::size_t openCount = 0;
@@ -332,9 +297,9 @@ DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::T
             continue;
         }
         const double room = geometry::distanceTo(c, *centre);
-        if (room < pt.radius - tol.distance) {
+        if (room < toolRadius - tol.distance) {
             say(ToolpathIssue::HoleWiderThanVector, i,
-                vecName(i) + ": the " + num(2.0 * pt.radius) + " mm hole is wider than the vector round its centre (" +
+                vecName(i) + ": the " + num(2.0 * toolRadius) + " mm hole is wider than the vector round its centre (" +
                     num(room) + " mm from the centre to the vector); drilled anyway");
         }
         candidates.push_back({*centre, i});
@@ -353,8 +318,7 @@ DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::T
     }
     const BoxIndex centreIndex(std::move(centreBoxes));
     std::vector<bool> kept(candidates.size(), false);
-    std::vector<OrderItem> items;
-    std::vector<std::size_t> itemHole;
+    std::vector<DrillHole> holes;
     for (std::size_t i = 0; i < candidates.size(); ++i) {
         const Vec2 c = candidates[i].centre;
         const Vec2 d{tol.distance, tol.distance};
@@ -372,14 +336,72 @@ DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::T
             continue;
         }
         kept[i] = true;
+        holes.push_back(candidates[i]);
+    }
+    return holes;
+}
+
+DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::Tool& tool,
+                          const std::optional<tooling::CuttingData>& cuttingData, const DrillParams& params) {
+    DrillResult result;
+    result.toolpath.name = params.name;
+    auto say = [&result](ToolpathIssue issue, std::optional<std::size_t> contour, std::string message) {
+        result.diagnostics.push_back(ToolpathDiagnostic{issue, contour, std::move(message), std::nullopt});
+    };
+
+    if (const std::string bad = drillParamProblem(params); !bad.empty()) {
+        say(ToolpathIssue::InvalidParameters, std::nullopt, bad);
+        return result;
+    }
+    const geometry::Tolerance& tol = params.tolerance;
+    const double bottomDepth = params.startDepth + params.cutDepth;
+    const PassTool pt = passTool(tool, effectiveCuttingData(tool, cuttingData), bottomDepth);
+    result.toolpath.tool = pt.snapshot;
+    if (const std::string bad = drillToolProblem(tool, pt, params); !bad.empty()) {
+        say(ToolpathIssue::InvalidTool, std::nullopt, bad);
+        return result;
+    }
+
+    PassPlan plan;
+    plan.startDepth = params.startDepth;
+    plan.cutDepth = params.cutDepth;
+    plan.passDepth = params.peck ? pt.passDepth : 0.0;  // 0: one pass to the bottom
+    plan.maintainExactStep = true;
+    // The cap is on the passes PassPlan actually makes: exactly kMaxLevels passes are allowed,
+    // one more is refused (T-0143). The estimate ceil(cut/pass) can exceed the true count by one
+    // (PassPlan's relative 1e-9 round-off guard), so it only screens out plans far too large to build.
+    const auto tooManyPasses = [&] {
+        say(ToolpathIssue::WorkLimitExceeded, std::nullopt,
+            "more than " + num(kMaxLevels) + " passes per hole (pass depth " + num(pt.passDepth) +
+                " mm too small for the cut depth)");
+    };
+    if (params.peck && !(std::ceil(params.cutDepth / pt.passDepth) <= kMaxLevels + 1.0)) {
+        tooManyPasses();
+        return result;
+    }
+    const std::vector<double> levels = plan.levels();
+    if (static_cast<double>(levels.size()) > kMaxLevels) {
+        tooManyPasses();
+        return result;
+    }
+    if (levels.empty()) {
+        say(ToolpathIssue::InvalidParameters, std::nullopt, "the cut depth yields no passes");
+        return result;
+    }
+
+    // Holes: the centre of every usable closed vector, coincident ones once.
+    const std::vector<DrillHole> holes = drillHoles(contours, pt.radius, tol, result.diagnostics);
+    std::vector<OrderItem> items;
+    std::vector<std::size_t> itemHole;
+    for (std::size_t i = 0; i < holes.size(); ++i) {
         // The vector itself (as an open path, so no hole "contains" another) gives the box the
         // left-to-right, bottom-to-top and grid orders sort by; the hole starts and ends at the centre.
         OrderItem item;
-        item.path = contours[candidates[i].contour];
+        item.path = contours[holes[i].contour];
         item.path.closed = false;
-        item.selectionIndex = candidates[i].contour;
-        item.start = c;
-        item.end = c;
+        item.selectionIndex = holes[i].contour;
+        item.start = holes[i].centre;
+        item.end = holes[i].centre;
         items.push_back(std::move(item));
         itemHole.push_back(i);
     }
@@ -403,7 +425,7 @@ DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::T
     std::vector<Move>& moves = result.toolpath.moves;
     moves.reserve(static_cast<std::size_t>(perHole) * order.size());
     for (const std::size_t k : order) {
-        const DrillHole& hole = candidates[itemHole[k]];
+        const DrillHole& hole = holes[itemHole[k]];
         result.holes.push_back(hole);
         const double x = hole.centre.x;
         const double y = hole.centre.y;

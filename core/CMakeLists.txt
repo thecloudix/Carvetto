@@ -319,6 +319,7 @@ add_library(carvetto_core STATIC
   src/io/svg_xml.cpp
   src/toolpath/pocket.cpp
   src/toolpath/drill.cpp
+  src/toolpath/drill_bank.cpp
   src/toolpath/engrave.cpp
   src/toolpath/chamfer.cpp
   src/toolpath/prism.cpp
