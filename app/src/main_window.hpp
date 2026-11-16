@@ -55,6 +55,7 @@ class LevelEffectsPanel;
 class ToolPanel;
 class ToolpathsPanel;
 class TransformMenu;
+class GadgetsMenu;
 class VectorOpsMenu;
 class TraceBitmapMenu;
 class TextureMenu;
@@ -193,6 +194,9 @@ class MainWindow : public QMainWindow {
     bool confirmDiscard();
     /// Suppresses message boxes (headless self-test); the file operations still report by result.
     void setQuiet(bool quiet) { quiet_ = quiet; }
+    bool quiet() const { return quiet_; }
+    /// The Gadgets menu (T-0331).
+    GadgetsMenu* gadgets() const { return gadgets_.get(); }
 
    protected:
     void closeEvent(QCloseEvent* event) override;
@@ -237,6 +241,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<TextureMenu> textureMenu_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;
+    std::unique_ptr<GadgetsMenu> gadgets_;
     std::unique_ptr<DimensionMenu> dimensions_;
 
     QTabWidget* views_{nullptr};

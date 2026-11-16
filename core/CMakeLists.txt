@@ -347,6 +347,8 @@ add_library(carvetto_core STATIC
   src/text/layout.cpp
   src/text/path_layout.cpp
   src/scripting/script_host.cpp
+  src/scripting/gadget_api.cpp
+  src/scripting/gadget_manifest.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core

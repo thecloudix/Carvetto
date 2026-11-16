@@ -45,6 +45,11 @@ class UndoStack {
     /// Closes the innermost macro; the outermost close records it (if it collected anything).
     void endMacro();
     bool inMacro() const { return macroDepth_ > 0; }
+    /// Abandons the open macro (at any nesting depth): reverts what it collected, newest first,
+    /// and records nothing, leaving history, redo tail and clean point exactly as before
+    /// `beginMacro`. For an edit sequence that failed midway (a gadget run, T-0331). Returns false
+    /// when no macro is open.
+    bool abortMacro(Document& doc);
 
     /// Ends the current coalescing run so the next push starts a new undo step.
     void breakCoalescing() { coalesceOpen_ = false; }

@@ -378,3 +378,45 @@ TEST_CASE("undoAndDiscard refuses with a redo tail or inside a macro", "[documen
     CHECK(stack.undoAndDiscard(doc));
     CHECK(log == "ab");
 }
+
+TEST_CASE("undo stack: abortMacro reverts what the macro collected and records nothing", "[document][undo][t0331]") {
+    Document doc;
+    UndoStack& stack = doc.undoStack();
+    REQUIRE(doc.execute(std::make_unique<SetDocumentVariableCommand>("A", 1.0)));
+    doc.undo();  // leaves a redo tail
+    const std::uint64_t genBefore = stack.generation();
+    REQUIRE(stack.canRedo());
+
+    SECTION("an open macro with edits") {
+        stack.beginMacro("gadget");
+        REQUIRE(doc.execute(std::make_unique<SetDocumentVariableCommand>("B", 2.0)));
+        REQUIRE(doc.execute(std::make_unique<SetDocumentVariableCommand>("C", 3.0)));
+        REQUIRE(doc.variables().contains("B"));
+        REQUIRE(stack.abortMacro(doc));
+        CHECK_FALSE(doc.variables().contains("B"));
+        CHECK_FALSE(doc.variables().contains("C"));
+        CHECK_FALSE(stack.inMacro());
+        CHECK(stack.count() == 1);  // nothing recorded
+        CHECK(stack.canRedo());     // the redo tail is intact
+        CHECK(stack.generation() != genBefore);
+        // the stack works normally afterwards
+        REQUIRE(doc.execute(std::make_unique<SetDocumentVariableCommand>("D", 4.0)));
+        CHECK(stack.count() == 1);
+    }
+    SECTION("nested macros are all abandoned") {
+        stack.beginMacro("outer");
+        stack.beginMacro("inner");
+        REQUIRE(doc.execute(std::make_unique<SetDocumentVariableCommand>("B", 2.0)));
+        stack.endMacro();
+        REQUIRE(stack.inMacro());
+        REQUIRE(stack.abortMacro(doc));
+        CHECK_FALSE(doc.variables().contains("B"));
+        CHECK_FALSE(stack.inMacro());
+    }
+    SECTION("an empty macro, and no macro") {
+        stack.beginMacro("gadget");
+        CHECK(stack.abortMacro(doc));
+        CHECK(stack.generation() == genBefore);
+        CHECK_FALSE(stack.abortMacro(doc));
+    }
+}

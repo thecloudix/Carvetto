@@ -12,6 +12,7 @@ if(NOT catch2_POPULATED)
 endif()
 
 add_executable(carvetto_viewmodel_tests
+  gadget_manager_test.cpp
   bitmap_trace_test.cpp
   clipart_test.cpp
   relief_tree_test.cpp

@@ -6,16 +6,26 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
 namespace carvetto::scripting {
 
-/// A value crossing the host/script boundary (ADR-0101, ADR-0102). Lua tables map to `Array`
-/// (a sequence 1..n); integers and floats stay distinct. Nothing of Lua leaks into this header.
+/// A value crossing the host/script boundary (ADR-0101, ADR-0102, ADR-0108). Lua tables map to
+/// `Array` (a sequence 1..n) or `Map` (string keys only, T-0331); integers and floats stay
+/// distinct. Nothing of Lua leaks into this header.
 struct ScriptValue {
     using Array = std::vector<ScriptValue>;
-    std::variant<std::monostate, bool, std::int64_t, double, std::string, Array> v;
+    /// String-keyed table: entries sorted by key when read from a script (deterministic), in the
+    /// given order when pushed to one; a repeated key keeps the last value.
+    struct Map {
+        std::vector<std::pair<std::string, ScriptValue>> items;
+        /// The value stored under `key`, or null.
+        const ScriptValue* find(std::string_view key) const;
+        void set(std::string key, ScriptValue value);
+    };
+    std::variant<std::monostate, bool, std::int64_t, double, std::string, Array, Map> v;
 
     ScriptValue() = default;
     ScriptValue(bool b) : v(b) {}
@@ -25,6 +35,7 @@ struct ScriptValue {
     ScriptValue(std::string s) : v(std::move(s)) {}
     ScriptValue(const char* s) : v(std::string(s)) {}
     ScriptValue(Array a) : v(std::move(a)) {}
+    ScriptValue(Map m) : v(std::move(m)) {}
 
     bool isNil() const { return std::holds_alternative<std::monostate>(v); }
     bool isBool() const { return std::holds_alternative<bool>(v); }
@@ -32,12 +43,14 @@ struct ScriptValue {
     bool isNumber() const { return isInt() || std::holds_alternative<double>(v); }
     bool isString() const { return std::holds_alternative<std::string>(v); }
     bool isArray() const { return std::holds_alternative<Array>(v); }
+    bool isMap() const { return std::holds_alternative<Map>(v); }
     bool asBool() const { return std::get<bool>(v); }
     std::int64_t asInt() const { return std::get<std::int64_t>(v); }
     /// Integer or float as a double.
     double asNumber() const;
     const std::string& asString() const { return std::get<std::string>(v); }
     const Array& asArray() const { return std::get<Array>(v); }
+    const Map& asMap() const { return std::get<Map>(v); }
 };
 
 using ScriptValues = std::vector<ScriptValue>;

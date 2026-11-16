@@ -23,6 +23,11 @@ qt_add_executable(carvetto
   src/double_sided_menu.hpp
   src/array_copy_menu.hpp
   src/main_window.cpp
+  src/gadget_dialogs.cpp
+  src/gadget_dialogs.hpp
+  src/gadgets_menu.cpp
+  src/gadgets_menu.hpp
+  src/gadgets_self_test.cpp
   src/main_window.hpp
   src/canvas_widget.cpp
   src/canvas_widget.hpp

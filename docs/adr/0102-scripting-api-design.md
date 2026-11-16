@@ -1,6 +1,6 @@
 # ADR-0102: the scripting API surface (design, for owner review)
 
-Status: proposed (T-0330 delivers the host, ADR-0101; T-0331 implements the bindings below)
+Status: proposed; built by T-0331 as described in ADR-0108 (with its deviations; the open questions below still wait for the owner)
 
 ## Context
 The feature inventory says gadgets are Lua add-ons, and that the vendor's API is only documented in an

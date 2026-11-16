@@ -62,6 +62,7 @@
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
+#include "gadgets_menu.hpp"
 #include "variables_dialog.hpp"
 #include "transform_menu.hpp"
 #include "trace_dialog.hpp"
@@ -849,6 +850,11 @@ int runSelfTest() {
 
     // 9d. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
     if (const std::string why = variablesSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9e. Gadgets: the menu, the sample gadget in one undo step, sandbox limits, forms, shortcuts, install (T-0331).
+    if (const std::string why = gadgetsSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

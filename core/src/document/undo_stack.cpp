@@ -136,6 +136,19 @@ void UndoStack::endMacro() {
     }
 }
 
+bool UndoStack::abortMacro(Document& doc) {
+    if (macroDepth_ == 0) {
+        return false;
+    }
+    std::unique_ptr<MacroCommand> macro = std::move(macro_);
+    macroDepth_ = 0;
+    if (macro && !macro->empty()) {
+        macro->revert(doc);
+        generation_ = nextGeneration();
+    }
+    return true;
+}
+
 void UndoStack::clear() {
     generation_ = nextGeneration();
     commands_.clear();
