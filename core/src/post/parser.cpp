@@ -386,6 +386,11 @@ Result<PostProcessor> PostProcessor::parse(std::string_view source) {
             err = number(s.minArcRadius);
         } else if (key == "MAX_ARC_RADIUS") {
             err = number(s.maxArcRadius);
+        } else if (key == "MAXIMUM_ROTATION") {
+            err = number(s.maxRotation);
+            if (!err && !(s.maxRotation >= 0.0 && s.maxRotation <= 360000.0)) {
+                err = badValue("a number of degrees from 0 (no limit) to 360000");
+            }
         } else if (key == "ROTARY_WRAP_X") {
             err = wrap(s.rotaryWrapX);
         } else if (key == "ROTARY_WRAP_Y") {

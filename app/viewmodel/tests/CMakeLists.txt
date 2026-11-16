@@ -20,6 +20,7 @@ add_executable(carvetto_viewmodel_tests
   relief_effects_test.cpp
   relief_build_test.cpp
   model_view_test.cpp
+  wrapped_view_test.cpp
   model_io_test.cpp
   preview_component_test.cpp
   vector_ops_test.cpp

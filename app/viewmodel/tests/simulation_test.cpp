@@ -171,11 +171,12 @@ TEST_CASE("simulation setup: refusals", "[simulation]") {
         CHECK_FALSE(makeSimulationSetup(none).ok);
     }
     {
+        // A rotary job without toolpaths has nothing to simulate (T-0320: rotary jobs are simulated now).
         document::Document doc(document::Job::rotary(100, 20, document::Units::Millimetres));
         ToolpathSession session(&doc);
         const SimulationSetup s = makeSimulationSetup(session);
         CHECK_FALSE(s.ok);
-        CHECK(s.problem.find("Rotary") != std::string::npos);
+        CHECK(s.problem.find("no computed") != std::string::npos);
     }
     {
         SimFixture f;

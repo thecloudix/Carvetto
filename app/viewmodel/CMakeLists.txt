@@ -36,6 +36,7 @@ add_library(carvetto_viewmodel STATIC
   src/relief_effects.cpp
   src/relief_build.cpp
   src/model_view.cpp
+  src/wrapped_view.cpp
   src/model_io.cpp
   src/preview_component.cpp
   src/playback.cpp

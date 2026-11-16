@@ -70,6 +70,8 @@ add_executable(carvetto_tests
   post/post_safety_test.cpp
   post/spindle_off_test.cpp
   post/line_length_test.cpp
+  post/rotary_wrap_test.cpp
+  geometry/cylinder_map_test.cpp
   simulate/determinism_test.cpp
   simulate/diagnostics_test.cpp
   simulate/fixture_record_test.cpp

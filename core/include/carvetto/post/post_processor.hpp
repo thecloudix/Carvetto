@@ -48,6 +48,9 @@ struct PostSettings {
     bool laserSupport{false};
     std::optional<RotaryWrap> rotaryWrapX;
     std::optional<RotaryWrap> rotaryWrapY;
+    /// `MAXIMUM_ROTATION`: the largest rotary-axis change (degrees) one written move may make; a wrapped
+    /// move turning further is split into equal moves (T-0320, ADR-0103). 0 = no limit.
+    double maxRotation{0.0};
     /// `SUBSTITUTE` character pairs (from, to) applied to text variables.
     std::vector<std::pair<char, char>> substitute;
     /// Arcs with a smaller radius are linearised (0 = no minimum).
@@ -85,6 +88,14 @@ struct PostContext {
     geometry::Vec3 materialMax{0.0, 0.0, 0.0};
     /// Cylinder diameter for `ROTARY_WRAP_X/Y`, mm. Must be > 0 and <= 1e6 when the post wraps.
     double rotaryDiameter{0.0};
+    /// The machine axis the job's cylinder lies along ('X' or 'Y'; 0 = not stated, no cross-check). The post must
+    /// wrap the other axis (the circumference): a mismatch is a run error (T-0320, ADR-0103).
+    char rotaryAlong{0};
+    /// Job "Flip Design": the angle runs the other way round the cylinder (sign of the rotary axis reversed).
+    bool rotaryFlip{false};
+    /// Machine Z of the cylinder axis, mm, when known: a move at or below it cannot be machined by a wrapped
+    /// program and is a run error naming the toolpath.
+    std::optional<double> rotaryAxisZ;
     /// Maximum chordal deviation when arcs are linearised, mm; must be 1e-6..1 (ADR-0020).
     double arcTolerance{0.01};
 };
