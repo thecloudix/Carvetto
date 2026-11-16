@@ -33,6 +33,7 @@
 
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/post/post_processor.hpp"
+#include "carvetto/toolpath/cutter_comp.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "text_util.hpp"
 
@@ -869,10 +870,28 @@ class Interpreter {
             jetOn_ = false;
             jetPowerKnown_ = false;
             moveIndex_ = 0;
-            for (const Move& m : tp.moves) {
+            // Cutter compensation (T-0327, ADR-0100): the moves hold the tool-centre path; the
+            // post writes the programmed path derived from it, with the CUTTER_COMP_* blocks
+            // where a run starts and ends.
+            compState_ = toolpath::CutterComp::Off;
+            toolpath::CutterCompProgram program;
+            const bool compensated = toolpath::usesCutterComp(tp.moves);
+            if (compensated) {
+                if (auto err = prepareCutterComp(tp, program)) {
+                    return *err;
+                }
+            }
+            for (const Move& original : tp.moves) {
                 ++moveIndex_;
+                const Move& m = compensated ? program.moves[moveIndex_ - 1].move : original;
                 if (auto err = validateMove(m)) {
                     return *err;
+                }
+                if (compensated) {
+                    switchCutterComp(original.comp);
+                    if (program.moves[moveIndex_ - 1].omit) {
+                        continue;
+                    }
                 }
                 if (auto err = jetBefore(m)) {
                     return *err;
@@ -1193,6 +1212,42 @@ class Interpreter {
     }
 
     // ---- moves -----------------------------------------------------------------------------
+
+    /// Checks that the post can write a compensated toolpath and derives its programmed path.
+    std::optional<Error> prepareCutterComp(const Toolpath& tp, toolpath::CutterCompProgram& program) {
+        std::vector<std::string_view> needed{"CUTTER_COMP_OFF"};
+        for (const Move& m : tp.moves) {
+            if (m.comp == toolpath::CutterComp::Left) {
+                needed.push_back("CUTTER_COMP_LEFT");
+            } else if (m.comp == toolpath::CutterComp::Right) {
+                needed.push_back("CUTTER_COMP_RIGHT");
+            }
+        }
+        for (std::string_view name : needed) {
+            if (!has(name)) {
+                return Error{0, "cannot write G-code: toolpath " + quoted(tp.name) +
+                                    " uses cutter compensation but the post has no " + std::string(name) +
+                                    " block"};
+            }
+        }
+        program = toolpath::cutterCompProgram(tp.moves, tp.tool.diameter / 2.0, pos_);
+        if (!program.ok()) {
+            return Error{0, "cannot write G-code: toolpath " + quoted(tp.name) + ", " + program.error};
+        }
+        return std::nullopt;
+    }
+
+    /// Writes the compensation block when the state changes (before the move that needs it).
+    void switchCutterComp(toolpath::CutterComp want) {
+        if (want == compState_) {
+            return;
+        }
+        compState_ = want;
+        setStationary();
+        emit(want == toolpath::CutterComp::Left    ? "CUTTER_COMP_LEFT"
+             : want == toolpath::CutterComp::Right ? "CUTTER_COMP_RIGHT"
+                                                   : "CUTTER_COMP_OFF");
+    }
 
     std::optional<Error> doMove(const Move& m) {
         switch (m.kind) {
@@ -1682,7 +1737,12 @@ class Interpreter {
         if (tag == "PATHNAME") return ctx_.pathName;
         if (tag == "PRODUCT") return ctx_.product;
         if (tag == "FILE_NOTES") return ctx_.fileNotes;
-        return {};  // TOOL_NOTES, CUTTER_COMP: no data yet
+        if (tag == "CUTTER_COMP") {
+            return compState_ == toolpath::CutterComp::Left    ? "LEFT"
+                   : compState_ == toolpath::CutterComp::Right ? "RIGHT"
+                                                               : "OFF";
+        }
+        return {};  // TOOL_NOTES: no data yet
     }
 
     double toOutputUnits(const TagInfo& info, double v) const {
@@ -1807,6 +1867,7 @@ class Interpreter {
     std::optional<Error> failure_;     // first unsafe value met while rendering (ADR-0020)
     std::optional<std::size_t> textCap_;  // longest text value in a comment, while a line is cut to fit (T-0162)
     std::string_view block_{"the program"};  // block being expanded, for error messages
+    toolpath::CutterComp compState_{toolpath::CutterComp::Off};  // compensation in force (T-0327)
     std::size_t moveIndex_{0};         // 1-based move of the current toolpath; 0 = none
     bool inFooter_{false};
     // Laser beam state of the toolpath being written (T-0323).

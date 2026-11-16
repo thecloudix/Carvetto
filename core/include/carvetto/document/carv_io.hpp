@@ -72,9 +72,13 @@ inline constexpr int kCarvFormatMinorAppearance = 12;
 /// toolpath's tool and move caches of version 2 (beam power); written only when a record is a laser's.
 inline constexpr int kCarvFormatMinorLaser = 13;
 /// 1.14 (T-0319, ADR-0098) adds the rotary model gaps (`job.json` job `gap_outside_mm`, `gap_inside_mm`); written
-/// only when one is non-zero. The newest minor this build writes and reads.
+/// only when one is non-zero.
 inline constexpr int kCarvFormatMinorRotaryGaps = 14;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorRotaryGaps;
+/// 1.15 (T-0327, ADR-0100) adds cutter compensation: a Profile record's `cutter_comp` parameter and the
+/// compensation side of moves in the binary move cache (move cache version 3); written only when a
+/// Profile record has the option or a move is compensated. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorCutterComp = 15;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorCutterComp;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

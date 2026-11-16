@@ -36,6 +36,7 @@
 #include "carvetto/document/dimension.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/text_object.hpp"
+#include "carvetto/toolpath/cutter_comp.hpp"
 #include "carvetto/geometry/vec2.hpp"
 
 #ifndef CARVETTO_VERSION_STRING
@@ -913,6 +914,9 @@ json encodeProfileParams(const toolpath::ProfileParams& p) {
     j["separate_last_pass"] = p.separateLastPass;
     j["last_pass_allowance"] = p.lastPassAllowance;
     j["last_pass_reverse"] = p.lastPassReverse;
+    if (p.cutterComp) {
+        j["cutter_comp"] = true;  // written only when on: older files and readers see no new key (format 1.15)
+    }
     json tabs = json::object();
     tabs["enabled"] = p.tabs.enabled;
     tabs["length"] = p.tabs.length;
@@ -2540,11 +2544,12 @@ constexpr std::array<std::string_view, 7> kLeadKeysParams{"type",  "length",   "
                                                           "sweep", "lead_out", "overcut"};
 constexpr std::array<std::string_view, 4> kOrderKeys{"selection_order", "left_to_right", "bottom_to_top", "grid"};
 constexpr std::array<std::string_view, 3> kCornerKeys{"sharp_external", "sharp_internal", "mitre_limit"};
-constexpr std::array<std::string_view, 20> kProfileKeys{
+constexpr std::array<std::string_view, 21> kProfileKeys{
     "name",         "side",           "direction",   "allowance",          "passes",
     "safe_z",       "separate_last_pass", "last_pass_allowance", "last_pass_reverse", "tabs",
     "ramp",         "leads",          "order",       "start_at",           "start_anchor",
-    "start_position", "corners",      "tolerance",   "tool",               "layers"};
+    "start_position", "corners",      "tolerance",   "cutter_comp",        "tool",
+    "layers"};
 constexpr std::array<std::string_view, 16> kPocketKeysJob{
     "name",     "start_depth",      "cut_depth",    "maintain_exact_step", "last_pass_thickness", "safe_z",
     "strategy", "direction",        "raster_angle_rad", "profile_pass",    "allowance",           "ramp_plunge",
@@ -2682,6 +2687,8 @@ toolpath::ProfileParams decodeProfileParams(JsonReader& r, const Path& p, Params
             out.lastPassAllowance = rec.number();
         } else if (k == "last_pass_reverse") {
             out.lastPassReverse = rec.boolean();
+        } else if (k == "cutter_comp") {
+            out.cutterComp = rec.boolean();
         } else if (k == "tabs") {
             ParamsRecord g(r, f, kTabKeys, d);
             while (g.next()) {
@@ -4729,7 +4736,8 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
             // (1 to kMaxMoveBytes bytes per move), so the move budget bounds the work.
             const std::uint64_t count = d.moveCount;
             if (e.size < detail::kMovesHeaderBytes + count ||
-                (e.size - detail::kMovesHeaderBytes) / detail::kMaxMoveBytes > count) {
+                e.size - detail::kMovesHeaderBytes >
+                    count * (detail::kMaxMoveBytes + detail::kMovesRunBytes) + detail::kMovesRunCountBytes) {
                 throw LoadFailure{CarvError::Code::InvalidContent,
                                   e.name + ": " + std::to_string(e.size) + " bytes cannot hold " +
                                       std::to_string(count) + " moves"};
@@ -5345,7 +5353,13 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         const bool usesLaser = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
             return tp.operation() == ToolpathOperation::LaserCutFill;
         });
-        version["minor"] = usesRotaryGaps ? kCarvFormatMinorRotaryGaps
+        // Cutter compensation (format 1.15, T-0327): a Profile with the option, or any compensated move.
+        const bool usesCutterComp = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
+            const auto* p = std::get_if<toolpath::ProfileParams>(&tp.params);
+            return (p != nullptr && p->cutterComp) || (tp.moves && toolpath::usesCutterComp(*tp.moves));
+        });
+        version["minor"] = usesCutterComp ? kCarvFormatMinorCutterComp
+                           : usesRotaryGaps ? kCarvFormatMinorRotaryGaps
                            : usesLaser ? kCarvFormatMinorLaser
                            : usesAppearance ? kCarvFormatMinorAppearance
                            : (usesGroups || usesPriors) ? kCarvFormatMinorToolGroups

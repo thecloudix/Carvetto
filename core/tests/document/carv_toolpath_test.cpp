@@ -780,8 +780,8 @@ TEST_CASE("move cache: defects are reported, never crash", "[document][toolpath]
     badMagic[0] = 'X';
     CHECK(contains(decodeError(badMagic, moves.size()), "signature"));
     Bytes badVersion = good;
-    badVersion[4] = 3;
-    CHECK(contains(decodeError(badVersion, moves.size()), "version 3"));
+    badVersion[4] = 9;
+    CHECK(contains(decodeError(badVersion, moves.size()), "version 9"));
     CHECK(contains(decodeError(Bytes(good.begin(), good.end() - 3), moves.size()), "ends early"));
     Bytes trailing = good;
     trailing.push_back(0);
@@ -2005,4 +2005,261 @@ TEST_CASE("T-0134: a record without computed moves keeps a default (zero) tool s
     const auto saved = saveCarv(z, CarvExtras{});
     REQUIRE_FALSE(saved.ok());
     CHECK(contains(saved.error().message, "tool diameter must be a finite number greater than zero for a toolpath with computed moves"));
+}
+
+// ------------------------------------------------------------------------------------------------
+// Cutter compensation (T-0327, ADR-0100): the Profile parameter, move cache version 3, minor 1.15
+// ------------------------------------------------------------------------------------------------
+
+namespace {
+
+std::vector<Move> compensatedMoves() {
+    using toolpath::CutterComp;
+    std::vector<Move> m{Move::rapid({0, 6, 5}),      Move::plunge({0, 6, -1}), Move::feed({3, 3, -1}),
+                        Move::feed({7, 3, -1}),      Move::arcCW({7, 3, -1}, {5, 3}, 700.0),
+                        Move::feed({7, 7, -1}),      Move::feed({7, 12, -1}),  Move::retract({7, 12, 5}),
+                        Move::rapid({0, 6, 5}),      Move::plunge({0, 6, -1}), Move::feed({3, 3, -1}),
+                        Move::feed({7, 3, -1}),      Move::feed({7, 12, -1})};
+    for (std::size_t i : {2u, 3u, 4u, 5u}) {
+        m[i].comp = CutterComp::Left;
+    }
+    for (std::size_t i : {10u, 11u}) {
+        m[i].comp = CutterComp::Right;
+    }
+    return m;
+}
+
+std::vector<Move> decodeOk(const Bytes& cache, std::size_t count) {
+    std::vector<Move> back;
+    const std::string text(cache.begin(), cache.end());
+    detail::StringSource src(text);
+    const std::string err = detail::decodeMoves(src, count, back);
+    INFO(err);
+    REQUIRE(err.empty());
+    detail::StringSource again(text);
+    CHECK(detail::validateMoves(again, count).empty());
+    return back;
+}
+
+}  // namespace
+
+TEST_CASE("cutter comp cache: compensated moves round trip in version 3; others keep version 1 or 2",
+          "[document][toolpath][moves][cuttercomp]") {
+    const std::vector<Move> moves = compensatedMoves();
+    const Bytes cache = cacheOf(moves);
+    CHECK(cache[4] == 3);
+    CHECK(decodeOk(cache, moves.size()) == moves);
+    CHECK(cacheOf(moves) == cache);
+    // Two runs of different sides: the trailer is the count and two 17-byte runs, after the per-move
+    // flag bytes of the version 2 layout.
+    CHECK(cache.size() >= detail::kMovesHeaderBytes + moves.size() + 8 + 2 * 17);
+    // Re-encoding the decoded moves gives the same bytes.
+    CHECK(cacheOf(decodeOk(cache, moves.size())) == cache);
+    // Without a flag: version 1, as before.
+    std::vector<Move> plain = moves;
+    for (Move& m : plain) {
+        m.comp = toolpath::CutterComp::Off;
+    }
+    const Bytes old = cacheOf(plain);
+    CHECK(old[4] == 1);
+    CHECK(decodeOk(old, plain.size()) == plain);
+    // A version 1 cache is read as before (flags all off).
+    CHECK(decodeOk(old, plain.size())[2].comp == toolpath::CutterComp::Off);
+    // Adjacent runs of the same side are one run; a side change starts a new one.
+    std::vector<Move> three = compensatedMoves();
+    three[6].comp = toolpath::CutterComp::Right;  // right directly after the left run
+    CHECK(decodeOk(cacheOf(three), three.size()) == three);
+}
+
+TEST_CASE("cutter comp cache: hostile run lists are refused with a message", "[document][toolpath][moves][cuttercomp][errors]") {
+    const std::vector<Move> moves = compensatedMoves();
+    const Bytes good = cacheOf(moves);
+    REQUIRE(decodeError(good, moves.size()).empty());
+    const std::size_t trailer = good.size() - (8 + 2 * 17);  // where the run count starts
+    const auto put64 = [](Bytes& b, std::size_t at, std::uint64_t v) {
+        for (int i = 0; i < 8; ++i) {
+            b[at + static_cast<std::size_t>(i)] = static_cast<std::uint8_t>(v >> (8 * i));
+        }
+    };
+    {  // the run list is missing or cut
+        CHECK(contains(decodeError(Bytes(good.begin(), good.begin() + static_cast<std::ptrdiff_t>(trailer)), moves.size()),
+                       "before its cutter compensation runs"));
+        CHECK(contains(decodeError(Bytes(good.begin(), good.end() - 4), moves.size()), "inside its cutter compensation runs"));
+    }
+    {  // no runs although the version says there are
+        Bytes b(good.begin(), good.begin() + static_cast<std::ptrdiff_t>(trailer));
+        b.insert(b.end(), 8, 0);
+        CHECK(contains(decodeError(b, moves.size()), "without cutter compensation runs"));
+    }
+    {  // an invalid side
+        Bytes b = good;
+        b[trailer + 8 + 16] = 3;
+        CHECK(contains(decodeError(b, moves.size()), "invalid side"));
+    }
+    {  // empty run, run past the end, overlap, out of order
+        Bytes b = good;
+        put64(b, trailer + 8 + 8, 0);
+        CHECK(contains(decodeError(b, moves.size()), "outside the moves or overlapping"));
+        b = good;
+        put64(b, trailer + 8, moves.size());
+        CHECK(contains(decodeError(b, moves.size()), "outside the moves or overlapping"));
+        b = good;
+        put64(b, trailer + 8 + 8, moves.size());  // length beyond the end
+        CHECK(contains(decodeError(b, moves.size()), "outside the moves or overlapping"));
+        b = good;
+        put64(b, trailer + 8 + 17, 3);  // second run starts inside the first
+        CHECK(contains(decodeError(b, moves.size()), "overlapping the run before it"));
+    }
+    {  // a run count larger than the data
+        Bytes b = good;
+        put64(b, trailer, 1000000);
+        CHECK(contains(decodeError(b, moves.size()), "inside its cutter compensation runs"));
+        put64(b, trailer, std::numeric_limits<std::uint64_t>::max());
+        CHECK(contains(decodeError(b, moves.size()), "inside its cutter compensation runs"));
+    }
+    {  // two runs of the same side with no gap: not what the encoder writes
+        Bytes b = good;
+        put64(b, trailer + 8 + 8, 2);          // first run: moves 2..3
+        put64(b, trailer + 8 + 17, 4);         // second run starts right after
+        b[trailer + 8 + 17 + 16] = 1;          // same side (left)
+        put64(b, trailer + 8 + 17 + 8, 1);
+        CHECK(contains(decodeError(b, moves.size()), "without a gap"));
+    }
+    {  // data after the runs
+        Bytes b = good;
+        b.push_back(0);
+        CHECK(contains(decodeError(b, moves.size()), "follows the last move"));
+    }
+    {  // a version 2 (laser layout) cache cannot carry the trailer
+        Bytes b = good;
+        b[4] = 2;
+        CHECK(contains(decodeError(b, moves.size()), "follows the last move"));
+    }
+}
+
+TEST_CASE("cutter comp: a Profile with the option saves as 1.15 and round-trips; unused stays 1.1",
+          "[document][toolpath][carv][cuttercomp]") {
+    Sample s = makeSample();
+    const Bytes before = save(s.doc);
+    CHECK(contains(memberText(before, "manifest.json"), "\"minor\": 1"));
+    CHECK_FALSE(contains(memberText(before, "job.json"), "cutter_comp"));
+
+    toolpath::ProfileParams p;
+    p.cutterComp = true;
+    p.leads.type = toolpath::LeadType::Straight;
+    p.leads.leadOut = true;
+    ToolpathRecord rec;
+    rec.name = "Comp";
+    rec.params = p;
+    rec.selection = VectorSelection::allVectors();
+    rec.tool = kValidTool;
+    rec.moves = shareMoves(compensatedMoves());
+    REQUIRE(s.doc.execute(std::make_unique<AddToolpathCommand>(rec)));
+    const Bytes once = save(s.doc);
+    CHECK(contains(memberText(once, "manifest.json"), "\"minor\": 15"));
+    CHECK(contains(memberText(once, "job.json"), "\"cutter_comp\": true"));
+    const LoadedCarv back = load(once);
+    CHECK(back.formatMinor == kCarvFormatMinorCutterComp);
+    REQUIRE(back.document.toolpaths().size() == s.doc.toolpaths().size());
+    const ToolpathRecord* got = nullptr;
+    for (const ToolpathRecord& t : back.document.toolpaths()) {
+        if (t.name == "Comp") {
+            got = &t;
+        }
+    }
+    REQUIRE(got != nullptr);
+    CHECK(std::get<toolpath::ProfileParams>(got->params).cutterComp);
+    REQUIRE(got->moves);
+    CHECK(*got->moves == compensatedMoves());
+    CHECK(save(back.document, back.extras) == once);  // byte-identical
+
+    // The option off, flagged moves still force the minor (the cache is version 3).
+    toolpath::ProfileParams off = p;
+    off.cutterComp = false;
+    rec.params = off;
+    ToolpathRecord flagged = rec;
+    Sample s2 = makeSample();
+    REQUIRE(s2.doc.execute(std::make_unique<AddToolpathCommand>(flagged)));
+    CHECK(contains(memberText(save(s2.doc), "manifest.json"), "\"minor\": 15"));
+    CHECK_FALSE(contains(memberText(save(s2.doc), "job.json"), "cutter_comp"));
+}
+
+// ------------------------------------------------------------------------------------------------
+// Cutter compensation next to the laser's beam power (T-0327 on T-0323): move cache versions 2 and 3
+// ------------------------------------------------------------------------------------------------
+
+TEST_CASE("cutter comp cache: a laser toolpath still writes version 2, byte for byte", "[document][toolpath][moves][cuttercomp][laser]") {
+    // Hand-assembled version 2 cache of {rapid(0,0,0), feed(1,0,0) at 40 %}.
+    const std::vector<Move> moves{Move::rapid({0, 0, 0}), Move::feed({1, 0, 0}).withJet(40.0)};
+    const Bytes cache = cacheOf(moves);
+    const std::uint8_t feedTag = static_cast<std::uint8_t>(static_cast<int>(toolpath::MoveKind::Feed) | 0x20 | 0x40);
+    const Bytes expected{'C', 'V', 'T', 'P', 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
+                         0x70, 0x00,                                                 // rapid: same x, y, z; no power
+                         feedTag, 0x01,                                              // feed: same y, z; a power follows
+                         0, 0, 0, 0, 0, 0, 0xF0, 0x3F,                               // x = 1.0
+                         0, 0, 0, 0, 0, 0, 0x44, 0x40};                              // power = 40.0
+    CHECK(cache == expected);
+    CHECK(decodeOk(cache, moves.size()) == moves);
+    // No trailer, and one cannot be appended to version 2.
+    Bytes trailing = cache;
+    trailing.insert(trailing.end(), 8, 0);
+    CHECK(contains(decodeError(trailing, moves.size()), "follows the last move"));
+}
+
+TEST_CASE("cutter comp cache: compensation and beam power together are version 3", "[document][toolpath][moves][cuttercomp][laser]") {
+    using toolpath::CutterComp;
+    std::vector<Move> moves = compensatedMoves();
+    moves[2] = moves[2].withJet(35.0);
+    moves[3] = moves[3].withJet(35.0);
+    moves[4] = moves[4].withJet(60.0);
+    moves[10] = moves[10].withJet(35.0);
+    const Bytes cache = cacheOf(moves);
+    CHECK(cache[4] == 3);
+    const std::vector<Move> back = decodeOk(cache, moves.size());
+    CHECK(back == moves);
+    CHECK(back[2].jetPower == 35.0);
+    CHECK(back[4].jetPower == 60.0);
+    CHECK(back[4].comp == CutterComp::Left);
+    CHECK(back[10].comp == CutterComp::Right);
+    CHECK(back[10].jetPower == 35.0);
+    CHECK(cacheOf(back) == cache);
+    // Power alone stays version 2; compensation alone is version 3 with zero power flags.
+    std::vector<Move> powerOnly = moves;
+    for (Move& m : powerOnly) {
+        m.comp = CutterComp::Off;
+    }
+    CHECK(cacheOf(powerOnly)[4] == 2);
+    std::vector<Move> compOnly = moves;
+    for (Move& m : compOnly) {
+        m.jetPower = 0.0;
+    }
+    const Bytes compCache = cacheOf(compOnly);
+    CHECK(compCache[4] == 3);
+    CHECK(decodeOk(compCache, compOnly.size()) == compOnly);
+    // A defect in either half is reported.
+    Bytes bad = cache;
+    bad.resize(bad.size() - 4);
+    CHECK(contains(decodeError(bad, moves.size()), "inside its cutter compensation runs"));
+    Bytes noTrailer = cache;
+    noTrailer.resize(noTrailer.size() - (8 + 2 * 17));
+    CHECK(contains(decodeError(noTrailer, moves.size()), "before its cutter compensation runs"));
+}
+
+TEST_CASE("cutter comp: the minor ladder puts compensation above rotary gaps and laser", "[document][toolpath][carv][cuttercomp]") {
+    CHECK(kCarvFormatMinorCutterComp > kCarvFormatMinorRotaryGaps);
+    CHECK(kCarvFormatMinorRotaryGaps > kCarvFormatMinorLaser);
+    CHECK(kCarvFormatMinor == kCarvFormatMinorCutterComp);
+    Job job = Job::rotary(400.0, 60.0, Units::Millimetres);
+    job.gapOutsideMm = 1.5;  // a rotary gap alone is minor 14
+    Document doc(job);
+    CHECK(contains(memberText(save(doc), "manifest.json"), "\"minor\": 14"));
+    toolpath::ProfileParams p;
+    p.cutterComp = true;
+    ToolpathRecord rec;
+    rec.name = "Comp";
+    rec.params = p;
+    rec.selection = VectorSelection::allVectors();
+    rec.tool = kValidTool;
+    REQUIRE(doc.execute(std::make_unique<AddToolpathCommand>(rec)));
+    CHECK(contains(memberText(save(doc), "manifest.json"), "\"minor\": 15"));
 }

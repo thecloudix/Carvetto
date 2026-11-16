@@ -115,6 +115,15 @@ struct ProfileParams {
     /// Tool position before the first cut (XY), for ordering and `StartAt::Optimise`.
     geometry::Vec2 startPosition{0.0, 0.0};
     CornerOptions corners;
+    /// Controller-side cutter compensation (T-0327, ADR-0100): the moves carry the tool-centre
+    /// path as always, with the cut (lead-in to the end of the cut) flagged as running under
+    /// compensation (`Move::comp`: left for climb, right for conventional), so the post writes the
+    /// programmed path with the CUTTER_COMP_* blocks and the controller applies the tool radius.
+    /// Needs an end mill, Outside/Inside (or open Left/Right), a straight lead-in and lead-out at
+    /// least a tool radius long, and no zig-zag ramp; refused (`CutterCompRefused`, nothing cut) where
+    /// the controller could not follow: arcs smaller than the tool, neighbouring vectors that merge or
+    /// trim, a cut that reverses direction (open vectors in several passes).
+    bool cutterComp{false};
 
     /// Feeds, speeds, tool number and default pass depth; empty = the tool's default data
     /// (`effectiveCuttingData`). Look up machine/material data with `Tool::cuttingDataFor`.

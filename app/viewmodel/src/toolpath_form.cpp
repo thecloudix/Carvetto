@@ -249,6 +249,7 @@ Table<toolpath::ProfileParams> makeProfileTable() {
     t.flag("separateLastPass", "Separate last pass", "Cut", [](P& p) -> bool& { return p.separateLastPass; });
     t.flag("lastPassReverse", "Reverse direction of the last pass", "Cut", [](P& p) -> bool& { return p.lastPassReverse; },
            [](const P& p) { return p.separateLastPass; });
+    t.flag("cutterComp", "Cutter compensation (G41/G42)", "Cut", [](P& p) -> bool& { return p.cutterComp; });
     t.flag("tabsEnabled", "Add tabs", "Tabs", [](P& p) -> bool& { return p.tabs.enabled; });
     t.option<toolpath::TabSpacing>("tabSpacing", "Tab spacing", "Tabs", {"Constant number", "Constant distance"},
                                    [](P& p) -> toolpath::TabSpacing& { return p.tabs.spacing; },

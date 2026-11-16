@@ -43,6 +43,7 @@ add_executable(carvetto_tests
   toolpath/refused_contour_test.cpp
   geometry/edit_ops_hardening_test.cpp
   toolpath/move_test.cpp
+  toolpath/cutter_comp_test.cpp
   toolpath/toolpath_test.cpp
   toolpath/pass_plan_test.cpp
   toolpath/linking_test.cpp
