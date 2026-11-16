@@ -1556,7 +1556,7 @@ Goal: core already has JobType::Rotary, RotaryAxis, Job::rotary(length, diameter
 Acceptance criteria:
   1. A rotary job can be created, edited, saved and reloaded with all fields; the design area and Z-zero follow Length/Diameter/orientation; app self-test drives the pages; ADR.
 
-### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: ready]
+### T-0320 Rotary wrapping: wrapped posts, auto-wrapping view and wrapped simulation   [status: in-progress]
 Phase: 3   Module: core/post + core/simulate + app   Depends on: T-0319
 Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/Y with the job diameter, sign, A-axis angle in the right units, feed handling for the rotary axis, MAXIMUM_ROTATION handling) correct and golden-tested for X and Y axes; add an Auto-Wrapping View (wrapped preview of vectors, toolpaths and the model on a cylinder, with a wrapped/flat toggle) and wrapped material-removal simulation for rotary jobs. Cover rotary refusals (tool longer than radius, etc.) with diagnostics.
 Acceptance criteria:
@@ -1580,7 +1580,7 @@ Goal: Laser tool (maximum burn rate already in cutting data) with power, move sp
 Acceptance criteria:
   1. Cut and Fill toolpaths verified on test shapes (kerf side, hatch spacing/angle, cross hatch, overscan moves, pass count); post output uses the jet blocks with correct power values; round trip and hostile-record tests; ADR.
 
-### T-0324 Laser Picture and Sketch Engraving (bitmap/model source, dithering)   [status: ready]
+### T-0324 Laser Picture and Sketch Engraving (bitmap/model source, dithering)   [status: in-progress]
 Phase: 3   Module: core/toolpath + app   Depends on: T-0323, T-0250
 Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither image, power modulation, overscan) and Laser Sketch Engraving (bitmap or 3D-model source, line thickness, stepover, hatch angle, fill together/regionally/between vectors, cross hatch, machine-limit boundary). Reuse the image pipeline from Image Engrave.
 Acceptance criteria:
