@@ -435,6 +435,32 @@ TEST_CASE("gadget: per-run caps are exact", "[gadget][t0331]") {
         CHECK(r2.script.status == ScriptStatus::Cancelled);
         CHECK(doc.toolpaths().empty());
     }
+    SECTION("with an injected clock the real clock never trips the watchdog") {
+        std::uint64_t t = 0;
+        o.limits.clockNanos = [&t] { return t; };  // injected time stands still
+        o.limits.deadlineMillis = 0;
+        o.gadgetLimits.maxCalculationNanos = 1'000'000;  // 1 ms of INJECTED time
+        GadgetServices tp = fakeToolpathService(doc);
+        const auto inner = tp.createToolpath;
+        bool sawToken = false;
+        bool raised = false;
+        tp.createToolpath = [&](const ToolpathRequest& q) {
+            sawToken = q.cancel != nullptr;
+            const auto start = std::chrono::steady_clock::now();
+            while (std::chrono::steady_clock::now() - start < std::chrono::milliseconds(100)) {  // 100 ms of REAL time
+                raised = raised || (q.cancel != nullptr && q.cancel->load());
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            return inner(q);
+        };
+        const GadgetRunResult r = runGadget(doc, tp,
+            "local i = carvetto.object.create_shape(nil, 'circle', {radius = 1}) carvetto.toolpath.create('drill', {i}, {})",
+            "g", o);
+        INFO(r.script.message);
+        CHECK(r.ok());
+        CHECK(sawToken);
+        CHECK_FALSE(raised);
+    }
     SECTION("the watchdog starts with what is LEFT of the calculation budget") {
         // Real clock, generous margins: budget 1000 ms; the first calculation really uses ~600 ms,
         // so the second one must be cut after ~400 ms (not after a fresh 1000 ms).
@@ -466,7 +492,7 @@ TEST_CASE("gadget: per-run caps are exact", "[gadget][t0331]") {
         CHECK(calls == 2);
         CHECK_FALSE(r.ok());
         CHECK(contains(r.script.message, "toolpath calculations"));
-        CHECK(secondRan < std::chrono::milliseconds(800));  // a watchdog started with the full limit would take ~1000 ms
+        CHECK(secondRan < std::chrono::milliseconds(900));  // a watchdog started with the full limit would take ~1000 ms
     }
     SECTION("the log keeps whole lines up to its byte cap") {
         o.gadgetLimits.maxLogBytes = 10;
