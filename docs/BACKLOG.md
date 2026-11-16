@@ -1605,13 +1605,13 @@ Goal: Profile option to output controller-side cutter compensation: lead-in/out 
 Acceptance criteria:
   1. Compensated Profile output is correct on test parts (left/right, climb/conventional, corners, tabs) and post blocks appear in the right order; simulation matches the uncompensated result; hostile/refusal cases; ADR.
 
-### T-0328 Drill Bank toolpath   [status: in-progress (round 2: rebase, minor 17, mutants)]
+### T-0328 Drill Bank toolpath   [status: done — PR #201 (subset; per-spindle detail -> T-0335)]
 Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0243
 Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-spindle drill bank (spindle spacing, which spindles are active, holes matched to the bank pattern, rows/columns offsets, per-hole depth, peck/dwell reuse of Drilling), with a refusal when holes cannot be matched. .carv record, form, self-test.
 Acceptance criteria:
   1. Bank patterns match holes on test layouts; unmatched holes are reported; output order minimises moves; round trip and hostile-record tests; ADR.
 
-### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: blocked — waits on T-0328]
+### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: ready]
 Phase: 3   Module: core/io + app   Depends on: T-0328
 Goal: Import a parts list (CSV/XML) describing rectangular panels with holes/dados through a user-editable mapping file (column -> part length/width/thickness/material/label/operations), then auto-nest the panels and create Profile/Drilling/Pocket toolpaths. No third-party product names or formats beyond generic CSV/XML.
 Acceptance criteria:
