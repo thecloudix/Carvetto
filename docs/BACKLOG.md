@@ -1586,7 +1586,7 @@ Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither ima
 Acceptance criteria:
   1. Power/dither output verified against reference rasters; model source works with the relief engine; forms and self-test; ADR.
 
-### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: ready]
+### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: in-progress]
 Phase: 3   Module: core/simulate + core/tooling + core/post + app   Depends on: T-0323
 Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (power x speed vs burn rate -> mark depth/darkness); machine flag for laser-capable posts; post-adaptation guide (power variable, laser blocks) in docs; ship our own laser-capable GRBL-style post with golden tests.
 Acceptance criteria:
@@ -1604,7 +1604,7 @@ Goal: Profile option to output controller-side cutter compensation: lead-in/out 
 Acceptance criteria:
   1. Compensated Profile output is correct on test parts (left/right, climb/conventional, corners, tabs) and post blocks appear in the right order; simulation matches the uncompensated result; hostile/refusal cases; ADR.
 
-### T-0328 Drill Bank toolpath   [status: ready]
+### T-0328 Drill Bank toolpath   [status: in-progress]
 Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0243
 Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-spindle drill bank (spindle spacing, which spindles are active, holes matched to the bank pattern, rows/columns offsets, per-hole depth, peck/dwell reuse of Drilling), with a refusal when holes cannot be matched. .carv record, form, self-test.
 Acceptance criteria:
