@@ -1550,7 +1550,7 @@ Goal: Residual (i) of T-0252 was not reproducible in T-0279 because scenes 9301_
 
 ## Phase 3 — Rotary, modules, scripting (drafted 2026-11-16; scripting compatibility with any third-party gadget SDK is NOT a goal unless the owner decides so, see PLAN §6.4)
 
-### T-0319 Rotary job: Job Setup / Material Setup pages, sheets and flat-design area (audit + complete)   [status: ready]
+### T-0319 Rotary job: Job Setup / Material Setup pages, sheets and flat-design area (audit + complete)   [status: in-progress]
 Phase: 3   Module: core/document + app/viewmodel + app   Depends on: T-0243
 Goal: core already has JobType::Rotary, RotaryAxis, Job::rotary(length, diameter, ...) and the post ROTARY_WRAP_X/Y keys. Audit what exists, then complete the rotary job: Job Setup Rotary page (Length, Diameter, Along X / Along Y, Flip Design, Z-zero at cylinder surface or axis), Material Setup Rotary (Diameter, Gap Outside / Gap Inside Model), rotary sheets (Edit Sheet for Rotary), .carv round trip (minor bump only if new fields), self-test driving it. Flat design area = length x pi x diameter is already modelled; keep units mm/radians in core.
 Acceptance criteria:
@@ -1574,7 +1574,7 @@ Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turn
 Acceptance criteria:
   1. Each tool produces the expected vectors/toolpath on test cylinders (counts, spacing, pitch exact); app forms drive them; ADR.
 
-### T-0323 Laser: laser tool power model and Laser Cut / Fill toolpath   [status: ready]
+### T-0323 Laser: laser tool power model and Laser Cut / Fill toolpath   [status: in-progress]
 Phase: 3   Module: core/toolpath + core/tooling + core/post + app/viewmodel   Depends on: T-0243
 Goal: Laser tool (maximum burn rate already in cutting data) with power, move speed, passes (cut depth -> number of passes), repeats and overscan; Laser Cut/Fill toolpath: Cut Outside/Right, Cut Inside/Left (kerf compensated), Cut On, Hatch Fill (stepover, angle, cross hatch, fill together/regionally, outline), allowance. Output through the post's JET_TOOL_POWER/ON/OFF blocks (already parsed; make them act). .carv record (job.json-only, minor bump rules as ADR-0021), viewmodel form, self-test.
 Acceptance criteria:
@@ -1598,7 +1598,7 @@ Goal: Wire Laser Cut/Fill, Picture and Sketch Engraving into the Toolpaths panel
 Acceptance criteria:
   1. Each laser toolpath can be created, recalculated, previewed, simulated and saved from the UI; self-test drives all three.
 
-### T-0327 Cutter compensation (G41/G42) for Profile toolpaths   [status: ready]
+### T-0327 Cutter compensation (G41/G42) for Profile toolpaths   [status: in-progress]
 Phase: 3   Module: core/toolpath + core/post + app/viewmodel   Depends on: T-0252
 Goal: Profile option to output controller-side cutter compensation: lead-in/out geometry that makes the compensation engage and release safely, move flags on the toolpath moves, and CUTTER_COMP_LEFT/RIGHT/OFF post blocks (already parsed) emitted around compensated passes; refusal rules (arcs smaller than the tool radius, inner corners, tabs interaction); the toolpath still carries the nominal (uncompensated) geometry for simulation. .carv field with minor bump only when used, form option, tests.
 Acceptance criteria:
@@ -1616,7 +1616,7 @@ Goal: Import a parts list (CSV/XML) describing rectangular panels with holes/dad
 Acceptance criteria:
   1. A sample parts file imports into nested panels and toolpaths; bad mappings give clear diagnostics; ADR with the mapping schema.
 
-### T-0330 Scripting host: embedded Lua (sandboxed), ScriptHost and API design   [status: ready]
+### T-0330 Scripting host: embedded Lua (sandboxed), ScriptHost and API design   [status: in-progress]
 Phase: 3   Module: core/scripting   Depends on: —
 Goal: Embed Lua (MIT; pinned release via FetchContent like the other dependencies; ADR on licence and size) behind ScriptHost in core/scripting with no Qt: a sandbox (no io/os/debug/package unless granted, instruction and memory limits, cancellation, wall-clock-free budget by instruction count), error reporting with line numbers, and our OWN documented API design (ADR-0098+) - do not copy any vendor SDK shapes. Deliver the host, the API surface design document, and tests including hostile scripts (infinite loops, memory bombs, string bombs).
 Acceptance criteria:
