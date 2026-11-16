@@ -225,6 +225,7 @@ endif()
 
 add_library(carvetto_core STATIC
   src/geometry/vec2.cpp
+  src/geometry/cylinder_map.cpp
   src/geometry/box2.cpp
   src/geometry/transform2.cpp
   src/geometry/span.cpp

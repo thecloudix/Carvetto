@@ -839,6 +839,11 @@ SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cance
             ctx.materialMax.z = side->topZ;
         }
         ctx.rotaryDiameter = j.diameterMm;
+        if (j.type == document::JobType::Rotary) {
+            ctx.rotaryAlong = j.rotaryAxis == document::RotaryAxis::X ? 'X' : 'Y';
+            ctx.rotaryFlip = j.flipDesign;
+            ctx.rotaryAxisZ = j.rotarySurfaceZ() - j.radiusMm();
+        }
 
         auto program = pp.value().run(toolpaths, ctx);
         if (!program) {

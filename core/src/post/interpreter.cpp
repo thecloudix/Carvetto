@@ -66,6 +66,8 @@ constexpr double kMinArcTolerance = 1e-6;
 constexpr double kMaxArcTolerance = 1.0;
 /// Most chords one linearised arc is split into.
 constexpr double kMaxArcSegments = 100000.0;
+/// Most moves MAXIMUM_ROTATION may split one wrapped move into.
+constexpr double kMaxRotationParts = 100000.0;
 /// Names quoted in error messages are cut to this many bytes.
 constexpr std::size_t kMaxQuotedName = 64;
 
@@ -734,6 +736,9 @@ class Interpreter {
                 return Error{0, "cannot write G-code: job rotary diameter " + problem};
             }
         }
+        if (auto err = rotaryRefusals()) {
+            return *err;
+        }
         if (!(ctx_.arcTolerance >= kMinArcTolerance && ctx_.arcTolerance <= kMaxArcTolerance)) {
             return Error{0, "cannot write G-code: arc tolerance " + describeValue(ctx_.arcTolerance) +
                                 " mm is outside the supported range " + describeValue(kMinArcTolerance) +
@@ -1014,6 +1019,74 @@ class Interpreter {
         return radius && !centre;
     }
 
+    /// Rotary refusals and warnings (T-0320, ADR-0103). Errors: the post wraps the axis the cylinder lies
+    /// along; a move at or below the cylinder axis. Warnings: a rotary job with a post that does not wrap, a
+    /// tool wider than the cylinder radius, a toolpath that goes more than once round.
+    std::optional<Error> rotaryRefusals() {
+        const bool wrapping = s_.rotaryWrapX || s_.rotaryWrapY;
+        if (ctx_.rotaryAlong != 0) {
+            const char along = ctx_.rotaryAlong;
+            if (along != 'X' && along != 'Y') {
+                return Error{0, "cannot write G-code: the rotary axis must be X or Y"};
+            }
+            if (!wrapping) {
+                warnings_.push_back({0, std::string("the job is a rotary job along ") + along +
+                                            " but the post does not wrap an axis onto a rotary axis"
+                                            " (ROTARY_WRAP_" + (along == 'X' ? "Y" : "X") +
+                                            "); the circumference is written as flat distance"});
+                return std::nullopt;
+            }
+            const bool wrapsAlong = (along == 'X' && s_.rotaryWrapX) || (along == 'Y' && s_.rotaryWrapY);
+            if (wrapsAlong) {
+                return Error{0, std::string("cannot write G-code: the job's cylinder lies along ") + along +
+                                    " but the post wraps " + along + " onto a rotary axis (ROTARY_WRAP_" + along +
+                                    "); a post for this job must wrap " + (along == 'X' ? "Y" : "X") +
+                                    ", the circumference"};
+            }
+        }
+        if (!wrapping) {
+            return std::nullopt;
+        }
+        const double radius = 0.5 * ctx_.rotaryDiameter;
+        for (const Toolpath& tp : toolpaths_) {
+            if (tp.isEmpty()) {
+                continue;
+            }
+            if (tp.tool.diameter > radius) {
+                warnOnce("tool " + quoted(tp.tool.name) + " (" + describeValue(tp.tool.diameter) +
+                         " mm) is wider than the cylinder radius (" + describeValue(radius) +
+                         " mm); a flat toolpath wrapped on so small a cylinder is cut inaccurately");
+            }
+            double lo = 0.0;
+            double hi = 0.0;
+            bool first = true;
+            std::size_t index = 0;
+            for (const Move& m : tp.moves) {
+                ++index;
+                if (ctx_.rotaryAxisZ && m.kind != MoveKind::Dwell && m.to.z <= *ctx_.rotaryAxisZ) {
+                    return Error{0, "cannot write G-code: toolpath " + quoted(tp.name) + " move " +
+                                        std::to_string(index) + " goes to Z " + describeValue(m.to.z) +
+                                        " mm, at or below the cylinder axis (Z " + describeValue(*ctx_.rotaryAxisZ) +
+                                        " mm); a wrapped program cannot cut past the axis"};
+                }
+                if (m.kind == MoveKind::Rapid || m.kind == MoveKind::Dwell) {
+                    continue;
+                }
+                const double a = rotaryAngle(m.to);
+                if (std::isfinite(a)) {
+                    lo = first ? a : std::min(lo, a);
+                    hi = first ? a : std::max(hi, a);
+                    first = false;
+                }
+            }
+            if (hi - lo > 360.0 + 1e-6) {
+                warnOnce("toolpath " + quoted(tp.name) + " turns the rotary axis through " +
+                         describeValue(hi - lo) + " degrees, more than once round the cylinder");
+            }
+        }
+        return std::nullopt;
+    }
+
     void warnOnce(const std::string& message) {
         for (const Diagnostic& d : warnings_) {
             if (d.message == message) {
@@ -1279,6 +1352,20 @@ class Interpreter {
         return kind == MoveKind::Plunge || kind == MoveKind::Retract ? tool_.plungeRate : tool_.feedRate;
     }
 
+    /// Feed written for a wrapped move (T-0320, ADR-0103). The flat feed is a speed over the surface; a
+    /// controller reads a move that includes the rotary axis as a straight line in mixed units (mm and
+    /// degrees), so the feed is scaled by (that length) / (surface length) to keep the surface speed.
+    /// Unchanged when nothing is wrapped or the move does not turn the rotary axis.
+    double wrappedFeed(double feed, Vec3 from, Vec3 to, double length) const {
+        if (!(s_.rotaryWrapX || s_.rotaryWrapY) || !(length > kZeroLength)) {
+            return feed;
+        }
+        const double turn = std::fabs(rotaryAngle(to) - rotaryAngle(from));
+        const double along = s_.rotaryWrapX ? to.x - from.x : to.y - from.y;
+        const double rest = std::max(0.0, length * length - along * along);
+        return feed * std::sqrt(rest + turn * turn) / length;
+    }
+
     void prepareCutting(MoveKind kind, Vec3 to, double length, std::optional<double> override) {
         const double feed = rateFor(kind, override);
         if (has("FEED_RATE_CHANGE") && (!lastFeedWritten_ || *lastFeedWritten_ != feed)) {
@@ -1295,10 +1382,42 @@ class Interpreter {
         frame_.inverseTime = length > kZeroLength ? feed / length : 0.0;
         frame_.length = length;
         frame_.cutting = true;
+        frame_.feed = wrappedFeed(feed, pos_, to, length);
     }
 
+    /// A move that turns the rotary axis further than MAXIMUM_ROTATION is split into equal moves.
     std::optional<Error> linear(MoveKind kind, Vec3 to, std::optional<double> override,
                                 toolpath::RapidRoute route = toolpath::RapidRoute::None) {
+        const bool wrapping = s_.rotaryWrapX || s_.rotaryWrapY;
+        if (wrapping && s_.maxRotation > 0.0) {
+            const Vec3 from = pos_;
+            const double turn = std::fabs(rotaryAngle(to) - rotaryAngle(from));
+            if (turn > s_.maxRotation) {
+                const double parts = std::ceil(turn / s_.maxRotation);
+                if (!(parts <= kMaxRotationParts)) {
+                    return Error{0, "cannot write G-code " + where() + ": the move turns the rotary axis through " +
+                                        describeValue(turn) + " degrees, which MAXIMUM_ROTATION = " +
+                                        describeValue(s_.maxRotation) + " would split into more than " +
+                                        describeValue(kMaxRotationParts) + " moves"};
+                }
+                const int n = static_cast<int>(parts);
+                for (int k = 1; k <= n; ++k) {
+                    const double t = static_cast<double>(k) / static_cast<double>(n);
+                    const Vec3 p = k == n ? to
+                                          : Vec3{from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t,
+                                                 from.z + (to.z - from.z) * t};
+                    if (auto err = linearOne(kind, p, override, route)) {
+                        return err;
+                    }
+                }
+                return std::nullopt;
+            }
+        }
+        return linearOne(kind, to, override, route);
+    }
+
+    std::optional<Error> linearOne(MoveKind kind, Vec3 to, std::optional<double> override,
+                                   toolpath::RapidRoute route) {
         std::string_view name;
         switch (kind) {
             case MoveKind::Rapid:
@@ -1652,7 +1771,7 @@ class Interpreter {
         }
         const double linear = s_.rotaryWrapX ? p.x : p.y;
         const double deg = linear / (kPi * ctx_.rotaryDiameter) * 360.0;
-        return w->negate ? -deg : deg;
+        return w->negate != ctx_.rotaryFlip ? -deg : deg;
     }
 
     double axisValue(std::string_view tag, Vec3 p) const {

@@ -460,6 +460,11 @@ int cmdPost(const std::vector<std::string>& a, std::ostream& out, std::ostream& 
     ctx.materialMin = {material.min.x, material.min.y, bedZero ? 0.0 : -job.sizeMm.z};
     ctx.materialMax = {material.max.x, material.max.y, bedZero ? job.sizeMm.z : 0.0};
     ctx.rotaryDiameter = job.diameterMm;
+    if (job.type == document::JobType::Rotary) {
+        ctx.rotaryAlong = job.rotaryAxis == document::RotaryAxis::X ? 'X' : 'Y';
+        ctx.rotaryFlip = job.flipDesign;
+        ctx.rotaryAxisZ = job.rotarySurfaceZ() - job.radiusMm();
+    }
 
     auto program = pp.value().run(toolpaths, ctx);
     if (!program) {

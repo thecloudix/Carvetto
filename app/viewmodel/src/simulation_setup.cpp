@@ -20,8 +20,9 @@ struct StockResult {
 StockResult stockOf(const document::Document& doc, double cellSize) {
     StockResult r;
     const document::Job& job = doc.job();
-    if (job.zZero == document::ZZero::CylinderAxis || job.type == document::JobType::Rotary) {
-        r.problem = "Rotary jobs cannot be simulated yet.";
+    const bool rotary = job.type == document::JobType::Rotary;
+    if (!rotary && job.zZero == document::ZZero::CylinderAxis) {
+        r.problem = "A cylinder-axis Z zero needs a rotary job.";
         return r;
     }
     const document::Sheet* sheet = doc.findSheet(doc.activeSheet());
@@ -36,9 +37,21 @@ StockResult stockOf(const document::Document& doc, double cellSize) {
     }
     r.stock.width = box.width();
     r.stock.height = box.height();
-    r.stock.thickness = job.sizeMm.z;
     r.stock.origin = box.min;
-    r.stock.topZ = job.zZero == document::ZZero::MachineBed ? job.sizeMm.z : 0.0;
+    if (rotary) {
+        // The unwrapped cylinder (ADR-0103): the surface is a flat sheet whose height is the machine Z, from the
+        // cylinder axis (the bottom: nothing can be cut past it) up to the surface. The flat tool sweep is the
+        // same approximation the flat toolpaths make; `wrappedSurfaceFromSimulation` draws it round the cylinder.
+        if (!(job.radiusMm() > 0.0)) {
+            r.problem = "The cylinder has no diameter.";
+            return r;
+        }
+        r.stock.thickness = job.radiusMm();
+        r.stock.topZ = job.rotarySurfaceZ();
+    } else {
+        r.stock.thickness = job.sizeMm.z;
+        r.stock.topZ = job.zZero == document::ZZero::MachineBed ? job.sizeMm.z : 0.0;
+    }
     r.stock.cellSize = cellSize;
     r.stock.trackPassIds = true;
     r.ok = true;
