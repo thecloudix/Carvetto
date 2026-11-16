@@ -689,6 +689,138 @@ const char* const k_m0_9302_71 =
         "P 0x1.9p+4 120 0x0p+0 0 0 0x0p+0 0x1.62b407341cb37p+2 0x1.b119b64dfa9a4p+2 0x1.7cbe4512ba89cp-1 0x1.4p+2 1 0x1.d2b98117446a4p-5 0 1 0x1.ecee18bbd3d64p-1 0x1.5fd3c40540a4p-1 0 4 0x1.bebbf3a7ee67p+5 0x0p+0 0 0 0x0p+0 0 0x1.55821ab14081ep+1 0 0 0x1.6cf09408167bp-3 0x1.a5ad730f52b52p+1 0x1.92717c14f983ep-1 0x1.5323506781db9p+2 0 0x1.2ac2e44f62a2ep-3 0 0 0x0p+0 0x0p+0 2 1 0 0 0 0 0x1.97f24f10e73b4p+4 0x1.a796d882db3p+4 0x1p+1\n"
         "K 1 0\n";
 
+// T-0279: the U-part family of the T-0167 verifier (end mill 3 to 6 mm, Outside, a notch whose two kerfs leave a
+// sliver of waste), as dumped by the flood-oracle harness.
+const char* const k_u9732_169 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.073e48681a5d2p+5 0x0p+0\n"
+        "L 0x1.073e48681a5d2p+5 0x0p+0 0x1.073e48681a5d2p+5 0x1.778cfea36e448p+4\n"
+        "L 0x1.073e48681a5d2p+5 0x1.778cfea36e448p+4 0x1.69dc0be4d7d8ap+4 0x1.778cfea36e448p+4\n"
+        "L 0x1.69dc0be4d7d8ap+4 0x1.778cfea36e448p+4 0x1.69dc0be4d7d8ap+4 0x1.5511285c37968p+2\n"
+        "L 0x1.69dc0be4d7d8ap+4 0x1.5511285c37968p+2 0x1.494109d6b9c36p+3 0x1.5511285c37968p+2\n"
+        "L 0x1.494109d6b9c36p+3 0x1.5511285c37968p+2 0x1.494109d6b9c36p+3 0x1.778cfea36e448p+4\n"
+        "L 0x1.494109d6b9c36p+3 0x1.778cfea36e448p+4 0x0p+0 0x1.778cfea36e448p+4\n"
+        "L 0x0p+0 0x1.778cfea36e448p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x1.384628976c6fcp-7 0 1 0x0p+0 0x1.f7d1722f20ddfp+2 0x1.cbd6f169ae388p+1 0x0p+0 0x1.4p+2 0 0x1.28d7b75cdd14bp-3 0 1 0x1.d39cd15345d6p-2 0x1.5925d69085ff4p+1 0 5 0x1.5a13d8cc265dep+5 0x0p+0 0 0 0x0p+0 2 0x1.b55bad906a043p+4 0 0 0x1.bab7e74d1bed8p-2 0x1.6c2d5159a96c1p+3 0x1.ac04b74c5346ep-1 0x1.f1b8787d9a956p-1 0 0x1.3f9efb524a67fp+0 0 0 0x0p+0 0x0p+0 2 7 0 0 0 0 0x1.465573cdcd1bep+5 -0x1.73484631b0973p+5 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_u9733_282 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.0e23ccf36b99ap+5 0x0p+0\n"
+        "L 0x1.0e23ccf36b99ap+5 0x0p+0 0x1.0e23ccf36b99ap+5 0x1.6a9be2908945p+4\n"
+        "L 0x1.0e23ccf36b99ap+5 0x1.6a9be2908945p+4 0x1.71a57d2e939f6p+4 0x1.6a9be2908945p+4\n"
+        "L 0x1.71a57d2e939f6p+4 0x1.6a9be2908945p+4 0x1.71a57d2e939f6p+4 0x1.7352fb34bf8a8p+2\n"
+        "L 0x1.71a57d2e939f6p+4 0x1.7352fb34bf8a8p+2 0x1.554439708727bp+3 0x1.7352fb34bf8a8p+2\n"
+        "L 0x1.554439708727bp+3 0x1.7352fb34bf8a8p+2 0x1.554439708727bp+3 0x1.6a9be2908945p+4\n"
+        "L 0x1.554439708727bp+3 0x1.6a9be2908945p+4 0x0p+0 0x1.6a9be2908945p+4\n"
+        "L 0x0p+0 0x1.6a9be2908945p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x1.91e2263c5cee2p-4 0 1 0x0p+0 0x1.c2cfcbd458444p+2 0x1.0874b1b3d3eaep+2 0x1.68b44d85a47a2p-2 0x1.4p+2 1 0x1.ea531cc12702fp-2 1 1 0x1.5abb35dcec05cp+0 0x1.6669f93cb749bp+1 0 4 0x1.e7d491e418a85p+4 0x0p+0 0 1 0x0p+0 2 0x1.07014e91d12f4p+5 1 0 0x1.958133338addep-2 0x1.92c77568547fep+3 0x1.40928c4e02ff4p+0 0x1.651a4e463bd0dp+3 0 0x1.a59fdc14784e5p-1 0 0 0x0p+0 0x0p+0 1 2 0 0 0 1 0x1.23843d5556204p+3 0x1.6d14a072afe5ep+5 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_u9737_246 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.100ef7a9d9e36p+5 0x0p+0\n"
+        "L 0x1.100ef7a9d9e36p+5 0x0p+0 0x1.100ef7a9d9e36p+5 0x1.95a06cd542f79p+4\n"
+        "L 0x1.100ef7a9d9e36p+5 0x1.95a06cd542f79p+4 0x1.710bc4387a0bp+4 0x1.95a06cd542f79p+4\n"
+        "L 0x1.710bc4387a0bp+4 0x1.95a06cd542f79p+4 0x1.710bc4387a0bp+4 0x1.690fec0f466fp+2\n"
+        "L 0x1.710bc4387a0bp+4 0x1.690fec0f466fp+2 0x1.5e24563673777p+3 0x1.690fec0f466fp+2\n"
+        "L 0x1.5e24563673777p+3 0x1.690fec0f466fp+2 0x1.5e24563673777p+3 0x1.95a06cd542f79p+4\n"
+        "L 0x1.5e24563673777p+3 0x1.95a06cd542f79p+4 0x0p+0 0x1.95a06cd542f79p+4\n"
+        "L 0x0p+0 0x1.95a06cd542f79p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x1.50a67a96a90cep-5 0 0 0x0p+0 0x1.e09437261627ep+2 0x1.e75c321e6fc25p+1 0x0p+0 0x1.4p+2 0 0x1.628b89d7ab2bep-2 0 1 0x1.8b7cff195bdd5p-2 0x1.111ae46f7baf4p+1 0 7 0x1.7b2fc308df296p+5 0x0p+0 1 1 0x0p+0 2 0x1.0e33e09cc66ffp+4 1 0 0x1.724229ac6ade5p-2 0x1.2061ff04b5e0dp+3 0x1.8050102ecc852p-2 0x1.30c9f35a64b7ap+1 0 0x1.30c068351b7e7p-1 0 0 0x0p+0 0x0p+0 0 2 0 0 0 1 -0x1.816491b493d48p+5 -0x1.d32cbe51ed8c8p+3 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_u9735_49 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.d9c764d5cef59p+4 0x0p+0\n"
+        "L 0x1.d9c764d5cef59p+4 0x0p+0 0x1.d9c764d5cef59p+4 0x1.4bf88ea437189p+4\n"
+        "L 0x1.d9c764d5cef59p+4 0x1.4bf88ea437189p+4 0x1.4ddba04b1569ep+4 0x1.4bf88ea437189p+4\n"
+        "L 0x1.4ddba04b1569ep+4 0x1.4bf88ea437189p+4 0x1.4ddba04b1569ep+4 0x1.2dc87f38cbdccp+2\n"
+        "L 0x1.4ddba04b1569ep+4 0x1.2dc87f38cbdccp+2 0x1.17d7891573176p+3 0x1.2dc87f38cbdccp+2\n"
+        "L 0x1.17d7891573176p+3 0x1.2dc87f38cbdccp+2 0x1.17d7891573176p+3 0x1.4bf88ea437189p+4\n"
+        "L 0x1.17d7891573176p+3 0x1.4bf88ea437189p+4 0x0p+0 0x1.4bf88ea437189p+4\n"
+        "L 0x0p+0 0x1.4bf88ea437189p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x1.54c08b96057e8p-6 0 1 0x0p+0 0x1.2cd31f93e393ep+3 0x1.c9807870e0c4ap+1 0x1.5e2cc1baa2141p-1 0x1.4p+2 0 0x1.b6e0f6e9a7c7p-3 1 1 0x1.b9e9e925a67eap-2 0x1.ef396ef16bd56p+0 0 5 0x1.69408bdddbd91p+5 0x0p+0 0 0 0x0p+0 2 0x1.2e22853c42f7fp+5 0 0 0x1.0151cd783ff5ep-1 0x1.58d0bac780da7p+3 0x1.fe56b27e53cd6p-2 0x1.61516ae9cc46ep+2 0 0x1.7d2f384e3fe52p-3 0 0 0x0p+0 0x0p+0 1 5 0 0 0 1 0x1.d1ea9f15b5578p+3 -0x1.008a0f1cc4898p+5 0x1p+1\n"
+        "K 0 1\n";
+
+const char* const k_u9734_403 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.08d9218b876dap+5 0x0p+0\n"
+        "L 0x1.08d9218b876dap+5 0x0p+0 0x1.08d9218b876dap+5 0x1.8f55d342dbb62p+4\n"
+        "L 0x1.08d9218b876dap+5 0x1.8f55d342dbb62p+4 0x1.69f3fc277dae8p+4 0x1.8f55d342dbb62p+4\n"
+        "L 0x1.69f3fc277dae8p+4 0x1.8f55d342dbb62p+4 0x1.69f3fc277dae8p+4 0x1.13e5481ecca64p+2\n"
+        "L 0x1.69f3fc277dae8p+4 0x1.13e5481ecca64p+2 0x1.4f7c8ddf22598p+3 0x1.13e5481ecca64p+2\n"
+        "L 0x1.4f7c8ddf22598p+3 0x1.13e5481ecca64p+2 0x1.4f7c8ddf22598p+3 0x1.8f55d342dbb62p+4\n"
+        "L 0x1.4f7c8ddf22598p+3 0x1.8f55d342dbb62p+4 0x0p+0 0x1.8f55d342dbb62p+4\n"
+        "L 0x0p+0 0x1.8f55d342dbb62p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x0p+0 0 1 0x0p+0 0x1.cc52c1205fe03p+2 0x1.f908990787fbep+1 0x1.9df81ce4712cp-1 0x1.4p+2 1 0x1.11cd3a9e2c33ap-4 1 1 0x1.7dc6b6bb87325p-1 0x1.0151478376f4ap+1 0 7 0x1.ef8a6a03bb8cp+5 0x0p+0 1 1 0x0p+0 3 0x1.c0b1117fcfff5p+3 0 0 0x1.669b9d43e121cp-4 0x1.5d134e7f09c1ap+2 0x1.40c015b223538p-2 0x1.51013090843p+1 0 0x1.ca973f450bf89p-1 0 0 0x0p+0 0x0p+0 0 4 0 0 0 1 -0x1.3fcb52de118ep+4 0x1.2c76428715aep+4 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_u9731_25 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.fd276f76f1d54p+4 0x0p+0\n"
+        "L 0x1.fd276f76f1d54p+4 0x0p+0 0x1.fd276f76f1d54p+4 0x1.964fb8e7fe1c9p+4\n"
+        "L 0x1.fd276f76f1d54p+4 0x1.964fb8e7fe1c9p+4 0x1.613ca8efa4d5p+4 0x1.964fb8e7fe1c9p+4\n"
+        "L 0x1.613ca8efa4d5p+4 0x1.964fb8e7fe1c9p+4 0x1.613ca8efa4d5p+4 0x1.5a970d5714ab4p+2\n"
+        "L 0x1.613ca8efa4d5p+4 0x1.5a970d5714ab4p+2 0x1.37d58d0e9a008p+3 0x1.5a970d5714ab4p+2\n"
+        "L 0x1.37d58d0e9a008p+3 0x1.5a970d5714ab4p+2 0x1.37d58d0e9a008p+3 0x1.964fb8e7fe1c9p+4\n"
+        "L 0x1.37d58d0e9a008p+3 0x1.964fb8e7fe1c9p+4 0x0p+0 0x1.964fb8e7fe1c9p+4\n"
+        "L 0x0p+0 0x1.964fb8e7fe1c9p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x1.1ab8ed37fdb7cp-4 0 0 0x0p+0 0x1.219e06d1945b8p+3 0x1.f4f88689d1eb9p+1 0x1.370d1129ce134p-2 0x1.4p+2 0 0x1.2f0ef464dffe2p-2 0 1 0x1.27df052451582p-1 0x1.43294ac868f16p+1 0 4 0x1.343c1e1ac9ac8p+4 0x0p+0 0 1 0x0p+0 2 0x1.89a181b1a4cbep+4 0 0 0x1.9fdf9e594c081p-2 0x1.365a3328c3e18p+3 0x1.695d9d4bc500cp-4 0x1.6303a80a35076p-1 0 0x1.7cff0e4c17a36p-2 0 0 0x0p+0 0x0p+0 1 2 0 0 0 0 0x1.330d899008f3ep+5 -0x1.1f8dda7af18c5p+5 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_u9731_137 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x0p+0 0x1.9efb8755e3c6cp+4\n"
+        "L 0x0p+0 0x1.9efb8755e3c6cp+4 0x1.3245637101e34p+3 0x1.9efb8755e3c6cp+4\n"
+        "L 0x1.3245637101e34p+3 0x1.9efb8755e3c6cp+4 0x1.3245637101e34p+3 0x1.7e5d64e3165ap+2\n"
+        "L 0x1.3245637101e34p+3 0x1.7e5d64e3165ap+2 0x1.5a285e53cc959p+4 0x1.7e5d64e3165ap+2\n"
+        "L 0x1.5a285e53cc959p+4 0x1.7e5d64e3165ap+2 0x1.5a285e53cc959p+4 0x1.9efb8755e3c6cp+4\n"
+        "L 0x1.5a285e53cc959p+4 0x1.9efb8755e3c6cp+4 0x1.f34b100c4d873p+4 0x1.9efb8755e3c6cp+4\n"
+        "L 0x1.f34b100c4d873p+4 0x1.9efb8755e3c6cp+4 0x1.f34b100c4d873p+4 0x0p+0\n"
+        "L 0x1.f34b100c4d873p+4 0x0p+0 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x0p+0 0 1 0x0p+0 0x1.2bc7ce9bb709p+3 0x1.dbb69c9f51deap+1 0x0p+0 0x1.4p+2 1 0x1.59c026ca2f967p-2 0 1 0x1.b929fcae930d8p-1 0x1.0d2560202eafap+1 0 4 0x1.0b8ec1e256c41p+6 0x0p+0 0 0 0x0p+0 1 0x1.5f8d7a44daf2cp+4 1 0 0x1.82a3b8d253475p-3 0x1.4d3c5cd70248p+3 0x1.9f98d6ffe0bcep-1 0x1.7aa347d4c4e8cp+3 0 0x1.2eb89ded68beep-1 0 0 0x0p+0 0x0p+0 1 7 0 0 0 0 0x1.1b114aedd0828p+4 0x1.bdad0c9006a68p+4 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_u9731_229 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.032f3dc297cf3p+5 0x0p+0\n"
+        "L 0x1.032f3dc297cf3p+5 0x0p+0 0x1.032f3dc297cf3p+5 0x1.7897aa8570f5fp+4\n"
+        "L 0x1.032f3dc297cf3p+5 0x1.7897aa8570f5fp+4 0x1.64920b9f8f82p+4 0x1.7897aa8570f5fp+4\n"
+        "L 0x1.64920b9f8f82p+4 0x1.7897aa8570f5fp+4 0x1.64920b9f8f82p+4 0x1.5f73f0a24334cp+2\n"
+        "L 0x1.64920b9f8f82p+4 0x1.5f73f0a24334cp+2 0x1.4398dfcb4038cp+3 0x1.5f73f0a24334cp+2\n"
+        "L 0x1.4398dfcb4038cp+3 0x1.5f73f0a24334cp+2 0x1.4398dfcb4038cp+3 0x1.7897aa8570f5fp+4\n"
+        "L 0x1.4398dfcb4038cp+3 0x1.7897aa8570f5fp+4 0x0p+0 0x1.7897aa8570f5fp+4\n"
+        "L 0x0p+0 0x1.7897aa8570f5fp+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x1.35cca985d805bp-7 0 1 0x0p+0 0x1.cbe4d4d4983cbp+2 0x1.d5ee8e5344643p+1 0x0p+0 0x1.4p+2 0 0x1.e876bc876630ap-5 1 1 0x1.da5676ffdbcafp-2 0x1.bdf72eb8e07a9p+0 0 4 0x1.7476bc3cf65f6p+3 0x0p+0 0 0 0x0p+0 2 0x1.0bf2013de1958p+2 0 0 0x1.fb716102b6acdp-2 0x1.b608f7116a5aep+0 0x1.f764f7b84a14bp-2 0x1.6a876602412a9p+3 0 0x1.18fd8ed78a8f3p-1 0 0 0x0p+0 0x0p+0 0 8 0 0 0 0 0x1.0f28fcef0b30cp+3 -0x1.9f309758b7268p+4 0x1p+1\n"
+        "K 1 0\n";
+
+const char* const k_u9731_272 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.d90a1a9085d76p+4 0x0p+0\n"
+        "L 0x1.d90a1a9085d76p+4 0x0p+0 0x1.d90a1a9085d76p+4 0x1.5260dbb0f5fc8p+4\n"
+        "L 0x1.d90a1a9085d76p+4 0x1.5260dbb0f5fc8p+4 0x1.4dabec04a9bfp+4 0x1.5260dbb0f5fc8p+4\n"
+        "L 0x1.4dabec04a9bfp+4 0x1.5260dbb0f5fc8p+4 0x1.4dabec04a9bfp+4 0x1.4d2381077b4f8p+2\n"
+        "L 0x1.4dabec04a9bfp+4 0x1.4d2381077b4f8p+2 0x1.16bc5d17b830cp+3 0x1.4d2381077b4f8p+2\n"
+        "L 0x1.16bc5d17b830cp+3 0x1.4d2381077b4f8p+2 0x1.16bc5d17b830cp+3 0x1.5260dbb0f5fc8p+4\n"
+        "L 0x1.16bc5d17b830cp+3 0x1.5260dbb0f5fc8p+4 0x0p+0 0x1.5260dbb0f5fc8p+4\n"
+        "L 0x0p+0 0x1.5260dbb0f5fc8p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 0 0x0p+0 0 0 0x0p+0 0x1.1d0cf9141e2e3p+3 0x1.ff91b4efaaeedp+1 0x0p+0 0x1.4p+2 1 0x1.ef88f7af0d84dp-4 1 1 0x1.2ad52b4a1dd87p+0 0x1.1f301db63de4ap+1 0 7 0x1.01a887c43340cp+6 0x0p+0 0 1 0x0p+0 2 0x1.73bf29481d34dp+3 1 0 0x1.cd91af49a1b98p-4 0x1.8fa2207a8b5adp+3 0x1.2d4bb85c0f9d3p+0 0x1.37df73249c017p+3 0 0x1.3667507473e87p+0 0 0 0x0p+0 0x0p+0 0 8 0 0 0 1 -0x1.6dc656eaefdd2p+4 0x1.2b8904dbe2578p+4 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_v9736_197 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.92072761685e3p+4 0x0p+0\n"
+        "L 0x1.92072761685e3p+4 0x0p+0 0x1.92072761685e3p+4 0x1.39fdbece381ap+4\n"
+        "L 0x1.92072761685e3p+4 0x1.39fdbece381ap+4 0x1.f766919a93514p+3 0x1.39fdbece381ap+4\n"
+        "L 0x1.f766919a93514p+3 0x1.39fdbece381ap+4 0x1.f766919a93514p+3 0x1.0cef910d4b8ap+2\n"
+        "L 0x1.f766919a93514p+3 0x1.0cef910d4b8ap+2 0x1.2ca7bd283d6b2p+3 0x1.0cef910d4b8ap+2\n"
+        "L 0x1.2ca7bd283d6b2p+3 0x1.0cef910d4b8ap+2 0x1.2ca7bd283d6b2p+3 0x1.39fdbece381ap+4\n"
+        "L 0x1.2ca7bd283d6b2p+3 0x1.39fdbece381ap+4 0x0p+0 0x1.39fdbece381ap+4\n"
+        "L 0x0p+0 0x1.39fdbece381ap+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 60 0x0p+0 0 0 0x0p+0 0x1.03de8c4057dc7p+3 0x1.ec7b80d579912p+1 0x0p+0 0x1.4p+2 0 0x1.decf91ffc0f9bp-5 1 1 0x1.38379cebb4c34p-1 0x1.78f261a5f1dfap+1 0 3 0x1.c77367be89849p+5 0x0p+0 0 1 0x0p+0 2 0x1.d52d6f2c32289p+4 0 0 0x1.e9c891f8ea3d7p-2 0x1.9df3baf7ca279p+2 0x1.d5f6c8b682683p-4 0x1.6826671d491d7p+2 0 0x1.872b8d4db66b9p+0 0 0 0x0p+0 0x0p+0 1 8 0 0 0 1 0x1.3dd36bca60e6p+3 -0x1.7331a2be055efp+4 0x1p+1\n"
+        "K 0 0\n";
+
 struct Scene {
     std::vector<Contour> cs;
     ProfileParams p;
@@ -881,3 +1013,103 @@ TEST_CASE("T-0167: the T-0158 repros that stay: pieces are reported (leads off)"
     }
 }
 
+
+// T-0279 (ADR-0096): when the raster finds no waste beyond the kerf near a tab, the exact capsule union of
+// the tools at the tab layer decides: the tab holds when lowering it splits a piece (it joins the part to a
+// sliver of waste between two kerfs), is cut through when a piece other than the part's lies in the window
+// and the tab joins only the part, and holds (as before) when there is no other piece at all.
+TEST_CASE("T-0279: a tab round a notch's sliver that the tools at its ends seal off is cut through",
+          "[toolpath][profile][tabs]") {
+    // m3_9732_169 (end mill 6, Outside, allowance 0.0095): the notch's two kerfs leave a sliver of waste; the
+    // tab at (16.3, 8.3) joins the part to nothing (the tools at its ends seal it off from the sliver), which
+    // the raster read as "a hole smaller than the kerf" and kept (the flood finds it severed). Two of five
+    // tabs were left out, now three; nothing comes free.
+    {
+        const Scene s = loadScene(k_u9732_169);
+        const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r) == 3);
+        CHECK_FALSE(tabNear(s, r, {16.3, 8.3}, 0.5));
+        CHECK(reported(r).empty());
+        CHECK(flooded(s, r, 0.1).empty());
+    }
+}
+
+TEST_CASE("T-0279: tabs that hold a sliver are kept, and so is a tab with no waste near it",
+          "[toolpath][profile][tabs]") {
+    // m3_9737_246: the tab at (14.0, 16.8) joins the part to a sliver 0.04 mm wide between the kerfs
+    // (lowering it splits a piece: it holds, though the flood's 0.046 mm cells miss the sliver).
+    {
+        const Scene s = loadScene(k_u9737_246);
+        const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
+        REQUIRE(r.ok());
+        CHECK(tabNear(s, r, {14.0, 10.4}, 0.5));
+        CHECK(leftOut(r) == 1);
+        CHECK(reported(r).empty());
+    }
+    // m3_9734_403: the same, the sliver (0.07 mm2, a few micrometres wide) the smallest that counts.
+    {
+        const Scene s = loadScene(k_u9734_403);
+        const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
+        REQUIRE(r.ok());
+        CHECK(tabNear(s, r, {13.55, 9.13}, 0.5));
+        CHECK(leftOut(r) == 1);
+        CHECK(reported(r).empty());
+    }
+    // m3_9733_282: the kerfs overlap, so there is no waste near the tab at (19.5, 11.8) at all (nothing to
+    // hold on to, a hole smaller than the kerf): kept, as before.
+    {
+        const Scene s = loadScene(k_u9733_282);
+        const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
+        REQUIRE(r.ok());
+        CHECK(tabNear(s, r, {19.5, 9.4}, 0.5));
+        CHECK(leftOut(r) == 0);
+    }
+}
+
+TEST_CASE("T-0279: the fix frees no part (seed 9735 scene 49 of the T-0167 verifier's U family)",
+          "[toolpath][profile][tabs]") {
+    // The widened-cells rule of the first T-0167 left all five tabs out of this scene (a 0.079 mm sliver)
+    // and a 426 mm2 part came free.
+    const Scene s = loadScene(k_u9735_49);
+    const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
+    REQUIRE(r.ok());
+    CHECK(leftOut(r) < 5);
+    CHECK(reported(r).empty());
+    CHECK(flooded(s, r, 0.1).empty());
+}
+
+// The exact judge's inputs, one scene each (mutation screen of T-0279, ADR-0096 "Mutants"): U parts whose
+// notch sliver the tools at a tab's ends seal off; the tab at the given place is cut through (the flood
+// finds it severed), the others stay, and nothing comes free.
+TEST_CASE("T-0279: the judge's inputs: window, bands, minimum piece, frame, verdict threshold",
+          "[toolpath][profile][tabs]") {
+    struct K {
+        const char* name;
+        const char* scene;
+        Vec2 severed;
+        std::size_t left;
+    };
+    const K ks[] = {
+        // one piece besides the part (before == 2): severed, not "holds"
+        {"m3_9731_25", k_u9731_25, {17.5, 8.5}, 2},
+        // the other live tabs' raised stretches count as cut
+        {"m3_9731_137", k_u9731_137, {18.3, 14.3}, 1},
+        // bands as wide as the tool (a narrower band leaves a gap the flood does not have)
+        {"m3_9731_229", k_u9731_229, {19.3, 9.0}, 1},
+        // a piece of 0.01 mm2 counts (the flood's rule)
+        {"m3_9731_272", k_u9731_272, {11.8, 14.3}, 2},
+        // a V-bit: the window is closed on every side (the frame's bottom bar)
+        {"m3_9736_197", k_v9736_197, {12.4, 7.7}, 1},
+    };
+    for (const K& k : ks) {
+        CAPTURE(k.name);
+        const Scene s = loadScene(k.scene);
+        const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r) == k.left);
+        CHECK_FALSE(tabNear(s, r, k.severed, 0.5));
+        CHECK(reported(r).empty());
+        CHECK(flooded(s, r, 0.1).empty());
+    }
+}
