@@ -1574,19 +1574,19 @@ Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turn
 Acceptance criteria:
   1. Each tool produces the expected vectors/toolpath on test cylinders (counts, spacing, pitch exact); app forms drive them; ADR.
 
-### T-0323 Laser: laser tool power model and Laser Cut / Fill toolpath   [status: verifying]
+### T-0323 Laser: laser tool power model and Laser Cut / Fill toolpath   [status: done — PR #196]
 Phase: 3   Module: core/toolpath + core/tooling + core/post + app/viewmodel   Depends on: T-0243
 Goal: Laser tool (maximum burn rate already in cutting data) with power, move speed, passes (cut depth -> number of passes), repeats and overscan; Laser Cut/Fill toolpath: Cut Outside/Right, Cut Inside/Left (kerf compensated), Cut On, Hatch Fill (stepover, angle, cross hatch, fill together/regionally, outline), allowance. Output through the post's JET_TOOL_POWER/ON/OFF blocks (already parsed; make them act). .carv record (job.json-only, minor bump rules as ADR-0021), viewmodel form, self-test.
 Acceptance criteria:
   1. Cut and Fill toolpaths verified on test shapes (kerf side, hatch spacing/angle, cross hatch, overscan moves, pass count); post output uses the jet blocks with correct power values; round trip and hostile-record tests; ADR.
 
-### T-0324 Laser Picture and Sketch Engraving (bitmap/model source, dithering)   [status: blocked — waits on T-0323]
+### T-0324 Laser Picture and Sketch Engraving (bitmap/model source, dithering)   [status: ready]
 Phase: 3   Module: core/toolpath + app   Depends on: T-0323, T-0250
 Goal: Laser Picture (raster/hatch/selected, line spacing, line angle, dither image, power modulation, overscan) and Laser Sketch Engraving (bitmap or 3D-model source, line thickness, stepover, hatch angle, fill together/regionally/between vectors, cross hatch, machine-limit boundary). Reuse the image pipeline from Image Engrave.
 Acceptance criteria:
   1. Power/dither output verified against reference rasters; model source works with the relief engine; forms and self-test; ADR.
 
-### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: blocked — waits on T-0323]
+### T-0325 Laser burn-rate simulation and laser-capable posts/machines   [status: ready]
 Phase: 3   Module: core/simulate + core/tooling + core/post + app   Depends on: T-0323
 Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (power x speed vs burn rate -> mark depth/darkness); machine flag for laser-capable posts; post-adaptation guide (power variable, laser blocks) in docs; ship our own laser-capable GRBL-style post with golden tests.
 Acceptance criteria:
