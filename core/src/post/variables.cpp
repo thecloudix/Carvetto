@@ -72,7 +72,8 @@ constexpr std::array kTags{
     TagInfo{"ZLENGTH", TagKind::Length, false},
     // Dwell.
     TagInfo{"DWELL", TagKind::Number, false},
-    // Recognised so posts using them parse; their blocks are not emitted yet (always 0 / empty).
+    // Drill bank spindle data (T-0335, ADR-0111): spindle number, offset from the reference spindle, hole depth,
+    // drill diameter; 0 outside the drill bank blocks. [CUTTER_COMP] is text.
     TagInfo{"DB", TagKind::Number, false},
     TagInfo{"DBX", TagKind::Length, false},
     TagInfo{"DBY", TagKind::Length, false},

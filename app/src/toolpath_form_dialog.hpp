@@ -20,6 +20,7 @@ class QLabel;
 class QLineEdit;
 class QListWidget;
 class QPushButton;
+class QTableWidget;
 class QVBoxLayout;
 class QWidget;
 
@@ -78,6 +79,13 @@ class ToolpathFormDialog : public QDialog {
     bool addClearanceTool(const std::string& toolId);
     bool typePriors(const std::string& text);
     QLineEdit* fieldEdit(const std::string& id) const;
+    /// Drill bank (T-0335, ADR-0111): the per-spindle table, one row per spindle of the head (drill number, active,
+    /// diameter and depth in mm; a blank diameter is the tool's, a blank depth the cut depth). `setBankSpindle` edits
+    /// the row of spindle `number` (1-based) as the user would (0 = blank); false when there is no such row or the
+    /// form refuses the lists. `bankSpindleRows` is the number of rows (0 for other operations).
+    bool setBankSpindle(int number, bool active, double diameterMm, double depthMm);
+    int bankSpindleRows() const;
+    QTableWidget* bankTable() const { return bankTable_; }
     /// "Insert New Document Variable" on the box of field `id`: creates the variable through
     /// `FormDocumentInfo::createVariable` and inserts `{name}` at the cursor (a leading `=` is added
     /// when the box is not yet a calculation). Returns the error message, empty on success.
@@ -95,6 +103,8 @@ class ToolpathFormDialog : public QDialog {
     void applyTool();
     void applyClearance();
     bool applyPriorsText(const QString& text);
+    void refreshBankTable();
+    bool applyBankTable();
     void setMessage(const std::string& text, bool error);
     bool isModel() const { return viewmodel::usesModel(form_.operation()); }
     bool isPhoto() const { return form_.operation() == document::ToolpathOperation::ImageEngrave; }
@@ -119,6 +129,9 @@ class ToolpathFormDialog : public QDialog {
     QWidget* clearanceBox_{nullptr};
     QWidget* priorsBox_{nullptr};
     QLineEdit* priorsEdit_{nullptr};
+    QWidget* bankBox_{nullptr};
+    QTableWidget* bankTable_{nullptr};
+    bool bankBuilding_{false};
     QComboBox* baseCombo_{nullptr};
     QListWidget* layerList_{nullptr};
     QCheckBox* openCheck_{nullptr};

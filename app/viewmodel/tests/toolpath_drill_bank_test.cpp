@@ -177,7 +177,7 @@ TEST_CASE("drill bank session: add, refuse, undo, save, load and recalculate", "
     REQUIRE(document::saveCarv(doc, dir / "t.carv", {}));
     auto loaded = document::loadCarv(dir / "t.carv");
     REQUIRE(loaded);
-    CHECK(loaded.value().formatMinor == document::kCarvFormatMinorDrillBank);
+    CHECK(loaded.value().formatMinor == document::kCarvFormatMinorBankSpindles);  // T-0335: the strokes name spindles
     Document& doc2 = loaded.value().document;
     ToolpathSession s2(&doc2);
     s2.setToolDatabase(db);

@@ -508,6 +508,9 @@ RoutingReport routeRapids(Toolpath& tp, KeepOutField& field, std::optional<Vec3>
                     const bool last = i + 1 == r.points.size();
                     out.push_back(Move::rapid(last ? m.to : Vec3{r.points[i], zHigh},
                                               i == 0 ? RapidRoute::DetourFirst : RapidRoute::DetourNext));
+                    if (last) {
+                        out.back().bank = m.bank;  // the leg that arrives is the stroke's rapid (drill bank, ADR-0111)
+                    }
                 }
                 ++report.routed;
                 pos = m.to;

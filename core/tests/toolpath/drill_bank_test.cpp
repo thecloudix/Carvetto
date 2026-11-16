@@ -701,7 +701,13 @@ TEST_CASE("drill bank: a one-spindle bank makes the Drilling moves", "[toolpath]
         const DrillResult d = drillToolpath(cs, drillTool(), std::nullopt, p);  // slices to the DrillParams
         REQUIRE(r.ok());
         REQUIRE(d.ok());
-        CHECK(r.toolpath.moves == d.toolpath.moves);
+        // T-0335: the bank's moves also carry the spindle set (here spindle 1); the moves are otherwise Drilling's.
+        std::vector<Move> bankMoves = r.toolpath.moves;
+        for (Move& m : bankMoves) {
+            CHECK(m.bank == 1);
+            m.bank = 0;
+        }
+        CHECK(bankMoves == d.toolpath.moves);
         CHECK(r.toolpath.tool == d.toolpath.tool);
         REQUIRE(r.placements.size() == d.holes.size());
         for (std::size_t i = 0; i < d.holes.size(); ++i) {

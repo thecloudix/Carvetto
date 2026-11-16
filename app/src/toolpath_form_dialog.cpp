@@ -14,10 +14,13 @@
 #include <QMenu>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QHeaderView>
+#include <QTableWidget>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <initializer_list>
 #include <utility>
+#include <variant>
 
 #include "carvetto/document/units.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
@@ -272,6 +275,25 @@ void ToolpathFormDialog::buildStatic() {
     outer->addWidget(priorsBox_);
     priorsBox_->setVisible(form_.operation() == document::ToolpathOperation::Finish3d);
     connect(priorsEdit_, &QLineEdit::textEdited, this, [this](const QString& text) { applyPriorsText(text); });
+
+    // Spindles of a drill bank (T-0335): one row per spindle of the head.
+    bankBox_ = new QGroupBox(QStringLiteral("Drill bank spindles (mm; blank = the tool's diameter / the cut depth)"), this);
+    auto* bankLayout = new QVBoxLayout(bankBox_);
+    bankTable_ = new QTableWidget(0, 4, bankBox_);
+    bankTable_->setObjectName(QStringLiteral("bankSpindleTable"));
+    bankTable_->setHorizontalHeaderLabels({QStringLiteral("Drill"), QStringLiteral("Active"),
+                                           QStringLiteral("Diameter"), QStringLiteral("Depth")});
+    bankTable_->verticalHeader()->setVisible(false);
+    bankTable_->horizontalHeader()->setStretchLastSection(true);
+    bankTable_->setMinimumHeight(140);
+    bankLayout->addWidget(bankTable_);
+    outer->addWidget(bankBox_);
+    bankBox_->setVisible(form_.operation() == document::ToolpathOperation::DrillBank);
+    connect(bankTable_, &QTableWidget::itemChanged, this, [this](QTableWidgetItem*) {
+        if (!building_ && !bankBuilding_) {
+            applyBankTable();
+        }
+    });
 
     // Vectors (the selector).
     auto* vbox = new QGroupBox(isPhoto() ? QStringLiteral("Bitmap") : QStringLiteral("Vectors"), this);
@@ -679,6 +701,9 @@ void ToolpathFormDialog::rebuildParameters() {
                 setMessage(r.message, !r.ok);
                 refreshPlaceholders();
                 reportVariables();
+                if (r.ok && (id == "horizontalDrills" || id == "verticalDrills")) {
+                    refreshBankTable();  // the head changed: one row per spindle
+                }
             });
             if (info_.createVariable) {
                 edit->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -714,6 +739,135 @@ void ToolpathFormDialog::rebuildParameters() {
     }
     paramLayout_->addStretch(1);
     building_ = was;
+    refreshBankTable();
+}
+
+namespace {
+
+QString mmText(double v) {
+    return v > 0.0 ? QString::number(v, 'g', 12) : QString();
+}
+
+}  // namespace
+
+void ToolpathFormDialog::refreshBankTable() {
+    if (bankTable_ == nullptr || form_.operation() != document::ToolpathOperation::DrillBank) {
+        return;
+    }
+    const auto* p = std::get_if<toolpath::DrillBankParams>(&form_.definition().params);
+    if (p == nullptr) {
+        return;
+    }
+    const int count = std::clamp(p->horizontalDrills + p->verticalDrills, 0, 64);
+    bankBuilding_ = true;
+    bankTable_->setRowCount(count);
+    for (int i = 0; i < count; ++i) {
+        const std::size_t k = static_cast<std::size_t>(i);
+        auto* number = new QTableWidgetItem(QString::number(i + 1));
+        number->setFlags(Qt::ItemIsEnabled);
+        auto* active = new QTableWidgetItem();
+        active->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
+        active->setCheckState(std::find(p->inactiveSpindles.begin(), p->inactiveSpindles.end(), i + 1) ==
+                                      p->inactiveSpindles.end()
+                                  ? Qt::Checked
+                                  : Qt::Unchecked);
+        auto* diameter = new QTableWidgetItem(k < p->spindleDiameters.size() ? mmText(p->spindleDiameters[k]) : QString());
+        auto* depth = new QTableWidgetItem(k < p->spindleDepths.size() ? mmText(p->spindleDepths[k]) : QString());
+        bankTable_->setItem(i, 0, number);
+        bankTable_->setItem(i, 1, active);
+        bankTable_->setItem(i, 2, diameter);
+        bankTable_->setItem(i, 3, depth);
+    }
+    bankBuilding_ = false;
+    // Lists that no longer fit the head (its size changed) are brought back to it from the rows.
+    const bool fits = (p->spindleDiameters.empty() || p->spindleDiameters.size() == static_cast<std::size_t>(count)) &&
+                      (p->spindleDepths.empty() || p->spindleDepths.size() == static_cast<std::size_t>(count)) &&
+                      std::all_of(p->inactiveSpindles.begin(), p->inactiveSpindles.end(),
+                                  [count](int n) { return n >= 1 && n <= count; });
+    if (!fits) {
+        applyBankTable();
+    }
+}
+
+bool ToolpathFormDialog::applyBankTable() {
+    std::vector<int> inactive;
+    std::vector<double> diameters;
+    std::vector<double> depths;
+    bool anyDiameter = false;
+    bool anyDepth = false;
+    bool ok = true;
+    const int rows = bankTable_->rowCount();
+    const auto cell = [this](int row, int column, double& out, bool& present) {
+        const QTableWidgetItem* item = bankTable_->item(row, column);
+        const QString text = item != nullptr ? item->text().trimmed() : QString();
+        present = !text.isEmpty();
+        out = 0.0;
+        if (!present) {
+            return true;
+        }
+        bool parsed = false;
+        out = text.toDouble(&parsed);
+        return parsed;
+    };
+    for (int r = 0; r < rows; ++r) {
+        const QTableWidgetItem* active = bankTable_->item(r, 1);
+        if (active != nullptr && active->checkState() != Qt::Checked) {
+            inactive.push_back(r + 1);
+        }
+        double d = 0.0;
+        double h = 0.0;
+        bool hasD = false;
+        bool hasH = false;
+        ok = cell(r, 2, d, hasD) && ok;
+        ok = cell(r, 3, h, hasH) && ok;
+        anyDiameter = anyDiameter || hasD;
+        anyDepth = anyDepth || hasH;
+        diameters.push_back(d);
+        depths.push_back(h);
+    }
+    if (!ok) {
+        badFields_.insert("bankSpindles");
+        setMessage("drill diameters and depths are numbers in mm", true);
+        return false;
+    }
+    if (anyDiameter) {
+        // All or nothing in the form: a blank diameter then stands for the tool's.
+        const double tool = form_.toolSummary().diameterMm;
+        for (double& d : diameters) {
+            d = d > 0.0 ? d : tool;
+        }
+    } else {
+        diameters.clear();
+    }
+    if (!anyDepth) {
+        depths.clear();
+    }
+    const viewmodel::FieldResult r = form_.setBankSpindles(inactive, diameters, depths);
+    if (r.ok) {
+        badFields_.erase("bankSpindles");
+    } else {
+        badFields_.insert("bankSpindles");
+    }
+    setMessage(r.message, !r.ok);
+    return r.ok;
+}
+
+bool ToolpathFormDialog::setBankSpindle(int number, bool active, double diameterMm, double depthMm) {
+    if (bankTable_ == nullptr || number < 1 || number > bankTable_->rowCount()) {
+        return false;
+    }
+    const int row = number - 1;
+    // Each assignment is one edit, as the user's: the table's change handler applies it to the form.
+    bankTable_->item(row, 2)->setText(mmText(diameterMm));
+    bankTable_->item(row, 3)->setText(mmText(depthMm));
+    bankTable_->item(row, 1)->setCheckState(active ? Qt::Checked : Qt::Unchecked);
+    return !badFields_.contains("bankSpindles");
+}
+
+int ToolpathFormDialog::bankSpindleRows() const {
+    return bankTable_ != nullptr && bankBox_ != nullptr && form_.operation() == document::ToolpathOperation::DrillBank
+               ? bankTable_->rowCount()
+               : 0;
 }
 
 void ToolpathFormDialog::refreshPlaceholders() {

@@ -79,17 +79,22 @@ void worker(std::shared_ptr<SimulationShared> shp) {
         for (std::size_t i = 0; i < sh.setup.toolpaths.size(); ++i) {
             const SimulationToolpath& tp = sh.setup.toolpaths[i];
             const std::vector<toolpath::Move>& all = *tp.moves;
-            for (std::size_t at = 0; at < all.size(); at += kQueueSlice) {
+            for (std::size_t at = 0; at < all.size();) {
                 {
                     std::lock_guard<std::mutex> lock(sh.m);
                     if (sh.quit) {
                         return;
                     }
                 }
-                const std::size_t n = std::min(kQueueSlice, all.size() - at);
+                std::size_t n = std::min(kQueueSlice, all.size() - at);
+                // A drill bank stroke is queued whole (the simulator finds its bottom from its moves, ADR-0111).
+                while (at + n < all.size() && all[at + n].bank != 0 && all[at + n].kind != toolpath::MoveKind::Rapid) {
+                    ++n;
+                }
                 toolpath::Toolpath path;
                 path.name = tp.name;
                 path.tool = tp.tool;
+                path.bankHead = tp.bankHead;
                 path.moves.assign(all.begin() + static_cast<std::ptrdiff_t>(at),
                                   all.begin() + static_cast<std::ptrdiff_t>(at + n));  // transient copy of one slice
                 const std::uint32_t id = static_cast<std::uint32_t>(i + 1);
@@ -107,6 +112,7 @@ void worker(std::shared_ptr<SimulationShared> shp) {
                 if (pause > 0) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(pause));
                 }
+                at += n;
             }
         }
         {

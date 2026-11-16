@@ -200,9 +200,9 @@ TEST_CASE("T-0328: drill bank records save and load exactly; save -> load -> sav
     CHECK(back.document.toolpaths()[0] == doc.toolpaths()[0]);
     CHECK(std::get<toolpath::DrillBankParams>(back.document.toolpaths()[0].params) == fullBank());
     CHECK(back.document.checkIntegrity().empty());
-    CHECK(back.formatMinor == kCarvFormatMinorDrillBank);
+    CHECK(back.formatMinor == kCarvFormatMinorBankSpindles);  // T-0335: the strokes name spindles
     CHECK(kCarvFormatMinorDrillBank == 17);
-    CHECK(kCarvFormatMinor == kCarvFormatMinorDrillBank);
+    CHECK(kCarvFormatMinor == kCarvFormatMinorBankSpindles);
     CHECK(save(back.document, back.extras) == once);
 }
 

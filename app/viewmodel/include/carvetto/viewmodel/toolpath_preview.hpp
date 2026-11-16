@@ -15,6 +15,7 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/keepout.hpp"
 #include "carvetto/toolpath/move.hpp"
+#include "carvetto/toolpath/toolpath.hpp"
 #include "carvetto/viewmodel/toolpath_session.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 
@@ -80,9 +81,12 @@ struct PreviewGeometry {
 /// the record's move that move i stands for (chunks then carry original indices, so the playback
 /// still lines up) and `start`, when set, is where the tool is before move 0 (so the first detour
 /// is drawn instead of being taken as the start point).
+/// With `bankHead` (a drill bank toolpath, ADR-0111) the vertical moves of a stroke are drawn as one dot per
+/// spindle of the stroke, at the spindle's own position (the head's position plus its offset).
 std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<toolpath::Move>& moves,
                                                             const std::vector<std::uint32_t>* originalIndex = nullptr,
-                                                            std::optional<toolpath::Vec3> start = std::nullopt);
+                                                            std::optional<toolpath::Vec3> start = std::nullopt,
+                                                            const std::vector<toolpath::BankSpindleSpec>* bankHead = nullptr);
 
 struct PreviewToolpath {
     document::ToolpathId id;

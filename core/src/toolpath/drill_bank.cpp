@@ -87,6 +87,28 @@ std::vector<DrillBankSpindle> drillBankSpindles(const DrillBankParams& p) {
     return out;
 }
 
+std::vector<BankSpindleSpec> drillBankHead(const DrillBankParams& p, double toolDiameter) {
+    const std::vector<DrillBankSpindle> all = drillBankSpindles(p);
+    std::vector<BankSpindleSpec> out;
+    if (all.empty()) {
+        return out;
+    }
+    const std::size_t ref =
+        p.referenceDrill >= 1 && static_cast<std::size_t>(p.referenceDrill) <= all.size()
+            ? static_cast<std::size_t>(p.referenceDrill - 1)
+            : 0;
+    out.reserve(all.size());
+    for (const DrillBankSpindle& s : all) {
+        out.push_back({s.offset - all[ref].offset, s.diameter > 0.0 ? s.diameter : toolDiameter,
+                       s.depth > 0.0 ? s.depth : p.cutDepth});
+    }
+    return out;
+}
+
+std::uint64_t drillBankSpindleBit(int number) {
+    return number >= 1 && number <= 64 ? std::uint64_t{1} << (number - 1) : 0;
+}
+
 std::string drillBankParamProblem(const DrillBankParams& p) {
     if (p.horizontalDrills < 0 || p.horizontalDrills > kMaxLine || p.verticalDrills < 0 ||
         p.verticalDrills > kMaxLine) {
@@ -235,7 +257,7 @@ DrillBankResult drillBankToolpath(const std::vector<Contour>& contours, const to
         say(ToolpathIssue::InvalidTool, std::nullopt, bad);
         return result;
     }
-    const double toolDiameter = 2.0 * pt.radius;
+    const double toolDiameter = pt.snapshot.diameter;
 
     // The active spindles with their effective diameter and depth, and positions relative to the reference.
     struct Active {
@@ -515,6 +537,7 @@ DrillBankResult drillBankToolpath(const std::vector<Contour>& contours, const to
 
     const double startZ = -params.startDepth;
     const double safeZ = params.safeZ;
+    result.toolpath.bankHead = drillBankHead(params, toolDiameter);
     std::vector<Move>& moves = result.toolpath.moves;
     moves.reserve(static_cast<std::size_t>(movesNeeded));
     for (const std::size_t k : order) {
@@ -523,6 +546,11 @@ DrillBankResult drillBankToolpath(const std::vector<Contour>& contours, const to
         const std::vector<double>& lv = levelsOf(pl.depth);
         const double x = pl.reference.x;
         const double y = pl.reference.y;
+        std::uint64_t spindles = 0;
+        for (const DrillBankHole& h : pl.holes) {
+            spindles |= drillBankSpindleBit(h.spindle);
+        }
+        const std::size_t strokeFirst = moves.size();
         moves.push_back(Move::rapid({x, y, safeZ}));
         for (std::size_t i = 0; i < lv.size(); ++i) {
             const double z = lv[i];
@@ -536,6 +564,9 @@ DrillBankResult drillBankToolpath(const std::vector<Contour>& contours, const to
             }
         }
         moves.push_back(Move::retract({x, y, safeZ}));
+        for (std::size_t i = strokeFirst; i < moves.size(); ++i) {
+            moves[i].bank = spindles;
+        }
     }
     return result;
 }
