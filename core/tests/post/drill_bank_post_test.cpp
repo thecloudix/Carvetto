@@ -258,3 +258,21 @@ TEST_CASE("T-0335: the retract blocks come right after the stroke's last move, b
     CHECK(out.find("M103 P1", feed) > feed);  // the second stroke's retracts come after it
     CHECK(lines(out, "M103 ") == 5);
 }
+
+TEST_CASE("T-0335: a drill bank toolpath without spindle sets is posted with a warning", "[post][drill_bank]") {
+    const PostProcessor pp = parse(samplePostText());
+    Toolpath old = bankToolpath();
+    for (Move& m : old.moves) {
+        m.bank = 0;
+    }
+    auto r = pp.run({old}, test::fixtureContext());
+    REQUIRE(r.ok());
+    REQUIRE(r.value().warnings.size() == 1);
+    CHECK_THAT(r.value().warnings[0].message, Catch::Matchers::ContainsSubstring("without spindle sets"));
+    CHECK_THAT(r.value().warnings[0].message, Catch::Matchers::ContainsSubstring("Hinge bank"));
+    CHECK(lines(r.value().text, "M101 ") == 0);  // no stroke blocks
+    // An ordinary toolpath (no head) and a drill bank with sets do not warn.
+    auto plain = pp.run(test::fixtureToolpaths(), test::fixtureContext());
+    REQUIRE(plain.ok());
+    CHECK(plain.value().warnings.empty());
+}

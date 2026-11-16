@@ -115,6 +115,7 @@ shallower spindle's hole shaded differently), and a save and reload of the docum
 ## Consequences
 - Every `Move` grows by 8 bytes; `Toolpath` aggregate initialisation lists the new `bankHead` member.
 - A record created by T-0328 (no sets) simulates and posts as the head's path, as before, until recalculated.
+  The post says so: a drill bank record without sets gets the warning "... without spindle sets ... recalculate it".
 - The head of a record is derived, so a future change of how parameters map to spindles changes old files' heads: the
   mapping is part of the format (ADR-0106 §1).
 

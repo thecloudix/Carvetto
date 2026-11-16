@@ -393,3 +393,22 @@ TEST_CASE("T-0335: spindle sets are checked against the record on save and load"
     CHECK(drillBankMovesProblem(none).empty());
     CHECK(drillBankMovesProblem(doc.toolpaths()[0]).empty());
 }
+
+TEST_CASE("T-0335: the declared size of a version 4 cache is bounded by its moves and runs",
+          "[document][toolpath][carv][drill_bank]") {
+    const Document doc = bankDocument(threeSpindles());
+    const Bytes good = save(doc);
+    const std::string name = cacheName(good);
+    const std::string cache = member(good, name);
+    const std::uint64_t count = doc.toolpaths()[0].moves->size();
+    const std::uint64_t bound = detail::kMovesHeaderBytes +
+                                count * (detail::kMaxMoveBytes + detail::kMovesBankRunBytes) +
+                                detail::kMovesRunCountBytes;
+    REQUIRE(cache.size() < bound);
+    // Exactly at the bound the size is not refused for its size (the padding is refused as content).
+    const CarvError atBound = loadError(withMember(good, name, cache + std::string(bound - cache.size(), '\0')));
+    CHECK_FALSE(contains(atBound.message, "cannot hold"));
+    // One byte over, the size itself is refused, before anything is inflated.
+    const CarvError over = loadError(withMember(good, name, cache + std::string(bound + 1 - cache.size(), '\0')));
+    CHECK(contains(over.message, "cannot hold " + std::to_string(count) + " moves"));
+}

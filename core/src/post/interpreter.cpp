@@ -1352,6 +1352,12 @@ class Interpreter {
             used |= m.bank;
         }
         if (used == 0) {
+            if (!tp.bankHead.empty() && !tp.moves.empty()) {
+                // A record from before the spindle sets (T-0328): written as the head's single path.
+                warnOnce("toolpath " + quoted(tp.name) +
+                         " is a drill bank toolpath without spindle sets (calculated before they were stored); it is "
+                         "written as the head's single path - recalculate it");
+            }
             return std::nullopt;
         }
         const std::string what = "cannot write G-code: toolpath " + quoted(tp.name) + " is a drill bank toolpath";
