@@ -822,6 +822,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9a2. Drill Bank: Add entry, per-spindle list editor, one hole per active spindle in the simulation (T-0335).
+    if (const std::string why = drillBankSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9b. Image Engrave: import a bitmap, form, calculation, stale, save and reload (T-0275).
     if (const std::string why = imageSelfTest(window); !why.empty()) {
         return fail(why);

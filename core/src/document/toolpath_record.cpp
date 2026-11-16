@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <initializer_list>
 #include <memory>
 #include <string>
@@ -42,8 +43,54 @@ toolpath::Toolpath ToolpathRecord::toolpath() const {
     tp.tool = tool;
     if (moves) {
         tp.moves = *moves;
+        tp.bankHead = bankHead();
     }
     return tp;
+}
+
+std::vector<toolpath::BankSpindleSpec> ToolpathRecord::bankHead() const {
+    // The head of a drill bank (ADR-0111) comes from the record's parameters; the moves hold the spindle sets.
+    const auto* bank = std::get_if<toolpath::DrillBankParams>(&params);
+    if (bank == nullptr || !moves ||
+        !std::any_of(moves->begin(), moves->end(), [](const toolpath::Move& m) { return m.bank != 0; })) {
+        return {};
+    }
+    return toolpath::drillBankHead(*bank, tool.diameter);
+}
+
+std::string drillBankMovesProblem(const ToolpathRecord& record) {
+    if (!record.moves) {
+        return {};
+    }
+    std::uint64_t used = 0;
+    std::size_t firstUsing = 0;
+    for (std::size_t i = 0; i < record.moves->size(); ++i) {
+        const toolpath::Move& m = (*record.moves)[i];
+        if (m.bank != 0 && used == 0) {
+            firstUsing = i + 1;
+        }
+        used |= m.bank;
+        if (m.bank != 0 && !(m.kind == toolpath::MoveKind::Rapid || m.kind == toolpath::MoveKind::Plunge ||
+                             m.kind == toolpath::MoveKind::Retract || m.kind == toolpath::MoveKind::Dwell)) {
+            return "move " + std::to_string(i + 1) + " is a drill bank move that is not a rapid, plunge, retract or dwell";
+        }
+    }
+    if (used == 0) {
+        return {};
+    }
+    const auto* bank = std::get_if<toolpath::DrillBankParams>(&record.params);
+    if (bank == nullptr) {
+        return "move " + std::to_string(firstUsing) + " names drill bank spindles, but the toolpath is not a drill bank";
+    }
+    const int count = bank->horizontalDrills + bank->verticalDrills;
+    if (count < 1 || count > 64) {
+        return "the drill bank head has " + std::to_string(count) + " spindles, which no spindle set can name";
+    }
+    const std::uint64_t valid = count == 64 ? ~std::uint64_t{0} : (std::uint64_t{1} << count) - 1;
+    if ((used & ~valid) != 0) {
+        return "a drill bank move names a spindle beyond the head's " + std::to_string(count);
+    }
+    return {};
 }
 
 SharedMoves shareMoves(std::vector<toolpath::Move> moves) {

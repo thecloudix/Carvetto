@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 
 #include "carvetto/geometry/box2.hpp"
@@ -76,6 +77,10 @@ struct Move {
     /// Cutter compensation in force during this move (T-0327): `Off` for every move that is not
     /// part of a compensated run. Only cutting moves (not Rapid, not Dwell) may carry it.
     CutterComp comp{CutterComp::Off};
+    /// Spindles of a drill bank head that drill during this move (T-0335, ADR-0111): bit k-1 is spindle k of
+    /// `Toolpath::bankHead`. 0 = a move that is not part of a drill bank stroke. Only Rapid, Plunge, Retract and
+    /// Dwell moves carry it; a stroke starts at the Rapid that carries its spindle set.
+    std::uint64_t bank{0};
 
     bool operator==(const Move&) const = default;
 
@@ -87,25 +92,25 @@ struct Move {
     }
 
     static Move rapid(Vec3 to, RapidRoute route = RapidRoute::None) {
-        return {MoveKind::Rapid, to, {}, {}, 0.0, route, 0.0, CutterComp::Off};
+        return {MoveKind::Rapid, to, {}, {}, 0.0, route, 0.0, CutterComp::Off, 0};
     }
     static Move feed(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Feed, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
+        return {MoveKind::Feed, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off, 0};
     }
     static Move plunge(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Plunge, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
+        return {MoveKind::Plunge, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off, 0};
     }
     static Move retract(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Retract, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
+        return {MoveKind::Retract, to, {}, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off, 0};
     }
     static Move arcCW(Vec3 to, Vec2 centre, std::optional<double> feedOverride = {}) {
-        return {MoveKind::ArcCW, to, centre, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
+        return {MoveKind::ArcCW, to, centre, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off, 0};
     }
     static Move arcCCW(Vec3 to, Vec2 centre, std::optional<double> feedOverride = {}) {
-        return {MoveKind::ArcCCW, to, centre, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off};
+        return {MoveKind::ArcCCW, to, centre, feedOverride, 0.0, RapidRoute::None, 0.0, CutterComp::Off, 0};
     }
     /// Dwell at `at` (the previous move's end point) for `seconds`.
-    static Move dwell(Vec3 at, double seconds) { return {MoveKind::Dwell, at, {}, {}, seconds, RapidRoute::None, 0.0, CutterComp::Off}; }
+    static Move dwell(Vec3 at, double seconds) { return {MoveKind::Dwell, at, {}, {}, seconds, RapidRoute::None, 0.0, CutterComp::Off, 0}; }
 };
 
 /// Radius of an arc move, measured from `from` (its start point) to the centre.

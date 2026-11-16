@@ -718,6 +718,8 @@ struct Frame {
     double dwell{0.0};          // seconds
     double length{0.0};         // cutting moves: path length (mm), for inverse time
     bool cutting{false};        // Feed/Plunge/Retract/Arc: [F] may be inverse time
+    int bankSpindle{0};         // drill bank blocks: the spindle number ([DB]); 0 elsewhere
+    toolpath::BankSpindleSpec bankSpec;  // ... and its position, diameter and depth ([DBX] [DBY] [CD] [DL])
 };
 
 class Interpreter {
@@ -885,6 +887,17 @@ class Interpreter {
             // where a run starts and ends.
             compState_ = toolpath::CutterComp::Off;
             toolpath::CutterCompProgram program;
+            std::uint64_t bankUsed = 0;
+            if (auto err = prepareDrillBank(tp, bankUsed)) {
+                return *err;
+            }
+            const bool banked = bankUsed != 0;
+            if (banked) {
+                emitBankSpindles("SETUP_DRILL_BANK", tp, bankUsed);  // once per spindle of the head that drills
+                if (failure_) {
+                    return *failure_;
+                }
+            }
             const bool compensated = toolpath::usesCutterComp(tp.moves);
             if (compensated) {
                 if (auto err = prepareCutterComp(tp, program)) {
@@ -912,6 +925,19 @@ class Interpreter {
                 if (auto err = doMove(m)) {
                     return *err;
                 }
+                if (failure_) {
+                    return *failure_;
+                }
+                if (banked) {
+                    bankAfterMove(tp, moveIndex_ - 1);
+                    if (failure_) {
+                        return *failure_;
+                    }
+                }
+            }
+            if (banked) {
+                setStationary();
+                emit("FINAL_DRILL_BANK_ACTION");
                 if (failure_) {
                     return *failure_;
                 }
@@ -1316,6 +1342,84 @@ class Interpreter {
             return Error{0, "cannot write G-code: toolpath " + quoted(tp.name) + ", " + program.error};
         }
         return std::nullopt;
+    }
+
+    /// Drill bank (T-0335, ADR-0111): checks the spindle sets of `tp` and that the post can drive a head; `used` is the
+    /// union of the sets (0 for an ordinary toolpath). A stroke starts at the Rapid that carries its set.
+    std::optional<Error> prepareDrillBank(const Toolpath& tp, std::uint64_t& used) {
+        used = 0;
+        for (const Move& m : tp.moves) {
+            used |= m.bank;
+        }
+        if (used == 0) {
+            if (!tp.bankHead.empty() && !tp.moves.empty()) {
+                // A record from before the spindle sets (T-0328): written as the head's single path.
+                warnOnce("toolpath " + quoted(tp.name) +
+                         " is a drill bank toolpath without spindle sets (calculated before they were stored); it is "
+                         "written as the head's single path - recalculate it");
+            }
+            return std::nullopt;
+        }
+        const std::string what = "cannot write G-code: toolpath " + quoted(tp.name) + " is a drill bank toolpath";
+        for (const char* name : {"DRILL_BANK_PATTERN", "DRILL_BANK_EXTEND_DRILL", "DRILL_BANK_RETRACT_DRILL"}) {
+            if (!has(name)) {
+                return Error{0, what + " (its strokes drill with several spindles), but the post has no " + name +
+                                    " block (is it a drill-bank-capable post?)"};
+            }
+        }
+        const std::size_t head = tp.bankHead.size();
+        if (head == 0 || head > 64 || (head < 64 && (used >> head) != 0)) {
+            return Error{0, what + " whose moves name spindles the head (" + std::to_string(head) +
+                                " spindles) does not have"};
+        }
+        std::uint64_t before = 0;
+        for (std::size_t i = 0; i < tp.moves.size(); ++i) {
+            const Move& m = tp.moves[i];
+            if (m.bank != 0 && !(m.kind == MoveKind::Rapid || m.kind == MoveKind::Plunge ||
+                                 m.kind == MoveKind::Retract || m.kind == MoveKind::Dwell)) {
+                return Error{0, what + ": move " + std::to_string(i + 1) +
+                                    " carries spindles but is not a rapid, plunge, retract or dwell"};
+            }
+            if (m.bank != 0 && m.bank != before && m.kind != MoveKind::Rapid) {
+                return Error{0, what + ": move " + std::to_string(i + 1) +
+                                    " starts a stroke but is not a rapid (a stroke starts with its positioning move)"};
+            }
+            before = m.bank;
+        }
+        return std::nullopt;
+    }
+
+    /// Writes `block` once per spindle of `set`, in number order, with the spindle's data in [DB] [DBX] [DBY] [DL] [CD].
+    void emitBankSpindles(std::string_view block, const Toolpath& tp, std::uint64_t set) {
+        for (std::size_t k = 0; k < tp.bankHead.size() && k < 64; ++k) {
+            if ((set >> k) & 1U) {
+                setStationary();
+                frame_.bankSpindle = static_cast<int>(k) + 1;
+                frame_.bankSpec = tp.bankHead[k];
+                emit(block);
+                if (failure_) {
+                    return;
+                }
+            }
+        }
+    }
+
+    /// After the move at `index`: a stroke's positioning rapid is followed by the pattern and extend blocks of its
+    /// spindles; the stroke's last move by the retract blocks.
+    void bankAfterMove(const Toolpath& tp, std::size_t index) {
+        const Move& m = tp.moves[index];
+        if (m.bank == 0) {
+            return;
+        }
+        if (m.kind == MoveKind::Rapid) {
+            emitBankSpindles("DRILL_BANK_PATTERN", tp, m.bank);
+            emitBankSpindles("DRILL_BANK_EXTEND_DRILL", tp, m.bank);
+        }
+        const bool last = index + 1 == tp.moves.size() || tp.moves[index + 1].bank == 0 ||
+                          tp.moves[index + 1].kind == MoveKind::Rapid;
+        if (last) {
+            emitBankSpindles("DRILL_BANK_RETRACT_DRILL", tp, m.bank);
+        }
     }
 
     /// Writes the compensation block when the state changes (before the move that needs it).
@@ -1841,7 +1945,12 @@ class Interpreter {
         if (tag == "ZMAX") return ctx_.materialMax.z;
         if (tag == "ZLENGTH") return ctx_.materialMax.z - ctx_.materialMin.z;
         if (tag == "DWELL") return frame_.dwell;
-        return 0.0;  // arc tags outside arcs, drill-bank tags
+        if (tag == "DB") return static_cast<double>(frame_.bankSpindle);
+        if (tag == "DBX") return frame_.bankSpec.offset.x;
+        if (tag == "DBY") return frame_.bankSpec.offset.y;
+        if (tag == "DL") return frame_.bankSpec.depth;
+        if (tag == "CD") return frame_.bankSpec.diameter;
+        return 0.0;  // arc tags outside arcs
     }
 
     std::string text(std::string_view tag) const {

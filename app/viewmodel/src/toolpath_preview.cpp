@@ -120,7 +120,8 @@ void arcPoints(const Vec3& from, const Move& m, std::vector<Vec2>& out) {
 
 std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<Move>& moves,
                                                             const std::vector<std::uint32_t>* originalIndex,
-                                                            std::optional<Vec3> startAt) {
+                                                            std::optional<Vec3> startAt,
+                                                            const std::vector<toolpath::BankSpindleSpec>* bankHead) {
     auto geo = std::make_shared<PreviewGeometry>();
     if (moves.empty()) {
         return geo;
@@ -170,6 +171,40 @@ std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<Mo
             // A vertical move (of any class): a dot where it happens (repeats at one place merge).
             if (*cls == MoveClass::Plunge || *cls == MoveClass::Retract || std::fabs(m.to.z - from.z) > 1e-9) {
                 close();
+                if (m.bank != 0 && bankHead != nullptr) {
+                    // One dot per spindle of the stroke, where that spindle drills (repeats merge).
+                    std::size_t spindles = 0;
+                    for (std::size_t k = 0; k < bankHead->size() && k < 64; ++k) {
+                        if (((m.bank >> k) & 1U) == 0) {
+                            continue;
+                        }
+                        ++spindles;
+                        const Vec2 at{start.x + (*bankHead)[k].offset.x, start.y + (*bankHead)[k].offset.y};
+                        bool merged = false;
+                        const std::size_t span = std::min(geo->chunks.size(), std::size_t{64});
+                        for (std::size_t back = 1; back <= span && !merged; ++back) {
+                            PreviewChunk& c = geo->chunks[geo->chunks.size() - back];
+                            if (c.cls == *cls && c.points.size() == 1 && c.points.front().x == at.x &&
+                                c.points.front().y == at.y) {
+                                c.lastMove = idx;
+                                merged = true;
+                            }
+                        }
+                        if (!merged) {
+                            PreviewChunk d;
+                            d.cls = *cls;
+                            d.firstMove = d.lastMove = idx;
+                            d.points.push_back(at);
+                            d.bounds.expand(at);
+                            geo->points += 1;
+                            geo->bounds.expand(d.bounds);
+                            geo->chunks.push_back(std::move(d));
+                        }
+                    }
+                    if (spindles > 0) {
+                        continue;
+                    }
+                }
                 PreviewChunk dot;
                 dot.cls = *cls;
                 dot.firstMove = dot.lastMove = idx;
@@ -294,14 +329,16 @@ void PreviewModel::sync(ToolpathSession& session) {
             tp.routing = routed->report;
         }
         if (tp.computed) {
+            const std::vector<toolpath::BankSpindleSpec> bankHead = rec.bankHead();
             const auto it = old.find(rec.id);
             if (it != old.end() && it->second->moves == rec.moves && it->second->routedMoves == tp.routedMoves &&
                 it->second->geometry) {
                 tp.geometry = it->second->geometry;
             } else if (routed != nullptr && routed->changed()) {
-                tp.geometry = buildPreviewGeometry(*routed->routed, routed->originalIndex.get(), routed->start);
+                tp.geometry = buildPreviewGeometry(*routed->routed, routed->originalIndex.get(), routed->start,
+                                                     bankHead.empty() ? nullptr : &bankHead);
             } else {
-                tp.geometry = buildPreviewGeometry(*rec.moves);
+                tp.geometry = buildPreviewGeometry(*rec.moves, nullptr, std::nullopt, bankHead.empty() ? nullptr : &bankHead);
             }
             if (tp.enabled) {
                 next.routing.routed += tp.routing.routed;

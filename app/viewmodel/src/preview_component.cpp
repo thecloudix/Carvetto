@@ -48,6 +48,7 @@ PreviewComponentOutcome createComponentFromToolpathPreview(document::Document& d
         path.name = tp.name;
         path.tool = tp.tool;
         path.moves = *tp.moves;
+        path.bankHead = tp.bankHead;
         const std::uint32_t id = static_cast<std::uint32_t>(i + 1);
         if (!(tp.tool.laser ? simulator.addLaserToolpath(path, tp.maxBurnRate, id)
                             : simulator.addToolpath(path, tp.shape, id))) {

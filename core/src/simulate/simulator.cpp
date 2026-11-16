@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <new>
 #include <utility>
 
@@ -29,6 +30,14 @@ bool coordOk(double v) {
     return std::isfinite(v) && std::fabs(v) <= kMaxCoordinate;
 }
 
+/// A drill bank toolpath's head (ADR-0111): the spindles with the tool shape of their drills, and per move of the run
+/// the Z of the stroke's bottom (the lowest Z of the stroke the move belongs to).
+struct BankRun {
+    std::vector<toolpath::BankSpindleSpec> head;
+    std::vector<ToolShape> shapes;
+    std::vector<double> strokeBottom;  // by move of the run; unused for moves without spindles
+};
+
 struct Run {
     std::size_t first{0};
     std::size_t count{0};
@@ -42,6 +51,7 @@ struct Run {
     double burnRate{0.0};     ///< Maximum burn rate, mm/min (> 0 for a laser run).
     double feedRate{0.0};     ///< Snapshot rates, mm/min, for moves without an override.
     double plungeRate{0.0};
+    std::shared_ptr<const BankRun> bank;  // set for a drill bank toolpath
 };
 
 void rotateBy(double ax, double ay, int dir, double phi, double& rx, double& ry) {
@@ -329,6 +339,43 @@ struct Simulator::Impl {
         }
     }
 
+    /// Cuts a move (a prefix of it for fraction < 1) the way the toolpath's machine does: with the tool at the
+    /// move's own position, or, for a drill bank stroke, with one drill per spindle of the stroke at the spindle's
+    /// own position (the head's path plus the spindle's offset), each no deeper than its hole depth (ADR-0111).
+    void cutMove(const Run& run, std::size_t idx, const Move& m, const Vec3& from, double fraction) {
+        if (m.bank == 0 || !run.bank) {
+            sweepMove(run.tool, m, from, SweepMode::Cut, fraction);
+            return;
+        }
+        const BankRun& b = *run.bank;
+        double deepest = 0.0;
+        for (std::size_t k = 0; k < b.head.size(); ++k) {
+            if ((m.bank >> k) & 1U) {
+                deepest = std::max(deepest, b.head[k].depth);
+            }
+        }
+        const double bottom = b.strokeBottom[idx - run.first];
+        for (std::size_t k = 0; k < b.head.size(); ++k) {
+            if (!((m.bank >> k) & 1U)) {
+                continue;
+            }
+            // A spindle with a shallower hole is stopped by the head's own stroke limit.
+            const double floorZ = bottom + (deepest - b.head[k].depth);
+            const geometry::Vec2 o = b.head[k].offset;
+            // The spindle's Z at the end of the (prefix of the) move, clamped like the start: the stroke's Z moves
+            // are vertical, so a clamped prefix is the clamped end of the whole move's prefix.
+            const double endZ = fraction < 1.0 ? from.z + (m.to.z - from.z) * fraction : m.to.z;
+            Move sm = m;
+            sm.to = {m.to.x + o.x, m.to.y + o.y, std::max(endZ, floorZ)};
+            if (fraction < 1.0) {
+                sm.to.x = from.x + (m.to.x - from.x) * fraction + o.x;
+                sm.to.y = from.y + (m.to.y - from.y) * fraction + o.y;
+            }
+            const Vec3 sf{from.x + o.x, from.y + o.y, std::max(from.z, floorZ)};
+            sweepMove(b.shapes[k], sm, sf, SweepMode::Cut, 1.0);
+        }
+    }
+
     void beginRun(std::size_t idx) {
         const Run& run = runs[curRun];
         if (curRun > 0 && pos) {
@@ -398,7 +445,7 @@ struct Simulator::Impl {
                                   "rapid move through material that has not been cut");
                 }
             } else {
-                sweepMove(run.tool, m, from, SweepMode::Cut, 1.0);
+                cutMove(run, idx, m, from, 1.0);
             }
             if (zlow < field.bottomZ() - options.collisionTolerance) {
                 addDiagnostic(DiagnosticKind::BelowTable, idx, run.id, m.to,
@@ -579,7 +626,70 @@ bool Simulator::addToolpathImpl(const toolpath::Toolpath& path, const ToolShape&
         times.push_back(t);
         p = m.to;
     }
+    std::shared_ptr<BankRun> bank;
+    for (const Move& m : path.moves) {
+        if (m.bank != 0) {
+            bank = std::make_shared<BankRun>();
+            break;
+        }
+    }
+    if (bank) {
+        // A drill bank toolpath: every spindle named by a move must exist and have a usable drill.
+        bank->head = path.bankHead;
+        std::uint64_t used = 0;
+        for (const Move& m : path.moves) {
+            used |= m.bank;
+        }
+        const std::size_t headSize = bank->head.size();
+        if (headSize == 0 || headSize > 64 || (headSize < 64 && (used >> headSize) != 0)) {
+            return refuse(SimStatus::InvalidMove, "a move names drill bank spindles the toolpath's head does not have");
+        }
+        for (const Move& m : path.moves) {
+            if (m.bank != 0 && isArc(m.kind)) {
+                return refuse(SimStatus::InvalidMove, "a drill bank stroke has no arc moves");
+            }
+        }
+        for (std::size_t k = 0; k < headSize; ++k) {
+            const toolpath::BankSpindleSpec& sp = bank->head[k];
+            if (!coordOk(sp.offset.x) || !coordOk(sp.offset.y) || !coordOk(sp.depth) || !(sp.depth >= 0.0)) {
+                return refuse(SimStatus::InvalidMove, "drill bank spindle " + std::to_string(k + 1) +
+                                                          " has a non-finite or out-of-range position or depth");
+            }
+            std::optional<ToolShape> shape;
+            if (((used >> k) & 1U) != 0) {
+                // The spindle's drill: the toolpath's own tool when the diameters agree, else a flat drill.
+                shape = std::fabs(sp.diameter - tool.diameter()) <= 1e-9 ? std::optional<ToolShape>(tool)
+                                                                          : ToolShape::flatEndMill(sp.diameter);
+                if (!shape || !shape->valid()) {
+                    return refuse(SimStatus::InvalidTool, "drill bank spindle " + std::to_string(k + 1) +
+                                                              " has an invalid drill diameter");
+                }
+                shape = shape->withFluteLength(tool.fluteLength());
+            }
+            bank->shapes.push_back(shape ? *shape : ToolShape{});
+        }
+        // The bottom of every stroke (a stroke runs from its rapid to the next stroke or move without spindles).
+        bank->strokeBottom.assign(path.moves.size(), 0.0);
+        std::size_t i = 0;
+        while (i < path.moves.size()) {
+            if (path.moves[i].bank == 0) {
+                ++i;
+                continue;
+            }
+            std::size_t j = i + 1;
+            double low = path.moves[i].to.z;
+            while (j < path.moves.size() && path.moves[j].bank != 0 && path.moves[j].kind != MoveKind::Rapid) {
+                low = std::min(low, path.moves[j].to.z);
+                ++j;
+            }
+            for (std::size_t k = i; k < j; ++k) {
+                bank->strokeBottom[k] = low;
+            }
+            i = j;
+        }
+    }
     Run run;
+    run.bank = bank;
     run.first = s.moves.size();
     run.count = path.moves.size();
     run.tool = tool;
@@ -668,7 +778,7 @@ bool Simulator::advanceToTime(double seconds) {
                         s.probedTooDeep = s.shankHits(run, m, from);  // before the first partial cut
                         s.probedMove = s.done;
                     }
-                    s.sweepMove(run.tool, m, from, SweepMode::Cut, f);
+                    s.cutMove(run, s.done, m, from, f);
                 }
                 s.partial = f;
             }

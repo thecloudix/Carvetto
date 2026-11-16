@@ -5017,7 +5017,7 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
             const std::uint64_t count = d.moveCount;
             if (e.size < detail::kMovesHeaderBytes + count ||
                 e.size - detail::kMovesHeaderBytes >
-                    count * (detail::kMaxMoveBytes + detail::kMovesRunBytes) + detail::kMovesRunCountBytes) {
+                    count * (detail::kMaxMoveBytes + detail::kMovesBankRunBytes) + detail::kMovesRunCountBytes) {
                 throw LoadFailure{CarvError::Code::InvalidContent,
                                   e.name + ": " + std::to_string(e.size) + " bytes cannot hold " +
                                       std::to_string(count) + " moves"};
@@ -5104,6 +5104,13 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
             throw LoadFailure{CarvError::Code::MissingMember,
                               std::string(kJobName) + ".toolpaths[" + std::to_string(index) + "].moves.member: the archive has no '" +
                                   member + "'"};
+        }
+    }
+
+    for (std::size_t i = 0; i < jf.toolpaths.size(); ++i) {
+        if (const std::string bad = drillBankMovesProblem(jf.toolpaths[i].record); !bad.empty()) {
+            throw LoadFailure{CarvError::Code::InvalidContent,
+                              std::string(kJobName) + ".toolpaths[" + std::to_string(i) + "]: " + bad};
         }
     }
 
@@ -5644,7 +5651,12 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         const bool usesLaserImages = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
             return tp.operation() == ToolpathOperation::LaserPicture || tp.operation() == ToolpathOperation::LaserSketch;
         });
-        version["minor"] = usesDrillBank ? kCarvFormatMinorDrillBank
+        // Per-stroke spindle sets (format 1.18, T-0335): any drill bank move that names spindles.
+        const bool usesBankSpindles = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
+            return tp.moves && std::any_of(tp.moves->begin(), tp.moves->end(), [](const toolpath::Move& m) { return m.bank != 0; });
+        });
+        version["minor"] = usesBankSpindles ? kCarvFormatMinorBankSpindles
+                           : usesDrillBank ? kCarvFormatMinorDrillBank
                            : usesLaserImages ? kCarvFormatMinorLaserImages
                            : usesCutterComp ? kCarvFormatMinorCutterComp
                            : usesRotaryGaps ? kCarvFormatMinorRotaryGaps
@@ -5790,6 +5802,10 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                                                       std::to_string(tp.id.value) + "): " + problem};
             }
             if (const std::string problem = groupProblem(tp); !problem.empty()) {
+                return CarvError{CarvError::Code::InvalidContent, "toolpath '" + clipped(tp.name) + "' (#" +
+                                                                      std::to_string(tp.id.value) + "): " + problem};
+            }
+            if (const std::string problem = drillBankMovesProblem(tp); !problem.empty()) {
                 return CarvError{CarvError::Code::InvalidContent, "toolpath '" + clipped(tp.name) + "' (#" +
                                                                       std::to_string(tp.id.value) + "): " + problem};
             }

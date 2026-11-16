@@ -129,6 +129,7 @@ SimulationSetup makeSimulationSetup(ToolpathSession& session, const SimulationRe
         tp.name = rec.name;
         tp.moves = rec.moves;
         tp.tool = rec.tool;
+        tp.bankHead = rec.bankHead();
         if (const tooling::Tool* dbTool = session.toolDatabase().findTool(rec.toolSource.toolId)) {
             if (rec.tool.laser) {
                 const tooling::CuttingDataLookup lookup =

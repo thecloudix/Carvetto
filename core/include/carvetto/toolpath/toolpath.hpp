@@ -57,6 +57,17 @@ struct LengthByKind {
     bool operator==(const LengthByKind&) const = default;
 };
 
+/// One spindle of a drill bank head (T-0335, ADR-0111): where it sits relative to the reference spindle (whose
+/// position the toolpath's moves give), the diameter of its drill and the depth of its hole below the start depth
+/// (both resolved: never 0).
+struct BankSpindleSpec {
+    Vec2 offset;
+    double diameter{0.0};
+    double depth{0.0};
+
+    bool operator==(const BankSpindleSpec&) const = default;
+};
+
 /// A computed toolpath: an ordered move list in absolute machine coordinates (mm, Z up, tool
 /// tip), plus the name and tool it was computed with. See ARCHITECTURE.md "Toolpaths are move
 /// lists". The position before the first move is not stored; queries that need it take an
@@ -65,6 +76,9 @@ struct Toolpath {
     std::string name;
     ToolSnapshot tool;
     std::vector<Move> moves;
+    /// The head of a drill bank toolpath, spindle k at index k-1; empty for every other toolpath. The moves'
+    /// `bank` bits name spindles of it (ADR-0111).
+    std::vector<BankSpindleSpec> bankHead;
 
     bool operator==(const Toolpath&) const = default;
 

@@ -82,9 +82,12 @@ inline constexpr int kCarvFormatMinorCutterComp = 15;
 /// and `laser_sketch`); written only when a record is one of them.
 inline constexpr int kCarvFormatMinorLaserImages = 16;
 /// 1.17 (T-0328, ADR-0106) adds Drill Bank records (operation `drill_bank`: the head's spindle pattern and matching
-/// parameters); written only when a record is a drill bank's. The newest minor this build writes and reads.
+/// parameters); written only when a record is a drill bank's.
 inline constexpr int kCarvFormatMinorDrillBank = 17;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorDrillBank;
+/// 1.18 (T-0335, ADR-0111) adds the per-stroke spindle sets of drill bank toolpaths (move cache version 4); written
+/// only when some drill bank move names spindles. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorBankSpindles = 18;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorBankSpindles;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

@@ -41,6 +41,8 @@ struct SimulationToolpath {
     document::SharedMoves moves;
     toolpath::ToolSnapshot tool;
     simulate::ToolShape shape;
+    /// A drill bank toolpath's head (ADR-0111), empty for others: the simulator drills one hole per spindle.
+    std::vector<toolpath::BankSpindleSpec> bankHead;
     /// The database tool was missing or not simulable: shown with a flat cutter of the snapshot's diameter.
     bool shapeApproximated{false};
     /// Laser toolpath (`tool.laser`, T-0325): the tool's maximum burn rate in mm/min from its cutting data for the

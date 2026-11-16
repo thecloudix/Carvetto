@@ -18,7 +18,9 @@
 // Drill Bank toolpath (T-0328, ADR-0106; feature-inventory "Drill Bank Toolpath"): a multi-spindle drill head
 // drills several holes in one stroke. The holes of the selected closed vectors are matched to the head's spindle
 // pattern; the toolpath is the path of the head (its reference spindle), written as the plain plunge / retract /
-// dwell moves of Drilling (ADR-0022), one stroke per placement of the head.
+// dwell moves of Drilling (ADR-0022), one stroke per placement of the head. T-0335 (ADR-0111): every move of a stroke
+// also carries the set of spindles that drill in it (`Move::bank`) and the toolpath the head (`Toolpath::bankHead`),
+// so simulation drills one hole per spindle and the post writes the drill-bank blocks.
 
 namespace carvetto::toolpath {
 
@@ -86,6 +88,14 @@ struct DrillBankSpindle {
 /// The spindles of the head `params` describe, in number order (row left to right, then column bottom to top).
 /// Settings the lists do not cover (empty or short lists) are the defaults. Does not validate.
 std::vector<DrillBankSpindle> drillBankSpindles(const DrillBankParams& params);
+
+/// The head as a toolpath carries it (`Toolpath::bankHead`, ADR-0111): every spindle (active or not), its position
+/// relative to the reference spindle, its drill diameter (`toolDiameter` when the parameters give none) and its hole
+/// depth (`cutDepth` when none). Does not validate; `referenceDrill` outside the head counts as 1.
+std::vector<BankSpindleSpec> drillBankHead(const DrillBankParams& params, double toolDiameter);
+
+/// The set of spindles `Move::bank` names, for spindle numbers 1..64 (bit k-1); numbers outside are ignored.
+std::uint64_t drillBankSpindleBit(int number);
 
 /// What is wrong with the bank parameters (counts, pitch, offsets, reference drill, spindle lists, tolerances,
 /// spindles closer than twice the pitch tolerance); empty when usable. Does not check the `DrillParams` part

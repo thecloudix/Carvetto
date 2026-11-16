@@ -350,8 +350,9 @@ Table<toolpath::DrillBankParams> makeDrillBankTable() {
     t.num("retractGap", "Retract gap", "Peck", Kind::Length, false, false, [](P& p) -> double& { return p.retractGap; },
           [](const P& p) { return p.peck; });
     t.num("dwellTime", "Dwell time", "Peck", Kind::Seconds, false, true, [](P& p) -> double& { return p.dwellTime; });
-    t.count("horizontalDrills", "Horizontal drills", "Bank", 0, 32, [](P& p) -> int& { return p.horizontalDrills; });
-    t.count("verticalDrills", "Vertical drills", "Bank", 0, 32, [](P& p) -> int& { return p.verticalDrills; });
+    // 0 is a valid count (a bank with only a column, or only a row); T-0335 lets it be typed.
+    t.count("horizontalDrills", "Horizontal drills", "Bank", 0, 32, [](P& p) -> int& { return p.horizontalDrills; }).zero = true;
+    t.count("verticalDrills", "Vertical drills", "Bank", 0, 32, [](P& p) -> int& { return p.verticalDrills; }).zero = true;
     t.num("pitch", "Pitch", "Bank", Kind::Length, false, false, [](P& p) -> double& { return p.pitch; });
     bound(t, "pitch", 1e-3, 1.0e6);
     t.num("rowOffset", "Row offset", "Bank", Kind::Length, true, true, [](P& p) -> double& { return p.rowOffset; });

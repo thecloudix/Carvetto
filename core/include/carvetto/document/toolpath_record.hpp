@@ -152,6 +152,9 @@ struct ToolpathRecord {
     std::size_t moveCount() const { return moves ? moves->size() : 0; }
     /// The record as a `toolpath::Toolpath` (name, tool snapshot and a copy of the moves).
     toolpath::Toolpath toolpath() const;
+    /// The head of a drill bank record whose moves name spindles (ADR-0111), built from its parameters and tool
+    /// snapshot; empty otherwise. `toolpath()` carries it as `Toolpath::bankHead`.
+    std::vector<toolpath::BankSpindleSpec> bankHead() const;
 
     /// Equal when every field is equal; moves compare by content.
     bool operator==(const ToolpathRecord& other) const;
@@ -162,6 +165,12 @@ struct ToolpathRecord {
 /// cleared, as the `.carv` move cache does not store them, so a record equals its saved and
 /// reloaded copy.
 SharedMoves shareMoves(std::vector<toolpath::Move> moves);
+
+/// Why the record's drill bank spindle sets (`Move::bank`, ADR-0111) are not allowed, or "" when they are: only a
+/// drill bank record's rapid, plunge, retract and dwell moves may carry them, and only for spindles of its head.
+/// `saveCarv` refuses to write such records, the loader refuses them (when it keeps the moves) and the post refuses
+/// to write them.
+std::string drillBankMovesProblem(const ToolpathRecord& record);
 
 /// Toolpath parameters must be finite numbers (T-0136, ADR-0021 §2): returns the job.json key
 /// path inside `params` of the first number that is NaN or infinite (e.g. `"safe_z"`,

@@ -202,6 +202,9 @@ std::string imageSelfTest(MainWindow& window);
 /// 3D Rough and 3D Finish (T-0303): the forms, calculation on the sheet's relief model, the toolpaths drawn
 /// in the Model view, undo, and the simulation. Replaces the window's document.
 std::string toolpaths3dSelfTest(MainWindow& window);
+/// Drill Bank (T-0335): the Add menu entry, the per-spindle list editor following the head, the toolpath, the
+/// simulation drilling one hole per active spindle, save and reload. Replaces the window's document.
+std::string drillBankSelfTest(MainWindow& window);
 /// V-carve inlay (T-0265): the form, a pocket and a plug, undo, save and reload.
 std::string vCarveInlaySelfTest(MainWindow& window);
 

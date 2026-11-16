@@ -48,6 +48,15 @@ inline constexpr std::uint32_t kMovesFormatVersionLaser = 2;
 /// the same side without a gap (so every move list has one encoding). Written only when some move is
 /// compensated; a version 2 cache never carries a trailer.
 inline constexpr std::uint32_t kMovesFormatVersionCutterComp = 3;
+/// Format version of a cache with at least one drill bank move (T-0335, ADR-0111): the version 1 layout (no flag
+/// bytes: a drill bank toolpath has no beam power or compensation), followed by the spindle-set runs: a u64 run
+/// count (at least 1), then per run a u64 first move (0-based), a u64 move count (at least 1) and a u64 set of
+/// spindles (bit k-1 = spindle k; not 0). Runs are in order, do not overlap, cover only rapid, plunge, retract
+/// and dwell moves, and a run never follows another of the same set without a gap. Written only when some move
+/// has a spindle set.
+inline constexpr std::uint32_t kMovesFormatVersionDrillBank = 4;
+/// Bytes per run of a version 4 cache.
+inline constexpr std::size_t kMovesBankRunBytes = 24;
 /// Bytes after the moves of a version 3 cache: the run count, and at most one run per move.
 inline constexpr std::size_t kMovesRunCountBytes = 8;
 inline constexpr std::size_t kMovesRunBytes = 17;

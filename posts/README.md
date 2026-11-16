@@ -210,6 +210,20 @@ changes, and modal X/Y/Z (written only when they change).
   power-up delay. On Grbl, Mach and LinuxCNC, configure spindle-at-speed (or add a dwell to
   `SPINDLE_ON`/`HEADER`) if your spindle needs time to reach speed.
 
+## Sample posts (`samples/`)
+
+`samples/` holds templates that show a feature a shipped post does not have. They are not shipped posts: the app does
+not list them, they are not in the golden fixture and safety tests of the table above, and they are written for a
+machine that does not exist as it is. Each has its own golden file in `core/tests/golden/post/`.
+
+- `samples/drill_bank_linuxcnc_mm.pp` (T-0335, ADR-0111): the LinuxCNC (mm) post plus the five drill bank blocks
+  (`SETUP_DRILL_BANK`, `DRILL_BANK_PATTERN`, `DRILL_BANK_EXTEND_DRILL`, `DRILL_BANK_RETRACT_DRILL`,
+  `FINAL_DRILL_BANK_ACTION`) and the tags `[DB]` (spindle number), `[DBX] [DBY]` (its place relative to the reference
+  spindle), `[DL]` (its hole depth) and `[CD]` (its drill diameter). The M codes it writes (`M100` .. `M104`) are
+  user-defined codes of LinuxCNC's `M100`-`M199` range: the machine's macros must implement them for the head. The header
+  of the file says when each block is written. A post without `DRILL_BANK_PATTERN`, `DRILL_BANK_EXTEND_DRILL` and
+  `DRILL_BANK_RETRACT_DRILL` refuses a drill bank toolpath; `SETUP_DRILL_BANK` and `FINAL_DRILL_BANK_ACTION` are optional.
+
 ## Adding or changing a post
 
 1. Write it from the controller's public documentation only, and add a row to the table above.

@@ -137,6 +137,12 @@ public:
     /// Cells whose darkness is > 0 and at least `minDarkness`.
     std::size_t markedCells(float minDarkness = 0.0f) const;
 
+    /// A drill bank toolpath (moves with `Move::bank`, `Toolpath::bankHead`; ADR-0111) is cut with one drill per
+    /// spindle of each stroke, at the head's path plus the spindle's offset, each no deeper than its own hole
+    /// depth; a spindle without a valid drill diameter, or a move naming a spindle the head lacks, is refused
+    /// (InvalidTool / InvalidMove). A stroke must be queued whole (in one call): a stroke's bottom is found from its
+    /// own moves. Diagnostics (collisions, shank) follow the head's path.
+
     /// Number of queued moves (all toolpaths) and the number completely cut so far.
     std::size_t moveCount() const;
     std::size_t movesDone() const;

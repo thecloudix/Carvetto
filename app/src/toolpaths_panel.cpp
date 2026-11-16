@@ -163,7 +163,7 @@ void ToolpathsPanel::build() {
     bar_->setToolButtonStyle(Qt::ToolButtonTextOnly);
     auto* addMenu = new QMenu(bar_);
     for (ToolpathOperation op : {ToolpathOperation::Profile, ToolpathOperation::Pocket, ToolpathOperation::Drill,
-                                 ToolpathOperation::Engrave, ToolpathOperation::VCarving, ToolpathOperation::Chamfer,
+                                 ToolpathOperation::DrillBank, ToolpathOperation::Engrave, ToolpathOperation::VCarving, ToolpathOperation::Chamfer,
                                  ToolpathOperation::ThreadMill, ToolpathOperation::Prism, ToolpathOperation::Fluting,
                                  ToolpathOperation::Inlay, ToolpathOperation::ImageEngrave, ToolpathOperation::VCarveInlay,
                                  ToolpathOperation::Rough3d, ToolpathOperation::Finish3d, ToolpathOperation::Moulding,

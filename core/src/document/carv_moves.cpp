@@ -113,11 +113,16 @@ class Reader {
 std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t>& out) {
     const bool laserMoves = std::any_of(moves.begin(), moves.end(), [](const Move& m) { return m.jetPower != 0.0; });
     const bool compensated = toolpath::usesCutterComp(moves);
+    const bool banked = std::any_of(moves.begin(), moves.end(), [](const Move& m) { return m.bank != 0; });
+    if (banked && (laserMoves || compensated)) {
+        return "a drill bank toolpath has no beam power or cutter compensation";
+    }
     // The lowest version that holds the moves; version 3 is version 2's per-move layout plus the runs.
-    const std::uint32_t version = compensated   ? kMovesFormatVersionCutterComp
+    const std::uint32_t version = banked        ? kMovesFormatVersionDrillBank
+                                  : compensated ? kMovesFormatVersionCutterComp
                                   : laserMoves ? kMovesFormatVersionLaser
                                                : kMovesFormatVersion;
-    const bool laser = version != kMovesFormatVersion;  // the per-move flag byte is present
+    const bool laser = version == kMovesFormatVersionLaser || version == kMovesFormatVersionCutterComp;  // flag byte
     out.insert(out.end(), kMagic.begin(), kMagic.end());
     for (int i = 0; i < 4; ++i) {
         out.push_back(static_cast<std::uint8_t>(version >> (8 * i)));
@@ -149,6 +154,10 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
         }
         if (hasFeed && !(*m.feedOverride > 0.0)) {
             return "move " + std::to_string(i + 1) + ": feed override must be greater than zero";
+        }
+        if (m.bank != 0 && !(m.kind == MoveKind::Rapid || m.kind == MoveKind::Plunge || m.kind == MoveKind::Retract ||
+                             m.kind == MoveKind::Dwell)) {
+            return "move " + std::to_string(i + 1) + ": only a rapid, plunge, retract or dwell can be a drill bank move";
         }
         const bool hasJet = m.jetPower != 0.0;
         if (hasJet && !(std::isfinite(m.jetPower) && m.jetPower > 0.0 && m.jetPower <= kMaxJetPower &&
@@ -225,6 +234,30 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
         putU64(out, runCount);
         out.insert(out.end(), runs.begin(), runs.end());
     }
+    if (banked) {
+        // Runs of equal nonzero spindle sets (drill bank, version 4).
+        std::vector<std::uint8_t> runs;
+        std::uint64_t runCount = 0;
+        std::size_t i = 0;
+        while (i < moves.size()) {
+            if (moves[i].bank == 0) {
+                ++i;
+                continue;
+            }
+            const std::uint64_t set = moves[i].bank;
+            std::size_t j = i;
+            while (j < moves.size() && moves[j].bank == set) {
+                ++j;
+            }
+            putU64(runs, i);
+            putU64(runs, j - i);
+            putU64(runs, set);
+            ++runCount;
+            i = j;
+        }
+        putU64(out, runCount);
+        out.insert(out.end(), runs.begin(), runs.end());
+    }
     return {};
 }
 
@@ -245,7 +278,8 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
     const std::uint32_t v = static_cast<std::uint32_t>(version[0]) | (static_cast<std::uint32_t>(version[1]) << 8) |
                             (static_cast<std::uint32_t>(version[2]) << 16) |
                             (static_cast<std::uint32_t>(version[3]) << 24);
-    if (v != kMovesFormatVersion && v != kMovesFormatVersionLaser && v != kMovesFormatVersionCutterComp) {
+    if (v != kMovesFormatVersion && v != kMovesFormatVersionLaser && v != kMovesFormatVersionCutterComp &&
+        v != kMovesFormatVersionDrillBank) {
         return "unsupported move cache version " + std::to_string(v);
     }
     if (count != expectedCount) {
@@ -262,7 +296,7 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
     double pz = 0.0;
     std::optional<double> lastFeed;
     std::optional<double> lastJet;
-    const bool laser = v != kMovesFormatVersion;  // versions 2 and 3 carry the flag byte
+    const bool laser = v == kMovesFormatVersionLaser || v == kMovesFormatVersionCutterComp;  // the flag byte
     for (std::uint64_t i = 0; i < count; ++i) {
         // Moves are numbered from 1, as in the post's errors.
         const auto bad = [i](const char* what) { return "move " + std::to_string(i + 1) + ": " + what; };
@@ -393,6 +427,47 @@ std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vec
             }
             nextFree = first + length;
             lastSide = side;
+        }
+    }
+    if (v == kMovesFormatVersionDrillBank) {
+        std::uint64_t runs = 0;
+        if (!r.u64(runs)) {
+            return "the move cache ends before its drill bank runs";
+        }
+        if (runs == 0) {
+            return "a version 4 move cache without drill bank runs";
+        }
+        std::uint64_t nextFree = 0;  // first move no earlier run has covered
+        std::uint64_t lastSet = 0;
+        for (std::uint64_t k = 0; k < runs; ++k) {
+            std::uint64_t first = 0;
+            std::uint64_t length = 0;
+            std::uint64_t set = 0;
+            if (!r.u64(first) || !r.u64(length) || !r.u64(set)) {
+                return "the move cache ends inside its drill bank runs";
+            }
+            const auto badRun = [k](const char* what) { return "drill bank run " + std::to_string(k + 1) + ": " + what; };
+            if (set == 0) {
+                return badRun("an empty spindle set");
+            }
+            if (length == 0 || first < nextFree || first > count || length > count - first) {
+                return badRun("outside the moves or overlapping the run before it");
+            }
+            if (k > 0 && first == nextFree && set == lastSet) {
+                return badRun("follows a run of the same spindle set without a gap (runs are written whole)");
+            }
+            if (out) {
+                for (std::uint64_t m = first; m < first + length; ++m) {
+                    Move& target = (*out)[base + static_cast<std::size_t>(m)];
+                    if (!(target.kind == MoveKind::Rapid || target.kind == MoveKind::Plunge ||
+                          target.kind == MoveKind::Retract || target.kind == MoveKind::Dwell)) {
+                        return badRun("covers a move that is not a rapid, plunge, retract or dwell");
+                    }
+                    target.bank = set;
+                }
+            }
+            nextFree = first + length;
+            lastSet = set;
         }
     }
     if (!r.atEnd()) {

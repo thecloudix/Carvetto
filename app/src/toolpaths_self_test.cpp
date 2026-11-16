@@ -4,18 +4,22 @@
 #include <QAction>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QComboBox>
 #include <QDockWidget>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QImage>
 #include <QPushButton>
+#include <QTableWidget>
 #include <QTreeWidget>
 #include <cmath>
 #include <memory>
+#include <span>
 #include <string>
 #include <variant>
 
+#include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/relief_commands.hpp"
@@ -24,6 +28,7 @@
 #include "main_window.hpp"
 #include "preview_panel.hpp"
 #include "relief_panels.hpp"
+#include "relief_view.hpp"
 #include "toolpath_form_dialog.hpp"
 #include "toolpaths_panel.hpp"
 
@@ -442,6 +447,121 @@ std::string toolpaths3dSelfTest(MainWindow& window) {
                "3D: the preview component was not one undo step");
     ST_REQUIRE(window.undo() && doc.reliefModel(doc.activeSheet()).front().components.size() == components,
                "3D: undo did not remove the preview component");
+    return std::string();
+}
+
+}  // namespace carvetto::app
+
+namespace carvetto::app {
+
+std::string drillBankSelfTest(MainWindow& window) {
+    window.setQuiet(true);
+    window.setDocument(std::make_unique<document::Document>(
+        document::Job::singleSided(300.0, 300.0, 18.0, document::Units::Millimetres)));
+    document::Document& doc = window.currentDocument();
+    ToolpathsPanel* panel = window.toolpaths();
+    ST_REQUIRE(panel != nullptr, "drill bank: the dock holds no ToolpathsPanel");
+    ST_REQUIRE(panel->addAction(document::ToolpathOperation::DrillBank) != nullptr,
+               "drill bank: the Add menu has no Drill Bank entry");
+
+    // Two rows of three holes at the bank's pitch, selected.
+    std::vector<document::ObjectId> ids;
+    for (const double y : {60.0, 160.0}) {
+        for (int i = 0; i < 3; ++i) {
+            const bool ok = doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::circle({60.0 + 32.0 * i, y}, 1.5), doc.activeLayer(), doc.activeSheet())));
+            ST_REQUIRE(ok, "drill bank: could not add a hole");
+            ids.push_back(doc.objectIds().back());
+        }
+    }
+    doc.selection().assign(ids);
+    window.documentChanged();
+    ST_REQUIRE(panel->addAction(document::ToolpathOperation::DrillBank)->isEnabled(), "drill bank: Add Drill Bank is disabled");
+    panel->addAction(document::ToolpathOperation::DrillBank)->trigger();
+    ToolpathFormDialog* dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr, "drill bank: Add Drill Bank opened no form");
+
+    // The per-spindle list follows the head: one row per spindle.
+    ST_REQUIRE(dlg->bankSpindleRows() == 4, "drill bank: the default head does not show four spindle rows");
+    ST_REQUIRE(dlg->typeField("verticalDrills", "2") && dlg->bankSpindleRows() == 6,
+               "drill bank: adding vertical drills did not add rows");
+    ST_REQUIRE(dlg->typeField("verticalDrills", "0") && dlg->bankSpindleRows() == 4,
+               "drill bank: removing vertical drills did not remove rows");
+    ST_REQUIRE(!dlg->setBankSpindle(9, true, 0.0, 0.0), "drill bank: a row that does not exist was edited");
+    ST_REQUIRE(dlg->setBankSpindle(4, false, 0.0, 0.0), "drill bank: switching spindle 4 off was refused");
+    ST_REQUIRE(dlg->setBankSpindle(2, true, 0.0, 5.0), "drill bank: giving spindle 2 a depth was refused");
+    {
+        const auto& p = std::get<toolpath::DrillBankParams>(dlg->form().definition().params);
+        ST_REQUIRE(p.inactiveSpindles == std::vector<int>{4}, "drill bank: the inactive list did not reach the form");
+        ST_REQUIRE(p.spindleDepths == std::vector<double>({0.0, 5.0, 0.0, 0.0}), "drill bank: the depth list did not reach the form");
+        ST_REQUIRE(p.spindleDiameters.empty(), "drill bank: blank diameters became a list");
+    }
+    // A bad entry is refused with a message and keeps the form from being accepted.
+    dlg->bankTable()->item(0, 2)->setText(QStringLiteral("abc"));
+    ST_REQUIRE(!dlg->message().isEmpty() && !dlg->canAccept(), "drill bank: a bad diameter shows no message");
+    dlg->bankTable()->item(0, 2)->setText(QString());
+    ST_REQUIRE(dlg->message().isEmpty(), "drill bank: clearing the bad diameter kept the message");
+    ST_REQUIRE(dlg->pickTool("drill-1-8in"), "drill bank: the drill cannot be picked");
+    ST_REQUIRE(dlg->typeField("cutDepth", "8") && dlg->typeField("pitch", "32") && dlg->typeField("minHoles", "2"),
+               "drill bank: the bank fields were refused");
+    const std::size_t stepsBefore = doc.undoStack().index();
+    ST_REQUIRE(accept(panel), "drill bank: accepting the form failed: " + dlg->message().toStdString());
+    ST_REQUIRE(panel->waitIdle(120000), "drill bank: the calculation did not finish");
+    ST_REQUIRE(doc.toolpaths().size() == 1 && doc.undoStack().index() == stepsBefore + 1,
+               "drill bank: adding it was not exactly one undo step: " + panel->statusText().toStdString());
+    const document::ToolpathRecord& rec = doc.toolpaths().front();
+    ST_REQUIRE(rec.operation() == document::ToolpathOperation::DrillBank && rec.hasMoves(), "drill bank: no drill bank toolpath");
+    std::size_t rapids = 0;
+    for (const toolpath::Move& m : *rec.moves) {
+        ST_REQUIRE(m.bank == 0b0111, "drill bank: a move does not name the three active spindles");
+        rapids += m.kind == toolpath::MoveKind::Rapid ? 1 : 0;
+    }
+    ST_REQUIRE(rapids == 2, "drill bank: the two rows are not two strokes");
+
+    // The list editor shows the saved settings when the toolpath is edited.
+    panel->selectToolpath(rec.id);
+    panel->editAction()->trigger();
+    dlg = panel->formDialog();
+    ST_REQUIRE(dlg != nullptr && dlg->bankSpindleRows() == 4, "drill bank: Edit shows no spindle rows");
+    ST_REQUIRE(dlg->bankTable()->item(3, 1)->checkState() == Qt::Unchecked &&
+                   dlg->bankTable()->item(1, 3)->text() == QStringLiteral("5") &&
+                   dlg->bankTable()->item(0, 1)->checkState() == Qt::Checked,
+               "drill bank: Edit does not show the spindle list");
+    dlg->reject();
+    QCoreApplication::processEvents();
+
+    // One hole per active spindle in the simulation: the three holes of the first stroke are cut, the place of the
+    // reference spindle's column to the right (switched-off spindle 4) is not.
+    PreviewPanel* preview = window.preview();
+    ReliefView* relief = window.reliefView();
+    preview->qualityCombo()->setCurrentIndex(0);
+    ST_REQUIRE(preview->startSimulation() && preview->waitSimulation(120000), "drill bank: the simulation did not run");
+    const std::size_t total = preview->playback().moveCount();
+    ST_REQUIRE(total == rec.moveCount(), "drill bank: the playback does not cover the toolpath");
+    preview->scrubTo(total);
+    ST_REQUIRE(preview->waitSimulation(120000), "drill bank: the final frame never arrived");
+    const QColor uncut = relief->pixelAtStock({280.0, 280.0});
+    ST_REQUIRE(uncut.isValid(), "drill bank: no picture");
+    std::vector<QColor> holes;
+    for (const double y : {60.0, 160.0}) {
+        for (int i = 0; i < 3; ++i) {
+            const QColor c = relief->pixelAtStock({60.0 + 32.0 * i, y});
+            ST_REQUIRE(c != uncut, "drill bank: a hole of the head is not drilled in the simulation");
+            holes.push_back(c);
+        }
+    }
+    ST_REQUIRE(relief->pixelAtStock({60.0 + 32.0 * 3, 60.0}) == uncut, "drill bank: the switched-off spindle drilled");
+    ST_REQUIRE(relief->pixelAtStock({60.0 + 16.0, 60.0}) == uncut, "drill bank: material between the holes was cut");
+    // The shallower spindle's hole (5 mm) is shaded differently from the others (8 mm).
+    ST_REQUIRE(holes[1] != holes[0] && holes[0] == holes[2], "drill bank: the per-spindle depth is not visible");
+
+    // Save and reload: the spindle sets come back and the record is unchanged.
+    auto saved = document::saveCarv(doc);
+    ST_REQUIRE(saved.ok(), "drill bank: the document cannot be saved");
+    auto loaded = document::loadCarv(std::span<const std::uint8_t>(saved.value()));
+    ST_REQUIRE(loaded.ok() && loaded.value().document.toolpaths().size() == 1 &&
+                   loaded.value().document.toolpaths().front() == rec,
+               "drill bank: the reloaded toolpath differs");
     return std::string();
 }
 

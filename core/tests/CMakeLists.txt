@@ -73,6 +73,7 @@ add_executable(carvetto_tests
   post/rotary_wrap_test.cpp
   geometry/cylinder_map_test.cpp
   simulate/determinism_test.cpp
+  simulate/drill_bank_sim_test.cpp
   simulate/diagnostics_test.cpp
   simulate/fixture_record_test.cpp
   simulate/hostile_test.cpp
@@ -121,6 +122,7 @@ add_executable(carvetto_tests
   document/carv_storage_residuals_test.cpp
   document/carv_drill_record_test.cpp
   document/carv_drill_bank_record_test.cpp
+  document/carv_bank_spindles_test.cpp
   document/carv_chamfer_record_test.cpp
   document/carv_thread_mill_record_test.cpp
   document/carv_inlay_record_test.cpp
@@ -187,6 +189,7 @@ add_executable(carvetto_tests
   toolpath/drill_bank_test.cpp
   io/parts_import_test.cpp
   io/parts_build_test.cpp
+  toolpath/drill_bank_spindles_test.cpp
   toolpath/drill_post_test.cpp
   toolpath/chamfer_test.cpp
   toolpath/prism_test.cpp
@@ -199,6 +202,7 @@ add_executable(carvetto_tests
   toolpath/laser_sketch_test.cpp
   post/jet_blocks_test.cpp
   post/laser_post_test.cpp
+  post/drill_bank_post_test.cpp
   toolpath/image_engrave_test.cpp
   toolpath/engrave_test.cpp
   toolpath/engrave_post_test.cpp

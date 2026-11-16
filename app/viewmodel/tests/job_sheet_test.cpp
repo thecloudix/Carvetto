@@ -70,7 +70,7 @@ TEST_CASE("job sheet: lists every toolpath, tool and time of the core estimate",
         const document::ToolpathRecord& rec = f.doc.toolpaths()[i];
         const toolpath::MachineRates rates = toolpath::MachineRates::fromTool(rec.tool, 3000.0, 500.0);
         const toolpath::TimeEstimate expect = toolpath::estimateTime(
-            toolpath::Toolpath{rec.name, rec.tool, *rec.moves}, rates);
+            toolpath::Toolpath{rec.name, rec.tool, *rec.moves, {}}, rates);
         CHECK(sheet.toolpaths[i].name == rec.name);
         CHECK(sheet.toolpaths[i].time.total() == expect.total());
         CHECK(sheet.toolpaths[i].feedRateMmPerMin == rec.tool.feedRate);
