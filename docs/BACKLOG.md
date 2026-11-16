@@ -1568,7 +1568,7 @@ Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around th
 Acceptance criteria:
   1. Wrapping effect composes and bakes equal to the direct wrapped surface on test models; unwrapper round-trips a known cross-section; rotary import places a mesh on the cylinder; ADR with the readings for owner review.
 
-### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: in-progress]
+### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: verifying (layout dialogs -> T-0340)]
 Phase: 3   Module: core/toolpath + core/geometry + app   Depends on: T-0320
 Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turns a cylinder down to a radius, and wrapped fluting and spiral layouts that generate vectors (flute count, length, start/end, spiral pitch) on the flat design area ready for the existing toolpaths. Forms, undo, self-test.
 Acceptance criteria:
@@ -1679,3 +1679,9 @@ Phase: 3   Module: build   Depends on: —
 Goal: main's windows-app job failed from T-0328 on with `toolpath_form.cpp : fatal error C1128: number of sections exceeded object file format limit: compile with /bigobj`. Add /bigobj to the shared MSVC options; confirm windows-app green on the PR.
 Acceptance criteria:
   1. windows-app CI job passes on the PR and on main.
+
+### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: ready — LOW]
+Phase: 3   Module: app + app/viewmodel   Depends on: T-0322, T-0334
+Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) but no Qt dialog, menu entry or self-test. Add the dialogs and menu entries for rotary jobs, let a following Fluting toolpath take its depth from the layout, preview the layouts in the wrapped view (needs T-0334), and drive it all from --self-test.
+Acceptance criteria:
+  1. A rotary job can create fluting and spiral layouts from the UI as one undo step with a wrapped preview; self-test drives it.
