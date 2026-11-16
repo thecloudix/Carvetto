@@ -85,3 +85,21 @@ TEST_CASE("cylinder map: wrapPolyline splits segments by angle", "[geometry][rot
     CHECK(wrapPolyline(m, {}, 0.1).empty());
     CHECK(wrapPolyline(m, {{1, 2, 10}}, 0.1).size() == 1);
 }
+
+TEST_CASE("cylinder map: wrapPolyline steps stay within the limit for a non-multiple turn", "[geometry][rotary]") {
+    CylinderMap m;
+    m.radius = 10.0;
+    const double step = kPi / 4.0;
+    const double turn = step * 2.01;  // 3 parts needed, not 2
+    const std::vector<Vec3> flat{{0, 0, 10}, {0, turn * 10.0, 10}};
+    const auto out = wrapPolyline(m, flat, step);
+    REQUIRE(out.size() == 4);
+    for (std::size_t i = 1; i < out.size(); ++i) {
+        const double a0 = std::atan2(out[i - 1].y, out[i - 1].z);
+        const double a1 = std::atan2(out[i].y, out[i].z);
+        CHECK(std::fabs(a1 - a0) <= step + 1e-9);
+    }
+    const Vec3 end = m.wrap(flat.back());
+    CHECK(out.back().y == Approx(end.y));
+    CHECK(out.back().z == Approx(end.z));
+}

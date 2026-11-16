@@ -1023,6 +1023,9 @@ class Interpreter {
     /// along; a move at or below the cylinder axis. Warnings: a rotary job with a post that does not wrap, a
     /// tool wider than the cylinder radius, a toolpath that goes more than once round.
     std::optional<Error> rotaryRefusals() {
+        if (ctx_.rotaryAxisZ && !std::isfinite(*ctx_.rotaryAxisZ)) {
+            return Error{0, "cannot write G-code: the cylinder axis height is not a finite number"};
+        }
         const bool wrapping = s_.rotaryWrapX || s_.rotaryWrapY;
         if (ctx_.rotaryAlong != 0) {
             const char along = ctx_.rotaryAlong;

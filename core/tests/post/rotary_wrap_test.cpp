@@ -7,6 +7,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <numbers>
 #include <sstream>
 #include <string>
@@ -208,6 +209,39 @@ TEST_CASE("MAXIMUM_ROTATION splits a wrapped move into equal parts", "[post][rot
     CHECK_THAT(whole, !ContainsSubstring("A45.000"));
     CHECK_THAT(whole, ContainsSubstring("A90.000"));
 
+    SECTION("a remainder that is not a whole multiple still never exceeds the limit") {
+        // The A words written for one wrapped move of `degrees` under the 30 degree limit.
+        const auto angles = [&](double degrees) {
+            Toolpath tp;
+            tp.name = "Wrapped";
+            tp.tool = tool();
+            tp.moves = {Move::rapid({0, 0, 30}), Move::plunge({0, 0, 23}),
+                        Move::feed({0, degrees / 360.0 * 2.0 * kPi * kRadius, 23})};
+            const std::string out = run(pp, tp, cylinderContext('X'));
+            std::vector<double> v;
+            std::istringstream in(out);
+            std::string line;
+            while (std::getline(in, line)) {
+                if (line.rfind("G1", 0) == 0 && line.find('A') != std::string::npos) {
+                    v.push_back(std::stod(line.substr(line.find('A') + 1)));
+                }
+            }
+            return v;
+        };
+        const auto a = angles(90.0001);
+        REQUIRE(a.size() == 4);  // 4 parts (A is modal, so the unchanged A0 of the plunge is not written)
+        double prev = 0.0;
+        for (std::size_t i = 0; i < a.size(); ++i) {
+            CHECK(a[i] - prev <= 30.0 + 1e-9);
+            prev = a[i];
+        }
+        CHECK(a.back() == Approx(90.0001).margin(1e-3));
+        const auto b = angles(30.00001);
+        REQUIRE(b.size() == 2);  // 2 parts
+        CHECK(b.back() == Approx(30.00001).margin(1e-3));
+        CHECK(b[0] <= 30.0 + 1e-9);
+        CHECK(angles(100.0).size() == 4);  // 4 parts of 25 degrees
+    }
     SECTION("a limit that would need more than 100000 moves is refused") {
         const PostProcessor tiny = parsePost("ROTARY_WRAP_Y = \"A\"\nMAXIMUM_ROTATION = 0.0001\n");
         const auto r = tiny.run({alongXPath()}, cylinderContext('X'));
@@ -253,6 +287,26 @@ TEST_CASE("rotary refusals and diagnostics", "[post][rotary]") {
         CHECK_FALSE(pp.run({tp}, cylinderContext('X')).ok());
         tp.moves[2] = Move::feed({40, 0, 0.5});
         CHECK(pp.run({tp}, cylinderContext('X')).ok());
+    }
+    SECTION("a rapid below the cylinder axis is refused too") {
+        const PostProcessor pp = parsePost("ROTARY_WRAP_Y = \"A\"\n");
+        Toolpath tp = alongXPath();
+        tp.moves[0] = Move::rapid({0, 0, -2});
+        const auto r = pp.run({tp}, cylinderContext('X'));
+        REQUIRE_FALSE(r.ok());
+        CHECK_THAT(r.error().message, ContainsSubstring("cylinder axis"));
+        CHECK_THAT(r.error().message, ContainsSubstring("'Wrapped'"));
+        CHECK_THAT(r.error().message, ContainsSubstring("move 1"));
+    }
+    SECTION("a non-finite cylinder axis height is refused") {
+        const PostProcessor pp = parsePost("ROTARY_WRAP_Y = \"A\"\n");
+        PostContext ctx = cylinderContext('X');
+        ctx.rotaryAxisZ = std::numeric_limits<double>::quiet_NaN();
+        const auto r = pp.run({alongXPath()}, ctx);
+        REQUIRE_FALSE(r.ok());
+        CHECK_THAT(r.error().message, ContainsSubstring("cylinder axis"));
+        ctx.rotaryAxisZ = std::numeric_limits<double>::infinity();
+        CHECK_FALSE(pp.run({alongXPath()}, ctx).ok());
     }
     SECTION("a tool wider than the radius warns") {
         const PostProcessor pp = parsePost("ROTARY_WRAP_Y = \"A\"\n");

@@ -69,6 +69,11 @@ listed for owner review.
     refuses rotary jobs. `wrappedSurfaceFromSimulation` draws the cut stock on the cylinder (cut cells tinted).
     No `.carv` change.
 
+Equivalent mutants (reviewed): `turn > MAXIMUM_ROTATION` versus `>=` differ only when the turn equals the limit,
+where `ceil` gives one part and the split loop emits the single move to the target, identical to the unsplit
+path. The last split part is set to `to` exactly; computing it as `from + (to - from) * 1` differs by at most
+one ulp, below the written precision.
+
 ## Not covered (follow-up card)
 App wiring of the above: the Auto-Wrapping View menu entry and toggle in the 2D/3D and simulation widgets,
 drawing the wrapped raster in Qt, wrapped playback in the simulation panel, a rotary refusal dialog, and the
