@@ -183,6 +183,8 @@ add_executable(carvetto_tests
   toolpath/toolpath_residual_scale_test.cpp
   toolpath/drill_test.cpp
   toolpath/drill_bank_test.cpp
+  io/parts_import_test.cpp
+  io/parts_build_test.cpp
   toolpath/drill_post_test.cpp
   toolpath/chamfer_test.cpp
   toolpath/prism_test.cpp

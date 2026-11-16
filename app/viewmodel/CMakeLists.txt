@@ -54,6 +54,7 @@ add_library(carvetto_viewmodel STATIC
   src/new_job_form.cpp
   src/rotary_material.cpp
   src/dxf_exchange.cpp
+  src/parts_import_form.cpp
   src/bitmap_import.cpp
   src/file_session.cpp
   src/node_edit.cpp

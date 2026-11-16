@@ -61,6 +61,7 @@ add_executable(carvetto_viewmodel_tests
   toolpath_laser_test.cpp
   toolpath_laser_image_test.cpp
   toolpath_drill_bank_test.cpp
+  parts_import_form_test.cpp
   toolpath_prism_test.cpp
   toolpath_photo_test.cpp
   toolpath_3d_test.cpp
