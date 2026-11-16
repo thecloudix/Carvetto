@@ -1081,6 +1081,34 @@ TEST_CASE("clipart: a failure after the macro recorded steps rolls the insert ba
     }
 }
 
+TEST_CASE("clipart: an exception thrown inside the importer step rolls the insert back", "[clipart][insert][hostile]") {
+    // The bitmap importer calls the injected decoder while the insert's macro is open, so a throwing
+    // decoder is a throw from inside the importer step (the afterImport hook only runs after it).
+    document::Document doc;
+    const std::size_t steps = doc.undoStack().count();
+    const std::size_t index = doc.undoStack().index();
+    const std::size_t layers = doc.layers().size();
+    int calls = 0;
+    const document::BitmapDecoder throwing = [&calls](std::span<const std::uint8_t>) -> geometry::ShapeResult<io::RasterImage> {
+        ++calls;
+        throw std::runtime_error("decoder exploded");
+    };
+    const ClipartInsertOutcome r = insertClipartBytes(doc, bytesOf(pngHeader(40, 10)), "pic.png", {}, throwing);
+    CHECK(calls == 1);
+    CHECK_FALSE(r.ok);
+    CHECK(r.error.find("decoder exploded") != std::string::npos);
+    CHECK_FALSE(doc.undoStack().inMacro());
+    CHECK(doc.undoStack().count() == steps);
+    CHECK(doc.undoStack().index() == index);
+    CHECK_FALSE(doc.undoStack().canRedo());
+    CHECK(doc.objectCount() == 0);
+    CHECK(doc.bitmaps().empty());
+    CHECK(doc.layers().size() == layers);
+    FakeDecoder dec;  // the document still works afterwards
+    REQUIRE(insertClipartBytes(doc, bytesOf(pngHeader(40, 10)), "pic.png", {}, dec.fn()).ok);
+    CHECK(doc.undoStack().count() == steps + 1);
+}
+
 TEST_CASE("clipart: a line (zero width) is scaled by its length", "[clipart][insert]") {
     document::Document doc;
     const std::string svg =

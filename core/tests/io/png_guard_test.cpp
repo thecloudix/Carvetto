@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -129,6 +130,27 @@ TEST_CASE("png guard: expected raw size from the header", "[png_guard]") {
     CHECK(pngExpectedRawBytes(5, 0, 8, 0, 0) == 0);
     // Saturates instead of overflowing.
     CHECK(pngExpectedRawBytes(0xFFFFFFFFU, 0xFFFFFFFFU, 16, 6, 0) > (std::uint64_t{1} << 62));
+}
+
+TEST_CASE("png guard: multiplication overflow saturates instead of wrapping", "[png_guard][hostile]") {
+    // 630784594 x 3655515735, RGBA16: the true size is about 1.8e19 bytes, which wraps to 46,656,839
+    // (under any sane cap) in plain 64-bit arithmetic.
+    constexpr std::uint32_t w = 630784594U;
+    constexpr std::uint32_t h = 3655515735U;
+    CHECK(pngExpectedRawBytes(w, h, 16, 6, 0) == std::numeric_limits<std::uint64_t>::max());
+    const PngGuardResult r = checkPngPixelData(pngWith(w, h, 16, 6, 0, storedZlib(16)), 80ULL * 1024 * 1024);
+    CHECK(r.status == PngGuardStatus::TooLarge);
+    CHECK(r.expectedBytes == std::numeric_limits<std::uint64_t>::max());
+}
+
+TEST_CASE("png guard: budget addition saturates instead of wrapping", "[png_guard][hostile]") {
+    // Expected size saturates at UINT64_MAX and the caller allows it; expected + slack must saturate
+    // too, otherwise the budget wraps to 4095 and a 5000-byte stream is wrongly called a bomb.
+    const PngGuardResult r = checkPngPixelData(pngWith(0xFFFFFFFFU, 0xFFFFFFFFU, 16, 6, 0, storedZlib(5000)),
+                                               std::numeric_limits<std::uint64_t>::max());
+    CHECK(r.expectedBytes == std::numeric_limits<std::uint64_t>::max());
+    CHECK(r.status == PngGuardStatus::Ok);
+    CHECK(r.inflatedBytes == 5000);
 }
 
 TEST_CASE("png guard: exact budget boundary", "[png_guard]") {

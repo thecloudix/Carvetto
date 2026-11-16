@@ -145,3 +145,10 @@ exceptions.
 * The importers' looser caps are untouched; the browser simply refuses earlier.
 * `ClipartStore` keeps QSettings out of the view model and the self-test away from the user's settings
   (the panel uses a scratch store until `setPersist(true)`).
+
+## Test seams for the rollback
+
+`insertClipartBytes` rolls back on any exception thrown while its macro is open. The tests cover both
+sides of the importer step: the `afterImport` hook throws after the importer has added objects, and a
+throwing injected `BitmapDecoder` throws from inside the importer itself. The SVG/DXF importers have no
+injection point, so a throw from inside them is not simulated; they share the same `try` block.
