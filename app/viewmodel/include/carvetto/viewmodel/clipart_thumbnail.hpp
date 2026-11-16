@@ -123,7 +123,9 @@ class ClipartThumbnailService {
     ClipartThumbState state(const std::string& path) const;
     /// The cached result (thumbnail or error) of `path`, or an empty entry when none.
     ClipartCacheEntry lookup(const std::string& path);
-    /// Paths finished since the last call.
+    /// Paths finished since the last call, oldest first. At most `Config::cacheEntries`
+    /// are kept between calls (the oldest are dropped beyond that), so a UI that never polls costs
+    /// bounded memory.
     std::vector<std::string> takeCompleted();
     /// Drops queued requests that have not started.
     void cancelPending();

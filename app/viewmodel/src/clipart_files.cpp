@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "carvetto/io/dxf.hpp"
+#include "carvetto/io/png_guard.hpp"
 #include "carvetto/io/svg.hpp"
 
 namespace carvetto::viewmodel {
@@ -177,6 +178,25 @@ std::optional<std::pair<std::uint32_t, std::uint32_t>> pngDimensions(std::span<c
     return std::make_pair(be32(16), be32(20));
 }
 
+std::string checkPngPixelData(std::span<const std::uint8_t> bytes, const ClipartLimits& limits) {
+    const io::PngGuardResult g = io::checkPngPixelData(bytes, limits.maxPngRawBytes);
+    switch (g.status) {
+        case io::PngGuardStatus::Ok:
+            return {};
+        case io::PngGuardStatus::BadHeader:
+            return "the PNG header is damaged or not supported";
+        case io::PngGuardStatus::BadData:
+            return "the PNG pixel data is damaged or truncated";
+        case io::PngGuardStatus::TooLarge:
+            return "the PNG declares " + std::to_string(g.expectedBytes / (1024U * 1024U)) +
+                   " MiB of pixel data; the limit is " + std::to_string(limits.maxPngRawBytes / (1024U * 1024U)) +
+                   " MiB";
+        case io::PngGuardStatus::TooMuchData:
+            return "the PNG holds far more pixel data than its header declares (a decompression bomb)";
+    }
+    return "the PNG pixel data cannot be checked";
+}
+
 ClipartFile checkClipartBytes(std::span<const std::uint8_t> bytes, std::string_view name, const ClipartLimits& limits) {
     const std::optional<ClipartKind> ext = clipartKindFromExtension(name);
     if (!ext) {
@@ -206,6 +226,10 @@ ClipartFile checkClipartBytes(std::span<const std::uint8_t> bytes, std::string_v
                                     " pixels; the limit is " + std::to_string(limits.maxImageEdge) +
                                     " pixels an edge and " + std::to_string(limits.maxImagePixels / 1'000'000U) +
                                     " million pixels in all");
+        }
+        const std::string bomb = checkPngPixelData(bytes, limits);
+        if (!bomb.empty()) {
+            return refuse(name, bomb);
         }
     }
     ClipartFile f;

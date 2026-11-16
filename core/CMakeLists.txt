@@ -320,6 +320,7 @@ add_library(carvetto_core STATIC
   src/io/svg_export.cpp
   src/io/svg_import.cpp
   src/io/svg_path.cpp
+  src/io/png_guard.cpp
   src/io/svg_xml.cpp
   src/toolpath/pocket.cpp
   src/toolpath/drill.cpp

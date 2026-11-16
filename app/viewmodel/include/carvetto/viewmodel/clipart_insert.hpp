@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <span>
 #include <string>
@@ -27,6 +28,9 @@ struct ClipartInsertOptions {
     ClipartLimits limits;
     /// TTF/OTF bytes for DXF text; empty = DXF text is skipped with a warning.
     std::span<const std::uint8_t> textFontBytes;
+    /// Test seam: called inside the insert's undo macro once the importer has added its objects and
+    /// before they are scaled. If it throws, the whole insert is rolled back like any other failure.
+    std::function<void(document::Document&)> afterImport;
 };
 
 /// What an insertion did, or why it did nothing.

@@ -145,6 +145,7 @@ add_executable(carvetto_tests
   io/svg_export_test.cpp
   io/svg_fuzz_test.cpp
   io/svg_import_test.cpp
+  io/png_guard_test.cpp
   io/svg_xml_test.cpp
   relief/relief_test.cpp
   relief/effects_test.cpp

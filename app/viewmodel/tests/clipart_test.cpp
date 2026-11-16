@@ -10,11 +10,14 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/io/png_guard.hpp"
 #include "carvetto/viewmodel/clipart_files.hpp"
 #include "carvetto/viewmodel/clipart_insert.hpp"
 #include "carvetto/viewmodel/clipart_library.hpp"
@@ -67,16 +70,70 @@ std::string dxfLines(int count, const std::string& layer = "CLIP") {
     return s + "0\nENDSEC\n0\nEOF\n";
 }
 
-std::string pngHeader(std::uint32_t w, std::uint32_t h) {
-    std::string s("\x89PNG\r\n\x1a\n", 8);
-    s += std::string("\0\0\0\x0d", 4) + "IHDR";
-    for (const std::uint32_t v : {w, h}) {
-        s.push_back(static_cast<char>(v >> 24));
-        s.push_back(static_cast<char>(v >> 16));
-        s.push_back(static_cast<char>(v >> 8));
-        s.push_back(static_cast<char>(v));
+void put32be(std::string& s, std::uint32_t v) {
+    s.push_back(static_cast<char>(v >> 24));
+    s.push_back(static_cast<char>(v >> 16));
+    s.push_back(static_cast<char>(v >> 8));
+    s.push_back(static_cast<char>(v));
+}
+
+/// zlib stream (one fixed-Huffman block) inflating to `n` (>= 1) zero bytes at about 13 bits per 258
+/// bytes: a tiny file that is a decompression bomb when `n` is far above what a header declares.
+std::string zeroZlib(std::uint64_t n) {
+    std::string z("\x78\x01", 2);
+    std::uint32_t acc = 0;
+    int bits = 0;
+    const auto emit = [&](std::uint32_t value, int count, bool msbFirst) {
+        for (int i = 0; i < count; ++i) {
+            const std::uint32_t bit = msbFirst ? (value >> (count - 1 - i)) & 1U : (value >> i) & 1U;
+            acc |= bit << bits;
+            if (++bits == 8) {
+                z.push_back(static_cast<char>(acc));
+                acc = 0;
+                bits = 0;
+            }
+        }
+    };
+    emit(1, 1, false);    // BFINAL
+    emit(1, 2, false);    // BTYPE: fixed Huffman
+    emit(0x30, 8, true);  // literal 0
+    std::uint64_t left = n - 1;
+    while (left >= 258) {
+        emit(0xC5, 8, true);  // length 258
+        emit(0, 5, true);     // distance 1
+        left -= 258;
     }
+    for (; left > 0; --left) {
+        emit(0x30, 8, true);
+    }
+    emit(0, 7, true);  // end of block
+    if (bits > 0) {
+        z.push_back(static_cast<char>(acc));
+    }
+    put32be(z, 1);
+    return z;
+}
+
+/// A PNG (RGB, 8 bit) with the given header size. IDAT inflates to `rawBytes` zero bytes (the size
+/// the header declares by default); a header declaring more than 64 MiB gets no IDAT unless `rawBytes` is given.
+std::string pngHeader(std::uint32_t w, std::uint32_t h, std::uint64_t rawBytes = 0) {
+    std::string s("\x89PNG\r\n\x1a\n", 8);
+    put32be(s, 13);
+    s += "IHDR";
+    put32be(s, w);
+    put32be(s, h);
     s += std::string("\x08\x02\0\0\0", 5) + std::string(4, '\0');
+    const std::uint64_t declared = static_cast<std::uint64_t>(h) * (1 + 3ULL * w);
+    const std::uint64_t raw = rawBytes != 0 ? rawBytes : declared;
+    if (w != 0 && h != 0 && (rawBytes != 0 || raw <= (64ULL << 20))) {
+        const std::string z = zeroZlib(raw);
+        put32be(s, static_cast<std::uint32_t>(z.size()));
+        s += "IDAT" + z;
+        put32be(s, 0);
+        put32be(s, 0);
+        s += "IEND";
+        put32be(s, 0);
+    }
     return s;
 }
 
@@ -138,6 +195,12 @@ TEST_CASE("clipart: sniffing by content", "[clipart]") {
     // <svg only counts within the first 4 KiB.
     CHECK_FALSE(refused("<!--" + std::string(5000, 'x') + "--><svg/>").kind.has_value());
     CHECK(refused("<!--" + std::string(4000, 'x') + "--><svg/>").kind == ClipartKind::Svg);
+    // The window is exactly 4096 bytes: "<svg" ending at byte 4096 counts, one byte later does not.
+    CHECK(refused("<" + std::string(4091, ' ') + "<svg").kind == ClipartKind::Svg);
+    CHECK_FALSE(refused("<" + std::string(4092, ' ') + "<svg").kind.has_value());
+    // The same window limits the SECTION search of an ASCII DXF.
+    CHECK(refused("0\n" + std::string(4096 - 2 - 7, ' ') + "SECTION").kind == ClipartKind::Dxf);
+    CHECK_FALSE(refused("0\n" + std::string(4096 - 2 - 6, ' ') + "SECTION").kind.has_value());
 }
 
 TEST_CASE("clipart: PNG dimension limits are checked on the header", "[clipart][hostile]") {
@@ -164,6 +227,28 @@ TEST_CASE("clipart: PNG dimension limits are checked on the header", "[clipart][
     std::string bad = pngHeader(1, 1);
     bad[12] = 'X';
     CHECK(checkClipartBytes(bytesOf(bad), "x.png", lim).error.find("damaged") != std::string::npos);
+    // Decompression bombs: the header is inside the limits but the pixel data is not what it says.
+    const std::uint64_t declared = 4ULL * (1 + 3 * 4);  // 4 x 4 RGB8
+    CHECK(checkClipartBytes(bytesOf(pngHeader(4, 4, declared + io::kPngInflateSlackBytes)), "x.png", lim).ok);
+    const ClipartFile bomb = checkClipartBytes(bytesOf(pngHeader(4, 4, declared + io::kPngInflateSlackBytes + 1)), "x.png", lim);
+    CHECK_FALSE(bomb.ok);
+    CHECK(bomb.error.find("bomb") != std::string::npos);
+    const std::string tiny = pngHeader(1, 1, 256ULL << 20);  // a 256 MiB stream in under 2 MiB: refused
+    CHECK(tiny.size() < 2 * 1024 * 1024);
+    CHECK_FALSE(checkClipartBytes(bytesOf(tiny), "x.png", lim).ok);
+    // A header declaring more raw bytes than the cap is refused before any inflating.
+    lim.maxPngRawBytes = 4 * 4 * 3 + 4;
+    CHECK(checkClipartBytes(bytesOf(pngHeader(4, 4)), "x.png", lim).ok);
+    lim.maxPngRawBytes = 4 * 4 * 3 + 3;
+    const ClipartFile over = checkClipartBytes(bytesOf(pngHeader(4, 4)), "x.png", lim);
+    CHECK_FALSE(over.ok);
+    CHECK(over.error.find("limit") != std::string::npos);
+    lim.maxPngRawBytes = ClipartLimits{}.maxPngRawBytes;
+    // The default cap admits the largest image the pixel limits allow (RGBA 8 bit = 4 bytes a pixel).
+    CHECK(ClipartLimits{}.maxPngRawBytes >= ClipartLimits{}.maxImagePixels * 4 + ClipartLimits{}.maxImageEdge);
+    // Damaged pixel data (no IDAT) is refused.
+    std::string noIdat = pngHeader(4, 4).substr(0, 33);
+    CHECK(checkClipartBytes(bytesOf(noIdat), "x.png", lim).error.find("damaged") != std::string::npos);
     // The extension has to agree with the content.
     const ClipartFile mism = checkClipartBytes(bytesOf(svgRect("1mm", "1mm")), "x.png", lim);
     CHECK_FALSE(mism.ok);
@@ -175,7 +260,8 @@ TEST_CASE("clipart: reading a file enforces the size limit before reading", "[cl
     TempDir dir("read");
     ClipartLimits lim;
     lim.maxVectorFileBytes = 200;
-    lim.maxPngFileBytes = 40;
+    const std::string png = pngHeader(2, 2);
+    lim.maxPngFileBytes = png.size();
     const std::string svg = svgRect("1mm", "1mm");
     REQUIRE(svg.size() < 200);
     write(dir.file("small.svg"), svg);
@@ -188,10 +274,10 @@ TEST_CASE("clipart: reading a file enforces the size limit before reading", "[cl
     CHECK_FALSE(over.ok);
     CHECK(over.error.find("limit") != std::string::npos);
     CHECK(over.error.rfind("over.svg: ", 0) == 0);
-    write(dir.file("p.png"), pngHeader(2, 2));
-    CHECK(readClipartFile(dir.file("p.png"), lim).ok);  // 33 bytes <= 40
-    write(dir.file("p2.png"), pngHeader(2, 2) + std::string(8, 'x'));
-    CHECK_FALSE(readClipartFile(dir.file("p2.png"), lim).ok);  // 41 bytes
+    write(dir.file("p.png"), png);
+    CHECK(readClipartFile(dir.file("p.png"), lim).ok);  // exactly the limit
+    write(dir.file("p2.png"), png + "x");
+    CHECK_FALSE(readClipartFile(dir.file("p2.png"), lim).ok);  // one byte over
     write(dir.file("empty.svg"), "");
     CHECK(readClipartFile(dir.file("empty.svg"), lim).error.find("empty") != std::string::npos);
     CHECK(readClipartFile(dir.file("missing.svg"), lim).error.find("regular file") != std::string::npos);
@@ -555,6 +641,15 @@ TEST_CASE("clipart: thumbnail cache is bounded and evicts least recently used", 
     CHECK(cache.contains("a"));
     CHECK(cache.evictions() == 1);
     CHECK(cache.bytes() == 3 * 164);
+    // An entry costing exactly the whole byte bound is kept; one byte more is refused.
+    ClipartThumbnailCache tight(64 + 100, 10);
+    tight.put("x", entry(100));
+    CHECK(tight.contains("x"));
+    CHECK(tight.bytes() == 164);
+    ClipartThumbnailCache tighter(64 + 100, 10);
+    tighter.put("x", entry(101));
+    CHECK_FALSE(tighter.contains("x"));
+    CHECK(tighter.bytes() == 0);
     // Replacing a key does not double count.
     cache.put("a", entry(100));
     CHECK(cache.bytes() == 3 * 164);
@@ -721,6 +816,11 @@ TEST_CASE("clipart: PNG thumbnails are box-filtered and never enlarged", "[clipa
     CHECK_FALSE(renderClipartThumbnail(bytesOf(pngHeader(1, 9000)), ClipartKind::Png, 16, ClipartLimits{}, counting.fn()).ok);
     CHECK_FALSE(renderClipartThumbnail(bytesOf(pngHeader(4097, 4096)), ClipartKind::Png, 16, ClipartLimits{}, counting.fn()).ok);
     CHECK_FALSE(renderClipartThumbnail(bytesOf("\x89PNG\r\n\x1a\n"), ClipartKind::Png, 16, ClipartLimits{}, counting.fn()).ok);
+    // A tiny header over a stream that inflates far beyond it never reaches the decoder either.
+    const ClipartRender bomb = renderClipartThumbnail(bytesOf(pngHeader(1, 1, 64ULL << 20)), ClipartKind::Png, 16,
+                                                      ClipartLimits{}, counting.fn());
+    CHECK_FALSE(bomb.ok);
+    CHECK(bomb.error.find("bomb") != std::string::npos);
     CHECK(counting.calls->load() == 0);
 }
 
@@ -819,6 +919,13 @@ TEST_CASE("clipart: thumbnail cache of the service stays within its byte bound",
         ready += svc.state(dir.file("s" + std::to_string(i) + ".svg")) == ClipartThumbState::Ready ? 1 : 0;
     }
     CHECK(ready == 5);
+    // The completed list is bounded by the entry bound too: the newest five, oldest first.
+    const std::vector<std::string> done = svc.takeCompleted();
+    REQUIRE(done.size() == 5);
+    for (int i = 0; i < 5; ++i) {
+        CHECK(done[static_cast<std::size_t>(i)] == dir.file("s" + std::to_string(i + 7) + ".svg"));
+    }
+    CHECK(svc.takeCompleted().empty());
 }
 
 TEST_CASE("clipart: inserting an SVG is one undo step, scaled to fit and centred", "[clipart][insert]") {
@@ -886,6 +993,92 @@ TEST_CASE("clipart: insertion point, fit fraction and non-square material", "[cl
     opt.at = geometry::Vec2{std::nan(""), 0.0};
     CHECK_FALSE(insertClipartBytes(doc, bytesOf(svgRect("1mm", "1mm")), "a.svg", opt, {}).ok);
     CHECK(doc.undoStack().generation() == gen);
+}
+
+TEST_CASE("clipart: an empty material fits a 100 mm box", "[clipart][insert]") {
+    document::Job job;
+    job.sizeMm = {0.0, 0.0, 0.0};
+    document::Document doc(job);
+    REQUIRE(doc.findSheet(doc.activeSheet()) != nullptr);
+    REQUIRE(doc.findSheet(doc.activeSheet())->materialBoundsMm().width() == Approx(0.0));
+    ClipartInsertOptions opt;  // fit fraction 0.5 of 100 mm = 50 mm
+    const ClipartInsertOutcome r = insertClipartBytes(doc, bytesOf(svgRect("10mm", "10mm")), "sq.svg", opt, {});
+    REQUIRE(r.ok);
+    CHECK(r.scale == Approx(5.0));
+    CHECK(r.placedBox.width() == Approx(50.0));
+    CHECK(r.placedBox.centre().x == Approx(0.0));
+    CHECK(r.placedBox.centre().y == Approx(0.0));
+}
+
+TEST_CASE("clipart: a line on a non-square material is scaled by the matching side", "[clipart][insert]") {
+    document::Job job;
+    job.sizeMm = {200.0, 100.0, 18.0};  // fit box at 0.5: 100 x 50
+    document::Document doc(job);
+    ClipartInsertOptions opt;
+    const std::string head = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10mm\" height=\"10mm\" viewBox=\"0 0 10 10\">";
+    // A vertical line (no width) is as tall as the fit box is high: 50 / 10.
+    ClipartInsertOutcome r = insertClipartBytes(doc, bytesOf(head + "<path d=\"M5 0 L5 10\"/></svg>"), "v.svg", opt, {});
+    REQUIRE(r.ok);
+    CHECK(r.scale == Approx(5.0));
+    CHECK(r.placedBox.height() == Approx(50.0));
+    // A horizontal line is as wide as the fit box is wide: 100 / 10.
+    r = insertClipartBytes(doc, bytesOf(head + "<path d=\"M0 5 L10 5\"/></svg>"), "h.svg", opt, {});
+    REQUIRE(r.ok);
+    CHECK(r.scale == Approx(10.0));
+    CHECK(r.placedBox.width() == Approx(100.0));
+}
+
+TEST_CASE("clipart: a failure after the macro recorded steps rolls the insert back exactly", "[clipart][insert][hostile]") {
+    // Object ids are never reused (the `.carv` records the next free id), so a rolled-back insert
+    // leaves the id counter advanced. The reference below advances it identically: the same insert
+    // succeeds and is then discarded with `undoAndDiscard`; the failed one must end byte-identical.
+    const auto build = [](document::Document& d) {
+        REQUIRE(insertClipartBytes(d, bytesOf(svgRect("10mm", "10mm")), "first.svg", {}, {}).ok);
+    };
+    const std::string cases[2][2] = {{svgRect("20mm", "10mm"), "second.svg"}, {dxfLines(3, "NEWLAYER"), "lines.dxf"}};
+    for (const auto& c : cases) {
+        document::Document doc;
+        build(doc);
+        document::Document ref;
+        build(ref);
+        REQUIRE(insertClipartBytes(ref, bytesOf(c[0]), c[1], {}, {}).ok);
+        REQUIRE(ref.undoStack().undoAndDiscard(ref));
+        ref.selection().assign(doc.selection().ids());
+        const auto expected = document::saveCarv(ref);
+        REQUIRE(expected.ok());
+
+        const std::size_t steps = doc.undoStack().count();
+        const std::size_t index = doc.undoStack().index();
+        const auto selection = doc.selection().ids();
+        const std::size_t layers = doc.layers().size();
+        const std::size_t objects = doc.objectCount();
+        int hookCalls = 0;
+        ClipartInsertOptions opt;
+        opt.afterImport = [&](document::Document& d) {
+            ++hookCalls;
+            CHECK(d.undoStack().inMacro());
+            CHECK(d.objectCount() > objects);  // the importer's objects are in the document by now
+            throw std::runtime_error("boom");
+        };
+        const ClipartInsertOutcome r = insertClipartBytes(doc, bytesOf(c[0]), c[1], opt, {});
+        CHECK(hookCalls == 1);
+        CHECK_FALSE(r.ok);
+        CHECK(r.error.find("boom") != std::string::npos);
+        CHECK(doc.undoStack().count() == steps);
+        CHECK(doc.undoStack().index() == index);
+        CHECK_FALSE(doc.undoStack().inMacro());
+        CHECK_FALSE(doc.undoStack().canRedo());  // discarded, not merely undone
+        CHECK(doc.undoStack().undoText() == "Insert clipart");
+        CHECK(doc.objectCount() == objects);
+        CHECK(doc.layers().size() == layers);
+        CHECK(doc.selection().ids() == selection);
+        const auto after = document::saveCarv(doc);
+        REQUIRE(after.ok());
+        CHECK(after.value() == expected.value());
+        // The document still works afterwards: a normal insert is one more step.
+        REQUIRE(insertClipartBytes(doc, bytesOf(c[0]), c[1], {}, {}).ok);
+        CHECK(doc.undoStack().count() == steps + 1);
+    }
 }
 
 TEST_CASE("clipart: a line (zero width) is scaled by its length", "[clipart][insert]") {

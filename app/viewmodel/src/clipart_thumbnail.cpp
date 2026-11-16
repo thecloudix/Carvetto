@@ -165,6 +165,9 @@ ClipartRender renderPng(std::span<const std::uint8_t> bytes, int edge, const Cli
         static_cast<std::uint64_t>(dims->first) * dims->second > limits.maxImagePixels) {
         return fail("the PNG header is damaged or its size is over the limit");
     }
+    if (const std::string bomb = checkPngPixelData(bytes, limits); !bomb.empty()) {
+        return fail(bomb);
+    }
     const geometry::ShapeResult<io::RasterImage> decoded = decoder(bytes);
     if (!decoded.ok()) {
         return fail("the image cannot be read: " + decoded.error());
@@ -398,7 +401,12 @@ void ClipartThumbnailService::run() {
                 e.error = std::move(r.error);
             }
             cache_.put(path, std::move(e));
+            // Bounded between takeCompleted calls: beyond the cache's own entry bound the oldest are
+            // dropped (their thumbnails are evicted from the cache by then anyway).
             completed_.push_back(path);
+            if (completed_.size() > std::max<std::size_t>(1, config_.cacheEntries)) {
+                completed_.erase(completed_.begin());
+            }
         } else if (std::find(queue_.begin(), queue_.end(), path) == queue_.end()) {
             pending_.erase(path);  // stale result of a cleared generation; a fresh request stays pending
         }

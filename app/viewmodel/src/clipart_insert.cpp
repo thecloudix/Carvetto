@@ -98,93 +98,107 @@ ClipartInsertOutcome insertClipartBytes(document::Document& doc, std::span<const
             return refuse("cannot insert: the document has no free object ids left");
         }
 
-        const std::size_t stepsBefore = doc.undoStack().count();
+        // The generation changes with every command pushed (also inside a macro), so it tells whether
+        // the importer recorded anything even when a bounded history dropped an old step meanwhile.
+        const std::uint64_t generationBefore = doc.undoStack().generation();
+        const std::vector<document::ObjectId> selectionBefore = doc.selection().ids();
         const std::uint64_t firstId = doc.idGenerator().peek();
         bool failed = false;
         std::string failure;
         {
             MacroScope macro(doc.undoStack(), "Insert clipart");
-            if (file.kind == ClipartKind::Svg) {
-                for (geometry::Contour& c : svgContours) {
-                    doc.execute(std::make_unique<document::AddObjectCommand>(
-                        document::Object::vector(std::move(c), doc.activeLayer(), doc.activeSheet())));
-                }
-            } else if (file.kind == ClipartKind::Dxf) {
-                const DxfImportOutcome r = importDxfIntoDocument(doc, file.bytes, std::nullopt, options.textFontBytes);
-                if (!r.ok) {
-                    failed = true;
-                    failure = r.error;
-                }
-                for (const std::string& w : r.warnings) {
-                    out.warnings.push_back(w);
-                }
-            } else {
-                const std::size_t slash = name.find_last_of("/\\");
-                const BitmapImportOutcome r = importBitmapIntoDocument(
-                    doc, std::vector<std::uint8_t>(file.bytes), slash == std::string::npos ? name : name.substr(slash + 1), decoder);
-                if (!r.ok) {
-                    failed = true;
-                    failure = r.error;
-                }
-            }
-            const std::vector<document::ObjectId> ids = failed ? std::vector<document::ObjectId>{} : idsFrom(doc, firstId);
-            if (!failed && ids.empty()) {
-                failed = true;
-                failure = "the file holds nothing that can be inserted";
-            }
-            if (!failed) {
-                geometry::Box2 box;
-                for (const document::ObjectId id : ids) {
-                    if (const auto b = doc.objectBounds(id)) {
-                        box.expand(*b);
+            // Anything thrown while the macro is open (the importers, the scaling, the test hook) is a
+            // failure of the insert: it is rolled back below, after the macro is closed.
+            try {
+                if (file.kind == ClipartKind::Svg) {
+                    for (geometry::Contour& c : svgContours) {
+                        doc.execute(std::make_unique<document::AddObjectCommand>(
+                            document::Object::vector(std::move(c), doc.activeLayer(), doc.activeSheet())));
                     }
-                }
-                const double w = box.width();
-                const double h = box.height();
-                double scale = 1.0;
-                if (!finiteBox(box) || !std::isfinite(w) || !std::isfinite(h)) {
-                    failed = true;
-                    failure = "the clipart has no measurable size";
-                } else {
-                    if (w > 0.0 && h > 0.0) {
-                        scale = std::min(fitW / w, fitH / h);
-                    } else if (w > 0.0) {
-                        scale = fitW / w;
-                    } else if (h > 0.0) {
-                        scale = fitH / h;
-                    }
-                    if (!(scale > 0.0) || !std::isfinite(scale)) {
+                } else if (file.kind == ClipartKind::Dxf) {
+                    const DxfImportOutcome r = importDxfIntoDocument(doc, file.bytes, std::nullopt, options.textFontBytes);
+                    if (!r.ok) {
                         failed = true;
-                        failure = "the clipart cannot be scaled to fit";
+                        failure = r.error;
                     }
+                    for (const std::string& w : r.warnings) {
+                        out.warnings.push_back(w);
+                    }
+                } else {
+                    const std::size_t slash = name.find_last_of("/\\");
+                    const BitmapImportOutcome r = importBitmapIntoDocument(
+                        doc, std::vector<std::uint8_t>(file.bytes), slash == std::string::npos ? name : name.substr(slash + 1), decoder);
+                    if (!r.ok) {
+                        failed = true;
+                        failure = r.error;
+                    }
+                }
+                if (!failed && options.afterImport) {
+                    options.afterImport(doc);
+                }
+                const std::vector<document::ObjectId> ids = failed ? std::vector<document::ObjectId>{} : idsFrom(doc, firstId);
+                if (!failed && ids.empty()) {
+                    failed = true;
+                    failure = "the file holds nothing that can be inserted";
                 }
                 if (!failed) {
-                    const geometry::Vec2 c = box.centre();
-                    const geometry::Transform2 m = geometry::Transform2::translation(target) *
-                                                   geometry::Transform2::scaling(scale) *
-                                                   geometry::Transform2::translation({-c.x, -c.y});
-                    doc.execute(std::make_unique<document::TransformObjectsCommand>(ids, m));
-                    geometry::Box2 placed;
+                    geometry::Box2 box;
                     for (const document::ObjectId id : ids) {
                         if (const auto b = doc.objectBounds(id)) {
-                            placed.expand(*b);
+                            box.expand(*b);
                         }
                     }
-                    if (!finiteBox(placed)) {
+                    const double w = box.width();
+                    const double h = box.height();
+                    double scale = 1.0;
+                    if (!finiteBox(box) || !std::isfinite(w) || !std::isfinite(h)) {
                         failed = true;
-                        failure = "the clipart could not be placed";
+                        failure = "the clipart has no measurable size";
                     } else {
-                        out.placedBox = placed;
-                        out.scale = scale;
-                        out.objectsAdded = ids.size();
+                        if (w > 0.0 && h > 0.0) {
+                            scale = std::min(fitW / w, fitH / h);
+                        } else if (w > 0.0) {
+                            scale = fitW / w;
+                        } else if (h > 0.0) {
+                            scale = fitH / h;
+                        }
+                        if (!(scale > 0.0) || !std::isfinite(scale)) {
+                            failed = true;
+                            failure = "the clipart cannot be scaled to fit";
+                        }
+                    }
+                    if (!failed) {
+                        const geometry::Vec2 c = box.centre();
+                        const geometry::Transform2 m = geometry::Transform2::translation(target) *
+                                                       geometry::Transform2::scaling(scale) *
+                                                       geometry::Transform2::translation({-c.x, -c.y});
+                        doc.execute(std::make_unique<document::TransformObjectsCommand>(ids, m));
+                        geometry::Box2 placed;
+                        for (const document::ObjectId id : ids) {
+                            if (const auto b = doc.objectBounds(id)) {
+                                placed.expand(*b);
+                            }
+                        }
+                        if (!finiteBox(placed)) {
+                            failed = true;
+                            failure = "the clipart could not be placed";
+                        } else {
+                            out.placedBox = placed;
+                            out.scale = scale;
+                            out.objectsAdded = ids.size();
+                        }
                     }
                 }
+            } catch (const std::exception& e) {
+                failed = true;
+                failure = e.what();
             }
         }
         if (failed) {
             // The macro recorded whatever the importer had added; take it back out completely.
-            if (doc.undoStack().count() > stepsBefore) {
+            if (doc.undoStack().generation() != generationBefore) {
                 doc.undoStack().undoAndDiscard(doc);
+                doc.selection().assign(selectionBefore);  // reverting the adds cleared it
             }
             return refuse(name + ": " + failure);
         }

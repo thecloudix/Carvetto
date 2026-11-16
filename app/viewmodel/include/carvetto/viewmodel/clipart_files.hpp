@@ -32,6 +32,9 @@ struct ClipartLimits {
     /// Largest PNG edge and pixel count, checked on the IHDR before any pixel is decoded.
     int maxImageEdge{8192};
     std::size_t maxImagePixels{std::size_t{16} * 1024U * 1024U};
+    /// Most raw (inflated) bytes a PNG's header may declare; the pixel data is also inflated with
+    /// that budget (`io::checkPngPixelData`) so a tiny header over a huge stream is refused.
+    std::uint64_t maxPngRawBytes{80ULL * 1024U * 1024U};
     /// SVG budgets (see `io::SvgImportOptions`).
     std::size_t svgMaxDepth{48};
     std::size_t svgMaxElements{200'000};
@@ -84,6 +87,10 @@ ClipartFile checkClipartBytes(std::span<const std::uint8_t> bytes, std::string_v
 /// before reading, and reading never exceeds it), content that disagrees with the extension, and a
 /// PNG with oversize dimensions.
 ClipartFile readClipartFile(const std::string& path, const ClipartLimits& limits);
+
+/// The Qt-free decompression-bomb check of a PNG (`io::checkPngPixelData` with the limits); empty
+/// when the pixel data is plausible, else one line saying why the file is refused.
+std::string checkPngPixelData(std::span<const std::uint8_t> bytes, const ClipartLimits& limits);
 
 /// Vector content of an SVG or DXF clipart (millimetres, Y up).
 struct ClipartGeometry {

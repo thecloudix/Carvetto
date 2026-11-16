@@ -19,9 +19,10 @@ in the Library dock and is glue only.
   first 4 KiB must be a PNG signature, an XML document with an `<svg` element, or an ASCII/binary DXF.
   A mismatch ("named .png but the content is svg") is refused with a rename hint. Compressed containers
   (gzip incl. .svgz, zip, 7z, xz, bzip2, zstd) are refused by name: Carvetto never decompresses
-  clipart, so a decompression or zip bomb cannot reach any parser.
+  clipart files, so a decompression or zip bomb cannot reach any parser. (A PNG's own zlib stream is the
+  one exception, and it is bounded; see "PNG decompression bombs" below.)
 * **Budgets** (`ClipartLimits`, far below the importers' own caps): SVG/DXF files 8 MiB, PNG files
-  32 MiB, checked from the file size before reading; PNG 8192 px an edge and 16 Mpx, read from the IHDR
+  32 MiB, PNG pixel data 80 MiB inflated (below), checked from the file size before reading; PNG 8192 px an edge and 16 Mpx, read from the IHDR
   before the decoder is called (so a tiny file claiming a huge canvas never allocates); SVG nesting 48,
   200k elements/spans, 400k visits and `<use>` depth 8 (entity expansion is already refused as DOCTYPE);
   DXF 200k spans, 50k block instances, depth 16; at most 20k contours per file (each becomes an object).
@@ -39,7 +40,8 @@ in the Library dock and is glue only.
   (never enlarged); DXF text is not drawn. One worker thread (`ClipartThumbnailService`) renders and
   puts results in an LRU cache bounded by bytes (32 MiB, never below 1 MiB) and by entries (4096);
   failures are cached as small entries with their message so a bad file is not retried every paint.
-  The UI thread only requests the visible rows (queue bounded at 512; a full queue is retried on the
+  The list of finished paths between `takeCompleted` calls is bounded by the cache's entry bound (the
+  oldest are dropped; their thumbnails are evicted by then). The UI thread only requests the visible rows (queue bounded at 512; a full queue is retried on the
   next timer tick) and converts finished results to icons. `clear()` and `cancelPending()` bump a
   generation so a result finishing afterwards is discarded. The cache is keyed by path; Refresh (or any
   folder change) clears it, so edited files are re-read after a refresh, not on every paint. The PNG
@@ -48,10 +50,48 @@ in the Library dock and is glue only.
   (SVG shapes as vector objects on the active layer; DXF layers matched or created by name by
   `importDxfIntoDocument`; a PNG embedded by `importBitmapIntoDocument`) and one transform. Vector
   files are parsed first with the tight limits, so a hostile one never touches the document. If anything
-  fails after the macro began, `undoAndDiscard` removes the whole attempt (no redo entry, no residue).
+  fails after the macro began (an importer error, an unmeasurable result, or any `std::exception` thrown
+  while the macro is open), the macro is closed and then `undoAndDiscard` removes the whole attempt
+  (no redo entry, no residue). Whether the macro recorded anything is read from
+  `UndoStack::generation()`, which changes with every command pushed. The rollback is exact for the
+  document (the `.carv` bytes are identical afterwards), the history (step count, index, no redo tail)
+  and the selection; only the generation itself differs, as it does after any undo.
+  `ClipartInsertOptions::afterImport` is a test seam that lets a test fail the insert at that point.
   Selection becomes the new objects.
 * **Dropping** works on the canvas for any SVG/DXF/PNG URL, whether it comes from the browser's list
   (which drags a local file URL) or from the file manager.
+
+## PNG decompression bombs
+
+The IHDR limits (8192 px an edge, 16 Mpx) say nothing about the IDAT stream: a 1 x 1 header over a zlib
+stream of zeros inflates to gigabytes at about 1000 : 1 (a 2 GiB stream is 2.1 MB, inside the 32 MiB
+file cap), and the Qt decoder inflates all of it, measured at about 3.5 s on the UI thread at insert
+time (the verifier's figure, with a 2 GiB stream; thumbnails reach the same decoder on the worker).
+`io::checkPngPixelData` (`core/src/io/png_guard.cpp`, Qt-free, miniz's `tinfl` that `core` already
+carries for `.carv`) therefore runs before any decoder call, in `checkClipartBytes` and again in the
+thumbnail renderer: it computes the raw size the header declares (every scanline with its filter byte,
+every Adam7 pass; invalid colour type / depth / interlace combinations are refused), refuses a header
+above `ClipartLimits::maxPngRawBytes` (80 MiB: the 64 MiB of a 16 Mpx RGBA 8-bit image plus filter
+bytes; 16-bit RGBA at the full pixel limit is refused), and inflates the concatenated IDAT payloads with
+an output budget of that size plus 4096 bytes of slack for padding encoders. The first call that pushes
+the total over the budget ends the check ("far more pixel data than its header declares"); `tinfl`
+writes at most one 32 KiB dictionary window per call, so no more than 32 768 bytes are inflated past
+the budget. Truncated or corrupt streams and a missing IDAT are refused as damaged; CRCs and the
+Adler-32 trailer stay the decoder's job.
+
+Measured here (Debug build of `core`, `miniz` at -O2, loaded machine; the figure varies by run):
+
+| file | declares | inflates | guard |
+|---|---|---|---|
+| 1 x 1 RGB, 2 GiB of zeros in a 2.09 MB file | 4 bytes | stops at 32 768 bytes | 1.3 ms |
+| 4096 x 4096 RGBA 8-bit, exact (a 64 KiB file) | 67 112 960 bytes | 67 112 960 bytes | 86 ms |
+
+So the worst case a hostile file can cost before the decoder sees it is the declared size, never above
+80 MiB + slack (about 110 ms), instead of the stream's own length; a bomb is refused in about a
+millisecond. A legitimate image of the largest allowed size pays the 86 ms once more before its normal
+decode. Tests sit on the exact budget (+0 and +1 byte), the cap (+0 and +1), both zlib shapes (stored
+blocks, fixed-Huffman runs), split IDAT chunks, Adam7 sizes and damaged files; `inflatedBytes` in the
+result is asserted, so the bound is checked by counting work, not timing.
 
 ## Product readings (not dictated by the card)
 
@@ -83,6 +123,21 @@ fraction, drop-point centring, refusal leaving `UndoStack::generation()` unchang
 empty), the `lru_.empty()` guard in `evict()` (bytes/entries cannot exceed bounds with an empty list),
 `kPad` and the exact rounding of thumbnail sizes (cosmetic; the size tests pin the current values
 anyway). Dot-name skipping is killed by a `.hidden.svg` file and a `.hiddendir`.
+
+Added after verification (each killed by applying the mutant by hand and seeing the named test fail):
+the 4 KiB sniff window (an `<svg` and a `SECTION` ending at byte 4096 are found, one byte later not;
+`kSniffBytes` 4095 fails), the cache's `cost > maxBytes_` (an entry costing exactly the bound is kept;
+`>=` fails), the 100 mm fit box of an empty material (50 fails), the height-only and width-only scale
+branches on a non-square material (swapping fitW / fitH fails both), the budget comparison of the PNG
+guard (`>=` fails), the completed-list bound (dropping the newest instead of the oldest fails), and the
+rollback after the macro recorded steps: `undoAndDiscard` -> `undo` leaves a redo entry and the history
+one step longer, `if (generation changed)` -> never rolls nothing back and leaves the objects, layers
+and a cleared selection in place; the test compares the `.carv` bytes with those of a reference
+document that inserted and discarded the same file (the id counter is never rolled back, so the
+reference advances it identically). Before this fix an exception thrown while the macro was open went
+to the outer handler, which closed the macro but left its steps on the undo stack; the earlier claim
+that every failure after the macro began was rolled back was true only for importer errors, not for
+exceptions.
 
 ## Consequences
 
