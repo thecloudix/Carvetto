@@ -1611,7 +1611,7 @@ Goal: Drill Bank: a toolpath that drills many holes in one setup using a multi-s
 Acceptance criteria:
   1. Bank patterns match holes on test layouts; unmatched holes are reported; output order minimises moves; round trip and hostile-record tests; ADR.
 
-### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: ready]
+### T-0329 Cabinet-parts import through a custom mapping file (generic, open formats only)   [status: in-progress]
 Phase: 3   Module: core/io + app   Depends on: T-0328
 Goal: Import a parts list (CSV/XML) describing rectangular panels with holes/dados through a user-editable mapping file (column -> part length/width/thickness/material/label/operations), then auto-nest the panels and create Profile/Drilling/Pocket toolpaths. No third-party product names or formats beyond generic CSV/XML.
 Acceptance criteria:
@@ -1649,7 +1649,7 @@ Goal: T-0320 delivered the wrapped post, CylinderMap, the Qt-free wrapped view (
 Acceptance criteria:
   1. For a rotary job the user can toggle flat/wrapped, see vectors, toolpaths and the model wrapped, play the wrapped simulation, and see rotary refusals; self-test drives all of it.
 
-### T-0335 Drill Bank per-stroke spindle list: simulation of every spindle's hole and the post's drill-bank blocks (T-0328 follow-up)   [status: ready]
+### T-0335 Drill Bank per-stroke spindle list: simulation of every spindle's hole and the post's drill-bank blocks (T-0328 follow-up)   [status: in-progress]
 Phase: 3   Module: core/toolpath + core/document + core/post + core/simulate + app   Depends on: T-0328
 Goal: T-0328 emits the head's (reference spindle's) path only; DrillBankResult::placements carries the per-spindle detail but the toolpath record does not. Add a per-stroke spindle list to the toolpath (schema + .carv bump only when used, hostile caps), make preview and simulation drill one hole per active spindle per stroke, and write the post's drill-bank blocks (the SETUP_DRILL_BANK family parsed by the post interpreter; audit what is parsed vs acted on) with golden tests; Add-menu entry and per-spindle list editor in the app with a self-test.
 Acceptance criteria:
