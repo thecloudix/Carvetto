@@ -165,10 +165,32 @@ namespace {
 
 // ---- value conversion ------------------------------------------------------------------------
 
+// Work budget of one conversion Lua -> host. A table that is a shared DAG expands to exponentially
+// many copies, so the total number of values and bytes is bounded, not only the depth.
+struct Conv {
+    int maxDepth = 0;
+    std::uint64_t elementsLeft = 0;
+    std::uint64_t bytesLeft = 0;
+    const std::atomic<bool>* cancel = nullptr;
+    std::uint64_t polled = 0;
+    const char* why = nullptr;  // set when the conversion fails for a budget reason
+};
+
 // Never raises a Lua error (it also runs outside any protected call); returns false for a value
-// that cannot cross: functions, userdata, threads, tables that are not sequences, too deep.
-bool toValue(lua_State* L, int idx, int depth, int maxDepth, ScriptValue& out) {
+// that cannot cross: functions, userdata, threads, tables that are not sequences, too deep, or
+// beyond the element/byte budget (then `cv.why` says so).
+bool toValue(lua_State* L, int idx, int depth, Conv& cv, ScriptValue& out) {
     idx = lua_absindex(L, idx);
+    if (cv.elementsLeft == 0) {
+        cv.why = "value too large";
+        return false;
+    }
+    --cv.elementsLeft;
+    if ((++cv.polled & 1023u) == 0 && cv.cancel != nullptr &&
+        cv.cancel->load(std::memory_order_relaxed)) {
+        cv.why = "script cancelled";
+        return false;
+    }
     switch (lua_type(L, idx)) {
         case LUA_TNIL:
         case LUA_TNONE:
@@ -187,29 +209,42 @@ bool toValue(lua_State* L, int idx, int depth, int maxDepth, ScriptValue& out) {
         case LUA_TSTRING: {
             std::size_t n = 0;
             const char* s = lua_tolstring(L, idx, &n);
+            if (n > cv.bytesLeft) {
+                cv.why = "value too large";
+                return false;
+            }
+            cv.bytesLeft -= n;
             out = ScriptValue(std::string(s, n));
             return true;
         }
         case LUA_TTABLE: {
-            if (depth >= maxDepth || lua_checkstack(L, 6) == 0) {
+            if (depth >= cv.maxDepth || lua_checkstack(L, 6) == 0) {
                 return false;
             }
             const lua_Unsigned n = lua_rawlen(L, idx);
+            if (n > cv.elementsLeft) {
+                cv.why = "value too large";
+                return false;
+            }
             lua_Unsigned count = 0;
             lua_pushnil(L);
             while (lua_next(L, idx) != 0) {
                 ++count;
                 lua_pop(L, 1);
+                if (count > n) {
+                    lua_pop(L, 1);  // the key
+                    return false;   // has keys outside the sequence
+                }
             }
             if (count != n) {
-                return false;  // has keys outside the sequence
+                return false;
             }
             ScriptValue::Array arr;
             arr.reserve(static_cast<std::size_t>(n));
             for (lua_Unsigned i = 1; i <= n; ++i) {
                 lua_rawgeti(L, idx, static_cast<lua_Integer>(i));
                 ScriptValue e;
-                const bool ok = toValue(L, -1, depth + 1, maxDepth, e);
+                const bool ok = toValue(L, -1, depth + 1, cv, e);
                 lua_pop(L, 1);
                 if (!ok) {
                     return false;
@@ -257,13 +292,29 @@ void pushValue(lua_State* L, const ScriptValue& v, int depth, int maxDepth) {
 // Returns the number of results, or -1 with `err` set.
 int hostCallImpl(lua_State* L, std::string& err) {
     const auto* fn = static_cast<const HostFunction*>(lua_touserdata(L, lua_upvalueindex(1)));
-    const int maxDepth = ctxOf(L)->lim->maxValueDepth;
+    RunCtx* rc = ctxOf(L);
+    const int maxDepth = rc->lim->maxValueDepth;
+    Conv cv;
+    cv.maxDepth = maxDepth;
+    cv.elementsLeft = rc->lim->maxValueElements;
+    cv.bytesLeft = rc->lim->maxValueBytes;
+    cv.cancel = rc->cancel;
     ScriptValues args;
     const int n = lua_gettop(L);
     args.reserve(static_cast<std::size_t>(n));
     for (int i = 1; i <= n; ++i) {
         ScriptValue a;
-        if (!toValue(L, i, 0, maxDepth, a)) {
+        if (!toValue(L, i, 0, cv, a)) {
+            if (cv.why != nullptr) {
+                if (rc->cancel != nullptr && std::string(cv.why) == "script cancelled") {
+                    rc->tripCancel = true;
+                    rc->tripText = "script cancelled";
+                    tripAll(L);
+                    raiseTrip(L, rc);
+                }
+                err = std::string("bad argument #") + std::to_string(i) + ": " + cv.why;
+                return -1;
+            }
             err = "bad argument #" + std::to_string(i) +
                   ": only nil, boolean, number, string and arrays of those can be passed";
             return -1;
@@ -281,6 +332,9 @@ int hostCallImpl(lua_State* L, std::string& err) {
         return -1;
     } catch (const std::exception& e) {
         err = e.what();
+        return -1;
+    } catch (...) {
+        err = "host function threw an unknown exception";
         return -1;
     }
     return static_cast<int>(results.size());
@@ -309,7 +363,7 @@ int luaPrint(lua_State* L) {
         }
         line.append(s, l);
         lua_pop(L, 1);
-        charge(L, l / 64 + 1);
+        charge(L, l / 8 + 1);
     }
     if (line.size() + 1 > c->lim->maxOutputBytes - c->outBytes ||
         c->outBytes > c->lim->maxOutputBytes) {
@@ -345,7 +399,7 @@ int luaSafeLoad(lua_State* L) {
     const char* s = lua_tolstring(L, 1, &len);
     const char* name = luaL_optstring(L, 2, s);
     const bool hasEnv = lua_gettop(L) >= 4;
-    charge(L, len / 64 + 1);
+    charge(L, len / 8 + 1);
     if (luaL_loadbufferx(L, s, len, name, "t") != LUA_OK) {
         lua_pushnil(L);
         lua_insert(L, -2);
@@ -392,7 +446,7 @@ int luaSafeRep(lua_State* L) {
         if (unit > 0 && static_cast<std::uint64_t>(n) > (maxBytes + seplen) / unit) {
             return luaL_error(L, "resulting string too large");
         }
-        charge(L, (static_cast<std::uint64_t>(n) * unit) / 64 + static_cast<std::uint64_t>(n) / 16);
+        charge(L, (static_cast<std::uint64_t>(n) * unit) / 8 + static_cast<std::uint64_t>(n) / 16);
     }
     const int top = lua_gettop(L);
     lua_pushvalue(L, lua_upvalueindex(1));
@@ -420,7 +474,7 @@ int luaSafeMove(lua_State* L) {
 }
 
 // Generic wrapper for the other string and table functions: charge work proportional to the
-// operands (strings: 1 unit per 64 bytes, tables: 1 unit per element, sort 16 per element).
+// operands (strings: 1 unit per 8 bytes, tables: 1 unit per element, sort 16 per element).
 int luaCharged(lua_State* L) {
     const int top = lua_gettop(L);
     const bool isSort = lua_toboolean(L, lua_upvalueindex(2)) != 0;
@@ -428,7 +482,7 @@ int luaCharged(lua_State* L) {
     for (int i = 1; i <= top; ++i) {
         const int t = lua_type(L, i);
         if (t == LUA_TSTRING) {
-            units += lua_rawlen(L, i) / 64;
+            units += lua_rawlen(L, i) / 8;
         } else if (t == LUA_TTABLE) {
             units += lua_rawlen(L, i) * (isSort ? 16u : 1u);
         }
@@ -726,9 +780,21 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
         lua_sethook(L, nullptr, 0, 0);
         if (st == LUA_OK) {
             const int top = lua_gettop(L);
+            Conv cv;
+            cv.maxDepth = limits_.maxValueDepth;
+            cv.elementsLeft = limits_.maxValueElements;
+            cv.bytesLeft = limits_.maxValueBytes;
+            cv.cancel = cancel;
             for (int i = 2; i <= top; ++i) {
                 ScriptValue v;
-                if (!toValue(L, i, 0, limits_.maxValueDepth, v)) {
+                if (!toValue(L, i, 0, cv, v)) {
+                    if (cv.why != nullptr) {
+                        const bool cancelled = std::string(cv.why) == "script cancelled";
+                        res.returned.clear();
+                        finish(cancelled ? ScriptStatus::Cancelled : ScriptStatus::RuntimeError,
+                               std::string("returned value: ") + cv.why, {});
+                        return res;
+                    }
                     v = ScriptValue();
                 }
                 res.returned.push_back(std::move(v));
@@ -765,6 +831,8 @@ ScriptResult ScriptHost::execute(std::string_view source, std::string_view chunk
         finish(ScriptStatus::MemoryLimit, "not enough memory", {});
     } catch (const std::exception& e) {
         finish(ScriptStatus::RuntimeError, e.what(), {});
+    } catch (...) {
+        finish(ScriptStatus::RuntimeError, "unknown exception", {});
     }
     return res;
 }

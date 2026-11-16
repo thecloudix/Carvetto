@@ -57,7 +57,7 @@ struct ScriptLimits {
     std::uint64_t maxInstructions = 50'000'000;
     /// Steps of the string-pattern matcher (find/match/gmatch/gsub), which runs inside C code where
     /// the instruction counter cannot see it. One step per recursive match call.
-    std::uint64_t maxPatternSteps = 20'000'000;
+    std::uint64_t maxPatternSteps = 2'000'000;
     /// Bytes the Lua heap may hold (all strings, tables, closures, stacks, the loaded chunk).
     std::size_t maxMemoryBytes = 64u * 1024u * 1024u;
     /// Longest string `string.rep` may build (other string growth is bounded by maxMemoryBytes).
@@ -70,6 +70,11 @@ struct ScriptLimits {
     std::size_t maxSourceBytes = 1u << 20;
     /// Longest nesting of arrays handed to or from host functions.
     int maxValueDepth = 16;
+    /// Values (every nil, number, string and array counted once per visit, so a shared sub-table
+    /// counts each time) one conversion between Lua and the host may visit.
+    std::uint64_t maxValueElements = 1u << 20;
+    /// Bytes of string data one such conversion may copy.
+    std::uint64_t maxValueBytes = 16u * 1024u * 1024u;
 };
 
 /// Standard libraries a run may use besides the always-present base, coroutine, table, string,

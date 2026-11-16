@@ -16,15 +16,16 @@ on GCC and MSVC.
    static library `carvetto_lua` from the plain sources (not `lua.c`, `luac.c`, the Makefile). Licence:
    MIT, compatible with the project's GPL-3.0; the notice is in the source tree fetched at build time and
    must be shipped with binaries (T-0331 adds it to the third-party notices). Size: a few hundred KB of
-   object code (to be measured on the release build), no runtime dependencies; no `dlopen` support is compiled (`package.loadlib` unsupported),
-   so even a granted `package` cannot load native code. Lua 5.4 rather than LuaJIT (stuck at 5.1 semantics, weaker
+   object code (to be measured on the release build), no runtime dependencies; native library loading is compiled out on every platform (a configure-time edit keeps only the
+   stub in `loadlib.c`: neither `dlopen` nor Windows `LoadLibrary`), so even a granted `package` cannot
+   load native code. Lua 5.4 rather than LuaJIT (stuck at 5.1 semantics, weaker
    portability) or a newer series (not yet proven in our CI); which Lua version existing community gadgets
    target is unknown to us (ADR-0102, question 1).
 2. **Compiled as C++.** The `.c` files are compiled with the C++ compiler (`LANGUAGE CXX`), which Lua
    supports: errors become C++ exceptions instead of `longjmp`. Hooks, host callbacks and `print` can then
    use `std::string`/`std::vector` and RAII without setjmp hazards, on MSVC as on GCC. Third-party
    warnings are silenced for this target only; Carvetto's own code keeps warnings-as-errors.
-3. **One source patch**, applied at configure time and idempotent like the Clipper2 ones: `match()` in
+3. **Two source patches (the second one is `loadlib.c`, decision 1)**; the first, applied at configure time and idempotent like the Clipper2 ones: `match()` in
    `lstrlib.c` calls `carvettoLuaMatchStep(L)`. The VM instruction hook never fires inside C library
    code, and a pattern such as `('.-'):rep(8) .. 'b'` on a 2000 character subject runs for minutes there.
    The step counter is bounded by `ScriptLimits::maxPatternSteps` and polls cancellation. The patch fails
@@ -42,19 +43,29 @@ on GCC and MSVC.
    disables hooks and an infinite loop there would hang the host. `math.randomseed(0)` is applied at
    start: random numbers are repeatable until the script seeds them.
 6. **Limits (`ScriptLimits`, defaults in the header).**
-   * *Instructions:* a count hook every 1000 VM instructions adds to a budget (default 50 M, roughly half
-     a second); the run stops within one block. The budget is shared by coroutines. After a trip the hook
+   * *Instructions:* a count hook every 1000 VM instructions adds to a budget (default 50 M; measured on a loaded Debug build, `while true do end` stops in about 0.4 s;
+     Release not measured); the run stops within one block. The budget is shared by coroutines. After a trip the hook
      is re-armed to fire on every instruction, so a script that wraps the loop in `pcall` (or loops over
      `pcall`) is stopped by the next instruction outside the `pcall`.
    * *C-side work:* the string and table library functions charge units proportional to their operands
-     (strings 1 per 64 bytes, tables 1 per element, sort 16 per element) against the same budget, so
+     (strings 1 per 8 bytes, tables 1 per element, sort 16 per element; 1000 calls of `s:upper()` on a
+     10 MB string stop after about 40 calls, about 1 s in Debug) against the same budget, so
      `table.insert(t, 1, x)` or `s:upper()` on a large operand in a loop cannot hide in C.
      `table.move` is bounded by `maxTableMoveElements`.
-   * *Pattern steps:* decision 3.
+   * *Pattern steps:* decision 3. Default 2 M steps (lowered from 20 M); measured 20-60 ns per step in
+     Debug, so a full budget takes 0.05-0.12 s there, for the patterns tried (backtracking on 10 MB
+     subjects, nested captures). A verifier measured about 10 s for the old 20 M on a loaded machine
+     with a pattern we could not reproduce; the lower default leaves 10x margin.
    * *Heap:* the allocator refuses growth past `maxMemoryBytes` (default 64 MiB); Lua raises "not enough
      memory", which a script may catch; its loop is then stopped by the instruction budget.
    * *Strings:* `string.rep` is refused above `maxStringBytes`; every other way to grow a string
      (`..`, `format`, `concat`) is bounded by the heap limit.
+   * *Values crossing the boundary:* one conversion (a returned value or the arguments of a host
+     call) visits at most `maxValueElements` (1 M) values and copies at most `maxValueBytes` (16 MiB) of
+     string data, besides the depth limit. Without this, a table built as a shared DAG (60 references
+     to the previous level, 15 levels) expands to 60^15 copies in the C++ heap. Over budget, a host
+     call fails with a catchable script error and a returned value ends the run with RuntimeError.
+     Cancellation is polled every 1024 values. Host exceptions of any type become script errors.
    * *Output:* `print` is captured, not written anywhere, and bounded by `maxOutputBytes`.
    * *Recursion:* Lua's own limits stay (about 200 nested C calls or metamethods, 1 M stack slots), and the
      heap limit bounds them in practice; the result is a normal error (`stack overflow`).

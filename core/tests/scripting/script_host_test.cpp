@@ -409,3 +409,91 @@ TEST_CASE("scripting: a very small heap limit fails cleanly", "[scripting][hosti
     const auto r = host.run("return 1", "t");
     CHECK(r.status == ScriptStatus::MemoryLimit);
 }
+
+TEST_CASE("scripting: hostile values crossing the boundary are budgeted", "[scripting][hostile]") {
+    // Every case below used to expand to ~60^15 copies (or hang) before the element/byte budget.
+    ScriptHost host;
+    host.registerFunction("", "id", [](const ScriptValues& a) { return a; });
+    const char* dag =
+        "local l = {1} for i = 1, 15 do local n = {} for j = 1, 60 do n[j] = l end l = n end ";
+    SECTION("shared DAG returned") {
+        const auto r = host.run(std::string(dag) + "return l", "t");
+        CHECK(r.status == ScriptStatus::RuntimeError);
+        CHECK(contains(r.message, "too large"));
+        CHECK(r.returned.empty());
+    }
+    SECTION("shared DAG passed to a host function") {
+        const auto r = host.run(std::string(dag) + "return id(l)", "t");
+        CHECK(r.status == ScriptStatus::RuntimeError);
+        CHECK(contains(r.message, "too large"));
+    }
+    SECTION("the script can catch the host-argument failure and carry on") {
+        const auto r = host.run(std::string(dag) + "local ok = pcall(id, l) return ok", "t");
+        REQUIRE(r.ok());
+        CHECK_FALSE(r.returned.at(0).asBool());
+    }
+    SECTION("cyclic wide table") {
+        const auto r = host.run("local t = {} for j = 1, 60 do t[j] = t end return t", "t");
+        REQUIRE(r.ok());  // too deep, not a budget failure: comes back as nil
+        CHECK(r.returned.at(0).isNil());
+        const auto r2 = host.run("local t = {} for j = 1, 60 do t[j] = t end return id(t)", "t");
+        CHECK_FALSE(r2.ok());
+    }
+    SECTION("wide table") {
+        ScriptLimits l;
+        l.maxValueElements = 1000;
+        ScriptHost h2(l);
+        const auto r = h2.run("local t = {} for i = 1, 5000 do t[i] = i end return t", "t");
+        CHECK(r.status == ScriptStatus::RuntimeError);
+        CHECK(contains(r.message, "too large"));
+        const auto ok = h2.run("local t = {} for i = 1, 500 do t[i] = i end return t", "t");
+        CHECK(ok.ok());
+    }
+    SECTION("long strings inside a table") {
+        ScriptLimits l;
+        l.maxValueBytes = 100'000;
+        ScriptHost h2(l);
+        h2.registerFunction("", "id", [](const ScriptValues& a) { return a; });
+        const auto r = h2.run("local s = ('x'):rep(40000) return {s, s, s}", "t");
+        CHECK(r.status == ScriptStatus::RuntimeError);
+        const auto r2 = h2.run("local s = ('x'):rep(40000) return id({s, s, s})", "t");
+        CHECK(r2.status == ScriptStatus::RuntimeError);
+        const auto ok = h2.run("return {('x'):rep(40000)}", "t");
+        CHECK(ok.ok());
+    }
+    SECTION("cancellation is polled while converting") {
+        std::atomic<bool> flag{false};
+        ScriptHost h2;
+        h2.registerFunction("", "stop", [&flag](const ScriptValues&) {
+            flag.store(true);
+            return ScriptValues{};
+        });
+        const auto r = h2.run(std::string(dag) + "stop() return l", "t", &flag);
+        CHECK_FALSE(r.ok());
+    }
+}
+
+TEST_CASE("scripting: host function throwing a non-std exception is contained", "[scripting]") {
+    ScriptHost host;
+    host.registerFunction("", "weird", [](const ScriptValues&) -> ScriptValues { throw 42; });
+    const auto r = host.run("local ok, e = pcall(weird) return ok, e", "t");
+    REQUIRE(r.ok());
+    CHECK_FALSE(r.returned.at(0).asBool());
+    const auto r2 = host.run("weird()", "t");
+    CHECK(r2.status == ScriptStatus::RuntimeError);
+}
+
+TEST_CASE("scripting: string functions on huge operands are charged", "[scripting][hostile]") {
+    // 1000 upper() calls on a 10 MB string must hit the instruction budget quickly.
+    ScriptLimits l;
+    l.maxStringBytes = 16u * 1024u * 1024u;
+    ScriptHost host(l);
+    int calls = 0;
+    host.registerFunction("", "tick", [&calls](const ScriptValues&) {
+        ++calls;
+        return ScriptValues{};
+    });
+    const auto r = host.run("local s = string.rep('x', 10000000) for i = 1, 1000 do s:upper() tick() end", "t");
+    CHECK(r.status == ScriptStatus::InstructionLimit);
+    CHECK(calls < 100);  // 1 unit per 8 bytes: about 40 calls fit in 50 M; at 1 per 64 about 320 did
+}
