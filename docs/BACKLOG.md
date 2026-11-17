@@ -1656,7 +1656,7 @@ Goal: T-0328 emits the head's (reference spindle's) path only; DrillBankResult::
 Acceptance criteria:
   1. A drill-bank job simulates one hole per active spindle, posts with the drill-bank blocks, and round-trips through .carv; app drives it.
 
-### T-0336 App dialog for the parts-list import (T-0329 follow-up)   [status: in-progress]
+### T-0336 App dialog for the parts-list import (T-0329 follow-up)   [status: verifying]
 Phase: 3   Module: app   Depends on: T-0329
 Goal: File/Edit menu entry and dialog driving the Qt-free PartsImportForm: choose CSV and mapping files (or paste), show the preview and line-numbered diagnostics, allow-partial toggle, tool choices per Profile/Drill/Pocket, Apply as one undo step; self-test.
 Acceptance criteria:
