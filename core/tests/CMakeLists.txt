@@ -11,6 +11,7 @@ add_executable(carvetto_tests
   scripting/script_host_test.cpp
   scripting/gadget_api_test.cpp
   scripting/gadget_manifest_test.cpp
+  scripting/stock_gadgets_test.cpp
   geometry/arc_segment_cap_test.cpp
   geometry/bezier_intersect_bounds_test.cpp
   geometry/bezier_work_bounds_test.cpp
@@ -228,6 +229,7 @@ target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src
 target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
+  CARVETTO_STOCK_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
   CARVETTO_SCRIPTING_TEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scripting"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"

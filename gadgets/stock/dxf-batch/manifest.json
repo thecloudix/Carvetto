@@ -1,0 +1,7 @@
+{
+  "name": "DXF Batch Processor",
+  "version": "1",
+  "api_version": 1,
+  "menu": "DXF Batch Processor",
+  "description": "Imports every DXF file of a folder you choose, one layer per file, laid out in a row, with optional profile toolpaths."
+}

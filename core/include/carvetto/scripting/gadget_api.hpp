@@ -50,6 +50,9 @@ struct GadgetUi {
     std::function<std::optional<ScriptValue::Map>(const FormSpec&)> form;
     std::function<void(const std::string&)> message;
     std::function<bool(const std::string&)> confirm;
+    /// Asks the user for a folder (UTF-8 path) or returns nullopt when they cancel. The only way a
+    /// gadget gets a path to read from (`carvetto.ui.choose_folder`, `carvetto.file.read_dxf_folder`).
+    std::function<std::optional<std::string>(const std::string& title)> chooseFolder;
 };
 
 /// A tool of the tool database as a gadget sees it.
@@ -111,6 +114,11 @@ struct GadgetLimits {
     std::size_t maxCreatedLayers = 1000;
     /// Executed `doc.set_variable` calls (that change a value) one run may make.
     std::size_t maxVariableEdits = 10'000;
+    /// DXF files `carvetto.file.read_dxf_folder` reads per call, and the largest one it opens (bytes).
+    std::size_t maxDxfFiles = 200;
+    std::size_t maxDxfFileBytes = 16u * 1024u * 1024u;
+    /// Contours one `read_dxf_folder` call hands to the script in total.
+    std::size_t maxDxfContours = 50'000;
     /// Combined time one run may spend waiting in DIALOGS (user time: `ui.message/confirm/form`), in
     /// nanoseconds (default 30 minutes). The deadline does not run during dialogs, so this is what
     /// keeps a gadget from sitting in them forever. Checked before and after every dialog: the run

@@ -1,0 +1,7 @@
+{
+  "name": "Celtic Weave Creator",
+  "version": "1",
+  "api_version": 1,
+  "menu": "Celtic Weave Creator",
+  "description": "Creates the strand vectors and a cross-section profile for a woven (Celtic) grid, ready for Extrude and Weave."
+}

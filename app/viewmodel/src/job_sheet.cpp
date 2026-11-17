@@ -228,8 +228,32 @@ struct ToolpathBlock {
 
 }  // namespace
 
+JobSheetStyle jobSheetStyleFromVariables(const document::DocumentVariables& v) {
+    JobSheetStyle st;
+    const auto colour = [&](const char* name) {
+        const std::optional<double> x = v.get(name);
+        if (!x || !(*x >= 0.0) || *x > 4.0e9) {
+            return std::uint32_t{0};
+        }
+        return static_cast<std::uint32_t>(static_cast<std::uint64_t>(*x) & 0xFFFFFFu);
+    };
+    const auto shown = [&](const char* name) {
+        const std::optional<double> x = v.get(name);
+        return !x || *x != 0.0;
+    };
+    st.headerRgb = colour("jobsheet_header_rgb");
+    st.footerRgb = colour("jobsheet_footer_rgb");
+    st.showLayout = shown("jobsheet_show_layout");
+    st.showNotes = shown("jobsheet_show_notes");
+    st.showMaterial = shown("jobsheet_show_material");
+    st.showSummary = shown("jobsheet_show_summary");
+    st.showToolpaths = shown("jobsheet_show_toolpaths");
+    return st;
+}
+
 JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, const std::string& title) {
     JobSheet s;
+    s.style = jobSheetStyleFromVariables(doc.variables());
     const document::Job& job = doc.job();
     s.title = title.empty() ? "Untitled job" : title;
     s.jobType = jobTypeName(job.type);
@@ -398,30 +422,36 @@ std::string renderJobSheetText(const JobSheet& s) {
     const Fmt f{s.inches};
     std::string o;
     o += "JOB SHEET: " + textSafe(s.title) + "\n\n";
-    o += "Material setup\n";
-    o += "  Type: " + s.jobType + "\n";
-    o += "  Size: " + f.len(s.widthMm) + " x " + f.len(s.heightMm) + " x " + f.len(s.thicknessMm) + "\n";
-    o += "  Z zero: " + s.zZero + "\n";
-    o += "  XY datum: " + s.datum + "\n\n";
-    o += "Toolpaths summary\n";
-    o += "  " + textSafe(s.readout.headline) + "\n";
-    if (!s.readout.breakdown.empty()) {
-        o += "  " + textSafe(s.readout.breakdown) + "\n";
+    if (s.style.showMaterial) {
+        o += "Material setup\n";
+        o += "  Type: " + s.jobType + "\n";
+        o += "  Size: " + f.len(s.widthMm) + " x " + f.len(s.heightMm) + " x " + f.len(s.thicknessMm) + "\n";
+        o += "  Z zero: " + s.zZero + "\n";
+        o += "  XY datum: " + s.datum + "\n\n";
     }
-    o += "  Toolpaths: " + std::to_string(s.summary.toolpaths) + " (" + std::to_string(s.summary.included) +
-         " in the estimate)\n";
-    o += "  Tools: " + std::to_string(s.summary.distinctTools) + ", tool changes: " +
-         std::to_string(s.summary.toolChanges) + "\n";
-    for (std::size_t i = 0; i < s.readout.warnings.size() && i < kJobSheetMaxWarnings; ++i) {
-        o += "  Warning: " + textSafe(s.readout.warnings[i]) + "\n";
+    if (s.style.showSummary) {
+        o += "Toolpaths summary\n";
+        o += "  " + textSafe(s.readout.headline) + "\n";
+        if (!s.readout.breakdown.empty()) {
+            o += "  " + textSafe(s.readout.breakdown) + "\n";
+        }
+        o += "  Toolpaths: " + std::to_string(s.summary.toolpaths) + " (" + std::to_string(s.summary.included) +
+             " in the estimate)\n";
+        o += "  Tools: " + std::to_string(s.summary.distinctTools) + ", tool changes: " +
+             std::to_string(s.summary.toolChanges) + "\n";
+        for (std::size_t i = 0; i < s.readout.warnings.size() && i < kJobSheetMaxWarnings; ++i) {
+            o += "  Warning: " + textSafe(s.readout.warnings[i]) + "\n";
+        }
+        if (s.readout.warnings.size() > kJobSheetMaxWarnings) {
+            o += "  ... and " + std::to_string(s.readout.warnings.size() - kJobSheetMaxWarnings) + " more warnings\n";
+        }
+        o += "\nTools\n";
+        textTools(o, s.tools, s.toolsTotal, f);
     }
-    if (s.readout.warnings.size() > kJobSheetMaxWarnings) {
-        o += "  ... and " + std::to_string(s.readout.warnings.size() - kJobSheetMaxWarnings) + " more warnings\n";
+    if (s.style.showToolpaths) {
+        o += "\nToolpaths list\n";
+        textToolpaths(o, s.toolpaths, s.toolpathsTotal, f);
     }
-    o += "\nTools\n";
-    textTools(o, s.tools, s.toolsTotal, f);
-    o += "\nToolpaths list\n";
-    textToolpaths(o, s.toolpaths, s.toolpathsTotal, f);
     if (!s.sides.empty()) {
         textSides(o, s, f);
     }
@@ -510,6 +540,45 @@ void htmlSides(std::string& o, const JobSheet& s, const Fmt& f,
 
 }  // namespace
 
+namespace {
+
+/// "#RRGGBB" of a number (digits only, so nothing a gadget supplies can add markup).
+std::string hexColour(std::uint32_t rgb) {
+    static const char* digits = "0123456789ABCDEF";
+    std::string out = "#";
+    for (int shift = 20; shift >= 0; shift -= 4) {
+        out += digits[(rgb >> shift) & 0xFu];
+    }
+    return out;
+}
+
+/// Black or white text, whichever reads better on `rgb`.
+const char* textOn(std::uint32_t rgb) {
+    const unsigned r = (rgb >> 16) & 0xFFu;
+    const unsigned g = (rgb >> 8) & 0xFFu;
+    const unsigned b = rgb & 0xFFu;
+    return (r * 299u + g * 587u + b * 114u) / 1000u > 140u ? "#000000" : "#FFFFFF";
+}
+
+std::string header(std::uint32_t rgb, const char* tag, const std::string& inner) {
+    const std::string t = tag;
+    if (rgb == 0) {
+        return "<" + t + ">" + inner + "</" + t + ">\n";
+    }
+    return "<" + t + " style=\"background:" + hexColour(rgb) + ";color:" + textOn(rgb) + ";padding:6px 10px\">" + inner +
+           "</" + t + ">\n";
+}
+
+std::string footer(std::uint32_t rgb) {
+    if (rgb == 0) {
+        return {};
+    }
+    return "<p style=\"background:" + hexColour(rgb) + ";color:" + textOn(rgb) +
+           ";padding:6px 10px;margin-top:24px\">Carvetto job sheet</p>\n";
+}
+
+}  // namespace
+
 std::string renderJobSheetHtml(const JobSheet& s) {
     const Fmt f{s.inches};
     auto e = [](const std::string& x) { return escapeHtml(clipJobSheetText(x)); };
@@ -518,46 +587,55 @@ std::string renderJobSheetHtml(const JobSheet& s) {
     o += "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Job sheet - " + e(s.title) +
          "</title>\n<style>body{font-family:sans-serif}table{border-collapse:collapse}"
          "td,th{border:1px solid #888;padding:2px 8px;text-align:left}</style>\n</head>\n<body>\n";
-    o += "<h1>Job sheet: " + e(s.title) + "</h1>\n";
-    const std::string svg = layoutSvg(s.material, s.toolpaths);
-    if (!svg.empty()) {
-        o += "<h2>Job layout</h2>\n" + svg;
-        if (const std::size_t omitted = thumbnailOmitted(s.toolpaths, s.thumbnailOmitted); omitted > 0) {
-            o += "<p>The layout shows the first " + std::to_string(kJobSheetMaxToolpathRows) + " toolpaths; " +
-                 std::to_string(omitted) + " more are not drawn.</p>\n";
+    o += header(s.style.headerRgb, "h1", "Job sheet: " + e(s.title));
+    if (s.style.showLayout) {
+        const std::string svg = layoutSvg(s.material, s.toolpaths);
+        if (!svg.empty()) {
+            o += "<h2>Job layout</h2>\n" + svg;
+            if (const std::size_t omitted = thumbnailOmitted(s.toolpaths, s.thumbnailOmitted); omitted > 0) {
+                o += "<p>The layout shows the first " + std::to_string(kJobSheetMaxToolpathRows) + " toolpaths; " +
+                     std::to_string(omitted) + " more are not drawn.</p>\n";
+            }
         }
     }
-    o += "<h2>Material setup</h2>\n<table>\n";
-    o += "<tr><th>Type</th>" + td(s.jobType) + "</tr>\n";
-    o += "<tr><th>Size</th>" + td(f.len(s.widthMm) + " x " + f.len(s.heightMm) + " x " + f.len(s.thicknessMm)) +
-         "</tr>\n";
-    o += "<tr><th>Z zero</th>" + td(s.zZero) + "</tr>\n";
-    o += "<tr><th>XY datum</th>" + td(s.datum) + "</tr>\n</table>\n";
-    o += "<h2>Toolpaths summary</h2>\n<p>" + e(s.readout.headline) + "</p>\n";
-    if (!s.readout.breakdown.empty()) {
-        o += "<p>" + e(s.readout.breakdown) + "</p>\n";
+    if (s.style.showMaterial) {
+        o += "<h2>Material setup</h2>\n<table>\n";
+        o += "<tr><th>Type</th>" + td(s.jobType) + "</tr>\n";
+        o += "<tr><th>Size</th>" + td(f.len(s.widthMm) + " x " + f.len(s.heightMm) + " x " + f.len(s.thicknessMm)) +
+             "</tr>\n";
+        o += "<tr><th>Z zero</th>" + td(s.zZero) + "</tr>\n";
+        o += "<tr><th>XY datum</th>" + td(s.datum) + "</tr>\n</table>\n";
     }
-    o += "<p>Toolpaths: " + std::to_string(s.summary.toolpaths) + " (" + std::to_string(s.summary.included) +
-         " in the estimate). Tools: " + std::to_string(s.summary.distinctTools) +
-         ", tool changes: " + std::to_string(s.summary.toolChanges) + ".</p>\n";
-    if (!s.readout.warnings.empty()) {
-        o += "<ul class=\"warnings\">\n";
-        for (std::size_t i = 0; i < s.readout.warnings.size() && i < kJobSheetMaxWarnings; ++i) {
-            o += "<li>" + e(s.readout.warnings[i]) + "</li>\n";
+    if (s.style.showSummary) {
+        o += "<h2>Toolpaths summary</h2>\n<p>" + e(s.readout.headline) + "</p>\n";
+        if (!s.readout.breakdown.empty()) {
+            o += "<p>" + e(s.readout.breakdown) + "</p>\n";
         }
-        if (s.readout.warnings.size() > kJobSheetMaxWarnings) {
-            o += "<li>... and " + std::to_string(s.readout.warnings.size() - kJobSheetMaxWarnings) +
-                 " more warnings</li>\n";
+        o += "<p>Toolpaths: " + std::to_string(s.summary.toolpaths) + " (" + std::to_string(s.summary.included) +
+             " in the estimate). Tools: " + std::to_string(s.summary.distinctTools) +
+             ", tool changes: " + std::to_string(s.summary.toolChanges) + ".</p>\n";
+        if (!s.readout.warnings.empty()) {
+            o += "<ul class=\"warnings\">\n";
+            for (std::size_t i = 0; i < s.readout.warnings.size() && i < kJobSheetMaxWarnings; ++i) {
+                o += "<li>" + e(s.readout.warnings[i]) + "</li>\n";
+            }
+            if (s.readout.warnings.size() > kJobSheetMaxWarnings) {
+                o += "<li>... and " + std::to_string(s.readout.warnings.size() - kJobSheetMaxWarnings) +
+                     " more warnings</li>\n";
+            }
+            o += "</ul>\n";
         }
-        o += "</ul>\n";
+        o += "<h2>Tools</h2>\n";
+        htmlTools(o, s.tools, s.toolsTotal, f, e, td);
     }
-    o += "<h2>Tools</h2>\n";
-    htmlTools(o, s.tools, s.toolsTotal, f, e, td);
-    o += "<h2>Toolpaths list</h2>\n";
-    htmlToolpaths(o, s.toolpaths, s.toolpathsTotal, f, td);
+    if (s.style.showToolpaths) {
+        o += "<h2>Toolpaths list</h2>\n";
+        htmlToolpaths(o, s.toolpaths, s.toolpathsTotal, f, td);
+    }
     if (!s.sides.empty()) {
         htmlSides(o, s, f, e, td);
     }
+    o += footer(s.style.footerRgb);
     o += "</body>\n</html>\n";
     return o;
 }

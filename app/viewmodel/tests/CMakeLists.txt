@@ -13,6 +13,7 @@ endif()
 
 add_executable(carvetto_viewmodel_tests
   gadget_manager_test.cpp
+  stock_gadgets_test.cpp
   bitmap_trace_test.cpp
   clipart_test.cpp
   relief_tree_test.cpp
@@ -99,6 +100,7 @@ target_compile_definitions(carvetto_viewmodel_tests PRIVATE
   CARVETTO_VM_WORK_DIR="${CMAKE_CURRENT_BINARY_DIR}/work"
   CARVETTO_TEXT_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/core/tests/fixtures/text"
   CARVETTO_DXF_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/core/tests/fixtures/dxf"
+  CARVETTO_STOCK_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
 )

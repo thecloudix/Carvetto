@@ -102,6 +102,23 @@ using RenameFn = std::function<std::error_code(const std::filesystem::path& from
 InstallResult installGadget(const std::filesystem::path& source, const std::filesystem::path& root,
                             std::size_t maxScriptBytes, bool replace = false, const RenameFn& rename = {});
 
+/// What `installShippedGadgets` did.
+struct ShippedInstall {
+    /// Names of the gadgets installed or updated.
+    std::vector<std::string> installed;
+    /// "folder: reason" for each shipped gadget that could not be installed.
+    std::vector<std::string> errors;
+};
+
+/// Installs the gadgets that ship with the application (`shippedRoot`, one folder per gadget, same
+/// layout as an install source) into the user's gadgets folder `root`: a gadget that is missing is
+/// installed, one whose installed manifest `version` differs from the shipped one is replaced, one
+/// that is installed at the same version is left alone (so a user's edit survives until the next
+/// release). A user gadget with the same name but a different folder is never touched (the folder name
+/// is derived from the name, see `gadgetFolderName`). A missing `shippedRoot` installs nothing.
+ShippedInstall installShippedGadgets(const std::filesystem::path& shippedRoot, const std::filesystem::path& root,
+                                     std::size_t maxScriptBytes);
+
 /// The folder name an installed gadget gets: a pure function of the EXACT full name, "<slug>-<16 hex>"
 /// where the slug is the lower-case ASCII letters/digits of the name (other runs become one '-', at
 /// most 40 characters, "gadget" when nothing is left) and the hex is a 64-bit hash of every byte of the

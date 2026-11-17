@@ -1,6 +1,9 @@
 #include "carvetto/scripting/gadget_api.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <filesystem>
+#include <fstream>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -19,6 +22,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/geometry/transform2.hpp"
+#include "carvetto/io/dxf.hpp"
 
 // Binding of the gadget API (ADR-0102, ADR-0108). Every function validates its arguments and
 // raises a ScriptError with a message naming the function; nothing here can crash on a bad id or
@@ -72,6 +76,8 @@ struct Session {
     std::size_t dialogCalls{0};
     std::size_t layerCalls{0};
     std::size_t variableEdits{0};
+    /// Folders the user picked in `ui.choose_folder` during this run: the only paths a gadget may read.
+    std::set<std::string> chosenFolders;
     /// Set when a cap that a script must not be able to swallow with pcall is crossed (waiting
     /// budgets, the dialog cap): the run fails at the end whatever the script did with the error.
     std::string overrun;
@@ -1352,6 +1358,112 @@ GadgetRunResult runGadget(document::Document& doc, const GadgetServices& service
         }
         s.countDialog(fn);
         return one(ScriptValue(s.paused(fn, Session::Wait::Dialog, [&] { return s.sv.ui.confirm(text); })));
+    });
+
+    reg("carvetto.ui", "choose_folder", [&s](const ScriptValues& a) {
+        const std::string fn = "carvetto.ui.choose_folder";
+        const std::string title = a.empty() || a[0].isNil() ? std::string("Choose a folder") : stringArg(fn, a, 0, "title");
+        if (title.size() > kMaxNameBytes || hasControl(title)) {
+            fail(fn, "bad title");
+        }
+        if (!s.sv.ui.chooseFolder) {
+            fail(fn, "no user interface available");
+        }
+        s.countDialog(fn);
+        std::optional<std::string> got = s.paused(fn, Session::Wait::Dialog, [&] { return s.sv.ui.chooseFolder(title); });
+        if (!got || got->empty() || got->size() > 4096 || got->find('\0') != std::string::npos) {
+            return one(ScriptValue());
+        }
+        s.chosenFolders.insert(*got);
+        return one(ScriptValue(*got));
+    });
+
+    // ---- files: DXF folders the user chose ------------------------------------------------------
+    reg("carvetto.file", "read_dxf_folder", [&s](const ScriptValues& a) {
+        const std::string fn = "carvetto.file.read_dxf_folder";
+        const std::string folder = stringArg(fn, a, 0, "folder");
+        if (!s.chosenFolders.contains(folder)) {
+            fail(fn, "only a folder the user chose with carvetto.ui.choose_folder can be read");
+        }
+        namespace fs = std::filesystem;
+        const fs::path dir(std::u8string(folder.begin(), folder.end()));
+        std::error_code ec;
+        if (!fs::is_directory(dir, ec)) {
+            fail(fn, "the folder does not exist");
+        }
+        std::vector<std::pair<std::string, fs::path>> files;
+        for (fs::directory_iterator it(dir, ec), end; !ec && it != end; it.increment(ec)) {
+            const fs::directory_entry& de = *it;
+            std::error_code e2;
+            if (de.is_symlink(e2) || !de.is_regular_file(e2)) {
+                continue;
+            }
+            std::string ext = de.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), [](char c) {
+                return static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            });
+            if (ext != ".dxf") {
+                continue;
+            }
+            const std::u8string n8 = de.path().filename().u8string();
+            files.emplace_back(std::string(n8.begin(), n8.end()), de.path());
+            if (files.size() > s.gl.maxDxfFiles) {
+                fail(fn, "the folder holds more than " + std::to_string(s.gl.maxDxfFiles) + " DXF files");
+            }
+        }
+        std::sort(files.begin(), files.end());
+        ScriptValue::Array out;
+        std::size_t contourTotal = 0;
+        for (const auto& [fname, path] : files) {
+            ScriptValue::Map entry;
+            const std::u8string stem8 = path.stem().u8string();
+            const std::string stem(stem8.begin(), stem8.end());
+            std::string error;
+            ScriptValue::Array contours;
+            std::size_t warnings = 0;
+            std::error_code e3;
+            const std::uintmax_t size = fs::file_size(path, e3);
+            if (e3) {
+                error = "the file cannot be read";
+            } else if (size > s.gl.maxDxfFileBytes) {
+                error = "the file is larger than " + std::to_string(s.gl.maxDxfFileBytes / (1024u * 1024u)) + " MiB";
+            } else {
+                std::ifstream in(path, std::ios::binary);
+                std::vector<std::uint8_t> bytes(static_cast<std::size_t>(size));
+                if (!bytes.empty()) {
+                    in.read(reinterpret_cast<char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+                }
+                if (!in && !bytes.empty()) {
+                    error = "the file cannot be read";
+                } else {
+                    io::DxfImportOptions opt;
+                    opt.maxSpans = 200'000;
+                    opt.maxTexts = 1000;
+                    opt.maxInstances = 20'000;
+                    const io::DxfResult<io::DxfDrawing> dr = io::importDxf(bytes, opt);
+                    if (!dr.ok()) {
+                        error = dr.error().describe();
+                    } else {
+                        warnings = dr.value().warnings.size();
+                        for (const io::DxfContour& c : dr.value().contours) {
+                            if (++contourTotal > s.gl.maxDxfContours) {
+                                fail(fn, "the DXF files hold more than " + std::to_string(s.gl.maxDxfContours) + " contours");
+                            }
+                            contours.push_back(contourValue(c.contour));
+                        }
+                    }
+                }
+            }
+            entry.items.emplace_back("contours", ScriptValue(std::move(contours)));
+            entry.items.emplace_back("file", ScriptValue(fname));
+            entry.items.emplace_back("name", ScriptValue(stem));
+            if (!error.empty()) {
+                entry.items.emplace_back("error", ScriptValue(error));
+            }
+            entry.items.emplace_back("warnings", ScriptValue(static_cast<std::int64_t>(warnings)));
+            out.push_back(ScriptValue(std::move(entry)));
+        }
+        return one(ScriptValue(std::move(out)));
     });
 
     // ---- run -----------------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+{
+  "name": "Drag Knife Toolpath",
+  "version": "1",
+  "api_version": 1,
+  "menu": "Drag Knife Toolpath",
+  "description": "Creates a drag-knife toolpath for the selected vectors: blade offset, corner swivels, depth passes."
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -95,8 +96,30 @@ struct JobSheetSide {
     std::size_t thumbnailOmitted{0};
 };
 
+/// How the sheet is dressed, set by the "Job Setup Sheet Editor" gadget (T-0332, ADR-0113) through the
+/// document variables `jobsheet_header_rgb`, `jobsheet_footer_rgb` (0xRRGGBB as a number; 0 or absent =
+/// none) and `jobsheet_show_layout`, `jobsheet_show_notes`, `jobsheet_show_material`,
+/// `jobsheet_show_summary`, `jobsheet_show_toolpaths` (0 = hidden; absent or anything else = shown). The
+/// defaults print the sheet exactly as it was before the editor existed. Colours only touch the HTML
+/// form; sections apply to both forms ("notes" is stored for a future notes section: the sheet has none
+/// yet).
+struct JobSheetStyle {
+    std::uint32_t headerRgb{0};
+    std::uint32_t footerRgb{0};
+    bool showLayout{true};
+    bool showNotes{true};
+    bool showMaterial{true};
+    bool showSummary{true};
+    bool showToolpaths{true};
+    bool operator==(const JobSheetStyle&) const = default;
+};
+
+/// The style stored in `variables` (see `JobSheetStyle`); out-of-range colours are masked to 24 bits.
+JobSheetStyle jobSheetStyleFromVariables(const document::DocumentVariables& variables);
+
 struct JobSheet {
     std::string title;
+    JobSheetStyle style;
     // Material setup.
     std::string jobType;
     double widthMm{0.0};
