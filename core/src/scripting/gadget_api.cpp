@@ -804,7 +804,9 @@ std::vector<toolpath::Move> parseMoves(const std::string& fn, const ScriptValue&
         } else if (kind == "retract") {
             m = toolpath::Move::retract(to, feed);
         } else if (kind == "arc_cw" || kind == "arc_ccw") {
-            const Vec2 c{p.num("cx"), p.num("cy")};
+            const double cx = p.num("cx");
+            const double cy = p.num("cy");
+            const Vec2 c{cx, cy};
             m = kind == "arc_cw" ? toolpath::Move::arcCW(to, c, feed) : toolpath::Move::arcCCW(to, c, feed);
         } else if (dwell) {
             const double secs = p.num("seconds");

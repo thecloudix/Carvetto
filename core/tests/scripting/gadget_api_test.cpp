@@ -871,6 +871,7 @@ TEST_CASE("gadget: a failing toolpath rolls the whole run back", "[gadget][t0331
         r = runGadget(doc, sv, "carvetto.toolpath.create_custom('x', 'em3', {{kind='dwell', seconds=1}})", "g", quick());
         CHECK(contains(r.script.message, "needs x, y and z"));
         r = runGadget(doc, sv, "carvetto.toolpath.create_custom('x', 'em3', {{kind='arc_cw', x=1, y=1, z=0}})", "g", quick());
+        CAPTURE(r.script.message);
         CHECK(contains(r.script.message, "missing parameter 'cx'"));
         r = runGadget(doc, sv, "carvetto.toolpath.create_custom('x', 'em3', {{kind='feed', x=1, y=1, z=0, feed=0}})", "g", quick());
         CHECK(contains(r.script.message, "feed must be positive"));
