@@ -1656,7 +1656,7 @@ Goal: T-0328 emits the head's (reference spindle's) path only; DrillBankResult::
 Acceptance criteria:
   1. A drill-bank job simulates one hole per active spindle, posts with the drill-bank blocks, and round-trips through .carv; app drives it.
 
-### T-0336 App dialog for the parts-list import (T-0329 follow-up)   [status: verifying]
+### T-0336 App dialog for the parts-list import (T-0329 follow-up)   [status: verifying — PR #217 in CI]
 Phase: 3   Module: app   Depends on: T-0329
 Goal: File/Edit menu entry and dialog driving the Qt-free PartsImportForm: choose CSV and mapping files (or paste), show the preview and line-numbered diagnostics, allow-partial toggle, tool choices per Profile/Drill/Pocket, Apply as one undo step; self-test.
 Acceptance criteria:
@@ -1680,7 +1680,7 @@ Goal: main's windows-app job failed from T-0328 on with `toolpath_form.cpp : fat
 Acceptance criteria:
   1. windows-app CI job passes on the PR and on main.
 
-### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: verifying]
+### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: verifying — PR #218 in CI]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0322, T-0334
 Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) but no Qt dialog, menu entry or self-test. Add the dialogs and menu entries for rotary jobs, let a following Fluting toolpath take its depth from the layout, preview the layouts in the wrapped view (needs T-0334), and drive it all from --self-test.
 Acceptance criteria:
@@ -1698,7 +1698,7 @@ Goal: windows-app fails on current main: 'T-0335: the spindle tags carry the hea
 Acceptance criteria:
   1. windows-app CI passes on the PR; the fix is root-caused, not a skip.
 
-### T-0343 Rotary job depth reference: toolpath Z on a rotary job whose Z zero is the cylinder axis   [status: verifying — PR #216 in CI]
+### T-0343 Rotary job depth reference: toolpath Z on a rotary job whose Z zero is the cylinder axis   [status: done — PR #216]
 Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0334
 Goal: found by the T-0334 coder: on a rotary job with Z zero at the axis (the Job::rotary default), a Profile with cutDepth 2 computes Z around -2 with safe Z 5, which is below the cylinder surface (Z = radius) so the simulation cuts nothing. Decide and implement how toolpath depths are referenced on such jobs (e.g. default the Z zero to the material surface for rotary jobs, or offset depths by the radius), with an ADR stating the reading.
 Acceptance criteria:
