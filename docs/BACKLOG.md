@@ -1709,3 +1709,89 @@ Phase: 3   Module: gadgets + core/scripting   Depends on: T-0332
 Goal: T-0332 left the Job Setup Sheet Editor without the logo (needs a validated read-file service, reusing io/png_guard) and without a Job Notes section on the sheet. Add both, plus a "do not reinstall" marker for deleted stock gadgets.
 Acceptance criteria:
   1. The sheet shows a chosen logo and the notes section; a deleted stock gadget stays deleted; tests cover the validation of hostile images.
+
+## Phase 4 — Polish & Linux (cards written 2026-11-17 from docs/PLAN.md §4; owner: start automatically, drive to a completed stage)
+
+### T-0345 3D-view drawing: draw vectors on the model's zero plane from the 3D view   [status: ready]
+Phase: 4   Module: app/viewmodel + app   Depends on: T-0299
+Goal: In the 3D (Model) view the user can draw the basic shapes (line, polyline, rectangle, circle, ellipse, polygon) by clicking on the zero plane through a ray-to-plane pick, creating ordinary document vectors in one undo step each. Qt-free ray/plane projection and a drawing controller in viewmodel; app wiring and --self-test steps.
+Acceptance criteria:
+  1. A rectangle and a circle drawn in the 3D view appear as document vectors at the picked plane coordinates; undo removes each; picks off the plane or in wrapped rotary view are refused; self-test drives it.
+
+### T-0346 3D-view editing: move, scale and node-edit vectors from the 3D view   [status: blocked — waits on T-0345]
+Phase: 4   Module: app/viewmodel + app   Depends on: T-0345
+Goal: Select, move, scale, rotate and node-edit vectors directly in the 3D view using the same ray/plane pick, reusing the 2D editing commands (no duplicate geometry code). One undo step per drag.
+Acceptance criteria:
+  1. Dragging a selected vector in the 3D view moves it exactly as the 2D canvas does; node edit works; undo; self-test drives it.
+
+### T-0347 Plate production: data merge (CSV rows into a template with variables, one plate per row)   [status: ready]
+Phase: 4   Module: core/io + app/viewmodel + app   Depends on: T-0257
+Goal: Plate production / data merge from the feature inventory: a template job with document variables and text fields is replicated once per CSV row (column to variable mapping, serial-number sequences, per-row text), laid out on sheets or output as one toolpath file per plate. Bounded and deterministic; clean-room, generic CSV, own UI copy. Qt-free engine and form, then a dialog and self-test.
+Acceptance criteria:
+  1. A 20-row CSV produces 20 plates with the right text/variables, laid out and toolpath-ready, as one undo step; malformed rows give line-numbered diagnostics; caps on rows and size; self-test drives it.
+
+### T-0348 Options dialog parity: a complete, persisted settings model and dialog   [status: in-progress]
+Phase: 4   Module: app/viewmodel + app   Depends on: none
+Goal: Audit every user preference currently scattered across the app (units, grid and snap, colours, autosave, undo depth, default folders, simulation quality, display options, tool database paths, language placeholder) into one Qt-free Settings model with defaults, validation, versioned persistence (QSettings in the app only) and an Options dialog with categories and Restore Defaults. Existing ad hoc settings migrate to it.
+Acceptance criteria:
+  1. One Options dialog edits all persisted preferences; invalid values are refused; restore defaults works; settings survive a restart (self-test round trip); no preference remains outside the model (audit list in the ADR).
+
+### T-0349 Printing: print the design, the toolpath preview and the job sheet, with print preview and tiling   [status: ready]
+Phase: 4   Module: app/viewmodel + app   Depends on: T-0259
+Goal: File > Print and Print Preview for the 2D design (scale to fit or true size with tiling over pages), the toolpath preview, and the job sheet (existing HTML and PDF export reused). Qt-free page-layout/tiling model in viewmodel; QPrinter use in app only; PDF output path for headless self-test.
+Acceptance criteria:
+  1. A design larger than a page tiles correctly at 1:1 with registration marks; fit-to-page scales; print to PDF in --self-test produces the expected page count.
+
+### T-0350 Localization infrastructure: translatable strings, language option, pseudo-locale test   [status: ready]
+Phase: 4   Module: app + CMake + tools   Depends on: T-0348 (language setting) — may start the Qt-linguist plumbing first
+Goal: Qt Linguist plumbing: CMake lupdate/lrelease targets, translation loading with fallback to English, a language choice in Options, a pseudo-locale and a lint check that no new user-visible literal bypasses tr() in new code, plus one real sample translation as proof (own wording). Translations ship as .qm in the install.
+Acceptance criteria:
+  1. Choosing the pseudo-locale visibly transforms menus and dialogs in --self-test; missing translations fall back to English; the lint test runs in ctest.
+
+### T-0351 Localization sweep: wrap all user-visible strings in tr() and extract the catalog   [status: blocked — waits on T-0350]
+Phase: 4   Module: app   Depends on: T-0350
+Goal: Mechanically wrap every user-visible string in the app in tr()/QCoreApplication::translate with disambiguating context, keep plain-text rules, regenerate the .ts catalog, and make sure no self-test depends on English literals beyond object names. Large mechanical change: do it when few other app tasks are open (director schedules).
+Acceptance criteria:
+  1. Pseudo-locale run shows no untranslated visible string in a scripted sweep of all menus and dialogs; full test suite green on Linux and Windows.
+
+### T-0352 Windows installer: package the app (installer, file association, uninstall) built in CI   [status: in-progress]
+Phase: 4   Module: packaging + CI   Depends on: none
+Goal: A Windows installer (CPack with NSIS or WiX, whichever installs cleanly on the CI runner) bundling Qt via windeployqt, shipped posts, gadgets, starter tool database, translations and licences; .carv file association; Start-menu entry; clean uninstall. CI builds it as an artifact on main/tag; a smoke job installs silently and runs `carvetto --self-test`.
+Acceptance criteria:
+  1. CI produces a Windows installer artifact whose installed app passes --self-test; uninstall removes everything it installed.
+
+### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: ready]
+Phase: 4   Module: packaging + CI   Depends on: none
+Goal: Linux packaging: install rules (binary, share/carvetto posts/gadgets/tooldb/translations), .desktop file, MIME type for .carv, icon set (own artwork), CPack DEB/RPM and an AppImage built in CI on Ubuntu 24.04; smoke job installs and runs --self-test offscreen.
+Acceptance criteria:
+  1. CI produces DEB and AppImage artifacts that pass --self-test; `carvetto` finds its shipped resources from the install prefix (shipped-gadgets path already supports ../share/carvetto).
+
+### T-0354 End-to-end acceptance: the PLAN.md §5 MVP scenario as an automated test   [status: in-progress]
+Phase: 4   Module: core/tests + app/viewmodel/tests   Depends on: none
+Goal: Automate the MVP acceptance test: open a DXF, add text on a curve, pocket + profile with tabs, V-carve the text with a clearance tool, simulate, post to a shipped Grbl post, and check the G-code (golden file) and simulation result; add a 3D variant (import STL, rough + finish, post) and a rotary variant. Any defect found is fixed in this card or split into a card with a reproducer.
+Acceptance criteria:
+  1. The three scenarios run in ctest headless and deterministically; golden files documented; defects found are fixed or carded.
+
+### T-0355 User documentation: guide, quick start, in-app help and reference index   [status: ready]
+Phase: 4   Module: docs + app   Depends on: none
+Goal: Own-wording user documentation under docs/user/ (quick start, drawing, editing, toolpaths, 3D relief, rotary, laser, gadgets, posts and machines, FAQ), an in-app Help menu opening it (offline, bundled), and an index linking the ADR/post/gadget guides. No third-party product names.
+Acceptance criteria:
+  1. Quick-start walks the MVP scenario with the real menu names (checked by a test that greps menu object names/labels against the doc); Help menu opens the bundled docs; clean-room lint passes.
+
+### T-0356 Compliance audit: clean-room scan, licences/NOTICE, dependency inventory   [status: in-progress]
+Phase: 4   Module: tools + docs   Depends on: none
+Goal: A scripted audit run in ctest and CI: no third-party product/trademark names or proprietary formats in code, docs, UI strings, samples or changelog (allowlist for factual compatibility claims like the .pp post format); NOTICE/THIRD_PARTY file listing every bundled dependency (Lua, miniz, ...) with licence text; SPDX headers or a licence file check.
+Acceptance criteria:
+  1. Audit passes on main and fails on an injected violation (test); THIRD_PARTY lists all FetchContent/bundled deps with licences.
+
+### T-0357 Robustness: autosave and crash recovery, large-file and low-memory behaviour   [status: ready]
+Phase: 4   Module: app/viewmodel + app + core/document   Depends on: T-0348
+Goal: Autosave to a recovery file at an interval from Options, recovery prompt after an unclean exit, atomic save (write temp, fsync, rename) with backup of the previous file, and graceful refusal (not crash) on files/operations exceeding documented caps. Fuzz-style tests on .carv loading with truncated/corrupt files.
+Acceptance criteria:
+  1. A killed session is recovered on next start (self-test simulated); corrupt/truncated .carv files give a clear error, never a crash (corpus test); atomic save leaves a valid file on injected failure.
+
+### T-0358 Release 0.1.0: version stamping, About dialog, release PR and tag   [status: blocked — waits on T-0345..T-0357 and T-0337, T-0318]
+Phase: 4   Module: CMake + app + changelog   Depends on: all Phase 3 and 4 cards
+Goal: Version from one source (CMake project VERSION) into binary, installer and About dialog (licence, dependencies, build info); assemble the changelog fragments in their own PR (python3 tools/changelog.py assemble), then a release PR inserting the `## 0.1.0` heading, then tag v0.1.0 and attach installer/package artifacts. Director cuts the release after verifying main is green on all jobs.
+Acceptance criteria:
+  1. Tag v0.1.0 exists with artifacts; About dialog shows the version; changelog check passes.
