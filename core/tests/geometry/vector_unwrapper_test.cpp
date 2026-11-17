@@ -165,6 +165,15 @@ TEST_CASE("unwrapper: refinement keeps every point on the source and the unrolle
         CHECK(distance(truth, chord) <= 0.01 + 1e-9);
         CHECK(back.points[k + 1].y > back.points[k].y);  // in order, no duplicates
     }
+    // Tolerance is approximate (three samples per piece: 1/4, 1/2, 3/4): every quarter point of every piece stays
+    // within it, give or take a fraction of a percent.
+    for (std::size_t k = 0; k + 1 < back.points.size(); ++k) {
+        for (const double t : {0.25, 0.75}) {
+            const Vec2 s = back.points[k] + (back.points[k + 1] - back.points[k]) * t;
+            const Vec2 truth{std::atan2(s.y, 10.0) * 10.0, std::hypot(10.0, s.y)};
+            CHECK(distance(truth, p[k] + (p[k + 1] - p[k]) * t) <= 0.01 * 1.005);
+        }
+    }
     // Operation counter: a tighter tolerance needs more points, deterministically.
     o.tolerance = 0.001;
     auto finer = unwrapCrossSection(seg, o);
@@ -176,6 +185,30 @@ TEST_CASE("unwrapper: refinement keeps every point on the source and the unrolle
     Polyline radial;
     radial.points = {{1, 1}, {5, 5}};
     CHECK(unwrapCrossSection(radial, o).value().contour.points.size() == 2);
+}
+
+TEST_CASE("unwrapper: refinement samples a quarter and three quarters, not only the middle", "[geometry][rotary][unwrapper]") {
+    // On a large cylinder the angle part of the error is an S-curve through the chord's middle: the middle is within
+    // tolerance (0.0125 < 0.014) while the quarter points are not (about 0.0156), so the piece must be split.
+    Polyline seg;
+    seg.points = {{10, -0.5}, {10, 0.5}};
+    UnwrapOptions o = opts(1000.0);
+    o.centre = UnwrapCentre::Custom;
+    o.customCentre = {0, 0};
+    o.refine = true;
+    o.tolerance = 0.014;
+    const auto r = unwrapCrossSection(seg, o);
+    REQUIRE(r.ok());
+    const auto& p = r.value().contour.points;
+    CHECK(p.size() > 2);
+    const Polyline back = wrapCrossSection(r.value().contour, {0, 0}, 1000.0, false);
+    for (std::size_t k = 0; k + 1 < back.points.size(); ++k) {
+        for (const double t : {0.25, 0.5, 0.75}) {
+            const Vec2 s = back.points[k] + (back.points[k + 1] - back.points[k]) * t;
+            const Vec2 truth{std::atan2(s.y, 10.0) * 1000.0, std::hypot(10.0, s.y)};
+            CHECK(distance(truth, p[k] + (p[k + 1] - p[k]) * t) <= 0.014 * 1.005);
+        }
+    }
 }
 
 TEST_CASE("unwrapper: closed refined contour keeps its closing segment curved", "[geometry][rotary][unwrapper]") {
@@ -226,6 +259,28 @@ TEST_CASE("unwrapper: refused inputs and the point cap", "[geometry][rotary][unw
     c.centre = UnwrapCentre::Workspace;
     c.workspaceCentre = {0, std::nan("")};
     CHECK_FALSE(unwrapCrossSection(ok, c).ok());
+    // Huge coordinates: refused with an error, never inf with ok. (min + max would overflow at 1e308.)
+    Polyline big;
+    big.points = {{1e308, 1e308}, {1.5e308, 1e308}};
+    const auto bigResult = unwrapCrossSection(big, opts());
+    CHECK_FALSE(bigResult.ok());
+    CHECK_FALSE(bigResult.error().empty());
+    Polyline wide;
+    wide.points = {{-1e300, 0.0}, {1e300, 1.0}};
+    CHECK_FALSE(unwrapCrossSection(wide, opts()).ok());
+    UnwrapOptions farCentre = opts();
+    farCentre.centre = UnwrapCentre::Custom;
+    farCentre.customCentre = {1e300, 0.0};
+    CHECK_FALSE(unwrapCrossSection(ok, farCentre).ok());
+    CHECK_FALSE(unwrapCrossSection(ok, opts(1e300)).ok());
+    Polyline large;  // large but in range: finite and ok
+    large.points = {{1e90, 1e90}, {2e90, 1e90}};
+    const auto largeResult = unwrapCrossSection(large, opts());
+    REQUIRE(largeResult.ok());
+    for (const Vec2& q : largeResult.value().contour.points) {
+        CHECK(std::isfinite(q.x));
+        CHECK(std::isfinite(q.y));
+    }
     Polyline many;
     for (std::size_t i = 0; i <= kMaxUnwrapPoints; ++i) many.points.push_back({1.0 + static_cast<double>(i % 7), static_cast<double>(i % 5)});
     CHECK_FALSE(unwrapCrossSection(many, opts()).ok());

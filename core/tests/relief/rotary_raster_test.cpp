@@ -156,6 +156,9 @@ TEST_CASE("rotary raster: placement along the axis, axis movement, zero radius",
     auto z1 = meshToRotaryField(cube, o);
     REQUIRE(z1.ok());
     CHECK(at(z1.value(), 5, 0) == 0.0F);  // below the zero radius: clamped
+    // maxRadius is the distance from the axis, not the (clamped) height above the zero radius.
+    CHECK(z1.value().maxRadius > 6.0);
+    CHECK(z1.value().maxRadius == Approx(5.0 * std::sqrt(2.0)).margin(0.1));
     o.discardBelowZero = false;
     auto z2 = meshToRotaryField(cube, o);
     REQUIRE(z2.ok());
@@ -236,6 +239,15 @@ TEST_CASE("rotary raster: refused inputs, work cap and cancel", "[relief][rotary
     TriangleMesh nan = good;
     nan.vertices[0].x = std::nan("");
     CHECK_FALSE(meshToRotaryField(nan, o).ok());
+    TriangleMesh huge = good;  // out of range: refused, not silently dropped or cast out of range
+    huge.vertices[0].x = -1e300;
+    huge.vertices[1].x = 1e300;
+    const auto hugeResult = meshToRotaryField(huge, o);
+    CHECK_FALSE(hugeResult.ok());
+    CHECK_FALSE(hugeResult.error().empty());
+    RotaryRasterOptions hugeAxis = o;
+    hugeAxis.axisPoint = {1e300, 0.0};
+    CHECK_FALSE(meshToRotaryField(good, hugeAxis).ok());
     RotaryRasterOptions badRadius = o;
     badRadius.map.radius = 0.0;
     CHECK_FALSE(meshToRotaryField(good, badRadius).ok());
@@ -310,4 +322,19 @@ TEST_CASE("rotary raster: rays along a prism's edges (vertex angles) are never l
             CHECK(r.value().field.at(i, 0) == Approx(5.0).margin(1e-6));  // the vertex itself: the circumradius
         }
     }
+}
+
+TEST_CASE("rotary raster: huge but in-range triangles over a tiny cell stay well defined", "[relief][rotary][mesh]") {
+    // Index arithmetic reaches 1e20 here, beyond long long: it must clamp, not cast out of range.
+    TriangleMesh m;
+    m.vertices = {{-1e11, -1e11, 1e-9}, {1e11, -1e11, 1e-9}, {0.0, 1e11, 1e-9}};
+    m.triangles = {{0, 1, 2}};
+    RotaryRasterOptions o;
+    o.map.alongX = true;
+    o.map.radius = 1e-9;
+    o.grid = Grid{4, 7, 1e-9, {0.5e-9, 0.5e-9}};
+    const auto r = meshToRotaryField(m, o);
+    REQUIRE(r.ok());
+    CHECK(r.value().hitCells > 0);
+    CHECK_FALSE(std::isnan(at(r.value(), 0, 0)));
 }

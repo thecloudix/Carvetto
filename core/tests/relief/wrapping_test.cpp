@@ -106,6 +106,18 @@ TEST_CASE("wrapping: a transparent neighbour makes an interpolated copy transpar
     CHECK(g.at(0, 2) == 1.0F);  // row 2 is a hole but the copy at 9.5 fills it
 }
 
+TEST_CASE("wrapping: a cell with no data of its own stays transparent when its only copy straddles a hole", "[relief][effects][wrapping]") {
+    // Rows 2 and 9 are holes, row 10 is a value. Row 2's only copy is at 9.5 (between rows 9 and 10): a transparent
+    // neighbour with weight makes the copy transparent, so nothing may fill row 2 (not even a zero).
+    HeightField f = field(1, 12, 0, 0, [](std::size_t, std::size_t j) { return (j == 2 || j == 9) ? kTransparent : 5.0F; });
+    REQUIRE(applyWrapping(wrapY(7.5), f) == Status::Ok);
+    CHECK(std::isnan(f.at(0, 2)));
+    // The same copy over two values fills it (the opaque case is not blocked).
+    HeightField g = field(1, 12, 0, 0, [](std::size_t, std::size_t j) { return j == 2 ? kTransparent : 5.0F; });
+    REQUIRE(applyWrapping(wrapY(7.5), g) == Status::Ok);
+    CHECK(g.at(0, 2) == 5.0F);
+}
+
 TEST_CASE("wrapping: off, empty and invalid parameters", "[relief][effects][wrapping]") {
     HeightField f = field(3, 9, 0, 0, srcValue);
     const HeightField before = f;

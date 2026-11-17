@@ -221,6 +221,9 @@ MeshImportOutcome importMeshIntoRotaryJob(Document& doc, document::SheetId sheet
         if (!raster.ok()) {
             return fail(raster.error());
         }
+        if (raster.value().hitCells == 0) {
+            return fail("The model does not touch the cylinder; nothing was imported.");
+        }
         c.field = std::move(raster.value().field);
     }
     MeshImportOutcome added = addImportedComponent(doc, sheet, std::move(c), "Import 3D model into rotary job");

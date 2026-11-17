@@ -36,9 +36,9 @@ review.
    unknown level, invalid numbers or no change; does not coalesce). `BakeReliefLevelEffectsCommand` already composes the
    level with all its effects, so the bake equals the composition (tested) and clears the wrapping with the rest.
    Bake enabling in the app panel (`sculpt_panel.cpp`) and a Wrapping toggle are app work, see Not done.
-6. **Format 1.19.** The level `effects` record gets an optional `wrapping` object
+6. **Format 1.20.** The level `effects` record gets an optional `wrapping` object
    (`circumference_axis` `"x"|"y"`, `circumference`, `start`, all required inside it) written only when enabled; the minor
-   is 19 only then, so every other file keeps its bytes. The record's existing keys stay required
+   is 20 only then, so every other file keeps its bytes. The record's existing keys stay required
    (`requireAll` became three explicit `require` calls so a 1.10 effects record still loads). Hostile cases: bad axis,
    zero/negative/non-finite/non-numeric circumference or start, duplicate and missing keys; unknown keys are skipped.
    `modelFingerprint` (toolpath recalculation) and the merged sculpt preview (full redo, like a mirror) see the effect.
@@ -120,3 +120,16 @@ dropped, inverse without flip. Equivalent, argued:
   for rays within 1e-9 of an edge.
 - `n <= nMax` -> `n < nMax` (turn offsets of the angular range): `nMax` is a ceiling and the next offset's range is
   empty or outside the grid, so the loop ends one step early with the same rows.
+
+## Round 2 notes
+
+- The unwrapper tolerance is approximate: refinement samples each piece at 1/4, 1/2 and 3/4 and splits when any is off
+  by more than the tolerance, so the deviation between samples can exceed it by a fraction of a percent (about 0.4%
+  near the centre). Tests pin the three samples and allow 0.5%.
+- Range guards: the unwrapper refuses points, centres and radii beyond 1e100 mm (so the bounding-box centre and the
+  squares cannot overflow) and any non-finite result; `meshToRotaryField` refuses vertices and placements beyond 1e12 mm
+  and clamps index arithmetic before integer casts, so nothing is silently dropped or cast out of range.
+- A wrapping circumference below `kMinWrapCircumference` (1e-6 mm) is invalid in the command and refused at `.carv`
+  load (it could never fit `kMaxWrapPeriods` turns, so compose would fail on a loaded file).
+- `importMeshIntoRotaryJob` (Full 3D) refuses a model that hits no cell of the cylinder instead of adding an empty
+  component.

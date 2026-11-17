@@ -125,7 +125,7 @@ TEST_CASE("wrapping: bake equals the composition and undo restores the effect", 
     for (std::size_t k = 0; k < expect.data().size(); ++k) CHECK(same(restored.data()[k], expect.data()[k]));
 }
 
-TEST_CASE("wrapping: persists in .carv 1.19, minor only when used, byte-stable", "[document][relief][effects][wrapping][carv]") {
+TEST_CASE("wrapping: persists in .carv 1.20, minor only when used, byte-stable", "[document][relief][effects][wrapping][carv]") {
     Fixture f;
     CHECK(loadCarv(save(f.doc)).value().formatMinor == kCarvFormatMinorRelief);
     REQUIRE(f.doc.execute(std::make_unique<SetReliefLevelMirrorCommand>(f.level, relief::MirrorMode::LeftToRight,
@@ -145,8 +145,8 @@ TEST_CASE("wrapping: persists in .carv 1.19, minor only when used, byte-stable",
     const Bytes first = save(f.doc);
     auto loaded = loadCarv(first);
     REQUIRE(loaded.ok());
-    CHECK(loaded.value().formatMinor == 19);
-    CHECK(kCarvFormatMinor == 19);
+    CHECK(loaded.value().formatMinor == 20);
+    CHECK(kCarvFormatMinor == 20);
     const Document& d = loaded.value().document;
     REQUIRE(d.checkIntegrity().empty());
     CHECK(d.reliefLevels()[0].effects.wrapping == w);
@@ -185,6 +185,8 @@ TEST_CASE("wrapping: hostile or malformed wrapping records are refused", "[docum
     CHECK_FALSE(mutated("\"circumference_axis\": \"y\"", "\"circumference_axis\": 1").ok());
     CHECK_FALSE(mutated("\"circumference\": 8.0", "\"circumference\": 0").ok());
     CHECK_FALSE(mutated("\"circumference\": 8.0", "\"circumference\": -4").ok());
+    CHECK_FALSE(mutated("\"circumference\": 8.0", "\"circumference\": 1e-9").ok());  // below the floor
+    CHECK(mutated("\"circumference\": 8.0", "\"circumference\": 1e-6").ok());
     CHECK_FALSE(mutated("\"circumference\": 8.0", "\"circumference\": 1e999").ok());
     CHECK_FALSE(mutated("\"circumference\": 8.0", "\"circumference\": \"8\"").ok());
     CHECK_FALSE(mutated("\"start\": 0.0", "\"start\": 1e999").ok());

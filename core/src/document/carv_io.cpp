@@ -4465,8 +4465,8 @@ relief::Wrapping decodeWrapping(JsonReader& r, const Path& p) {
         }
     }
     rec.requireAll();
-    if (!(w.circumference > 0.0)) {
-        fail(p, "the wrapping circumference must be positive");
+    if (!(w.circumference >= relief::kMinWrapCircumference)) {
+        fail(p, "the wrapping circumference must be positive and at least 1e-6 mm");
     }
     return w;
 }
@@ -4519,7 +4519,7 @@ relief::LevelEffects decodeReliefEffects(JsonReader& r, const Path& p) {
             rec.skip();
         }
     }
-    rec.require("mirror");  // "wrapping" is optional (format 1.19)
+    rec.require("mirror");  // "wrapping" is optional (format 1.20)
     rec.require("mirror_center");
     rec.require("clip");
     return e;

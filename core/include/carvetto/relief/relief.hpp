@@ -177,6 +177,10 @@ struct Wrapping {
     }
 };
 
+/// Smallest wrapping circumference (mm) accepted by validation and `.carv` loading; a smaller one could never fit
+/// within kMaxWrapPeriods turns of any real field.
+inline constexpr double kMinWrapCircumference = 1e-6;
+
 /// Most periods (turns of the cylinder) a wrapped level may span; more is BadParameter.
 inline constexpr std::size_t kMaxWrapPeriods = 64;
 

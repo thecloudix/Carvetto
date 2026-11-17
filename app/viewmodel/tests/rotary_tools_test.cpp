@@ -321,3 +321,19 @@ TEST_CASE("rotary import: flat model is rastered onto the flat design area; refu
     CHECK_FALSE(importMeshIntoRotaryJob(doc, doc.activeSheet(), box, badAxis, "x").ok);
     CHECK_FALSE(importMeshIntoRotaryJob(doc, doc.activeSheet(), io::TriangleMesh{}, s, "x").ok);
 }
+
+TEST_CASE("rotary import: a degenerate mesh (every vertex the same point) is refused, not imported empty", "[viewmodel][rotary][import]") {
+    Document doc = rotaryDoc();
+    const std::size_t before = doc.reliefLevels().size();
+    io::TriangleMesh dot;
+    dot.vertices = {{5, 5, 5}, {5, 5, 5}, {5, 5, 5}};
+    dot.triangles = {{0, 1, 2}};
+    RotaryImportSettings s;
+    s.type = RotaryModelType::Full3D;
+    s.mesh.cellSize = 1.0;
+    const MeshImportOutcome r = importMeshIntoRotaryJob(doc, doc.activeSheet(), dot, s, "Dot");
+    CHECK_FALSE(r.ok);
+    CHECK_FALSE(r.error.empty());
+    CHECK(doc.reliefLevels().size() == before);
+    CHECK(doc.undoStack().count() == 0);
+}

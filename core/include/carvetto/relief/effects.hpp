@@ -26,7 +26,7 @@ Status applyMirror(MirrorMode mode, Point center, HeightField& field);
 /// number of circumferences (so a relief that runs past the window edge wraps in on the other side, and
 /// overlapping turns merge high); every other cell becomes transparent. Linear interpolation along the
 /// circumference, exact on cell centres. No change when not enabled. BadParameter for a non-finite or
-/// non-positive circumference, or when the field spans more than kMaxWrapPeriods turns.
+/// circumference below kMinWrapCircumference, or when the field spans more than kMaxWrapPeriods turns.
 Status applyWrapping(const Wrapping& wrapping, HeightField& field);
 
 /// Mirror, wrapping, then clip. BadParameter when the effects are invalid.

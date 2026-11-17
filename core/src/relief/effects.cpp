@@ -12,7 +12,7 @@ bool finitePoint(const Point& p) { return std::isfinite(p.x) && std::isfinite(p.
 Status validateEffects(const LevelEffects& e) {
     if (!finitePoint(e.mirrorCenter)) return Status::BadParameter;
     if (e.wrapping.enabled &&
-        !(std::isfinite(e.wrapping.circumference) && e.wrapping.circumference > 0.0 && std::isfinite(e.wrapping.start))) {
+        !(std::isfinite(e.wrapping.circumference) && e.wrapping.circumference >= kMinWrapCircumference && std::isfinite(e.wrapping.start))) {
         return Status::BadParameter;
     }
     if (e.clip.polygons.size() > kMaxClipPolygons) return Status::BadParameter;

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <string>
+#include <vector>
 
 namespace carvetto::relief {
 namespace {
@@ -18,6 +20,13 @@ V3 sub(V3 p, V3 q) { return {p.a - q.a, p.s - q.s, p.u - q.u}; }
 V3 cross(V3 p, V3 q) { return {p.s * q.u - p.u * q.s, p.u * q.a - p.a * q.u, p.a * q.s - p.s * q.a}; }
 double dot(V3 p, V3 q) { return p.a * q.a + p.s * q.s + p.u * q.u; }
 
+/// Largest vertex or placement coordinate magnitude accepted (mm).
+constexpr double kMaxCoordinate = 1e12;
+/// Index arithmetic is clamped to this before the cast to an integer (a double beyond long long is undefined).
+constexpr double kMaxIndex = 1e15;
+
+long long toIndex(double x) { return static_cast<long long>(std::clamp(x, -kMaxIndex, kMaxIndex)); }
+
 double nearAngle(double a, double ref) { return a - kTwoPi * std::round((a - ref) / kTwoPi); }
 
 }  // namespace
@@ -27,13 +36,19 @@ geometry::ShapeResult<RotaryRaster> meshToRotaryField(const io::TriangleMesh& me
     if (mesh.vertices.empty() || mesh.triangles.empty()) return R(std::string("mesh is empty"));
     if (!(std::isfinite(opt.map.radius) && opt.map.radius > 0.0) || !std::isfinite(opt.axisPoint.x) ||
         !std::isfinite(opt.axisPoint.y) || !std::isfinite(opt.meshAlongOrigin) || !std::isfinite(opt.alongStart) ||
-        !std::isfinite(opt.zeroRadius)) {
+        !std::isfinite(opt.zeroRadius) || std::fabs(opt.axisPoint.x) > kMaxCoordinate ||
+        std::fabs(opt.axisPoint.y) > kMaxCoordinate || std::fabs(opt.meshAlongOrigin) > kMaxCoordinate ||
+        std::fabs(opt.alongStart) > kMaxCoordinate || std::fabs(opt.zeroRadius) > kMaxCoordinate ||
+        opt.map.radius > kMaxCoordinate) {
         return R(std::string("bad cylinder or placement"));
     }
     if (validate(opt.grid) != Status::Ok) return R(std::string("bad grid"));
     for (const auto& v : mesh.vertices) {
         if (!std::isfinite(v.x) || !std::isfinite(v.y) || !std::isfinite(v.z)) {
             return R(std::string("mesh has a non-finite vertex"));
+        }
+        if (std::fabs(v.x) > kMaxCoordinate || std::fabs(v.y) > kMaxCoordinate || std::fabs(v.z) > kMaxCoordinate) {
+            return R(std::string("mesh has a vertex out of range"));
         }
     }
     for (const auto& t : mesh.triangles) {
@@ -63,9 +78,9 @@ geometry::ShapeResult<RotaryRaster> meshToRotaryField(const io::TriangleMesh& me
 
     // Rows (circumference indices) for one interval of circumference coordinate.
     const auto rowRange = [&](double cA, double cB, long long& lo, long long& hi) {
-        lo = std::max<long long>(0, static_cast<long long>(std::ceil((cA - circOrigin) / cs - kEps)));
+        lo = std::max<long long>(0, toIndex(std::ceil((cA - circOrigin) / cs - kEps)));
         hi = std::min<long long>(static_cast<long long>(nCirc) - 1,
-                                 static_cast<long long>(std::floor((cB - circOrigin) / cs + kEps)));
+                                 toIndex(std::floor((cB - circOrigin) / cs + kEps)));
     };
     const double circMin = circOrigin;
     const double circMax = circOrigin + static_cast<double>(nCirc - 1) * cs;
@@ -76,9 +91,9 @@ geometry::ShapeResult<RotaryRaster> meshToRotaryField(const io::TriangleMesh& me
         const V3 v[3] = {pts[t[0]], pts[t[1]], pts[t[2]]};
         const double aMin = std::min({v[0].a, v[1].a, v[2].a});
         const double aMax = std::max({v[0].a, v[1].a, v[2].a});
-        const long long i0 = std::max<long long>(0, static_cast<long long>(std::ceil((aMin - alongOrigin) / cs - kEps)));
+        const long long i0 = std::max<long long>(0, toIndex(std::ceil((aMin - alongOrigin) / cs - kEps)));
         const long long i1 = std::min<long long>(static_cast<long long>(nAlong) - 1,
-                                                 static_cast<long long>(std::floor((aMax - alongOrigin) / cs + kEps)));
+                                                 toIndex(std::floor((aMax - alongOrigin) / cs + kEps)));
         if (i0 > i1) continue;
         // Angular range of the triangle seen from the axis.
         bool full = false;  // a triangle round the axis spans pi or more of angle, which sets it below
@@ -107,9 +122,11 @@ geometry::ShapeResult<RotaryRaster> meshToRotaryField(const io::TriangleMesh& me
         } else {
             double cA = opt.map.circOf(lo), cB = opt.map.circOf(hi);
             if (cA > cB) std::swap(cA, cB);
-            const long long nMin = static_cast<long long>(std::floor((circMin - cB) / turn));
-            const long long nMax = static_cast<long long>(std::ceil((circMax - cA) / turn));
-            for (long long n = nMin; n <= nMax && nSpans < 64; ++n) {
+            const long long nMin = toIndex(std::floor((circMin - cB) / turn));
+            const long long nMax = toIndex(std::ceil((circMax - cA) / turn));
+            const bool manyTurns = nMax - nMin >= 63;  // too many turns to list: test every row (conservative)
+            if (manyTurns) spans[nSpans++] = {0, static_cast<long long>(nCirc) - 1};
+            for (long long n = nMin; !manyTurns && n <= nMax && nSpans < 64; ++n) {
                 long long j0 = 0, j1 = 0;
                 rowRange(cA + static_cast<double>(n) * turn, cB + static_cast<double>(n) * turn, j0, j1);
                 if (j0 <= j1) spans[nSpans++] = {j0, j1};

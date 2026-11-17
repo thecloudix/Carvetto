@@ -11,6 +11,10 @@ namespace carvetto::geometry {
 namespace {
 
 constexpr double kCentreEps = 1e-12;
+/// Largest coordinate magnitude accepted (mm); beyond it sums and squares can overflow.
+constexpr double kMaxCoordinate = 1e100;
+
+bool inRange(Vec2 p) { return std::fabs(p.x) <= kMaxCoordinate && std::fabs(p.y) <= kMaxCoordinate; }
 
 /// `a` brought within pi of `ref` by whole turns.
 double nearAngle(double a, double ref) {
@@ -74,7 +78,7 @@ Vec2 unwrapCentre(const UnwrapOptions& options, const Box2& bounds) {
         case UnwrapCentre::Custom: return options.customCentre;
         case UnwrapCentre::Contour: break;
     }
-    return (bounds.min + bounds.max) * 0.5;
+    return bounds.min * 0.5 + bounds.max * 0.5;
 }
 
 ShapeResult<UnwrapResult> unwrapCrossSection(const Polyline& cs, const UnwrapOptions& o) {
@@ -86,6 +90,7 @@ ShapeResult<UnwrapResult> unwrapCrossSection(const Polyline& cs, const UnwrapOpt
     if (cs.points.size() > kMaxUnwrapPoints) return std::string("The cross-section has too many points.");
     for (const Vec2& p : cs.points) {
         if (!(std::isfinite(p.x) && std::isfinite(p.y))) return std::string("The cross-section has a non-finite point.");
+        if (!inRange(p)) return std::string("The cross-section has a point out of range.");
     }
     if (o.centre == UnwrapCentre::Workspace &&
         !(std::isfinite(o.workspaceCentre.x) && std::isfinite(o.workspaceCentre.y))) {
@@ -93,6 +98,10 @@ ShapeResult<UnwrapResult> unwrapCrossSection(const Polyline& cs, const UnwrapOpt
     }
     if (o.centre == UnwrapCentre::Custom && !(std::isfinite(o.customCentre.x) && std::isfinite(o.customCentre.y))) {
         return std::string("The centre point is not a number.");
+    }
+    if ((o.centre == UnwrapCentre::Workspace && !inRange(o.workspaceCentre)) ||
+        (o.centre == UnwrapCentre::Custom && !inRange(o.customCentre)) || o.radius > kMaxCoordinate) {
+        return std::string("The centre or radius is out of range.");
     }
     UnwrapResult result;
     result.centre = unwrapCentre(o, cs.bounds());
@@ -134,6 +143,9 @@ ShapeResult<UnwrapResult> unwrapCrossSection(const Polyline& cs, const UnwrapOpt
         }
         if (!closing) out.push_back(refiner.unrolled(pb));
         if (out.size() > kMaxUnwrapPoints) return std::string("Unwrapping needs too many points; raise the tolerance.");
+    }
+    for (const Vec2& q : out) {
+        if (!(std::isfinite(q.x) && std::isfinite(q.y))) return std::string("Unwrapping overflowed; the geometry is out of range.");
     }
     result.contour.points = std::move(out);
     result.contour.closed = closedOut;
