@@ -1680,7 +1680,7 @@ Goal: main's windows-app job failed from T-0328 on with `toolpath_form.cpp : fat
 Acceptance criteria:
   1. windows-app CI job passes on the PR and on main.
 
-### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: done — PR #218]
+### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: verifying — PR #218 conflict]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0322, T-0334
 Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) but no Qt dialog, menu entry or self-test. Add the dialogs and menu entries for rotary jobs, let a following Fluting toolpath take its depth from the layout, preview the layouts in the wrapped view (needs T-0334), and drive it all from --self-test.
 Acceptance criteria:
