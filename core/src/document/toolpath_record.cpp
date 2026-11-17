@@ -352,6 +352,19 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", l->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(l->tolerance) : key;
     }
+    if (const auto* g = std::get_if<toolpath::RoundingParams>(&params)) {
+        return firstNonFinite({{"blank_radius", g->blankRadius},
+                               {"target_radius", g->targetRadius},
+                               {"start_radius", g->startRadius},
+                               {"allowance", g->allowance},
+                               {"surface_z", g->surfaceZ},
+                               {"along_start", g->alongStart},
+                               {"along_end", g->alongEnd},
+                               {"circ_start", g->circStart},
+                               {"stepover", g->stepover},
+                               {"pass_depth", g->passDepth},
+                               {"safe_z", g->safeZ}});
+    }
     if (const auto* r = std::get_if<toolpath::Project3dParams>(&params)) {
         return firstNonFinite({{"z_offset", r->zOffset},
                                {"allowance", r->allowance},

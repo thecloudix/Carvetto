@@ -22,6 +22,7 @@
 #include "carvetto/toolpath/drill_bank.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/laser.hpp"
+#include "carvetto/toolpath/rounding.hpp"
 #include "carvetto/toolpath/laser_picture.hpp"
 #include "carvetto/toolpath/laser_sketch.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
@@ -785,6 +786,50 @@ Table<toolpath::LaserSketchParams> makeLaserSketchTable() {
     return t;
 }
 
+Table<toolpath::RoundingParams> makeRoundingTable() {
+    using P = toolpath::RoundingParams;
+    Table<P> t;
+    t.num("blankRadius", "Blank radius (the cylinder's)", "Blank", Kind::Length, false, false,
+          [](P& p) -> double& { return p.blankRadius; });
+    bound(t, "blankRadius", 1e-3, 100000.0);
+    t.num("targetRadius", "Radius to turn down to", "Rounding", Kind::Length, false, false,
+          [](P& p) -> double& { return p.targetRadius; });
+    bound(t, "targetRadius", 1e-3, 100000.0);
+    t.num("startRadius", "Already turned to radius (0 = no rest machining)", "Rounding", Kind::Length, false, true,
+          [](P& p) -> double& { return p.startRadius; });
+    bound(t, "startRadius", 0.0, 100000.0);
+    t.num("allowance", "Allowance (radial)", "Rounding", Kind::Length, false, true,
+          [](P& p) -> double& { return p.allowance; });
+    bound(t, "allowance", 0.0, 100000.0);
+    t.num("passDepth", "Pass depth (radial)", "Passes", Kind::Length, false, true,
+          [](P& p) -> double& { return p.passDepth; })
+        .fromTool = FromTool::PassDepth;
+    bound(t, "passDepth", 0.0, 100000.0);
+    t.num("stepover", "Stepover", "Passes", Kind::Length, false, true, [](P& p) -> double& { return p.stepover; })
+        .fromTool = FromTool::Stepover;
+    bound(t, "stepover", 0.0, 100000.0);
+    t.num("alongStart", "Start along the axis", "Extent", Kind::Length, true, true,
+          [](P& p) -> double& { return p.alongStart; });
+    bound(t, "alongStart", -100000.0, 100000.0);
+    t.num("alongEnd", "End along the axis", "Extent", Kind::Length, true, true,
+          [](P& p) -> double& { return p.alongEnd; });
+    bound(t, "alongEnd", -100000.0, 100000.0);
+    t.num("circStart", "Start round the circumference", "Extent", Kind::Length, true, true,
+          [](P& p) -> double& { return p.circStart; });
+    bound(t, "circStart", -100000.0, 100000.0);
+    t.num("surfaceZ", "Z of the cylinder surface", "Blank", Kind::Length, true, true,
+          [](P& p) -> double& { return p.surfaceZ; });
+    bound(t, "surfaceZ", -100000.0, 100000.0);
+    t.num("safeZ", "Safe Z", "Passes", Kind::Length, true, true, [](P& p) -> double& { return p.safeZ; });
+    bound(t, "safeZ", -100000.0, 100000.0);
+    t.option<toolpath::RoundingMethod>("method", "Method", "Passes", {"Radial", "Raster", "Optimized raster"},
+                                       [](P& p) -> toolpath::RoundingMethod& { return p.method; });
+    t.option<toolpath::RoundingBlank>("blank", "Blank", "Blank", {"Round", "Square"},
+                                      [](P& p) -> toolpath::RoundingBlank& { return p.blank; });
+    t.flag("alongX", "Cylinder lies along X", "Blank", [](P& p) -> bool& { return p.alongX; });
+    return t;
+}
+
 Table<toolpath::PrismParams> makePrismTable() {
     using P = toolpath::PrismParams;
     Table<P> t;
@@ -1046,6 +1091,12 @@ const Table<toolpath::LaserPictureParams>& tableOf() {
 template <>
 const Table<toolpath::LaserSketchParams>& tableOf() {
     static const Table<toolpath::LaserSketchParams> t = makeLaserSketchTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::RoundingParams>& tableOf() {
+    static const Table<toolpath::RoundingParams> t = makeRoundingTable();
     return t;
 }
 
@@ -1363,7 +1414,8 @@ std::string checkParams(const P& p) {
         }
     }
     if constexpr (!std::is_same_v<P, toolpath::Rough3dParams> && !std::is_same_v<P, toolpath::Finish3dParams> &&
-                  !std::is_same_v<P, toolpath::MouldingParams> && !std::is_same_v<P, toolpath::Project3dParams>) {
+                  !std::is_same_v<P, toolpath::MouldingParams> && !std::is_same_v<P, toolpath::Project3dParams> &&
+                  !std::is_same_v<P, toolpath::RoundingParams>) {
         // The tolerances not offered as fields: the core's own ranges (distance <= chordal <= 1 mm).
         const geometry::Tolerance& tol = p.tolerance;
         if (!(tol.distance >= 1e-6 && tol.distance <= 1.0)) {

@@ -205,6 +205,9 @@ std::string toolpaths3dSelfTest(MainWindow& window);
 /// Drill Bank (T-0335): the Add menu entry, the per-spindle list editor following the head, the toolpath, the
 /// simulation drilling one hole per active spindle, save and reload. Replaces the window's document.
 std::string drillBankSelfTest(MainWindow& window);
+
+/// Rounding (T-0322): Add entry on a rotary job, form defaults from the job, no vectors, one undo step.
+std::string roundingSelfTest(MainWindow& window);
 /// V-carve inlay (T-0265): the form, a pocket and a plug, undo, save and reload.
 std::string vCarveInlaySelfTest(MainWindow& window);
 

@@ -70,6 +70,7 @@ add_library(carvetto_viewmodel STATIC
   src/layers_sheets.cpp
   src/calculation.cpp
   src/variables_model.cpp
+  src/rotary_layout_form.cpp
   src/texture_form.cpp
   src/tiling_form.cpp
 )

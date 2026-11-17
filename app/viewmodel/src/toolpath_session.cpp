@@ -7,9 +7,11 @@
 #include <span>
 #include <tuple>
 #include <utility>
+#include <variant>
 
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
+#include "carvetto/toolpath/rounding.hpp"
 #include "carvetto/toolpath/time.hpp"
 #include "carvetto/toolpath/v_carve.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
@@ -447,6 +449,21 @@ ToolpathForm ToolpathSession::newForm(ToolpathOperation operation) {
             set("safeZ", d.safeZ);
         }
     }
+    if (doc_ != nullptr && operation == ToolpathOperation::Rounding && doc_->job().type == document::JobType::Rotary) {
+        // The cylinder of the job (ADR-0115): its radius, length and surface; turn down to 80 percent of the radius.
+        const document::Job& job = doc_->job();
+        const auto set = [&](const char* id, double mm) {
+            form.setField(id, std::to_string(document::toDisplay(mm, form.units())));
+        };
+        set("blankRadius", job.radiusMm());
+        set("targetRadius", 0.8 * job.radiusMm());
+        set("alongStart", 0.0);
+        set("alongEnd", job.lengthMm());
+        set("circStart", 0.0);
+        set("surfaceZ", job.rotarySurfaceZ());
+        set("safeZ", job.rotarySurfaceZ() + 5.0);
+        form.setChoice("alongX", job.rotaryAxis == document::RotaryAxis::X ? 1 : 0);
+    }
     if (doc_ != nullptr) {
         VectorSelector current = VectorSelector::fromSelection(*doc_);
         if (!current.base.objects.empty()) {
@@ -535,6 +552,10 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     ToolpathJob job = makeToolpathJob(definition, resolved, db_, stored);
     if (!bad.empty()) {
         job.refusal = bad;
+    }
+    if (job.refusal.empty() && std::holds_alternative<toolpath::RoundingParams>(definition.params) &&
+        doc_->job().type != document::JobType::Rotary) {
+        job.refusal = "Rounding turns the cylinder of a rotary job; this job is not a rotary job";
     }
     if (photo) {
         job.vectorsFingerprint = inputsFingerprint(*doc_, selector, job.definition.params);

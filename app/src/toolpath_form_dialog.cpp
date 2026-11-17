@@ -75,6 +75,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "Laser Cut / Fill";
         case ToolpathOperation::DrillBank:
             return "Drill Bank";
+        case ToolpathOperation::Rounding:
+            return "Rounding";
     }
     return "?";
 }
@@ -521,6 +523,8 @@ void ToolpathFormDialog::refreshVectors() {
                         .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
         }
         countLabel_->setText(text);
+    } else if (form_.operation() == document::ToolpathOperation::Rounding) {
+        countLabel_->setText(QStringLiteral("Turns the cylinder of the rotary job down to a radius; no vectors are needed."));
     } else if (form_.operation() == document::ToolpathOperation::Project3d) {
         countLabel_->setText(QStringLiteral("Re-heights the chosen toolpath onto the relief model of the active sheet."));
     } else if (isModel()) {
@@ -935,7 +939,8 @@ std::string ToolpathFormDialog::sourceProblem() const {
         info_.countVectors(form_.selector()) < 2) {
         return "a moulding needs a profile and at least one rail: select two or more vectors";
     }
-    if (info_.countVectors && info_.countVectors(form_.selector()) == 0) {
+    if (info_.countVectors && viewmodel::needsVectors(form_.definition().params) &&
+        info_.countVectors(form_.selector()) == 0) {
         return "no vectors are selected";
     }
     return {};

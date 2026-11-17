@@ -494,7 +494,13 @@ constexpr EnumName<toolpath::SketchFill> kSketchFills[] = {{toolpath::SketchFill
                                                           {toolpath::SketchFill::BetweenVectors, "between_vectors"}};
 constexpr EnumName<toolpath::BankUnmatched> kBankUnmatcheds[] = {{toolpath::BankUnmatched::Refuse, "refuse"},
                                                                 {toolpath::BankUnmatched::Skip, "skip"}};
-constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::DrillBank, "drill_bank"},
+constexpr EnumName<toolpath::RoundingMethod> kRoundingMethods[] = {{toolpath::RoundingMethod::Radial, "radial"},
+                                                                  {toolpath::RoundingMethod::Raster, "raster"},
+                                                                  {toolpath::RoundingMethod::OptimizedRaster, "optimized_raster"}};
+constexpr EnumName<toolpath::RoundingBlank> kRoundingBlanks[] = {{toolpath::RoundingBlank::Round, "round"},
+                                                                {toolpath::RoundingBlank::Square, "square"}};
+constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Rounding, "rounding"},
+                                                      {ToolpathOperation::DrillBank, "drill_bank"},
                                                       {ToolpathOperation::LaserPicture, "laser_picture"},
                                                       {ToolpathOperation::LaserSketch, "laser_sketch"},
                                                       {ToolpathOperation::LaserCutFill, "laser_cut_fill"},
@@ -1275,6 +1281,26 @@ json encodeProject3dParams(const toolpath::Project3dParams& p) {
     return j;
 }
 
+json encodeRoundingParams(const toolpath::RoundingParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["method"] = nameOf(kRoundingMethods, p.method);
+    j["blank"] = nameOf(kRoundingBlanks, p.blank);
+    j["along_x"] = p.alongX;
+    j["blank_radius"] = p.blankRadius;
+    j["target_radius"] = p.targetRadius;
+    j["start_radius"] = p.startRadius;
+    j["allowance"] = p.allowance;
+    j["surface_z"] = p.surfaceZ;
+    j["along_start"] = p.alongStart;
+    j["along_end"] = p.alongEnd;
+    j["circ_start"] = p.circStart;
+    j["stepover"] = p.stepover;
+    j["pass_depth"] = p.passDepth;
+    j["safe_z"] = p.safeZ;
+    return j;
+}
+
 json encodeLaserCutFillParams(const toolpath::LaserCutFillParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -1456,6 +1482,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeLaserSketchParams(*sketch);
     } else if (const auto* bank = std::get_if<toolpath::DrillBankParams>(&tp.params)) {
         j["params"] = encodeDrillBankParams(*bank);
+    } else if (const auto* rounding = std::get_if<toolpath::RoundingParams>(&tp.params)) {
+        j["params"] = encodeRoundingParams(*rounding);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2730,6 +2758,10 @@ constexpr std::array<std::string_view, 25> kDrillBankKeys{
     "tolerance",   "horizontal_drills", "vertical_drills",   "pitch",             "row_offset",
     "column_offset", "reference_drill", "inactive_spindles", "spindle_diameters", "spindle_depths",
     "match_diameters", "pitch_tolerance", "diameter_tolerance", "min_holes", "unmatched"};
+// Rounding records exist only in job.json (ADR-0115).
+constexpr std::array<std::string_view, 15> kRoundingKeys{
+    "name",         "method",       "blank",     "along_x",  "blank_radius", "target_radius", "start_radius", "allowance",
+    "surface_z",    "along_start",  "along_end", "circ_start", "stepover",   "pass_depth",    "safe_z"};
 // Laser cut / fill records exist only in job.json (ADR-0099).
 constexpr std::array<std::string_view, 21> kLaserCutFillKeys{
     "name",       "strategy",       "power",     "move_speed", "cut_depth",     "pass_depth", "repeats",
@@ -3587,6 +3619,48 @@ toolpath::DrillBankParams decodeDrillBankParams(JsonReader& r, const Path& p, Pa
     return out;
 }
 
+toolpath::RoundingParams decodeRoundingParams(JsonReader& r, const Path& p, ParamsDialect d) {
+    toolpath::RoundingParams out;
+    ParamsRecord rec(r, p, std::span<const std::string_view>(kRoundingKeys), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "method") {
+            out.method = rec.choice(kRoundingMethods);
+        } else if (k == "blank") {
+            out.blank = rec.choice(kRoundingBlanks);
+        } else if (k == "along_x") {
+            out.alongX = rec.boolean();
+        } else if (k == "blank_radius") {
+            out.blankRadius = rec.number();
+        } else if (k == "target_radius") {
+            out.targetRadius = rec.number();
+        } else if (k == "start_radius") {
+            out.startRadius = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "surface_z") {
+            out.surfaceZ = rec.number();
+        } else if (k == "along_start") {
+            out.alongStart = rec.number();
+        } else if (k == "along_end") {
+            out.alongEnd = rec.number();
+        } else if (k == "circ_start") {
+            out.circStart = rec.number();
+        } else if (k == "stepover") {
+            out.stepover = rec.number();
+        } else if (k == "pass_depth") {
+            out.passDepth = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::LaserCutFillParams decodeLaserCutFillParams(JsonReader& r, const Path& p, ParamsDialect d) {
     toolpath::LaserCutFillParams out;
     ParamsRecord rec(r, p, std::span<const std::string_view>(kLaserCutFillKeys), d);
@@ -3860,6 +3934,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::DrillBank) {
         return decodeDrillBankParams(r, p, d);
+    }
+    if (operation == ToolpathOperation::Rounding) {
+        return decodeRoundingParams(r, p, d);
     }
     return decodePocketParams(r, p, d, legacy);
 }
@@ -5655,7 +5732,11 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         const bool usesBankSpindles = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
             return tp.moves && std::any_of(tp.moves->begin(), tp.moves->end(), [](const toolpath::Move& m) { return m.bank != 0; });
         });
-        version["minor"] = usesBankSpindles ? kCarvFormatMinorBankSpindles
+        const bool usesRounding = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
+            return tp.operation() == ToolpathOperation::Rounding;
+        });
+        version["minor"] = usesRounding ? kCarvFormatMinorRounding
+                           : usesBankSpindles ? kCarvFormatMinorBankSpindles
                            : usesDrillBank ? kCarvFormatMinorDrillBank
                            : usesLaserImages ? kCarvFormatMinorLaserImages
                            : usesCutterComp ? kCarvFormatMinorCutterComp

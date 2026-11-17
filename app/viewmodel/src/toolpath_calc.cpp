@@ -22,6 +22,7 @@
 #include "carvetto/toolpath/drill_bank.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/laser.hpp"
+#include "carvetto/toolpath/rounding.hpp"
 #include "carvetto/toolpath/laser_picture.hpp"
 #include "carvetto/toolpath/laser_sketch.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
@@ -237,6 +238,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::LaserPicture: def.params = toolpath::LaserPictureParams{}; break;
         case ToolpathOperation::LaserSketch: def.params = toolpath::LaserSketchParams{}; break;
         case ToolpathOperation::DrillBank: def.params = toolpath::DrillBankParams{}; break;
+        case ToolpathOperation::Rounding: def.params = toolpath::RoundingParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
         case ToolpathOperation::ImageEngrave: def.params = toolpath::ImageEngraveParams{}; break;
         case ToolpathOperation::VCarveInlay: def.params = toolpath::VCarveInlayParams{}; break;
@@ -325,6 +327,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::LaserPicture: return "laser_picture";
         case ToolpathOperation::LaserSketch: return "laser_sketch";
         case ToolpathOperation::DrillBank: return "drill_bank";
+        case ToolpathOperation::Rounding: return "rounding";
         case ToolpathOperation::Prism: return "prism";
         case ToolpathOperation::ImageEngrave: return "image_engrave";
         case ToolpathOperation::VCarveInlay: return "v_carve_inlay";
@@ -350,6 +353,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::LaserPicture:
         case ToolpathOperation::LaserSketch: return toolpath::laserToolAllowed(type);
         case ToolpathOperation::DrillBank: return toolpath::drillToolAllowed(type);
+        case ToolpathOperation::Rounding: return toolpath::roundingToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::ImageEngrave: return toolpath::imageEngraveToolAllowed(type);
         case ToolpathOperation::Rough3d:
@@ -380,6 +384,10 @@ bool hasRestTools(ToolpathOperation operation) {
 bool usesModel(ToolpathOperation operation) {
     return operation == ToolpathOperation::Rough3d || operation == ToolpathOperation::Finish3d ||
            operation == ToolpathOperation::Project3d;
+}
+
+bool needsVectors(const document::ToolpathParams& params) {
+    return !std::holds_alternative<toolpath::RoundingParams>(params);
 }
 
 bool usesBitmap(const document::ToolpathParams& params) {
@@ -767,6 +775,9 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
     if (modelSource && !boundaryUsesVectors(job.definition.params)) {
         return job;  // reads the relief model only (see attachModel)
     }
+    if (!needsVectors(job.definition.params)) {
+        return job;  // the cylinder is the work piece (Rounding)
+    }
     if (vectors.contours.empty()) {
         const bool sketch = std::holds_alternative<toolpath::LaserSketchParams>(job.definition.params);
         refuse(sketch ? "the Vectors boundary needs closed vectors: select some" + std::string(bitmapOp ? " besides the bitmap" : "")
@@ -1064,7 +1075,8 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
     const bool bitmapOp = usesBitmap(definition.params);
     const bool modelOp = readsModel(definition.params);
     const bool projectOp = definition.operation() == ToolpathOperation::Project3d;
-    const bool needsContours = (bitmapOp || modelOp) ? boundaryUsesVectors(definition.params) : true;
+    const bool needsContours =
+        (bitmapOp || modelOp) ? boundaryUsesVectors(definition.params) : needsVectors(definition.params);
     if (!tool.has_value() || (needsContours && contours.empty()) || (bitmapOp && !photo.has_value()) ||
         (modelOp && model == nullptr) || (projectOp && !source.has_value()) ||
         (std::holds_alternative<toolpath::Finish3dParams>(definition.params) &&
@@ -1105,6 +1117,15 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
             control.cancel = cancel;
             toolpath::DrillBankResult r = toolpath::drillBankToolpath(
                 contours, tool->tool, tool->data, std::get<toolpath::DrillBankParams>(definition.params), control);
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Rounding) {
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            toolpath::RoundingResult r = toolpath::roundingToolpath(
+                tool->tool, tool->data, std::get<toolpath::RoundingParams>(definition.params), control);
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});

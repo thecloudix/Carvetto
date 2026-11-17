@@ -85,9 +85,12 @@ inline constexpr int kCarvFormatMinorLaserImages = 16;
 /// parameters); written only when a record is a drill bank's.
 inline constexpr int kCarvFormatMinorDrillBank = 17;
 /// 1.18 (T-0335, ADR-0111) adds the per-stroke spindle sets of drill bank toolpaths (move cache version 4); written
-/// only when some drill bank move names spindles. The newest minor this build writes and reads.
+/// only when some drill bank move names spindles.
 inline constexpr int kCarvFormatMinorBankSpindles = 18;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorBankSpindles;
+/// 1.19 (T-0322, ADR-0115) adds Rounding records (operation `rounding`: the rotary blank, radius, method and
+/// extent); written only when a record is a rounding's. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorRounding = 19;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorRounding;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

@@ -827,6 +827,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9a3. Rounding on a rotary job: Add entry, form defaults from the job, no vectors needed (T-0322).
+    if (const std::string why = roundingSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9b. Image Engrave: import a bitmap, form, calculation, stale, save and reload (T-0275).
     if (const std::string why = imageSelfTest(window); !why.empty()) {
         return fail(why);

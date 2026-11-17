@@ -226,6 +226,7 @@ endif()
 add_library(carvetto_core STATIC
   src/geometry/vec2.cpp
   src/geometry/cylinder_map.cpp
+  src/geometry/wrapped_layout.cpp
   src/geometry/box2.cpp
   src/geometry/transform2.cpp
   src/geometry/span.cpp
@@ -333,6 +334,7 @@ add_library(carvetto_core STATIC
   src/toolpath/v_carve_inlay.cpp
   src/toolpath/fluting.cpp
   src/toolpath/laser.cpp
+  src/toolpath/rounding.cpp
   src/toolpath/laser_picture.cpp
   src/toolpath/laser_sketch.cpp
   src/toolpath/image_engrave.cpp
