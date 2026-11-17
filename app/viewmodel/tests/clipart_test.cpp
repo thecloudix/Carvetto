@@ -43,7 +43,8 @@ struct TempDir {
         fs::remove_all(path, ec);
     }
     std::string str() const { return path.string(); }
-    std::string file(const std::string& rel) const { return (path / rel).string(); }
+    // Native separators throughout (a scanned entry's path is built the same way), so "one/bird.dxf" compares equal on Windows.
+    std::string file(const std::string& rel) const { return (path / fs::path(rel)).make_preferred().string(); }
     fs::path path;
 };
 
