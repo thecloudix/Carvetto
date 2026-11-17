@@ -1644,7 +1644,7 @@ Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (S
 Acceptance criteria:
   1. Browsing a folder of mixed files shows thumbnails; insert is one undo step; self-test; ADR.
 
-### T-0334 App wiring for the Auto-Wrapping View, wrapped simulation playback and rotary refusal dialogs (T-0320 follow-up)   [status: in-progress]
+### T-0334 App wiring for the Auto-Wrapping View, wrapped simulation playback and rotary refusal dialogs (T-0320 follow-up)   [status: verifying]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0320
 Goal: T-0320 delivered the wrapped post, CylinderMap, the Qt-free wrapped view (flat/wrapped state, software renderer, path builders) and wrapped simulation core. Wire them into the app: a View-menu entry and flat/wrapped toggle for rotary jobs, drawing the wrapped raster in the Model/2D views, wrapped playback in the simulation panel, a dialog presenting the rotary post refusals/warnings, and --self-test coverage driving them offscreen.
 Acceptance criteria:
