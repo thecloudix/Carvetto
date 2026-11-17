@@ -1568,7 +1568,7 @@ Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around th
 Acceptance criteria:
   1. Wrapping effect composes and bakes equal to the direct wrapped surface on test models; unwrapper round-trips a known cross-section; rotary import places a mesh on the cylinder; ADR with the readings for owner review.
 
-### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: verifying (layout dialogs -> T-0340)]
+### T-0322 Rotary layout tools: Rounding toolpath, Wrapped Fluting Layout, Wrapped Spiral Layout   [status: done — PR #210 (layout dialogs -> T-0340)]
 Phase: 3   Module: core/toolpath + core/geometry + app   Depends on: T-0320
 Goal: Native (non-scripted) tools for rotary jobs: a Rounding toolpath that turns a cylinder down to a radius, and wrapped fluting and spiral layouts that generate vectors (flute count, length, start/end, spiral pitch) on the flat design area ready for the existing toolpaths. Forms, undo, self-test.
 Acceptance criteria:
@@ -1624,7 +1624,7 @@ RE-SCOPED 2026-11-16 after three verifier FAILs (round 1: shared-table conversio
 Acceptance criteria:
   1. Scripts run with the documented limits and are cancellable; hostile scripts are stopped; core builds on all CI platforms; ADR with the API design for owner review.
 
-### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: in-progress (round 4, tests only; re-scoped after 3 FAILs)]
+### T-0331 Scripting API: document, vectors, toolpaths, forms, gadget loader and menu   [status: done — PR #209, 4 rounds]
 Phase: 3   Module: core/scripting + app/viewmodel + app   Depends on: T-0330
 Goal: Bind the designed API: read/create/modify vectors and layers, selection, document variables, create toolpaths, show simple input forms; all edits go through undoable commands (one undo step per gadget run); gadget discovery (folder of scripts with a manifest), Gadgets menu built at startup, Install New Gadget, Gadget Shortcuts (Ctrl+F-key), error dialog.
 Also (from the T-0330 verifier): make host-callback failures for oversized values report 'value too large' instead of the vague 'host function threw an unknown exception', and add the Lua MIT notice to the shipped third-party notices.
@@ -1632,7 +1632,7 @@ RE-SCOPED 2026-11-17 after three verifier FAILs: functionality, hardening and sa
 Acceptance criteria:
   1. A sample gadget creates vectors and a toolpath in one undo step from the Gadgets menu; sandbox limits enforced in the app; self-test.
 
-### T-0332 Stock gadgets as scripts: Celtic weave, drag knife, keyhole, job-sheet editor, DXF batch   [status: blocked — waits on T-0331]
+### T-0332 Stock gadgets as scripts: Celtic weave, drag knife, keyhole, job-sheet editor, DXF batch   [status: in-progress]
 Phase: 3   Module: gadgets + docs   Depends on: T-0331, T-0299
 Goal: Port the stock gadget behaviours as original scripts shipped with the app: weave creator (grid, intersection states, cross-section, Apply creates vectors for Extrude and Weave), drag-knife toolpath (blade offset, tolerance angle, swivel, passes), keyhole toolpath, job-sheet editor (logo, colours, sections), DXF batch convert. Written from the behaviour descriptions only (clean room).
 Acceptance criteria:
@@ -1644,7 +1644,7 @@ Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (S
 Acceptance criteria:
   1. Browsing a folder of mixed files shows thumbnails; insert is one undo step; self-test; ADR.
 
-### T-0334 App wiring for the Auto-Wrapping View, wrapped simulation playback and rotary refusal dialogs (T-0320 follow-up)   [status: ready]
+### T-0334 App wiring for the Auto-Wrapping View, wrapped simulation playback and rotary refusal dialogs (T-0320 follow-up)   [status: in-progress]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0320
 Goal: T-0320 delivered the wrapped post, CylinderMap, the Qt-free wrapped view (flat/wrapped state, software renderer, path builders) and wrapped simulation core. Wire them into the app: a View-menu entry and flat/wrapped toggle for rotary jobs, drawing the wrapped raster in the Model/2D views, wrapped playback in the simulation panel, a dialog presenting the rotary post refusals/warnings, and --self-test coverage driving them offscreen.
 Acceptance criteria:
