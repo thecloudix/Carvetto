@@ -82,6 +82,11 @@ MeshImportOutcome importMeshIntoDocument(document::Document& doc, document::Shee
                                          const io::TriangleMesh& original, const MeshImportSettings& s,
                                          const std::string& name);
 
+/// Adds `component` on top of the topmost level of `sheet` (a level is created when the sheet has none), selected;
+/// one undo step named `undoText`. Shared by the flat and the rotary import.
+MeshImportOutcome addImportedComponent(document::Document& doc, document::SheetId sheet, relief::Component component,
+                                       const char* undoText);
+
 // --- Export --------------------------------------------------------------------------------------
 
 enum class ModelExportKind { Stl, Obj, Heightmap };

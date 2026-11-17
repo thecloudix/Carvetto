@@ -640,6 +640,13 @@ json encodeRelief(const Document& doc) {
                 polys.push_back(std::move(pj));
             }
             ej["clip"] = std::move(polys);
+            if (l.effects.wrapping.enabled) {  // format 1.19 (T-0321)
+                json wj = json::object();
+                wj["circumference_axis"] = l.effects.wrapping.circumferenceIsY ? "y" : "x";
+                wj["circumference"] = l.effects.wrapping.circumference;
+                wj["start"] = l.effects.wrapping.start;
+                ej["wrapping"] = std::move(wj);
+            }
             lj["effects"] = std::move(ej);
         }
         json comps = json::array();
@@ -4434,7 +4441,35 @@ relief::Appearance decodeAppearance(JsonReader& r, const Path& p, bool isLevel) 
     }
     return a;
 }
-constexpr std::array<std::string_view, 3> kReliefEffectsKeys{"mirror", "mirror_center", "clip"};
+constexpr std::array<std::string_view, 4> kReliefEffectsKeys{"mirror", "mirror_center", "clip", "wrapping"};
+constexpr std::array<std::string_view, 3> kWrappingKeys{"circumference_axis", "circumference", "start"};
+
+relief::Wrapping decodeWrapping(JsonReader& r, const Path& p) {
+    relief::Wrapping w;
+    w.enabled = true;
+    Record rec(r, p, kWrappingKeys);
+    while (rec.next()) {
+        const Path f = rec.field();
+        if (rec.key() == "circumference_axis") {
+            const std::string axis = readStoredString(r, f);
+            if (axis != "x" && axis != "y") {
+                fail(f, "must be \"x\" or \"y\"");
+            }
+            w.circumferenceIsY = axis == "y";
+        } else if (rec.key() == "circumference") {
+            w.circumference = readFinite(r, f);
+        } else if (rec.key() == "start") {
+            w.start = readFinite(r, f);
+        } else {
+            rec.skip();
+        }
+    }
+    rec.requireAll();
+    if (!(w.circumference >= relief::kMinWrapCircumference)) {
+        fail(p, "the wrapping circumference must be positive and at least 1e-6 mm");
+    }
+    return w;
+}
 
 relief::LevelEffects decodeReliefEffects(JsonReader& r, const Path& p) {
     relief::LevelEffects e;
@@ -4447,6 +4482,8 @@ relief::LevelEffects decodeReliefEffects(JsonReader& r, const Path& p) {
         } else if (rec.key() == "mirror_center") {
             const Vec2 v = readFinitePoint(r, f);
             e.mirrorCenter = {v.x, v.y};
+        } else if (rec.key() == "wrapping") {
+            e.wrapping = decodeWrapping(r, f);
         } else if (rec.key() == "clip") {
             if (r.peek() != JKind::Array) {
                 fail(f, "must be a JSON array");
@@ -4482,7 +4519,9 @@ relief::LevelEffects decodeReliefEffects(JsonReader& r, const Path& p) {
             rec.skip();
         }
     }
-    rec.requireAll();
+    rec.require("mirror");  // "wrapping" is optional (format 1.20)
+    rec.require("mirror_center");
+    rec.require("clip");
     return e;
 }
 constexpr std::array<std::string_view, 9> kReliefComponentKeys{
@@ -5735,7 +5774,11 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         const bool usesRounding = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [](const ToolpathRecord& tp) {
             return tp.operation() == ToolpathOperation::Rounding;
         });
-        version["minor"] = usesRounding ? kCarvFormatMinorRounding
+        // Wrapping level effect (format 1.20, T-0321).
+        const bool usesWrapping = std::any_of(doc.reliefLevels().begin(), doc.reliefLevels().end(),
+                                              [](const ReliefLevel& l) { return l.effects.wrapping.enabled; });
+        version["minor"] = usesWrapping ? kCarvFormatMinorWrapping
+                           : usesRounding ? kCarvFormatMinorRounding
                            : usesBankSpindles ? kCarvFormatMinorBankSpindles
                            : usesDrillBank ? kCarvFormatMinorDrillBank
                            : usesLaserImages ? kCarvFormatMinorLaserImages

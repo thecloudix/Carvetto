@@ -57,6 +57,7 @@ add_executable(carvetto_tests
   document/relief_document_test.cpp
   document/relief_carv_test.cpp
   document/relief_effects_test.cpp
+  document/relief_wrapping_test.cpp
   document/relief_appearance_test.cpp
   toolpath/time_test.cpp
   toolpath/block_settle_test.cpp
@@ -76,6 +77,7 @@ add_executable(carvetto_tests
   post/rotary_wrap_test.cpp
   geometry/cylinder_map_test.cpp
   geometry/wrapped_layout_test.cpp
+  geometry/vector_unwrapper_test.cpp
   simulate/determinism_test.cpp
   simulate/drill_bank_sim_test.cpp
   simulate/diagnostics_test.cpp
@@ -155,6 +157,8 @@ add_executable(carvetto_tests
   io/svg_xml_test.cpp
   relief/relief_test.cpp
   relief/effects_test.cpp
+  relief/wrapping_test.cpp
+  relief/rotary_raster_test.cpp
   relief/shape_test.cpp
   relief/mesh_raster_test.cpp
   relief/bitmap_relief_test.cpp

@@ -313,6 +313,27 @@ void SetReliefLevelClipCommand::revert(Document& doc) {
     }
 }
 
+bool SetReliefLevelWrappingCommand::apply(Document& doc) {
+    ReliefLevel* l = doc.findReliefLevel(id_);
+    if (!l) {
+        return false;
+    }
+    relief::LevelEffects probe;
+    probe.wrapping = after_;
+    if (!reliefEffectsProblem(probe).empty() || l->effects.wrapping == after_) {
+        return false;
+    }
+    before_ = l->effects.wrapping;
+    l->effects.wrapping = after_;
+    return true;
+}
+
+void SetReliefLevelWrappingCommand::revert(Document& doc) {
+    if (ReliefLevel* l = doc.findReliefLevel(id_)) {
+        l->effects.wrapping = before_;
+    }
+}
+
 bool SetReliefComponentAppearanceCommand::apply(Document& doc) {
     ReliefComponent* c = doc.findReliefComponent(id_);
     if (!c || !reliefAppearanceProblem(after_, false).empty() || c->data.appearance == after_) {

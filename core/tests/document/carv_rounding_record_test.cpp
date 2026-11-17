@@ -144,7 +144,7 @@ TEST_CASE("T-0322: every method and blank survives a save and load", "[document]
 }
 
 TEST_CASE("T-0322: the file is 1.19 only when a rounding record is saved", "[document][toolpath][carv][rounding]") {
-    CHECK(kCarvFormatMinor == kCarvFormatMinorRounding);
+    CHECK(kCarvFormatMinor >= kCarvFormatMinorRounding);  // newer minors (T-0321: 1.20) are for other features
     CHECK(kCarvFormatMinorRounding == 19);
     Document plain(Job::rotary(150.0, 63.5, Units::Millimetres));
     auto saved = saveCarv(plain, CarvExtras{});
