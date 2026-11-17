@@ -416,6 +416,78 @@ TEST_CASE("T-0324: the machine limit boundary clips the sketch", "[toolpath][las
     }
 }
 
+TEST_CASE("T-0326: with the machine limit boundary the beam-off overscan stays inside the limits",
+          "[toolpath][laser][sketch]") {
+    LaserSketchParams p = params();
+    p.machineLimitBoundary = true;
+    p.overscan = 2.0;
+    const auto inside = [](const LaserSketchResult& r, const Box2& lim) {
+        for (const Move& m : r.toolpath.moves) {
+            if (m.to.x < lim.min.x - 1e-9 || m.to.x > lim.max.x + 1e-9 || m.to.y < lim.min.y - 1e-9 ||
+                m.to.y > lim.max.y + 1e-9) {
+                return false;
+            }
+        }
+        return true;
+    };
+    // Limits that cut the lines: the burn ends at the limit, and so does the overscan (nothing to run out into).
+    const Box2 tight({1.0, 3.0}, {6.0, 7.0});
+    LaserSketchResult r = run(uniform(0), p, {}, tight);
+    REQUIRE(r.ok());
+    CHECK(inside(r, tight));
+    const std::vector<Seen> s = strokesOf(r);
+    REQUIRE(s.size() == 2);
+    CHECK(s[0].start.x == Approx(1.0).margin(1e-9));
+    CHECK(s[0].end.x == Approx(6.0).margin(1e-9));
+    // The first stroke has no approach feed: the rapid goes to the burn start, and no run-out follows the burn.
+    REQUIRE(r.toolpath.moves.size() >= 3);
+    CHECK(r.toolpath.moves[0].kind == MoveKind::Rapid);
+    CHECK(r.toolpath.moves[0].to.x == Approx(1.0).margin(1e-9));
+    CHECK(r.toolpath.moves[1].kind == MoveKind::Feed);
+    CHECK(r.toolpath.moves[1].jetPower > 0.0);
+    // Limits a little wider than the source: the overscan is shortened to the limit, not dropped.
+    const Box2 wide({-0.5, -1.0}, {10.5, 11.0});
+    r = run(uniform(0), p, {}, wide);
+    REQUIRE(r.ok());
+    CHECK(inside(r, wide));
+    CHECK(r.toolpath.moves[0].to.x == Approx(-0.5).margin(1e-9));
+    CHECK(r.toolpath.moves[1].to.x == Approx(0.0).margin(1e-9));
+    CHECK(r.toolpath.moves[1].jetPower == Approx(0.0));  // the approach is beam off
+    const auto extent = [](const LaserSketchResult& res, bool useX, bool wantMax) {
+        double v = wantMax ? -1e9 : 1e9;
+        for (const Move& m : res.toolpath.moves) {
+            if (m.kind == MoveKind::Feed) {  // the beam-off run-outs are feeds too
+                const double c = useX ? m.to.x : m.to.y;
+                v = wantMax ? std::max(v, c) : std::min(v, c);
+            }
+        }
+        return v;
+    };
+    CHECK(extent(r, true, true) == Approx(10.5).margin(1e-9));   // the run-out ends at the limit, 0.5 past the burn
+    CHECK(extent(r, true, false) == Approx(-0.5).margin(1e-9));
+    // Vertical lines: the same along Y.
+    LaserSketchParams vertical = p;
+    vertical.hatchAngle = 1.5707963267948966;
+    r = run(uniform(0), vertical, {}, wide);
+    REQUIRE(r.ok());
+    CHECK(inside(r, wide));
+    CHECK(extent(r, false, false) == Approx(-1.0).margin(1e-6));
+    CHECK(extent(r, false, true) == Approx(11.0).margin(1e-6));
+    // Limits far wider than the overscan: the full overscan is kept.
+    r = run(uniform(0), p, {}, Box2({-20.0, -20.0}, {30.0, 30.0}));
+    CHECK(r.toolpath.moves[0].to.x == Approx(-2.0).margin(1e-9));
+    // Without the boundary the overscan is as asked, limits or no limits.
+    p.machineLimitBoundary = false;
+    r = run(uniform(0), p, {}, tight);
+    CHECK(r.toolpath.moves[0].to.x == Approx(-2.0).margin(1e-9));
+    // Rotated lines (cross hatch at 45 degrees): the same rule along the slanted direction.
+    p.machineLimitBoundary = true;
+    p.hatchAngle = 0.7853981633974483;
+    r = run(uniform(0), p, {}, wide);
+    REQUIRE(r.ok());
+    CHECK(inside(r, wide));
+}
+
 TEST_CASE("T-0324: bad parameters, tools and sources are refused", "[toolpath][laser][sketch]") {
     const auto refused = [&](LaserSketchParams p) {
         const LaserSketchResult r = run(uniform(0), p);
@@ -655,4 +727,33 @@ TEST_CASE("T-0324: a model sketch burns where the model is low", "[toolpath][las
         CHECK(lo == Approx(-0.5).margin(1e-9));
         CHECK(hi == Approx(4.5).margin(1e-9));
     }
+}
+
+TEST_CASE("T-0326: a burn ending on the limit border leaves no zero-length beam-off move",
+          "[toolpath][laser][sketch]") {
+    LaserSketchParams p = params();
+    p.machineLimitBoundary = true;
+    p.overscan = 2.0;
+    const Box2 tight({1.0, 3.0}, {6.0, 7.0});
+    std::size_t checkedStrokes = 0;
+    for (int deg = 0; deg < 180; deg += 7) {
+        p.hatchAngle = static_cast<double>(deg) * 0.017453292519943295;
+        const LaserSketchResult r = run(uniform(0), p, {}, tight);
+        if (!r.ok()) {
+            continue;
+        }
+        const std::vector<Move>& mv = r.toolpath.moves;
+        for (std::size_t i = 1; i < mv.size(); ++i) {
+            if (mv[i].kind != MoveKind::Feed) {
+                continue;
+            }
+            if (mv[i].jetPower > 0.0) {
+                ++checkedStrokes;  // a burn: the scenes do reach the border
+            } else {
+                const double len = std::hypot(mv[i].to.x - mv[i - 1].to.x, mv[i].to.y - mv[i - 1].to.y);
+                CHECK(len > 1e-9);
+            }
+        }
+    }
+    CHECK(checkedStrokes > 0);
 }

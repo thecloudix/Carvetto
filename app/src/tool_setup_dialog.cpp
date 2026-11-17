@@ -351,6 +351,9 @@ void ToolSetupDialog::buildMachines(QWidget* page) {
     for (QDoubleSpinBox* b : {workX_, workY_, workZ_, rapid_, accelX_, accelY_, accelZ_, maxSpindle_, maxFeed_, accelAngular_}) {
         b->setSpecialValueText(QStringLiteral("not set"));
     }
+    machineLaser_ = new QCheckBox(QStringLiteral("Laser machine"), machineForm_);
+    machineLaser_->setObjectName(QStringLiteral("machineLaser"));
+    machineLaser_->setToolTip(QStringLiteral("The machine carries a laser: laser toolpaths can be saved for it (with a post that declares laser support)"));
     posts_ = new QLineEdit(machineForm_);
     posts_->setObjectName(QStringLiteral("machinePosts"));
     posts_->setToolTip(QStringLiteral("Names of the posts usable with this machine, separated by commas"));
@@ -367,6 +370,7 @@ void ToolSetupDialog::buildMachines(QWidget* page) {
     form->addRow(QStringLiteral("Rotary acceleration"), accelAngular_);
     form->addRow(QStringLiteral("Spindle speed limit"), maxSpindle_);
     form->addRow(QStringLiteral("Feed rate limit"), maxFeed_);
+    form->addRow(QString(), machineLaser_);
     form->addRow(QStringLiteral("Associated posts"), posts_);
     form->addRow(QStringLiteral("Default post"), defaultPost_);
     right->addLayout(form);
@@ -392,6 +396,7 @@ void ToolSetupDialog::buildMachines(QWidget* page) {
     for (QDoubleSpinBox* b : {workX_, workY_, workZ_, rapid_, accelX_, accelY_, accelZ_, maxSpindle_, maxFeed_, accelAngular_}) {
         connect(b, &QDoubleSpinBox::valueChanged, this, commit);
     }
+    connect(machineLaser_, &QCheckBox::toggled, this, commit);
     connect(posts_, &QLineEdit::textEdited, this, [this]() {
         const QString keep = defaultPost_->currentText();
         loading_ = true;
@@ -987,6 +992,7 @@ void ToolSetupDialog::loadMachine() {
     accelAngular_->setProperty("ui", accelAngular_->value());
     maxSpindle_->setValue(m->maxSpindleSpeed);
     setLengthBox(maxFeed_, m->maxFeedRate, units_);
+    machineLaser_->setChecked(m->laser);
     QStringList posts;
     for (const std::string& p : m->associatedPosts) {
         posts << qs(p);
@@ -1025,6 +1031,7 @@ void ToolSetupDialog::commitMachine() {
                                 : accelAngular_->value() / kRadToDeg;
     m.maxSpindleSpeed = maxSpindle_->value();
     m.maxFeedRate = lengthOf(maxFeed_, units_);
+    m.laser = machineLaser_->isChecked();
     m.associatedPosts.clear();
     for (const QString& p : posts_->text().split(QLatin1Char(','), Qt::SkipEmptyParts)) {
         const std::string name = ss(p.trimmed());

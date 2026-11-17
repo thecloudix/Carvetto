@@ -16,6 +16,8 @@
 class QCheckBox;
 class QComboBox;
 class QDialogButtonBox;
+class QFormLayout;
+class QGroupBox;
 class QLabel;
 class QLineEdit;
 class QListWidget;
@@ -106,13 +108,16 @@ class ToolpathFormDialog : public QDialog {
     void refreshBankTable();
     bool applyBankTable();
     void setMessage(const std::string& text, bool error);
-    bool isModel() const { return viewmodel::usesModel(form_.operation()); }
-    bool isPhoto() const { return form_.operation() == document::ToolpathOperation::ImageEngrave; }
+    /// The toolpath reads the relief model / a bitmap (a laser sketch decides by its source choice, T-0326).
+    bool isModel() const { return viewmodel::readsModel(form_.definition().params); }
+    bool isPhoto() const { return viewmodel::usesBitmap(form_.definition().params); }
     /// What is wrong with the vectors or bitmap the toolpath would read now; empty when fine.
     std::string sourceProblem() const;
     void reportVariables();
 
     viewmodel::ToolpathForm form_;
+    QGroupBox* vectorsBox_{nullptr};
+    QFormLayout* vectorsForm_{nullptr};
     tooling::ToolDatabase db_;
     FormDocumentInfo info_;
     bool editing_{false};

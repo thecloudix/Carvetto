@@ -305,6 +305,11 @@ viewmodel::SaveOptions SaveToolpathsDialog::currentOptions() const {
     o.nameTemplate = stdString(template_->text());
     o.jobName = jobName_;
     viewmodel::applyTiling(o, tiling_->form(), currentMachine());
+    // A laser toolpath needs a laser machine and a post that supports it (T-0326, ADR-0113).
+    o.checkLaserSetup = true;
+    if (const tooling::Machine* m = currentMachine()) {
+        o.machine = *m;
+    }
     return o;
 }
 
