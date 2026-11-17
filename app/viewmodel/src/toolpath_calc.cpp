@@ -560,7 +560,11 @@ void attachSource(ToolpathJob& job, const document::Document& doc) {
 ModelDefaults modelDefaults(const document::Document& doc) {
     ModelDefaults out;
     const document::Job& job = doc.job();
-    if (job.zZero == document::ZZero::MachineBed) {
+    if (job.type == document::JobType::Rotary) {
+        // The cylinder: the surface at the top, the stock down to the axis (ADR-0117).
+        out.stockTop = job.rotarySurfaceZ();
+        out.stockBottom = job.rotarySurfaceZ() - job.radiusMm();
+    } else if (job.zZero == document::ZZero::MachineBed) {
         out.stockTop = job.sizeMm.z;
         out.stockBottom = 0.0;
     } else {
@@ -588,6 +592,14 @@ ModelDefaults modelDefaults(const document::Document& doc) {
         out.valid = true;
     }
     return out;
+}
+
+double surfaceDepthShift(const document::Job& job, ToolpathOperation operation) {
+    if (job.type != document::JobType::Rotary || usesModel(operation) || operation == ToolpathOperation::Moulding ||
+        operation == ToolpathOperation::Rounding) {
+        return 0.0;
+    }
+    return job.rotarySurfaceZ();
 }
 
 // --- Tools ---------------------------------------------------------------------------------------
@@ -1052,6 +1064,11 @@ document::ToolpathRecord makeRecord(const ToolpathJob& job, toolpath::Toolpath t
     record.expressions = job.definition.expressions;
     record.tool = tp.tool;
     record.toolSource = source;
+    if (job.zShift != 0.0) {
+        for (toolpath::Move& mv : tp.moves) {
+            mv.to.z += job.zShift;
+        }
+    }
     record.moves = document::shareMoves(std::move(tp.moves));
     return record;
 }
