@@ -372,6 +372,22 @@ std::vector<ModelPath> wrappedToolpathPaths(const std::vector<document::Toolpath
     return out;
 }
 
+WrappedSurface wrappedBlankCylinder(const document::Job& job) {
+    WrappedSurface s;
+    const double w = job.sizeMm.x;
+    const double h = job.sizeMm.y;
+    if (!(w > 0.0) || !(h > 0.0) || !std::isfinite(w) || !std::isfinite(h)) {
+        return s;
+    }
+    // About 96 cells along the longer side: enough for the cylinder to look round.
+    s.cellSize = std::max(w, h) / 96.0;
+    s.origin = {0.0, 0.0};
+    s.nx = static_cast<std::size_t>(std::ceil(w / s.cellSize)) + 1;
+    s.ny = static_cast<std::size_t>(std::ceil(h / s.cellSize)) + 1;
+    s.z.assign(s.nx * s.ny, static_cast<float>(job.rotarySurfaceZ()));
+    return s;
+}
+
 Raster renderRotaryModel(const ModelSurface& model, const document::Job& job, const RotaryViewState& state,
                          const OrbitCamera& camera, const ModelRenderOptions& options,
                          const std::vector<ModelPath>& wrappedPaths) {
@@ -384,7 +400,8 @@ Raster renderRotaryModel(const ModelSurface& model, const document::Job& job, co
     w.material = options.material;
     w.background = options.background;
     w.paths = wrappedPaths;
-    return renderWrapped(wrappedSurfaceFromModel(model, job), cylinderMapFor(job), camera, w);
+    return renderWrapped(model.ok() ? wrappedSurfaceFromModel(model, job) : wrappedBlankCylinder(job),
+                         cylinderMapFor(job), camera, w);
 }
 
 }  // namespace carvetto::viewmodel

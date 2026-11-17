@@ -46,6 +46,7 @@
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
 #include "rotary_self_test.hpp"
+#include "wrapped_view_self_test.hpp"
 #include "main_window.hpp"
 #include "job_sheet_self_test.hpp"
 #include "node_edit_menu.hpp"
@@ -856,6 +857,11 @@ int runSelfTest() {
 
     // 9c2. Rotary jobs: Job Setup, Material Setup, Edit Sheet and a save/reload (T-0319).
     if (const std::string why = rotarySelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c3. The Auto-Wrapping View of rotary jobs: toggle, Model view, wrapped simulation, post dialog (T-0334).
+    if (const std::string why = wrappedViewSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

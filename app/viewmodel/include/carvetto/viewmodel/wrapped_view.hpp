@@ -69,6 +69,10 @@ struct WrappedRenderOptions {
 Raster renderWrapped(const WrappedSurface& surface, const geometry::CylinderMap& map, const OrbitCamera& camera,
                      const WrappedRenderOptions& options = {});
 
+/// A plain cylinder surface (machine Z = the job's surface) over the job's design area, drawn when a rotary job has
+/// no model yet so that vectors and toolpaths still show on the cylinder. Empty (not ok) for a job without size.
+WrappedSurface wrappedBlankCylinder(const document::Job& job);
+
 /// The visible vector contours on the active sheet as flat paths at the cylinder surface (z = `job` surface Z).
 std::vector<ModelPath> wrappedVectorPaths(const document::Document& doc, std::uint32_t colour = 0xFF1A5FB4u);
 /// The cutting moves of every record with moves, in machine coordinates (arcs split into chords of at most
@@ -77,7 +81,7 @@ std::vector<ModelPath> wrappedToolpathPaths(const std::vector<document::Toolpath
                                             double arcStepRad = 0.1, std::size_t maxPoints = 200000);
 
 /// The flat/wrapped picture of the model for a rotary job: the wrapped view when `state` says so and the job is
-/// rotary, else the existing flat `renderModel` (`options` are used for size, material and toolpaths there).
+/// rotary (a plain cylinder when `model` is empty), else the existing flat `renderModel` (`options` are used for size, material and toolpaths there).
 Raster renderRotaryModel(const ModelSurface& model, const document::Job& job, const RotaryViewState& state,
                          const OrbitCamera& camera, const ModelRenderOptions& options,
                          const std::vector<ModelPath>& wrappedPaths = {});

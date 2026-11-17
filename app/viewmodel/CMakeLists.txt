@@ -38,6 +38,7 @@ add_library(carvetto_viewmodel STATIC
   src/relief_build.cpp
   src/model_view.cpp
   src/wrapped_view.cpp
+  src/rotary_post_report.cpp
   src/model_io.cpp
   src/preview_component.cpp
   src/playback.cpp

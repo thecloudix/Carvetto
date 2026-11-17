@@ -9,6 +9,7 @@
 
 #include "carvetto/document/document.hpp"
 #include "carvetto/tooling/machine.hpp"
+#include "carvetto/viewmodel/rotary_post_report.hpp"
 #include "carvetto/viewmodel/save_toolpaths.hpp"
 
 class QCheckBox;
@@ -22,6 +23,7 @@ class QTimer;
 
 namespace carvetto::app {
 
+class RotaryPostDialog;
 class TilingManagerPanel;
 
 /// Where the shipped posts live: next to the executable (`posts`), in `../share/carvetto/posts`,
@@ -66,6 +68,12 @@ class SaveToolpathsDialog : public QDialog {
     std::string previewShown() const;
     std::string messageShown() const;
     bool canSave() const;
+    /// The rotary refusals and warnings of the current output (T-0334); empty for other jobs.
+    const viewmodel::RotaryPostReport& rotaryReport() const { return rotaryReport_; }
+    /// "Rotary details..." button, visible while the report has anything to show.
+    QPushButton* rotaryDetailsButton() const { return rotaryDetails_; }
+    /// The dialog the button opens (not yet shown); the button shows it modally.
+    std::unique_ptr<RotaryPostDialog> makeRotaryDialog();
     /// Writes the files as the Save button does and waits for the result. True on success.
     bool saveNow();
     const std::vector<std::filesystem::path>& written() const { return written_; }
@@ -112,6 +120,8 @@ class SaveToolpathsDialog : public QDialog {
     QLabel* message_{nullptr};
     QPlainTextEdit* preview_{nullptr};
     QPushButton* save_{nullptr};
+    QPushButton* rotaryDetails_{nullptr};
+    viewmodel::RotaryPostReport rotaryReport_;
 
     viewmodel::SaveOutput output_;
     bool outputFresh_{false};

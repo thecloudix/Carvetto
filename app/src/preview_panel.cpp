@@ -527,6 +527,7 @@ void PreviewPanel::tick() {
 
 void PreviewPanel::showFrame(const std::shared_ptr<const viewmodel::SimulationFrame>& frame) {
     shownSerial_ = frame->serial;
+    relief_->setCylinder(sim_.setup().cylinder);
     relief_->setFrame(frame, stockBox());
     diagnostics_->clear();
     int shown = 0;

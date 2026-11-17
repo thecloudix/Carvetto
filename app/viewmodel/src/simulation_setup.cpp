@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/viewmodel/wrapped_view.hpp"
 
 namespace carvetto::viewmodel {
 
@@ -176,6 +177,9 @@ SimulationSetup makeSimulationSetup(ToolpathSession& session, const SimulationRe
     if (setup.staleAtStart > 0) {
         setup.notes.push_back(pluralToolpaths(setup.staleAtStart) + (setup.staleAtStart == 1 ? " needs" : " need") +
                               " recalculation: the simulation uses the old moves.");
+    }
+    if (doc->job().type == document::JobType::Rotary) {
+        setup.cylinder = cylinderMapFor(doc->job());
     }
     setup.ok = true;
     return setup;
