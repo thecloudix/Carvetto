@@ -79,6 +79,7 @@
 #include "clipart_panel.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
+#include "rotary_tools_dialogs.hpp"
 
 namespace carvetto::app {
 
@@ -488,6 +489,7 @@ void MainWindow::buildMenus() {
     materialSetupAction_ = setup->addAction(QStringLiteral("&Material Setup (rotary)..."));
     materialSetupAction_->setObjectName(QStringLiteral("materialSetupAction"));
     connect(materialSetupAction_, &QAction::triggered, this, [this]() { materialSetupDialog(); });
+    addRotaryToolsActions(*this, setup);
     toolSetupAction_ = setup->addAction(QStringLiteral("&Tools, Machines and Materials..."));
     toolSetupAction_->setObjectName(QStringLiteral("toolSetupAction"));
     connect(toolSetupAction_, &QAction::triggered, this, [this]() { toolSetupDialog(); });

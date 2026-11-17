@@ -616,6 +616,10 @@ LevelEffectsPanel::LevelEffectsPanel(DocumentGetter getter, QWidget* parent) : P
     }
     mirrorRow->addWidget(mirror_, 1);
     outer->addLayout(mirrorRow);
+    wrapping_ = new QCheckBox(QStringLiteral("Wrapping (rotary)"), this);
+    wrapping_->setObjectName(QStringLiteral("Effects: Wrapping"));
+    wrapping_->setToolTip(QStringLiteral("Wrap the level round the cylinder of a rotary job"));
+    outer->addWidget(wrapping_);
     bake_ = new QPushButton(QStringLiteral("Bake Effects"), this);
     bake_->setObjectName(QStringLiteral("Effects: Bake"));
     bake_->setToolTip(QStringLiteral("Make the clipping and mirror permanent in one merged component"));
@@ -625,6 +629,7 @@ LevelEffectsPanel::LevelEffectsPanel(DocumentGetter getter, QWidget* parent) : P
     connect(mirror_, &QComboBox::activated, this, [this](int i) {
         setMirror(static_cast<relief::MirrorMode>(mirror_->itemData(i).toInt()));
     });
+    connect(wrapping_, &QCheckBox::clicked, this, [this](bool on) { setWrapping(on); });
     connect(bake_, &QPushButton::clicked, this, [this]() { bake(); });
     refresh();
 }
@@ -650,7 +655,9 @@ void LevelEffectsPanel::refresh() {
     }
     apply_->setEnabled(s.has_value());
     remove_->setEnabled(s && s->clipPolygons > 0);
-    bake_->setEnabled(s && (s->clipPolygons > 0 || s->mirror != relief::MirrorMode::None));
+    bake_->setEnabled(s && (s->clipPolygons > 0 || s->mirror != relief::MirrorMode::None || s->wrapping));
+    wrapping_->setEnabled(s.has_value());
+    wrapping_->setChecked(s && s->wrapping);
     mirror_->setEnabled(s.has_value());
     refreshing_ = false;
 }
@@ -669,6 +676,13 @@ bool LevelEffectsPanel::setMirror(relief::MirrorMode mode) {
     document::Document* d = doc();
     const bool ok = d != nullptr && finish(viewmodel::setLevelMirror(*d, level(), mode));
     refresh();  // a refused choice puts the box back
+    return ok;
+}
+
+bool LevelEffectsPanel::setWrapping(bool enabled) {
+    document::Document* d = doc();
+    const bool ok = d != nullptr && finish(viewmodel::setLevelWrapping(*d, level(), enabled));
+    refresh();  // a refused choice (not a rotary job) puts the box back
     return ok;
 }
 
