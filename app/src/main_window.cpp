@@ -71,6 +71,7 @@
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "gadgets_menu.hpp"
+#include "parts_import_dialog.hpp"
 #include "variable_menu.hpp"
 #include "carvetto/viewmodel/variables_model.hpp"
 #include "transform_menu.hpp"
@@ -392,6 +393,11 @@ void MainWindow::buildMenus() {
     QAction* importModelAction = file->addAction(QStringLiteral("Import 3D &Model..."));
     importModelAction->setObjectName(QStringLiteral("importModelAction"));
     connect(importModelAction, &QAction::triggered, this, [this]() { importMeshDialog(); });
+    importPartsAction_ = file->addAction(QStringLiteral("Import &Parts List..."));
+    importPartsAction_->setObjectName(QStringLiteral("importPartsAction"));
+    importPartsAction_->setToolTip(QStringLiteral(
+        "Import a CSV parts list through a mapping file: nested panels and Profile, Drilling and Pocket toolpaths"));
+    connect(importPartsAction_, &QAction::triggered, this, [this]() { importPartsDialog(); });
     QAction* previewComponentAction = file->addAction(QStringLiteral("Create Component From Toolpath &Preview"));
     previewComponentAction->setObjectName(QStringLiteral("createPreviewComponentAction"));
     previewComponentAction->setToolTip(QStringLiteral(
@@ -1112,6 +1118,34 @@ void MainWindow::importBitmapDialog() {
         return;
     }
     importBitmapFile(viewmodel::pathFromUtf8(name.toStdString()));
+}
+
+void MainWindow::importPartsDialog() {
+    PartsImportDialog dialog(toolpaths_->toolDatabase(), this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    applyPartsImport(dialog.form());
+}
+
+viewmodel::PartsImportOutcome MainWindow::applyPartsImport(viewmodel::PartsImportForm& form) {
+    viewmodel::PartsImportOutcome outcome = form.apply(session_.document(), &toolpaths_->session());
+    if (outcome.ok) {
+        toolpaths_->invalidate();
+        documentChanged();
+    }
+    QString text = QString::fromStdString(outcome.message);
+    for (const io::PartsDiagnostic& d : outcome.diagnostics) {
+        text += QStringLiteral("\n") + QString::fromStdString(d.text);
+    }
+    statusBar()->showMessage(QString::fromStdString(outcome.message), 8000);
+    if (!quiet_) {
+        QMessageBox box(outcome.ok ? QMessageBox::Information : QMessageBox::Warning, QStringLiteral("Import Parts List"),
+                        text, QMessageBox::Ok, this);
+        box.setTextFormat(Qt::PlainText);
+        box.exec();
+    }
+    return outcome;
 }
 
 void MainWindow::importDxfDialog() {

@@ -41,6 +41,9 @@ qt_add_executable(carvetto
   src/new_job_dialog.hpp
   src/rotary_material_dialog.cpp
   src/rotary_material_dialog.hpp
+  src/parts_import_dialog.cpp
+  src/parts_import_dialog.hpp
+  src/parts_import_self_test.cpp
   src/rotary_post_dialog.cpp
   src/rotary_post_dialog.hpp
   src/rotary_self_test.cpp

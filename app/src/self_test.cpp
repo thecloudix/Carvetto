@@ -47,6 +47,7 @@
 #include "double_sided_menu.hpp"
 #include "rotary_self_test.hpp"
 #include "wrapped_view_self_test.hpp"
+#include "parts_import_dialog.hpp"
 #include "main_window.hpp"
 #include "job_sheet_self_test.hpp"
 #include "node_edit_menu.hpp"
@@ -862,6 +863,11 @@ int runSelfTest() {
 
     // 9c3. The Auto-Wrapping View of rotary jobs: toggle, Model view, wrapped simulation, post dialog (T-0334).
     if (const std::string why = wrappedViewSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c4. Import Parts List: dialog, diagnostics, partial import, one undo step (T-0336).
+    if (const std::string why = partsImportSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

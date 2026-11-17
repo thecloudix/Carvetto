@@ -16,6 +16,7 @@
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/job_sheet.hpp"
 #include "carvetto/viewmodel/model_io.hpp"
+#include "carvetto/viewmodel/parts_import_form.hpp"
 #include "carvetto/viewmodel/preview_component.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
@@ -200,6 +201,12 @@ class MainWindow : public QMainWindow {
     /// Suppresses message boxes (headless self-test); the file operations still report by result.
     void setQuiet(bool quiet) { quiet_ = quiet; }
     bool quiet() const { return quiet_; }
+    /// File > Import Parts List... (T-0336): the dialog is modal; accepting applies the form as one undo step.
+    QAction* importPartsAction() const { return importPartsAction_; }
+    void importPartsDialog();
+    /// Applies a configured parts-import form to the open document (one undo step) and refreshes the window; the
+    /// outcome message is shown unless quiet.
+    viewmodel::PartsImportOutcome applyPartsImport(viewmodel::PartsImportForm& form);
     /// The Gadgets menu (T-0331).
     GadgetsMenu* gadgets() const { return gadgets_.get(); }
 
@@ -234,6 +241,7 @@ class MainWindow : public QMainWindow {
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
     QAction* saveToolpathsAction_{nullptr};
+    QAction* importPartsAction_{nullptr};
     QAction* createJobSheetAction_{nullptr};
     QAction* jobSetupAction_{nullptr};
     QAction* materialSetupAction_{nullptr};
