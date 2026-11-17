@@ -1656,7 +1656,7 @@ Goal: T-0328 emits the head's (reference spindle's) path only; DrillBankResult::
 Acceptance criteria:
   1. A drill-bank job simulates one hole per active spindle, posts with the drill-bank blocks, and round-trips through .carv; app drives it.
 
-### T-0336 App dialog for the parts-list import (T-0329 follow-up)   [status: verifying — PR #217 in CI]
+### T-0336 App dialog for the parts-list import (T-0329 follow-up)   [status: done — PR #217]
 Phase: 3   Module: app   Depends on: T-0329
 Goal: File/Edit menu entry and dialog driving the Qt-free PartsImportForm: choose CSV and mapping files (or paste), show the preview and line-numbered diagnostics, allow-partial toggle, tool choices per Profile/Drill/Pocket, Apply as one undo step; self-test.
 Acceptance criteria:
@@ -1680,13 +1680,13 @@ Goal: main's windows-app job failed from T-0328 on with `toolpath_form.cpp : fat
 Acceptance criteria:
   1. windows-app CI job passes on the PR and on main.
 
-### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: verifying — PR #218 in CI]
+### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: done — PR #218]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0322, T-0334
 Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) but no Qt dialog, menu entry or self-test. Add the dialogs and menu entries for rotary jobs, let a following Fluting toolpath take its depth from the layout, preview the layouts in the wrapped view (needs T-0334), and drive it all from --self-test.
 Acceptance criteria:
   1. A rotary job can create fluting and spiral layouts from the UI as one undo step with a wrapped preview; self-test drives it.
 
-### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: verifying]
+### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: verifying — PR #219 in CI]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0321, T-0334
 Goal: T-0321 delivered the Wrapping level effect, unwrapCrossSection and meshToRotaryField with viewmodel actions but no Qt UI. Add the Wrapping toggle in the level effects UI (and enable Bake for a wrapping-only level in sculpt_panel.cpp), the Vector Unwrapper form, the rotary 3D import dialog (orientation, fit, axis movement), and self-test steps driving them; interactive rotation rings, the orientation gizmo, Resize material block and Reimport remain optional.
 Acceptance criteria:
