@@ -1,0 +1,3 @@
+# ADR-0116: byte-exact fixtures in subfolders, native separators in path tests
+
+The `.gitattributes` pattern `posts/*.pp` does not match `posts/samples/*.pp` (a pattern containing a slash is anchored and `*` does not cross `/`), so the sample post was checked out with CRLF on the Windows runner and tests that search for `begin X\n` failed. `posts/**/*.pp` is now `-text` as well, and a test fails if a `\r` appears in the sample post. Tests that compare a path they built with a path the code scanned must build it with native separators (`make_preferred`), since `fs::path / "a/b"` keeps the `/` on Windows while directory iteration yields `\`.

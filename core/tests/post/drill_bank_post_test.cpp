@@ -276,3 +276,8 @@ TEST_CASE("T-0335: a drill bank toolpath without spindle sets is posted with a w
     REQUIRE(plain.ok());
     CHECK(plain.value().warnings.empty());
 }
+
+TEST_CASE("T-0342: the sample post is read with LF line endings on every platform", "[post][drill_bank]") {
+    // .gitattributes keeps posts/**/*.pp byte-exact (-text); a CRLF checkout would break the block searches above.
+    CHECK(samplePostText().find('\r') == std::string::npos);
+}
