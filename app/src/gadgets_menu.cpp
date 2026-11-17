@@ -1,6 +1,7 @@
 #include "gadgets_menu.hpp"
 
 #include <QAction>
+#include <QCoreApplication>
 #include <QFileDialog>
 #include <QKeySequence>
 #include <QMenu>
@@ -56,9 +57,35 @@ void GadgetsMenu::setFolder(const std::filesystem::path& folder) {
     rebuild();
 }
 
+std::filesystem::path shippedGadgetsDir() {
+    const std::filesystem::path app = viewmodel::pathFromUtf8(QCoreApplication::applicationDirPath().toStdString());
+    const std::filesystem::path candidates[] = {app / "gadgets", app / ".." / "share" / "carvetto" / "gadgets",
+                                                viewmodel::pathFromUtf8(CARVETTO_SHIPPED_GADGETS_DIR)};
+    for (const std::filesystem::path& c : candidates) {
+        std::error_code ec;
+        if (!c.empty() && std::filesystem::is_directory(c, ec)) {
+            return c;
+        }
+    }
+    return {};
+}
+
+scripting::ShippedInstall GadgetsMenu::installShipped(const std::filesystem::path& shippedRoot) {
+    const std::filesystem::path from = shippedRoot.empty() ? shippedGadgetsDir() : shippedRoot;
+    scripting::ShippedInstall out;
+    if (from.empty() || manager_.folder().empty()) {
+        return out;
+    }
+    out = scripting::installShippedGadgets(from, manager_.folder(), scripting::ScriptLimits{}.maxSourceBytes);
+    manager_.rescan();
+    rebuild();
+    return out;
+}
+
 void GadgetsMenu::setPersist(bool persist) {
     persist_ = persist;
     if (persist) {
+        installShipped();
         loadOverrides();
         rebuild();
     }
@@ -170,6 +197,13 @@ scripting::GadgetUi GadgetsMenu::realUi() {
             return false;
         }
         return mb.clickedButton() == yes;
+    };
+    ui.chooseFolder = [parent](const std::string& title) -> std::optional<std::string> {
+        const QString picked = QFileDialog::getExistingDirectory(parent, qs(title));
+        if (picked.isEmpty()) {
+            return std::nullopt;
+        }
+        return picked.toStdString();
     };
     ui.message = [box](const std::string& text) { box(text, QMessageBox::Information, false); };
     ui.confirm = [box](const std::string& text) { return box(text, QMessageBox::Question, true); };

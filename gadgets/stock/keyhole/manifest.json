@@ -1,0 +1,7 @@
+{
+  "name": "Keyhole Toolpath",
+  "version": "1",
+  "api_version": 1,
+  "menu": "Keyhole Toolpath",
+  "description": "Plunges at each selected vector's centre and slides the tool along a slot, for hanging-hardware keyholes."
+}

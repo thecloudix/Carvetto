@@ -445,4 +445,39 @@ InstallResult installGadget(const fs::path& source, const fs::path& root, std::s
     return r;
 }
 
+ShippedInstall installShippedGadgets(const fs::path& shippedRoot, const fs::path& root, std::size_t maxScriptBytes) {
+    ShippedInstall out;
+    const GadgetDiscovery found = discoverGadgets(shippedRoot);
+    out.errors = found.skipped;
+    for (const GadgetInfo& g : found.gadgets) {
+        if (!g.runnable()) {
+            out.errors.push_back(g.folderName + ": " + g.problem);
+            continue;
+        }
+        const fs::path target = root / gadgetFolderName(g.manifest.name);
+        std::error_code ec;
+        bool replace = false;
+        if (fs::exists(target, ec)) {
+            const InstallResult have = inspectGadgetFolder(target, maxScriptBytes);
+            if (have.ok && have.gadget.manifest.name == g.manifest.name) {
+                if (have.gadget.manifest.version == g.manifest.version) {
+                    continue;
+                }
+                replace = true;
+            } else {
+                out.errors.push_back(g.folderName + ": the folder " + target.filename().string() +
+                                     " in the gadgets folder is not this gadget");
+                continue;
+            }
+        }
+        const InstallResult r = installGadget(g.folder, root, maxScriptBytes, replace);
+        if (r.ok) {
+            out.installed.push_back(g.manifest.name);
+        } else {
+            out.errors.push_back(g.folderName + ": " + r.error);
+        }
+    }
+    return out;
+}
+
 }  // namespace carvetto::scripting

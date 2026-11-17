@@ -14,6 +14,7 @@
 #include <QTemporaryDir>
 #include <QTimer>
 #include <filesystem>
+#include <map>
 #include <functional>
 #include <fstream>
 #include <memory>
@@ -482,6 +483,88 @@ std::string gadgetsSelfTest(MainWindow& window) {
         GD_REQUIRE(evilAction != nullptr, "the hostile-description gadget is not in the menu");
         GD_REQUIRE(evilAction->toolTip().contains(QStringLiteral("&lt;a href")) && !evilAction->toolTip().contains(QStringLiteral("<a ")),
                    "the menu tooltip renders the manifest description as markup");
+    }
+
+    // 7. The stock gadgets (T-0332): installed from the shipped folder into an empty gadgets folder,
+    // listed in the menu, and run from it with scripted answers (keyhole, drag knife and the DXF batch
+    // with its folder chooser) against the real toolpath session.
+    {
+        const fs::path stockRoot = viewmodel::pathFromUtf8(tmp.path().toStdString()) / "stock-gadgets";
+        gadgets->setFolder(stockRoot);
+        const fs::path shipped = shippedGadgetsDir();
+        GD_REQUIRE(!shipped.empty(), "the shipped gadgets folder was not found");
+        const scripting::ShippedInstall inst = gadgets->installShipped(shipped);
+        GD_REQUIRE(inst.errors.empty() && inst.installed.size() == 5, "the stock gadgets were not all installed");
+        for (const char* name : {"Celtic Weave Creator", "Drag Knife Toolpath", "Keyhole Toolpath", "Job Setup Sheet Editor",
+                                 "DXF Batch Processor"}) {
+            GD_REQUIRE(actionNamed(*gadgets, QString::fromUtf8(name)) != nullptr,
+                       std::string("the stock gadget is not in the menu: ") + name);
+        }
+        window.setDocument(std::make_unique<document::Document>(
+            document::Job::singleSided(300.0, 300.0, 18.0, document::Units::Millimetres)));
+        document::Document& fresh = window.currentDocument();
+        const auto formAnswers = [](std::map<std::string, scripting::ScriptValue> over, const std::string& toolId) {
+            return [over = std::move(over), toolId](const scripting::FormSpec& spec) -> std::optional<scripting::ScriptValue::Map> {
+                scripting::ScriptValue::Map m;
+                for (const auto& f : spec.fields) {
+                    const auto it = over.find(f.name);
+                    if (it != over.end()) {
+                        m.set(f.name, it->second);
+                    } else if (f.kind == scripting::FormFieldKind::Tool) {
+                        m.set(f.name, scripting::ScriptValue(toolId));
+                    } else {
+                        m.set(f.name, f.defaultValue);
+                    }
+                }
+                return m;
+            };
+        };
+        const std::string toolId = window.toolpaths()->session().toolDatabase().tools().begin()->first;
+
+        // Celtic weave: one undo step of vectors.
+        scripting::GadgetUi weaveUi;
+        weaveUi.form = formAnswers({}, toolId);
+        gadgets->setUiOverride(weaveUi);
+        fresh.undoStack().clear();
+        actionNamed(*gadgets, QStringLiteral("Celtic Weave Creator"))->trigger();
+        GD_REQUIRE(gadgets->lastReport().ok && fresh.objectCount() == 25 && fresh.undoStack().count() == 1,
+                   "the Celtic weave gadget did not create its vectors in one step");
+
+        // Keyhole on a selected circle.
+        const auto circle = fresh.objectIds().front();
+        fresh.selection().assign({circle});
+        scripting::GadgetUi keyUi;
+        keyUi.form = formAnswers({}, toolId);
+        gadgets->setUiOverride(keyUi);
+        actionNamed(*gadgets, QStringLiteral("Keyhole Toolpath"))->trigger();
+        GD_REQUIRE(gadgets->lastReport().ok && fresh.toolpaths().size() == 1 && fresh.toolpaths()[0].hasMoves(),
+                   "the keyhole gadget did not create its toolpath");
+
+        // Drag knife on the same selection.
+        actionNamed(*gadgets, QStringLiteral("Drag Knife Toolpath"))->trigger();
+        GD_REQUIRE(gadgets->lastReport().ok && fresh.toolpaths().size() == 2, "the drag knife gadget did not create its toolpath");
+
+        // DXF batch with a scripted folder chooser.
+        const fs::path dxfDir = viewmodel::pathFromUtf8(tmp.path().toStdString()) / "dxf";
+        fs::create_directories(dxfDir);
+        writeFile(dxfDir / "tri.dxf",
+                  "0\nSECTION\n2\nENTITIES\n0\nLWPOLYLINE\n8\n0\n90\n3\n70\n1\n10\n0\n20\n0\n10\n10\n20\n0\n10\n5\n20\n8\n"
+                  "0\nENDSEC\n0\nEOF\n");
+        scripting::GadgetUi dxfUi;
+        dxfUi.form = formAnswers({}, toolId);
+        dxfUi.chooseFolder = [&dxfDir](const std::string&) { return std::optional<std::string>(dxfDir.string()); };
+        gadgets->setUiOverride(dxfUi);
+        const std::size_t objectsBefore = fresh.objectCount();
+        actionNamed(*gadgets, QStringLiteral("DXF Batch Processor"))->trigger();
+        GD_REQUIRE(gadgets->lastReport().ok && fresh.objectCount() == objectsBefore + 1,
+                   "the DXF batch gadget did not import the file: " +
+                       (gadgets->lastReport().error ? gadgets->lastReport().error->summary + gadgets->lastReport().error->detail
+                                                    : std::string()));
+        GD_REQUIRE(fresh.layers().back().name == "tri", "the DXF batch layer is not named after the file");
+
+        // Second start: nothing is installed again.
+        const scripting::ShippedInstall again = gadgets->installShipped(shipped);
+        GD_REQUIRE(again.installed.empty() && again.errors.empty(), "the stock gadgets were installed twice");
     }
 
     gadgets->setUiOverride(std::nullopt);

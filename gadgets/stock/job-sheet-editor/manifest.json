@@ -1,0 +1,7 @@
+{
+  "name": "Job Setup Sheet Editor",
+  "version": "1",
+  "api_version": 1,
+  "menu": "Job Setup Sheet Editor",
+  "description": "Sets the colours and the sections of the job sheet this job prints."
+}

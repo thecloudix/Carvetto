@@ -113,7 +113,8 @@ qt_add_executable(carvetto
   src/variables_self_test.cpp
 )
 # Development builds find the shipped posts in the source tree (a packaged app has posts/ beside it).
-target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts")
+target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
+                                                CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock")
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
 # GUI subsystem on Windows (no console window). CI waits for `--self-test` with
 # Start-Process -Wait and redirected output. See ADR-0014.

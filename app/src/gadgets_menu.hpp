@@ -43,6 +43,12 @@ class GadgetsMenu {
     /// runs only, so tests never touch the user's settings.
     void setPersist(bool persist);
 
+    /// Installs the gadgets that ship with the application into the gadgets folder (missing ones, and
+    /// ones whose manifest version changed), then rescans and rebuilds the menu. `shippedRoot` empty =
+    /// `shippedGadgetsDir()`. Done when persistence is turned on (real runs), so the stock gadgets are
+    /// in the menu from the first start.
+    scripting::ShippedInstall installShipped(const std::filesystem::path& shippedRoot = {});
+
     /// The gadget actions of the menu, in menu order (submenus flattened).
     std::vector<QAction*> gadgetActions() const;
 
@@ -85,6 +91,10 @@ class GadgetsMenu {
     std::atomic<bool> cancel_{false};  ///< set by the "Abort gadget" button of a dialog
     bool persist_{false};
 };
+
+/// The folder of the gadgets shipped with the application (stock gadgets, ADR-0113): beside the
+/// executable, in the install tree, or the source tree of a development build; empty if none found.
+std::filesystem::path shippedGadgetsDir();
 
 /// The default gadgets folder: <AppData>/gadgets (created on first install).
 std::filesystem::path defaultGadgetsFolder();
