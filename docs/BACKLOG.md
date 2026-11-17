@@ -1562,7 +1562,7 @@ Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/
 Acceptance criteria:
   1. Golden-file tests of wrapped output for X and Y along-axis jobs; wrapped view and simulation covered by viewmodel tests and the self-test; ADR with the unit and sign conventions.
 
-### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: verifying (app UI -> T-0341)]
+### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: verifying — PR #215 in CI]
 Phase: 3   Module: core/relief + core/geometry + app   Depends on: T-0319, T-0295
 Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around the cylinder at render time, like Clipping and Mirror Mode, made permanent by Bake); Vector Unwrapper (turns a cross-section into a contour for two-rail rotary modelling; centre options); 3D import into a rotary job (mesh mapped to the cylinder, orientation options). Operation-counter tests; .carv bump only if used.
 Acceptance criteria:
@@ -1592,7 +1592,7 @@ Goal: Simulation that marks the surface using each tool's Maximum Burn Rate (pow
 Acceptance criteria:
   1. Burn marks match the model on test paths (counter-based, no timing); laser post golden test; ADR.
 
-### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: verifying]
+### T-0326 Laser app wiring: Add-menu entries, forms, preview and job-sheet   [status: done — PR #211]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0324, T-0325
 Goal: Wire Laser Cut/Fill, Picture and Sketch Engraving into the Toolpaths panel (entries, dialogs, recalculation, staleness, preview and simulation overlay, job-sheet rows) following the T-0303/T-0311 pattern.
 Also: with the machine-limit boundary on, overscan strokes can still leave the limits (the burn is clipped, the beam-off overscan moves are not): clamp overscan to the limits or note it in ADR-0105 (T-0324 verifier). Call post::laserSetupProblem(machine, post) from the UI (T-0325) and add the machine laser flag to the tool/machine setup dialog. Self-tests for Picture and Sketch entries belong here.
@@ -1632,7 +1632,7 @@ RE-SCOPED 2026-11-17 after three verifier FAILs: functionality, hardening and sa
 Acceptance criteria:
   1. A sample gadget creates vectors and a toolpath in one undo step from the Gadgets menu; sandbox limits enforced in the app; self-test.
 
-### T-0332 Stock gadgets as scripts: Celtic weave, drag knife, keyhole, job-sheet editor, DXF batch   [status: verifying]
+### T-0332 Stock gadgets as scripts: Celtic weave, drag knife, keyhole, job-sheet editor, DXF batch   [status: done — PR #214 pending CI]
 Phase: 3   Module: gadgets + docs   Depends on: T-0331, T-0299
 Goal: Port the stock gadget behaviours as original scripts shipped with the app: weave creator (grid, intersection states, cross-section, Apply creates vectors for Extrude and Weave), drag-knife toolpath (blade offset, tolerance angle, swivel, passes), keyhole toolpath, job-sheet editor (logo, colours, sections), DXF batch convert. Written from the behaviour descriptions only (clean room).
 Acceptance criteria:
@@ -1644,7 +1644,7 @@ Goal: A browser panel over user-chosen local folders of vector/bitmap clipart (S
 Acceptance criteria:
   1. Browsing a folder of mixed files shows thumbnails; insert is one undo step; self-test; ADR.
 
-### T-0334 App wiring for the Auto-Wrapping View, wrapped simulation playback and rotary refusal dialogs (T-0320 follow-up)   [status: verifying]
+### T-0334 App wiring for the Auto-Wrapping View, wrapped simulation playback and rotary refusal dialogs (T-0320 follow-up)   [status: done — PR #213]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0320
 Goal: T-0320 delivered the wrapped post, CylinderMap, the Qt-free wrapped view (flat/wrapped state, software renderer, path builders) and wrapped simulation core. Wire them into the app: a View-menu entry and flat/wrapped toggle for rotary jobs, drawing the wrapped raster in the Model/2D views, wrapped playback in the simulation panel, a dialog presenting the rotary post refusals/warnings, and --self-test coverage driving them offscreen.
 Acceptance criteria:
@@ -1697,3 +1697,15 @@ Phase: 3   Module: core/tests + app/viewmodel/tests   Depends on: T-0335, T-0333
 Goal: windows-app fails on current main: 'T-0335: the spindle tags carry the head's data, converted for inch posts' (drill_bank_post_test.cpp:166 REQUIRE(feed != npos)), 'T-0335: a post without the needed blocks refuses a drill bank toolpath' (drill_bank_post_test.cpp:57 REQUIRE(begin != npos), message DRILL_BANK_PATTERN), and 'clipart: library folders, search and favourites persist through the store' (clipart_test.cpp:515 REQUIRE(lib.visible().size() == 1) got 0). Linux passes. Find the root causes (suspects: CRLF line endings when a sample post file is read on Windows; path/separator or drive-letter handling in the clipart library folders/favourites sanitising), fix the code or tests, add a regression guard, and confirm windows-app green on the PR.
 Acceptance criteria:
   1. windows-app CI passes on the PR; the fix is root-caused, not a skip.
+
+### T-0343 Rotary job depth reference: toolpath Z on a rotary job whose Z zero is the cylinder axis   [status: ready — LOW]
+Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0334
+Goal: found by the T-0334 coder: on a rotary job with Z zero at the axis (the Job::rotary default), a Profile with cutDepth 2 computes Z around -2 with safe Z 5, which is below the cylinder surface (Z = radius) so the simulation cuts nothing. Decide and implement how toolpath depths are referenced on such jobs (e.g. default the Z zero to the material surface for rotary jobs, or offset depths by the radius), with an ADR stating the reading.
+Acceptance criteria:
+  1. A default rotary job with a Profile toolpath simulates cutting the cylinder; tests cover both Z-zero choices.
+
+### T-0344 Job Setup Sheet Editor completion: logo and notes section (T-0332 follow-up)   [status: ready — LOW]
+Phase: 3   Module: gadgets + core/scripting   Depends on: T-0332
+Goal: T-0332 left the Job Setup Sheet Editor without the logo (needs a validated read-file service, reusing io/png_guard) and without a Job Notes section on the sheet. Add both, plus a "do not reinstall" marker for deleted stock gadgets.
+Acceptance criteria:
+  1. The sheet shows a chosen logo and the notes section; a deleted stock gadget stays deleted; tests cover the validation of hostile images.
