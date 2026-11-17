@@ -1562,7 +1562,7 @@ Goal: Toolpaths stay computed flat; make the post-processor wrap (ROTARY_WRAP_X/
 Acceptance criteria:
   1. Golden-file tests of wrapped output for X and Y along-axis jobs; wrapped view and simulation covered by viewmodel tests and the self-test; ADR with the unit and sign conventions.
 
-### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: verifying — PR #215 in CI]
+### T-0321 Wrapping level effect, Vector Unwrapper and rotary 3D import   [status: done — PR #215]
 Phase: 3   Module: core/relief + core/geometry + app   Depends on: T-0319, T-0295
 Goal: A Wrapping level effect (a flat-modelled relief composed wrapped around the cylinder at render time, like Clipping and Mirror Mode, made permanent by Bake); Vector Unwrapper (turns a cross-section into a contour for two-rail rotary modelling; centre options); 3D import into a rotary job (mesh mapped to the cylinder, orientation options). Operation-counter tests; .carv bump only if used.
 Acceptance criteria:
@@ -1686,7 +1686,7 @@ Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) 
 Acceptance criteria:
   1. A rotary job can create fluting and spiral layouts from the UI as one undo step with a wrapped preview; self-test drives it.
 
-### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: ready — LOW]
+### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: in-progress]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0321, T-0334
 Goal: T-0321 delivered the Wrapping level effect, unwrapCrossSection and meshToRotaryField with viewmodel actions but no Qt UI. Add the Wrapping toggle in the level effects UI (and enable Bake for a wrapping-only level in sculpt_panel.cpp), the Vector Unwrapper form, the rotary 3D import dialog (orientation, fit, axis movement), and self-test steps driving them; interactive rotation rings, the orientation gizmo, Resize material block and Reimport remain optional.
 Acceptance criteria:
@@ -1698,7 +1698,7 @@ Goal: windows-app fails on current main: 'T-0335: the spindle tags carry the hea
 Acceptance criteria:
   1. windows-app CI passes on the PR; the fix is root-caused, not a skip.
 
-### T-0343 Rotary job depth reference: toolpath Z on a rotary job whose Z zero is the cylinder axis   [status: verifying]
+### T-0343 Rotary job depth reference: toolpath Z on a rotary job whose Z zero is the cylinder axis   [status: verifying — PR #216 in CI]
 Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0334
 Goal: found by the T-0334 coder: on a rotary job with Z zero at the axis (the Job::rotary default), a Profile with cutDepth 2 computes Z around -2 with safe Z 5, which is below the cylinder surface (Z = radius) so the simulation cuts nothing. Decide and implement how toolpath depths are referenced on such jobs (e.g. default the Z zero to the material surface for rotary jobs, or offset depths by the radius), with an ADR stating the reading.
 Acceptance criteria:
