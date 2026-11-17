@@ -1,4 +1,4 @@
-// T-0321: the Wrapping level effect in the document: undoable command, bake, `.carv` 1.19 (ADR-0114).
+// T-0321: the Wrapping level effect in the document: undoable command, bake, `.carv` 1.20 (ADR-0114).
 
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
