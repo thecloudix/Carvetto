@@ -214,6 +214,9 @@ struct ToolpathJob {
     /// The records of the target (its V-carve) as they were when the job was prepared; `apply`
     /// refuses the result when they have changed since (an edit or rename in between).
     std::vector<document::ToolpathRecord> targetRecords;
+    /// Rotary job with the Z zero on the cylinder axis (T-0343, ADR-0117): the Z (mm) of the cylinder surface,
+    /// added to every move of the surface-referenced operations so their depths are measured from the surface.
+    double zShift{0.0};
 
     /// Runs the core operation. Deterministic. A set `cancel` flag is checked before the run and
     /// after it (the core operations themselves are not interruptible); a cancelled run produces
@@ -302,7 +305,8 @@ std::uint64_t modelFingerprint(const document::Document& doc, document::SheetId 
 
 /// Defaults for a new 3D toolpath from the job and the model: Z zero at the material surface puts
 /// the stock top at 0 and the bottom at -thickness (MachineBed: thickness and 0); the model's highest
-/// point is placed at the stock top (`zOffset`); the safe Z is 5 mm above the stock top.
+/// point is placed at the stock top (`zOffset`); the safe Z is 5 mm above the stock top. On a rotary job the
+/// stock top is the cylinder surface (the radius when Z zero is the axis) and the bottom the model band's.
 struct ModelDefaults {
     bool valid{false};
     double zOffset{0.0};
@@ -311,6 +315,11 @@ struct ModelDefaults {
     double safeZ{5.0};
 };
 ModelDefaults modelDefaults(const document::Document& doc);
+
+/// Z (mm) added to the moves of `operation` on `job` (T-0343, ADR-0117): the surface Z of a rotary job whose Z zero
+/// is the cylinder axis, for the operations whose depths are measured from the surface; 0 for every other job and
+/// for the operations that take absolute Z (the model toolpaths, Moulding and Rounding).
+double surfaceDepthShift(const document::Job& job, document::ToolpathOperation operation);
 
 /// Hash of what the toolpath of `params` reads from `selector` in `doc`: the resolved vectors, or
 /// for an image engrave its bitmap (and, for Selected Vectors, the vectors too), for a 3D rough or

@@ -553,6 +553,7 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
     if (!bad.empty()) {
         job.refusal = bad;
     }
+    job.zShift = surfaceDepthShift(doc_->job(), definition.operation());
     if (job.refusal.empty() && std::holds_alternative<toolpath::RoundingParams>(definition.params) &&
         doc_->job().type != document::JobType::Rotary) {
         job.refusal = "Rounding turns the cylinder of a rotary job; this job is not a rotary job";

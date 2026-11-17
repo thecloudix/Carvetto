@@ -833,3 +833,105 @@ TEST_CASE("applyBurnMarks blends towards the burn colour by the largest darkness
         CHECK(p == kBurnColour);
     }
 }
+
+// --- rotary depth reference (T-0343, ADR-0117) -----------------------------------------------------
+
+namespace {
+
+/// A Profile of cut depth 2 on a 100 x 20 rotary job with the given Z zero; the setup it simulates.
+struct RotaryProfile {
+    std::unique_ptr<document::Document> doc;
+    tooling::ToolDatabase db{cliToolDatabase()};
+    std::unique_ptr<ToolpathSession> session;
+    document::ToolpathId id;
+
+    explicit RotaryProfile(document::ZZero zero) {
+        doc = std::make_unique<document::Document>(document::Job::rotary(
+            100, 20, document::Units::Millimetres, document::RotaryAxis::X, zero));
+        session = std::make_unique<ToolpathSession>(doc.get());
+        session->setToolDatabase(db);
+        addVector(*doc, square(20, 20, 20));
+        const ToolpathOutcome out = session->add(profileDefinition(db, 2.0));
+        REQUIRE(out.ok);
+        id = out.ids.front();
+    }
+    double lowestZ() const {
+        double lo = 1e9;
+        for (const Move& m : *doc->findToolpath(id)->moves) {
+            lo = std::min(lo, m.to.z);
+        }
+        return lo;
+    }
+    double highestZ() const {
+        double hi = -1e9;
+        for (const Move& m : *doc->findToolpath(id)->moves) {
+            hi = std::max(hi, m.to.z);
+        }
+        return hi;
+    }
+    float lowestStock() const {
+        const SimulationSetup setup = makeSimulationSetup(*session);
+        REQUIRE(setup.ok);
+        simulate::Simulator sim(setup.stock, setup.options);
+        REQUIRE(sim.ok());
+        for (std::size_t i = 0; i < setup.toolpaths.size(); ++i) {
+            toolpath::Toolpath path;
+            path.tool = setup.toolpaths[i].tool;
+            path.moves = *setup.toolpaths[i].moves;
+            REQUIRE(sim.addToolpath(path, setup.toolpaths[i].shape, static_cast<std::uint32_t>(i + 1)));
+        }
+        REQUIRE(sim.advanceToMove(path_size(setup)));
+        float lo = 1e9f;
+        for (const float h : sim.heightfield().heights()) {
+            lo = std::min(lo, h);
+        }
+        return lo;
+    }
+    static std::size_t path_size(const SimulationSetup& setup) {
+        std::size_t n = 0;
+        for (const auto& t : setup.toolpaths) {
+            n += t.moves->size();
+        }
+        return n;
+    }
+};
+
+}  // namespace
+
+TEST_CASE("rotary depth: a profile on a cylinder-axis job is cut from the surface", "[simulation][rotary]") {
+    RotaryProfile f(document::ZZero::CylinderAxis);
+    // radius 10: the cut bottom is at 10 - 2, the safe Z above the surface at 10 + 5
+    CHECK(f.lowestZ() == Catch::Approx(8.0));
+    CHECK(f.highestZ() == Catch::Approx(15.0));
+    CHECK(f.lowestStock() < 9.5f);  // material was removed from the cylinder
+    CHECK(f.lowestStock() > 7.0f);
+}
+
+TEST_CASE("rotary depth: a profile on a surface-zero job is cut from Z 0", "[simulation][rotary]") {
+    RotaryProfile f(document::ZZero::MaterialSurface);
+    CHECK(f.lowestZ() == Catch::Approx(-2.0));
+    CHECK(f.highestZ() == Catch::Approx(5.0));
+    CHECK(f.lowestStock() < -0.5f);
+    CHECK(f.lowestStock() > -3.0f);
+}
+
+TEST_CASE("rotary depth: model toolpath defaults follow the cylinder surface", "[simulation][rotary]") {
+    const document::Document axis(document::Job::rotary(100, 20, document::Units::Millimetres));
+    const ModelDefaults a = modelDefaults(axis);
+    CHECK(a.stockTop == Catch::Approx(10.0));
+    CHECK(a.stockBottom == Catch::Approx(0.0));
+    CHECK(a.safeZ == Catch::Approx(15.0));
+    const document::Document surf(document::Job::rotary(100, 20, document::Units::Millimetres,
+                                                        document::RotaryAxis::X, document::ZZero::MaterialSurface));
+    const ModelDefaults s = modelDefaults(surf);
+    CHECK(s.stockTop == Catch::Approx(0.0));
+    CHECK(s.stockBottom == Catch::Approx(-10.0));
+    // The shift applies to surface-referenced operations of a rotary axis job only.
+    const document::Job& job = axis.job();
+    CHECK(surfaceDepthShift(job, document::ToolpathOperation::Profile) == Catch::Approx(10.0));
+    CHECK(surfaceDepthShift(job, document::ToolpathOperation::Rounding) == 0.0);
+    CHECK(surfaceDepthShift(job, document::ToolpathOperation::Rough3d) == 0.0);
+    CHECK(surfaceDepthShift(surf.job(), document::ToolpathOperation::Profile) == 0.0);
+    CHECK(surfaceDepthShift(document::Job::singleSided(100, 100, 20, document::Units::Millimetres),
+                            document::ToolpathOperation::Profile) == 0.0);
+}
