@@ -1778,7 +1778,7 @@ Goal: Own-wording user documentation under docs/user/ (quick start, drawing, edi
 Acceptance criteria:
   1. Quick-start walks the MVP scenario with the real menu names (checked by a test that greps menu object names/labels against the doc); Help menu opens the bundled docs; clean-room lint passes.
 
-### T-0356 Compliance audit: clean-room scan, licences/NOTICE, dependency inventory   [status: in-progress]
+### T-0356 Compliance audit: clean-room scan, licences/NOTICE, dependency inventory   [status: verifying]
 Phase: 4   Module: tools + docs   Depends on: none
 Goal: A scripted audit run in ctest and CI: no third-party product/trademark names or proprietary formats in code, docs, UI strings, samples or changelog (allowlist for factual compatibility claims like the .pp post format); NOTICE/THIRD_PARTY file listing every bundled dependency (Lua, miniz, ...) with licence text; SPDX headers or a licence file check.
 Acceptance criteria:
