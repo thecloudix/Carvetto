@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QSignalBlocker>
 #include <QDesktopServices>
 #include <QPageSize>
 #include <QPdfWriter>
@@ -50,6 +51,7 @@
 #include "double_sided_menu.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/wrapped_view.hpp"
 #include "carvetto/viewmodel/job_sheet.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/starter_font.hpp"
@@ -470,6 +472,15 @@ void MainWindow::buildMenus() {
         simView->blockSignals(false);
     });
 
+    wrappedViewAction_ = view->addAction(QStringLiteral("&Wrapped View (rotary)"));
+    wrappedViewAction_->setObjectName(QStringLiteral("wrappedViewAction"));
+    wrappedViewAction_->setCheckable(true);
+    wrappedViewAction_->setChecked(true);
+    wrappedViewAction_->setEnabled(false);
+    wrappedViewAction_->setToolTip(QStringLiteral("Show a rotary job wrapped round its cylinder, or flat"));
+    connect(wrappedViewAction_, &QAction::toggled, this, [this](bool on) { setWrappedView(on); });
+    modelView_->onWrappedToggled = [this](bool on) { setWrappedView(on); };
+
     QMenu* setup = menuBar()->addMenu(QStringLiteral("&Setup"));
     jobSetupAction_ = setup->addAction(QStringLiteral("&Job Setup..."));
     jobSetupAction_->setObjectName(QStringLiteral("jobSetupAction"));
@@ -634,9 +645,22 @@ bool MainWindow::replaceDocument(const std::function<bool()>& swap) {
     return ok;
 }
 
+void MainWindow::setWrappedView(bool on) {
+    wrappedView_ = on;
+    if (wrappedViewAction_ != nullptr && wrappedViewAction_->isChecked() != on) {
+        const QSignalBlocker block(wrappedViewAction_);
+        wrappedViewAction_->setChecked(on);
+    }
+    modelView_->setWrapped(on);
+    relief_->setWrapped(on);
+}
+
 void MainWindow::documentChanged() {
     if (materialSetupAction_) {
         materialSetupAction_->setEnabled(session_.document().job().type == document::JobType::Rotary);
+    }
+    if (wrappedViewAction_) {
+        wrappedViewAction_->setEnabled(viewmodel::RotaryViewState::available(session_.document().job()));
     }
     if (transformMenu_) {
         transformMenu_->refresh();

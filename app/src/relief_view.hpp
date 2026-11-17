@@ -7,7 +7,9 @@
 #include <optional>
 
 #include "carvetto/geometry/box2.hpp"
+#include "carvetto/geometry/cylinder_map.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/viewmodel/model_view.hpp"
 #include "carvetto/viewmodel/simulation_controller.hpp"
 
 namespace carvetto::app {
@@ -32,18 +34,37 @@ class ReliefView : public QWidget {
     /// Text shown when there is no frame.
     void setEmptyText(const QString& text);
 
+    /// The Auto-Wrapping View (T-0334): the cut stock of a rotary job drawn round the cylinder `map` from the
+    /// frame's wrapped surface, orbitable with the mouse (left-drag orbits, the wheel zooms). Only frames that
+    /// carry a wrapped surface (rotary jobs) can show it; others keep the flat picture.
+    void setWrapped(bool on);
+    void setCylinder(std::optional<geometry::CylinderMap> map);
+    bool wrappedRequested() const { return wrapped_; }
+    /// True when the picture on screen is the wrapped one.
+    bool showingWrapped() const { return wrapped_ && frame_ && frame_->wrapped && cylinder_.has_value(); }
+    viewmodel::OrbitCamera& camera() { return camera_; }
+    void cameraChanged();
+    /// The wrapped picture rendered now at the widget's picture size (null image when not showing it).
+    QImage wrappedImage();
+
     const QImage& image() const { return image_; }
     const QString& banner() const { return banner_; }
     const QString& status() const { return status_; }
+    const std::shared_ptr<const viewmodel::SimulationFrame>& frame() const { return frame_; }
     bool hasPicture() const { return !image_.isNull(); }
     /// Colour of the picture pixel under the stock position `mm` (self-test); invalid when outside.
     QColor pixelAtStock(geometry::Vec2 mm) const;
 
    protected:
     void paintEvent(QPaintEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
 
    private:
     QRectF pictureRect() const;
+    void rebuildImage();
 
     std::shared_ptr<const viewmodel::SimulationFrame> frame_;
     QImage image_;
@@ -53,6 +74,10 @@ class ReliefView : public QWidget {
     QString emptyText_;
     std::optional<geometry::Vec2> tool_;
     double toolDiameter_{0.0};
+    bool wrapped_{true};
+    std::optional<geometry::CylinderMap> cylinder_;
+    viewmodel::OrbitCamera camera_;
+    QPoint last_;
 };
 
 }  // namespace carvetto::app

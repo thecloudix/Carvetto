@@ -1,9 +1,11 @@
 #include "relief_view.hpp"
 
 #include <QFontMetrics>
+#include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
+#include <QWheelEvent>
 #include <algorithm>
 
 namespace carvetto::app {
@@ -24,7 +26,16 @@ ReliefView::ReliefView(QWidget* parent) : QWidget(parent) {
 void ReliefView::setFrame(std::shared_ptr<const viewmodel::SimulationFrame> frame, const geometry::Box2& stockMm) {
     frame_ = std::move(frame);
     stock_ = stockMm;
+    rebuildImage();
+    update();
+}
+
+void ReliefView::rebuildImage() {
     image_ = QImage();
+    if (showingWrapped()) {
+        image_ = wrappedImage();
+        return;
+    }
     if (frame_ && frame_->relief && frame_->relief->width > 0 && frame_->relief->height > 0) {
         const viewmodel::Raster& r = *frame_->relief;
         // Wrap the shared pixels (no copy); the frame stays alive as long as the image does.
@@ -35,7 +46,71 @@ void ReliefView::setFrame(std::shared_ptr<const viewmodel::SimulationFrame> fram
                         [](void* info) { delete static_cast<std::shared_ptr<const viewmodel::SimulationFrame>*>(info); },
                         keep);
     }
+}
+
+void ReliefView::setWrapped(bool on) {
+    if (wrapped_ != on) {
+        wrapped_ = on;
+        rebuildImage();
+        update();
+    }
+}
+
+void ReliefView::setCylinder(std::optional<geometry::CylinderMap> map) {
+    cylinder_ = map;
+    rebuildImage();
     update();
+}
+
+void ReliefView::cameraChanged() {
+    if (showingWrapped()) {
+        rebuildImage();
+    }
+    update();
+}
+
+QImage ReliefView::wrappedImage() {
+    if (!showingWrapped()) {
+        return QImage();
+    }
+    const QRectF area(kMargin, kMargin, width() - 2 * kMargin, height() - 2 * kMargin - kStatusHeight);
+    viewmodel::WrappedRenderOptions opt;
+    opt.width = static_cast<std::size_t>(std::clamp(static_cast<int>(area.width()), 64, 2048));
+    opt.height = static_cast<std::size_t>(std::clamp(static_cast<int>(area.height()), 64, 2048));
+    const viewmodel::Raster r = viewmodel::renderWrapped(*frame_->wrapped, *cylinder_, camera_, opt);
+    QImage img(static_cast<int>(r.width), static_cast<int>(r.height), QImage::Format_ARGB32);
+    for (std::size_t y = 0; y < r.height; ++y) {
+        auto* line = reinterpret_cast<QRgb*>(img.scanLine(static_cast<int>(y)));
+        for (std::size_t x = 0; x < r.width; ++x) {
+            line[x] = r.pixels[y * r.width + x];
+        }
+    }
+    return img;
+}
+
+void ReliefView::resizeEvent(QResizeEvent* event) {
+    QWidget::resizeEvent(event);
+    cameraChanged();
+}
+
+void ReliefView::mousePressEvent(QMouseEvent* event) {
+    last_ = event->pos();
+}
+
+void ReliefView::mouseMoveEvent(QMouseEvent* event) {
+    if (showingWrapped() && (event->buttons() & Qt::LeftButton) != 0) {
+        const QPoint d = event->pos() - last_;
+        camera_.orbit(d.x(), d.y());
+        cameraChanged();
+    }
+    last_ = event->pos();
+}
+
+void ReliefView::wheelEvent(QWheelEvent* event) {
+    if (showingWrapped()) {
+        camera_.zoomBy(event->angleDelta().y() > 0 ? 1.1 : 1.0 / 1.1);
+        cameraChanged();
+    }
 }
 
 void ReliefView::setStatus(const QString& text) {
@@ -75,7 +150,7 @@ QRectF ReliefView::pictureRect() const {
 }
 
 QColor ReliefView::pixelAtStock(geometry::Vec2 mm) const {
-    if (image_.isNull() || stock_.isEmpty() || !stock_.contains(mm)) {
+    if (showingWrapped() || image_.isNull() || stock_.isEmpty() || !stock_.contains(mm)) {
         return QColor();
     }
     const double fx = (mm.x - stock_.min.x) / std::max(stock_.width(), 1e-9);
@@ -99,7 +174,7 @@ void ReliefView::paintEvent(QPaintEvent* event) {
         p.setPen(QPen(QColor(120, 120, 120), 1.0));
         p.setBrush(Qt::NoBrush);
         p.drawRect(pic);
-        if (tool_.has_value() && !stock_.isEmpty() && stock_.contains(*tool_)) {
+        if (!showingWrapped() && tool_.has_value() && !stock_.isEmpty() && stock_.contains(*tool_)) {
             const double fx = (tool_->x - stock_.min.x) / std::max(stock_.width(), 1e-9);
             const double fy = 1.0 - (tool_->y - stock_.min.y) / std::max(stock_.height(), 1e-9);
             const QPointF c(pic.left() + fx * pic.width(), pic.top() + fy * pic.height());

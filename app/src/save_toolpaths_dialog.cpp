@@ -26,6 +26,7 @@
 
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/tiling_form.hpp"
+#include "rotary_post_dialog.hpp"
 #include "tiling_manager_panel.hpp"
 
 #ifndef CARVETTO_SHIPPED_POSTS_DIR
@@ -169,6 +170,12 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
     message_->setObjectName(QStringLiteral("saveMessage"));
     message_->setWordWrap(true);
     layout->addWidget(message_);
+
+    rotaryDetails_ = new QPushButton(QStringLiteral("Rotary details..."), this);
+    rotaryDetails_->setObjectName(QStringLiteral("saveRotaryDetails"));
+    rotaryDetails_->setVisible(false);
+    layout->addWidget(rotaryDetails_);
+    connect(rotaryDetails_, &QPushButton::clicked, this, [this]() { makeRotaryDialog()->exec(); });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
     save_ = buttons->button(QDialogButtonBox::Save);
@@ -487,9 +494,18 @@ void SaveToolpathsDialog::showState() {
     if (!writeError_.empty()) {
         message = QStringLiteral("Not saved: ") + qs(writeError_) + QLatin1Char('\n') + message;
     }
+    rotaryReport_ = outputFresh_ ? viewmodel::rotaryPostReport(output_, source_.job) : viewmodel::RotaryPostReport{};
+    rotaryDetails_->setVisible(!rotaryReport_.empty());
+    if (!rotaryReport_.empty() && !output_.ok) {
+        message += QStringLiteral("Rotary job refused: press \"Rotary details...\" for what to change.\n");
+    }
     summary_->setText(summary);
     preview_->setPlainText(previewText);
     message_->setText(message.trimmed());
+}
+
+std::unique_ptr<RotaryPostDialog> SaveToolpathsDialog::makeRotaryDialog() {
+    return std::make_unique<RotaryPostDialog>(rotaryReport_, this);
 }
 
 std::string SaveToolpathsDialog::previewShown() const {

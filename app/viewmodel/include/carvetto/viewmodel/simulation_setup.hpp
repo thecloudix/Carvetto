@@ -2,11 +2,13 @@
 
 #include <cstddef>
 #include <limits>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/geometry/cylinder_map.hpp"
 #include "carvetto/simulate/simulator.hpp"
 #include "carvetto/simulate/stock.hpp"
 #include "carvetto/simulate/tool_shape.hpp"
@@ -66,6 +68,8 @@ struct SimulationSetup {
     std::vector<SimulationToolpath> toolpaths;
     std::size_t totalMoves{0};
     std::size_t staleAtStart{0};
+    /// Rotary job (T-0334): the job's flat-to-cylinder map; frames then also carry the wrapped surface.
+    std::optional<geometry::CylinderMap> cylinder;
 };
 
 /// Copies the enabled, computed toolpaths, the tools (shapes from the session's tool database) and

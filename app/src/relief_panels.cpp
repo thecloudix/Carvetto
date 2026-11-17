@@ -20,6 +20,7 @@
 #include <QWheelEvent>
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <limits>
 
 namespace carvetto::app {
@@ -658,6 +659,19 @@ ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(paren
         setMaterial(static_cast<viewmodel::ModelMaterial>(materialBox_->itemData(index).toInt()));
     });
     bar->addWidget(materialBox_);
+    wrappedButton_ = new QPushButton(QStringLiteral("Wrapped"), this);
+    wrappedButton_->setObjectName(QStringLiteral("wrappedToggle"));
+    wrappedButton_->setCheckable(true);
+    wrappedButton_->setChecked(true);
+    wrappedButton_->setVisible(false);
+    wrappedButton_->setToolTip(QStringLiteral("Show the rotary job wrapped round its cylinder or flat"));
+    connect(wrappedButton_, &QPushButton::clicked, this, [this](bool on) {
+        setWrapped(on);
+        if (onWrappedToggled) {
+            onWrappedToggled(on);
+        }
+    });
+    bar->addWidget(wrappedButton_);
     bar->addStretch(1);
     bar->setAlignment(Qt::AlignTop);
 }
@@ -665,6 +679,14 @@ ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(paren
 void ModelView3D::refresh() {
     document::Document* d = getter_ ? getter_() : nullptr;
     options_.paths.clear();
+    wrappedPaths_.clear();
+    rotaryAvailable_ = d != nullptr && viewmodel::RotaryViewState::available(d->job());
+    wrappedButton_->setVisible(rotaryAvailable_);
+    if (rotaryAvailable_) {
+        wrappedPaths_ = viewmodel::wrappedVectorPaths(*d);
+        std::vector<viewmodel::ModelPath> tp = viewmodel::wrappedToolpathPaths(d->toolpaths());
+        wrappedPaths_.insert(wrappedPaths_.end(), std::make_move_iterator(tp.begin()), std::make_move_iterator(tp.end()));
+    }
     if (previewing_) {
         surface_ = previewSurface_;
     } else if (d != nullptr) {
@@ -712,6 +734,12 @@ void ModelView3D::clearPreview() {
     }
 }
 
+void ModelView3D::setWrapped(bool on) {
+    rotaryView_.mode = on ? viewmodel::RotaryViewMode::Wrapped : viewmodel::RotaryViewMode::Flat;
+    wrappedButton_->setChecked(on);
+    invalidate();
+}
+
 void ModelView3D::setMaterial(viewmodel::ModelMaterial material) {
     options_.material = material;
     const int idx = materialBox_->findData(static_cast<int>(material));
@@ -738,7 +766,11 @@ const QImage& ModelView3D::image() {
     }
     options_.width = w;
     options_.height = h;
-    const viewmodel::Raster raster = viewmodel::renderModel(surface_, camera_, options_);
+    document::Document* d = getter_ ? getter_() : nullptr;
+    const viewmodel::Raster raster =
+        showingWrapped() && d != nullptr
+            ? viewmodel::renderRotaryModel(surface_, d->job(), rotaryView_, camera_, options_, wrappedPaths_)
+            : viewmodel::renderModel(surface_, camera_, options_);
     QImage img(static_cast<int>(raster.width), static_cast<int>(raster.height), QImage::Format_ARGB32);
     for (std::size_t y = 0; y < raster.height; ++y) {
         auto* line = reinterpret_cast<QRgb*>(img.scanLine(static_cast<int>(y)));
@@ -763,7 +795,7 @@ void ModelView3D::clearOverlay() {
 }
 
 std::optional<viewmodel::ScreenPoint> ModelView3D::overlayCorner(int index) {
-    if (overlay_.isNull() || !surface_.ok()) {
+    if (overlay_.isNull() || !surface_.ok() || showingWrapped()) {
         return std::nullopt;
     }
     options_.width = static_cast<std::size_t>(std::max(width(), 1));
@@ -784,7 +816,7 @@ std::optional<viewmodel::ScreenPoint> ModelView3D::overlayCorner(int index) {
 
 std::vector<viewmodel::ScreenPoint> ModelView3D::ringOutline() {
     const std::optional<double> d = brushDiameter ? brushDiameter() : std::nullopt;
-    if (!d || !ringCentre_) {
+    if (!d || !ringCentre_ || showingWrapped()) {
         return {};
     }
     options_.width = static_cast<std::size_t>(std::max(width(), 1));
@@ -800,7 +832,7 @@ void ModelView3D::setRingCentre(std::optional<relief::Point> at) {
 void ModelView3D::paintEvent(QPaintEvent*) {
     QPainter p(this);
     p.drawImage(0, 0, image());
-    if (!overlay_.isNull()) {
+    if (!overlay_.isNull() && !showingWrapped()) {
         const auto tl = overlayCorner(0);
         const auto tr = overlayCorner(1);
         const auto bl = overlayCorner(2);
@@ -827,7 +859,7 @@ void ModelView3D::paintEvent(QPaintEvent*) {
         p.setPen(QPen(QColor(20, 20, 20), 1.0));
         p.drawPolygon(poly);
     }
-    if (!surface_.ok()) {
+    if (!surface_.ok() && !showingWrapped()) {
         p.setPen(QColor(90, 90, 90));
         p.drawText(rect(), Qt::AlignCenter | Qt::TextWordWrap,
                    surface_.problem.empty() ? QStringLiteral("No model") : qs(surface_.problem));
@@ -847,6 +879,9 @@ void ModelView3D::resizeEvent(QResizeEvent* event) {
 }
 
 std::optional<relief::Point> ModelView3D::pickAt(QPoint pos) {
+    if (showingWrapped()) {
+        return std::nullopt;  // the flat design plane is not what is on screen
+    }
     options_.width = static_cast<std::size_t>(std::max(width(), 1));
     options_.height = static_cast<std::size_t>(std::max(height(), 1));
     return viewmodel::pickModelPoint(surface_, camera_, options_, pos.x() + 0.5, pos.y() + 0.5);

@@ -122,6 +122,11 @@ class MainWindow : public QMainWindow {
     /// Materials... (T-0235). The dialogs are modal; the self-test drives the dialog classes directly.
     QAction* jobSetupAction() const { return jobSetupAction_; }
     QAction* materialSetupAction() const { return materialSetupAction_; }
+    /// View > Wrapped View (T-0334): the flat/wrapped toggle of rotary jobs, enabled only for them.
+    QAction* wrappedViewAction() const { return wrappedViewAction_; }
+    bool wrappedView() const { return wrappedView_; }
+    /// Shows rotary jobs wrapped round the cylinder (Model view, simulation view) or flat.
+    void setWrappedView(bool on);
     QAction* toolSetupAction() const { return toolSetupAction_; }
     void jobSetupDialog();
     void materialSetupDialog();
@@ -232,6 +237,8 @@ class MainWindow : public QMainWindow {
     QAction* createJobSheetAction_{nullptr};
     QAction* jobSetupAction_{nullptr};
     QAction* materialSetupAction_{nullptr};
+    QAction* wrappedViewAction_{nullptr};
+    bool wrappedView_{true};
     QAction* toolSetupAction_{nullptr};
     QAction* variablesAction_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;

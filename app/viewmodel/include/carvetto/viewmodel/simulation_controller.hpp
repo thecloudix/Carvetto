@@ -10,6 +10,7 @@
 #include "carvetto/simulate/simulator.hpp"
 #include "carvetto/viewmodel/relief_render.hpp"
 #include "carvetto/viewmodel/simulation_setup.hpp"
+#include "carvetto/viewmodel/wrapped_view.hpp"
 
 // Runs the material-removal simulation off the UI thread (T-0223, ADR-0032 amendment, ADR-0014).
 // Qt-free. The controller owns a copy of a `SimulationSetup` (shared move lists, tool shapes, the
@@ -67,6 +68,8 @@ struct SimulationFrame {
     /// Cells marked by a laser so far (T-0325); 0 when no laser toolpath is queued.
     std::size_t burnedCells{0};
     std::shared_ptr<const Raster> relief;
+    /// The cut stock as machine heights for the wrapped view (T-0334); null unless the job is rotary.
+    std::shared_ptr<const WrappedSurface> wrapped;
     std::vector<simulate::SimDiagnostic> diagnostics;
     std::size_t droppedDiagnostics{0};
     /// Wall time the worker spent cutting and shading to reach it.

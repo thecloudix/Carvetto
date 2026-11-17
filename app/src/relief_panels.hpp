@@ -10,6 +10,7 @@
 
 #include "carvetto/document/ids.hpp"
 #include "carvetto/viewmodel/model_view.hpp"
+#include "carvetto/viewmodel/wrapped_view.hpp"
 #include "carvetto/viewmodel/relief_tree.hpp"
 #include "document_panels.hpp"
 
@@ -150,6 +151,17 @@ class ModelView3D : public QWidget {
     viewmodel::OrbitCamera& camera() { return camera_; }
     void cameraChanged();
 
+    /// The Auto-Wrapping View (T-0334): for a rotary job the model, the visible vectors and the toolpaths are drawn
+    /// round the cylinder (`setWrapped(true)`, the default) or flat. Brush picking and the reference overlay
+    /// need the flat view. `onWrappedToggled` is called when the user flips the view's own toggle button.
+    void setWrapped(bool on);
+    bool wrappedRequested() const { return rotaryView_.mode == viewmodel::RotaryViewMode::Wrapped; }
+    /// The job is rotary (the toggle is offered).
+    bool wrappedAvailable() const { return rotaryAvailable_; }
+    /// The picture is the wrapped one now.
+    bool showingWrapped() const { return rotaryAvailable_ && wrappedRequested(); }
+    std::function<void(bool)> onWrappedToggled;
+
     /// Reference image laid over the model on the design plane at the model's top, drawn with
     /// `opacity` (0..1) (T-0309). It is a plane drawn over the surface, not occluded by it.
     void setOverlay(const QImage& image, double opacity);
@@ -199,6 +211,10 @@ class ModelView3D : public QWidget {
     double overlayOpacity_{0.5};
     std::optional<relief::Point> ringCentre_;
     QComboBox* materialBox_;
+    QPushButton* wrappedButton_{nullptr};
+    viewmodel::RotaryViewState rotaryView_;
+    bool rotaryAvailable_{false};
+    std::vector<viewmodel::ModelPath> wrappedPaths_;
 };
 
 }  // namespace carvetto::app

@@ -234,6 +234,9 @@ void worker(std::shared_ptr<SimulationShared> shp) {
                 frame->burnedCells = sim.markedCells();
             }
             frame->relief = std::make_shared<const Raster>(std::move(picture));
+            if (sh.setup.cylinder.has_value()) {
+                frame->wrapped = std::make_shared<const WrappedSurface>(wrappedSurfaceFromSimulation(sim.heightfield()));
+            }
             frame->diagnostics = sim.diagnostics();
             frame->droppedDiagnostics = sim.droppedDiagnostics();
             frame->workSeconds = secondsSince(t0);
