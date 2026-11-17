@@ -1686,7 +1686,7 @@ Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) 
 Acceptance criteria:
   1. A rotary job can create fluting and spiral layouts from the UI as one undo step with a wrapped preview; self-test drives it.
 
-### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: in-progress]
+### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: verifying]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0321, T-0334
 Goal: T-0321 delivered the Wrapping level effect, unwrapCrossSection and meshToRotaryField with viewmodel actions but no Qt UI. Add the Wrapping toggle in the level effects UI (and enable Bake for a wrapping-only level in sculpt_panel.cpp), the Vector Unwrapper form, the rotary 3D import dialog (orientation, fit, axis movement), and self-test steps driving them; interactive rotation rings, the orientation gizmo, Resize material block and Reimport remain optional.
 Acceptance criteria:
