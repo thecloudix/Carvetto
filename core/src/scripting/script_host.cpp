@@ -24,6 +24,25 @@ double ScriptValue::asNumber() const {
     return std::get<double>(v);
 }
 
+const ScriptValue* ScriptValue::Map::find(std::string_view key) const {
+    for (const auto& kv : items) {
+        if (kv.first == key) {
+            return &kv.second;
+        }
+    }
+    return nullptr;
+}
+
+void ScriptValue::Map::set(std::string key, ScriptValue value) {
+    for (auto& kv : items) {
+        if (kv.first == key) {
+            kv.second = std::move(value);
+            return;
+        }
+    }
+    items.emplace_back(std::move(key), std::move(value));
+}
+
 }  // namespace carvetto::scripting
 
 namespace {
@@ -306,6 +325,46 @@ bool toValue(lua_State* L, int idx, int depth, Conv& cv, ScriptValue& out) {
                 cv.why = "value too large";
                 return false;
             }
+            if (n == 0) {
+                // Empty, or string-keyed (a Map). Any other key kind is refused.
+                ScriptValue::Map map;
+                lua_pushnil(L);
+                while (lua_next(L, idx) != 0) {
+                    // key at -2, value at -1
+                    if (lua_type(L, -2) != LUA_TSTRING || !cv.spend(kUnitsPerEntry)) {
+                        lua_pop(L, 2);
+                        return false;
+                    }
+                    std::size_t kn = 0;
+                    const char* ks = lua_tolstring(L, -2, &kn);
+                    if (kn > cv.bytesLeft || map.items.size() >= cv.elementsLeft) {
+                        cv.why = "value too large";
+                        lua_pop(L, 2);
+                        return false;
+                    }
+                    cv.bytesLeft -= kn;
+                    if (!cv.spend(kn / 8)) {
+                        lua_pop(L, 2);
+                        return false;
+                    }
+                    std::string key(ks, kn);
+                    ScriptValue e;
+                    if (!toValue(L, -1, depth + 1, cv, e)) {
+                        lua_pop(L, 2);
+                        return false;
+                    }
+                    map.items.emplace_back(std::move(key), std::move(e));
+                    lua_pop(L, 1);  // the value; the key stays for lua_next
+                }
+                if (map.items.empty()) {
+                    out = ScriptValue(ScriptValue::Array{});
+                    return true;
+                }
+                std::sort(map.items.begin(), map.items.end(),
+                          [](const auto& a, const auto& b) { return a.first < b.first; });
+                out = ScriptValue(std::move(map));
+                return true;
+            }
             lua_Unsigned count = 0;
             lua_pushnil(L);
             while (lua_next(L, idx) != 0) {
@@ -400,6 +459,20 @@ void pushValue(lua_State* L, const ScriptValue& v, int depth, int maxDepth, Push
             pc->spend(s.size() / 8);
         }
         lua_pushlstring(L, s.data(), s.size());
+    } else if (v.isMap()) {
+        if (depth >= maxDepth) {
+            throw ScriptError{"value nested too deeply"};
+        }
+        const auto& m = v.asMap();
+        lua_createtable(L, 0, static_cast<int>(std::min<std::size_t>(m.items.size(), 1u << 20)));
+        for (const auto& kv : m.items) {
+            if (pc != nullptr) {
+                pc->spend(kUnitsPerValue + kv.first.size() / 8);
+            }
+            lua_pushlstring(L, kv.first.data(), kv.first.size());
+            pushValue(L, kv.second, depth + 1, maxDepth, pc);
+            lua_rawset(L, -3);
+        }
     } else {
         if (depth >= maxDepth) {
             throw ScriptError{"value nested too deeply"};
@@ -456,7 +529,7 @@ int hostCallImpl(lua_State* L, std::string& err) {
                 return -1;
             }
             err = "bad argument #" + std::to_string(i) +
-                  ": only nil, boolean, number, string and arrays of those can be passed";
+                  ": only nil, boolean, number, string, arrays and string-keyed tables of those can be passed";
             return -1;
         }
         args.push_back(std::move(a));
@@ -469,8 +542,10 @@ int hostCallImpl(lua_State* L, std::string& err) {
     pc.L = L;
     pc.rc = rc;
     pc.left = remainingUnits(rc);
+    bool pushing = false;
     try {
         results = (*fn)(args);
+        pushing = true;
         for (const ScriptValue& r : results) {
             pushValue(L, r, 0, maxDepth, &pc);
         }
@@ -480,7 +555,12 @@ int hostCallImpl(lua_State* L, std::string& err) {
     } catch (const std::exception& e) {
         err = e.what();
     } catch (...) {
-        err = "host function threw an unknown exception";
+        // While pushing results the only thing that can escape here is the runtime's own
+        // out-of-memory error (Lua is compiled as C++: its errors are C++ throws of an opaque
+        // type): a result the limits do not allow (a string above maxStringBytes, an array above
+        // maxAllocationBytes, a heap at its limit). Say that, not "unknown exception" (T-0331).
+        err = pushing ? "value too large (the result does not fit the script's memory limits)"
+                      : "host function threw an unknown exception";
     }
     rc->instr += pc.used;
     if (failed) {
@@ -757,12 +837,24 @@ int setupState(lua_State* L) {
         if (module.empty()) {
             lua_pushglobaltable(L);
         } else {
-            lua_getglobal(L, module.c_str());
-            if (!lua_istable(L, -1)) {
-                lua_pop(L, 1);
-                lua_newtable(L);
-                lua_pushvalue(L, -1);
-                lua_setglobal(L, module.c_str());
+            // `module` may be a dotted path ("carvetto.doc"): nested tables created on demand.
+            lua_pushglobaltable(L);
+            std::size_t pos = 0;
+            for (;;) {
+                const std::size_t dot = module.find('.', pos);
+                const std::string part = module.substr(pos, dot == std::string::npos ? dot : dot - pos);
+                lua_getfield(L, -1, part.c_str());
+                if (!lua_istable(L, -1)) {
+                    lua_pop(L, 1);
+                    lua_newtable(L);
+                    lua_pushvalue(L, -1);
+                    lua_setfield(L, -3, part.c_str());
+                }
+                lua_remove(L, -2);
+                if (dot == std::string::npos) {
+                    break;
+                }
+                pos = dot + 1;
             }
         }
         if ((*a->fns)[i] != nullptr) {

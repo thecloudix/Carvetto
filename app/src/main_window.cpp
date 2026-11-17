@@ -68,6 +68,7 @@
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
+#include "gadgets_menu.hpp"
 #include "variable_menu.hpp"
 #include "carvetto/viewmodel/variables_model.hpp"
 #include "transform_menu.hpp"
@@ -480,6 +481,8 @@ void MainWindow::buildMenus() {
     toolSetupAction_->setObjectName(QStringLiteral("toolSetupAction"));
     connect(toolSetupAction_, &QAction::triggered, this, [this]() { toolSetupDialog(); });
 
+    gadgets_ = std::make_unique<GadgetsMenu>(*this);
+
     QMenu* help = menuBar()->addMenu(QStringLiteral("&Help"));
     QAction* about = help->addAction(QStringLiteral("&About Carvetto"));
     connect(about, &QAction::triggered, this, [this]() {
@@ -786,6 +789,7 @@ void MainWindow::setPersistLayout(bool persist) {
     if (clipart_ != nullptr) {
         clipart_->setPersist(persist);
     }
+    gadgets_->setPersist(persist);
     if (persist) {
         QSettings settings;
         loadUserSetup(settings.value(QStringLiteral("activeMachine")).toString());

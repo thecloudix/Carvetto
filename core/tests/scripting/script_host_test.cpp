@@ -405,7 +405,7 @@ TEST_CASE("scripting: host functions and values", "[scripting]") {
         CHECK(host.run("local t = {} t[1] = t math2.sum({t})", "t").status == ScriptStatus::RuntimeError);
     }
     SECTION("unsupported results of a chunk become nil") {
-        const auto r = host.run("return print, {x = 1}", "t");
+        const auto r = host.run("return print, {1, x = 1}", "t");
         REQUIRE(r.ok());
         CHECK(r.returned.at(0).isNil());
         CHECK(r.returned.at(1).isNil());
@@ -780,4 +780,125 @@ TEST_CASE("scripting: tests never use default ScriptLimits", "[scripting][lint]"
     CHECK(scanned >= 1);
     INFO("Use testLimits() (deadlineMillis = 0) instead of default limits:\n" << offences);
     CHECK(offences.empty());
+}
+
+// ---- T-0331: string-keyed tables, dotted modules, oversized host results ---------------------------
+
+TEST_CASE("scripting: string-keyed tables cross the boundary both ways", "[scripting][t0331]") {
+    ScriptHost host(testLimits());
+    host.registerFunction("", "echo", [](const ScriptValues& a) { return a; });
+    SECTION("a nested map comes back equal, keys sorted when read") {
+        const auto r = host.run("local r = echo({b = 1, a = {x = 2.5, y = 'z'}}) return r.b, r.a.x, r.a.y", "t");
+        REQUIRE(r.ok());
+        REQUIRE(r.returned.size() == 3);
+        CHECK(r.returned[0].asInt() == 1);
+        CHECK(r.returned[1].asNumber() == 2.5);
+        CHECK(r.returned[2].asString() == "z");
+    }
+    SECTION("a returned map is read as a Map with keys in sorted order") {
+        const auto r = host.run("return {zeta = 1, alpha = true, mid = 'm'}", "t");
+        REQUIRE(r.ok());
+        REQUIRE(r.returned.size() == 1);
+        REQUIRE(r.returned[0].isMap());
+        const auto& items = r.returned[0].asMap().items;
+        REQUIRE(items.size() == 3);
+        CHECK(items[0].first == "alpha");
+        CHECK(items[1].first == "mid");
+        CHECK(items[2].first == "zeta");
+        CHECK(r.returned[0].asMap().find("mid")->asString() == "m");
+        CHECK(r.returned[0].asMap().find("nope") == nullptr);
+    }
+    SECTION("an empty table is still an empty array") {
+        const auto r = host.run("return {}", "t");
+        REQUIRE(r.ok());
+        CHECK(r.returned[0].isArray());
+    }
+    SECTION("mixed and non-string keys are refused") {
+        CHECK_FALSE(host.run("echo({1, 2, x = 3})", "t").ok());
+        CHECK_FALSE(host.run("echo({[1.5] = 1})", "t").ok());
+        CHECK_FALSE(host.run("echo({[true] = 1})", "t").ok());
+        CHECK_FALSE(host.run("echo({[2] = 1})", "t").ok());
+        const auto r = host.run("local t = {a = 1} t[1] = 2 return echo(t)", "t");
+        CHECK_FALSE(r.ok());
+    }
+    SECTION("a host function can build a map for the script") {
+        host.registerFunction("", "mk", [](const ScriptValues&) {
+            ScriptValue::Map m;
+            m.set("n", ScriptValue(3));
+            m.set("n", ScriptValue(4));  // the last value wins
+            m.set("s", ScriptValue("hi"));
+            return ScriptValues{ScriptValue(std::move(m))};
+        });
+        const auto r = host.run("local m = mk() return m.n, m.s", "t");
+        REQUIRE(r.ok());
+        CHECK(r.returned[0].asInt() == 4);
+        CHECK(r.returned[1].asString() == "hi");
+    }
+    SECTION("depth is limited for maps too") {
+        ScriptLimits l = testLimits();
+        l.maxValueDepth = 3;
+        ScriptHost shallow(l);
+        shallow.registerFunction("", "echo", [](const ScriptValues& a) { return a; });
+        CHECK_FALSE(shallow.run("echo({a = {b = {c = {d = 1}}}})", "t").ok());
+        CHECK(shallow.run("echo({a = {b = 1}})", "t").ok());
+    }
+    SECTION("a wide map is charged to the budget, a shared one cannot blow up") {
+        ScriptLimits l = testLimits();
+        l.maxInstructions = 100'000;
+        ScriptHost small(l);
+        small.registerFunction("", "echo", [](const ScriptValues& a) { return a; });
+        const auto r = small.run(
+            "local t = {x = 1} for i = 1, 20 do t = {a = t, b = t} end while true do echo(t) end", "t");
+        CHECK_FALSE(r.ok());
+    }
+}
+
+TEST_CASE("scripting: dotted module names create nested tables", "[scripting][t0331]") {
+    ScriptHost host(testLimits());
+    host.registerFunction("a.b", "f", [](const ScriptValues&) { return ScriptValues{ScriptValue(7)}; });
+    host.registerFunction("a", "g", [](const ScriptValues&) { return ScriptValues{ScriptValue(8)}; });
+    host.setValue("a.b", "k", ScriptValue(9));
+    const auto r = host.run("return a.b.f(), a.g(), a.b.k", "t");
+    REQUIRE(r.ok());
+    CHECK(r.returned[0].asInt() == 7);
+    CHECK(r.returned[1].asInt() == 8);
+    CHECK(r.returned[2].asInt() == 9);
+}
+
+TEST_CASE("scripting: an oversized host result says 'value too large'", "[scripting][t0331]") {
+    ScriptLimits l = testLimits();
+    l.maxStringBytes = 64u * 1024u;
+    l.maxAllocationBytes = 256u * 1024u;
+    ScriptHost host(l);
+    host.registerFunction("", "bigString", [](const ScriptValues&) {
+        return ScriptValues{ScriptValue(std::string(200u * 1024u, 'x'))};
+    });
+    host.registerFunction("", "bigArray", [](const ScriptValues&) {
+        ScriptValue::Array a(100'000, ScriptValue(1.5));
+        return ScriptValues{ScriptValue(std::move(a))};
+    });
+    SECTION("a string over the string cap") {
+        const auto r = host.run("return pcall(bigString)", "t");
+        REQUIRE(r.ok());
+        REQUIRE(r.returned.size() == 2);
+        CHECK_FALSE(r.returned[0].asBool());
+        CHECK(contains(r.returned[1].asString(), "value too large"));
+        CHECK_FALSE(contains(r.returned[1].asString(), "unknown exception"));
+    }
+    SECTION("an array over the block cap") {
+        const auto r = host.run("return pcall(bigArray)", "t");
+        REQUIRE(r.ok());
+        CHECK_FALSE(r.returned[0].asBool());
+        CHECK(contains(r.returned[1].asString(), "value too large"));
+    }
+    SECTION("uncaught, the error names the call and the line") {
+        const auto r = host.run("\nlocal x = bigString()", "g.lua");
+        CHECK_FALSE(r.ok());
+        CHECK(contains(r.message, "value too large"));
+        CHECK(contains(r.message, "g.lua:2:"));
+    }
+    SECTION("the host is usable afterwards") {
+        host.run("bigString()", "t");
+        CHECK(host.run("return 1", "t").ok());
+    }
 }

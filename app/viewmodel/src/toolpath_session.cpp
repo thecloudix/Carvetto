@@ -965,9 +965,9 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
 }
 
 ToolpathOutcome ToolpathSession::runAndApply(const ToolpathDefinition& definition, std::optional<ToolpathId> target,
-                                             const char* text) {
+                                             const char* text, const std::atomic<bool>* cancel) {
     const ToolpathJob job = prepare(definition, target);
-    const ToolpathCalculation calc = job.run();
+    const ToolpathCalculation calc = job.run(cancel);
     ToolpathOutcome out = applyOne(calc, text);
     if (!out.ok && target.has_value()) {
         messages_[*target] = calc.messages;
@@ -975,11 +975,11 @@ ToolpathOutcome ToolpathSession::runAndApply(const ToolpathDefinition& definitio
     return out;
 }
 
-ToolpathOutcome ToolpathSession::add(const ToolpathDefinition& definition) {
+ToolpathOutcome ToolpathSession::add(const ToolpathDefinition& definition, const std::atomic<bool>* cancel) {
     if (doc_ == nullptr) {
         return failure("there is no document");
     }
-    return runAndApply(definition, std::nullopt, "Add toolpath");
+    return runAndApply(definition, std::nullopt, "Add toolpath", cancel);
 }
 
 ToolpathOutcome ToolpathSession::update(ToolpathId id, const ToolpathDefinition& definition) {

@@ -12,6 +12,7 @@ GPL-compatible licence. Their full licence texts are fetched with the sources at
 | miniz | 3.0.2 | MIT | `.carv` zip container |
 | FreeType | 2.14.3 | FreeType License (FTL; used under this option, which is GPLv3 compatible, ADR-0033) | Font parsing and glyph outlines (`core/text`) |
 | HarfBuzz | 15.1.0 | "Old MIT" | Text shaping (`core/text`) |
+| Lua | 5.4.8 (two local source patches: pattern-step hook, native library loading disabled; ADR-0101) | MIT | Embedded scripting language of the gadgets (`core/scripting`) |
 | Catch2 | 3.7.1 | Boost Software License 1.0 | Unit tests only (not distributed) |
 | DejaVuSerif.ttf (DejaVu Serif Regular) | 2.37 (`dejavu-fonts-ttf-2.37.tar.bz2`, SHA-256 `fa9ca4d1…17d7`) | Bitstream Vera Fonts licence + DejaVu public-domain changes (`data/fonts/DEJAVU-LICENSE.txt`); redistribution allowed, GPL-compatible as a separate font data file | Starter font of the Text tool and DXF text, compiled into the app |
 | CarvettoTest-Regular.ttf | 1.0 | SIL Open Font License 1.1 (original Carvetto work, `core/tests/fixtures/text/OFL.txt`) | Text tests only (not distributed) |
@@ -20,6 +21,29 @@ GPL-compatible licence. Their full licence texts are fetched with the sources at
 **Required credit (FreeType License, clause 2):** "Portions of this software are copyright © The
 FreeType Project (www.freetype.org). All rights reserved." Binary distributions must include this line
 in their documentation, together with `docs/FTL.TXT` of the FreeType sources and HarfBuzz's `COPYING`.
+
+**Lua licence notice (MIT; must accompany every binary distribution that contains Lua, T-0331):**
+
+> Copyright © 1994–2025 Lua.org, PUC-Rio.
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+> associated documentation files (the "Software"), to deal in the Software without restriction,
+> including without limitation the rights to use, copy, modify, merge, publish, distribute,
+> sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all copies or
+> substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+> NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+> NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+> DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+The same text is in `COPYRIGHT` of the Lua sources fetched at build time (`lua-src/doc/readme.html`).
+Carvetto's Lua build differs from upstream by two documented source patches (ADR-0101) and is
+compiled as C++.
 
 **DejaVu Serif licence conditions:** the copyright and trademark notices and the permission notice
 (`data/fonts/DEJAVU-LICENSE.txt`) must be included with every copy of the font, binary distributions
