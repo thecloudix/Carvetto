@@ -1632,7 +1632,7 @@ RE-SCOPED 2026-11-17 after three verifier FAILs: functionality, hardening and sa
 Acceptance criteria:
   1. A sample gadget creates vectors and a toolpath in one undo step from the Gadgets menu; sandbox limits enforced in the app; self-test.
 
-### T-0332 Stock gadgets as scripts: Celtic weave, drag knife, keyhole, job-sheet editor, DXF batch   [status: in-progress]
+### T-0332 Stock gadgets as scripts: Celtic weave, drag knife, keyhole, job-sheet editor, DXF batch   [status: verifying]
 Phase: 3   Module: gadgets + docs   Depends on: T-0331, T-0299
 Goal: Port the stock gadget behaviours as original scripts shipped with the app: weave creator (grid, intersection states, cross-section, Apply creates vectors for Extrude and Weave), drag-knife toolpath (blade offset, tolerance angle, swivel, passes), keyhole toolpath, job-sheet editor (logo, colours, sections), DXF batch convert. Written from the behaviour descriptions only (clean room).
 Acceptance criteria:
