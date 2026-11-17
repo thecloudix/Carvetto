@@ -1698,7 +1698,7 @@ Goal: windows-app fails on current main: 'T-0335: the spindle tags carry the hea
 Acceptance criteria:
   1. windows-app CI passes on the PR; the fix is root-caused, not a skip.
 
-### T-0343 Rotary job depth reference: toolpath Z on a rotary job whose Z zero is the cylinder axis   [status: in-progress]
+### T-0343 Rotary job depth reference: toolpath Z on a rotary job whose Z zero is the cylinder axis   [status: verifying]
 Phase: 3   Module: core/toolpath + app/viewmodel   Depends on: T-0334
 Goal: found by the T-0334 coder: on a rotary job with Z zero at the axis (the Job::rotary default), a Profile with cutDepth 2 computes Z around -2 with safe Z 5, which is below the cylinder surface (Z = radius) so the simulation cuts nothing. Decide and implement how toolpath depths are referenced on such jobs (e.g. default the Z zero to the material surface for rotary jobs, or offset depths by the radius), with an ADR stating the reading.
 Acceptance criteria:
