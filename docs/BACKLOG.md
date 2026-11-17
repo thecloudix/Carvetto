@@ -1691,3 +1691,9 @@ Phase: 3   Module: app + app/viewmodel   Depends on: T-0321, T-0334
 Goal: T-0321 delivered the Wrapping level effect, unwrapCrossSection and meshToRotaryField with viewmodel actions but no Qt UI. Add the Wrapping toggle in the level effects UI (and enable Bake for a wrapping-only level in sculpt_panel.cpp), the Vector Unwrapper form, the rotary 3D import dialog (orientation, fit, axis movement), and self-test steps driving them; interactive rotation rings, the orientation gizmo, Resize material block and Reimport remain optional.
 Acceptance criteria:
   1. For a rotary job the user can turn on Wrapping, unwrap a selected cross-section, and import a mesh onto the cylinder from the UI; self-test drives all three.
+
+### T-0342 Windows CI test failures on main: T-0335 drill bank post tests and T-0333 clipart favourites test   [status: in-progress]
+Phase: 3   Module: core/tests + app/viewmodel/tests   Depends on: T-0335, T-0333
+Goal: windows-app fails on current main: 'T-0335: the spindle tags carry the head's data, converted for inch posts' (drill_bank_post_test.cpp:166 REQUIRE(feed != npos)), 'T-0335: a post without the needed blocks refuses a drill bank toolpath' (drill_bank_post_test.cpp:57 REQUIRE(begin != npos), message DRILL_BANK_PATTERN), and 'clipart: library folders, search and favourites persist through the store' (clipart_test.cpp:515 REQUIRE(lib.visible().size() == 1) got 0). Linux passes. Find the root causes (suspects: CRLF line endings when a sample post file is read on Windows; path/separator or drive-letter handling in the clipart library folders/favourites sanitising), fix the code or tests, add a regression guard, and confirm windows-app green on the PR.
+Acceptance criteria:
+  1. windows-app CI passes on the PR; the fix is root-caused, not a skip.
