@@ -211,6 +211,9 @@ void buildStrokes(const std::vector<Span>& spans, Vec2 dir, const PowerOf& power
     close();
 }
 
+/// Overscan runs no longer than this (mm) are left out: rounding at a limit border must not emit a near-zero move.
+inline constexpr double kOverscanEps = 1e-9;
+
 /// How far (0 .. `overscan`) the point `p` can run along the unit direction `d` and stay inside `limits`
 /// (all of `overscan` without limits); 0 or less when there is no room (a point on or outside the border).
 inline double overscanWithin(Vec2 p, Vec2 d, double overscan, const Box2* limits) {
@@ -240,7 +243,7 @@ inline Vec2 emitStrokes(const std::vector<Stroke>& strokes, double overscan, dou
     for (const Stroke& s : strokes) {
         const double before =
             overscan > 0.0 ? overscanWithin(s.start, {-s.dir.x, -s.dir.y}, overscan, limits) : 0.0;
-        if (before > 0.0) {
+        if (before > kOverscanEps) {
             moves.push_back(Move::rapid({s.start.x - s.dir.x * before, s.start.y - s.dir.y * before, z}));
             moves.push_back(Move::feed({s.start.x, s.start.y, z}));
         } else {
@@ -254,7 +257,7 @@ inline Vec2 emitStrokes(const std::vector<Stroke>& strokes, double overscan, dou
             last = p.to;
         }
         const double after = overscan > 0.0 ? overscanWithin(last, s.dir, overscan, limits) : 0.0;
-        if (after > 0.0) {
+        if (after > kOverscanEps) {
             last = {last.x + s.dir.x * after, last.y + s.dir.y * after};
             moves.push_back(Move::feed({last.x, last.y, z}));
         }

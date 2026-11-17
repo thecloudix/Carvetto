@@ -728,3 +728,32 @@ TEST_CASE("T-0324: a model sketch burns where the model is low", "[toolpath][las
         CHECK(hi == Approx(4.5).margin(1e-9));
     }
 }
+
+TEST_CASE("T-0326: a burn ending on the limit border leaves no zero-length beam-off move",
+          "[toolpath][laser][sketch]") {
+    LaserSketchParams p = params();
+    p.machineLimitBoundary = true;
+    p.overscan = 2.0;
+    const Box2 tight({1.0, 3.0}, {6.0, 7.0});
+    std::size_t checkedStrokes = 0;
+    for (int deg = 0; deg < 180; deg += 7) {
+        p.hatchAngle = static_cast<double>(deg) * 0.017453292519943295;
+        const LaserSketchResult r = run(uniform(0), p, {}, tight);
+        if (!r.ok()) {
+            continue;
+        }
+        const std::vector<Move>& mv = r.toolpath.moves;
+        for (std::size_t i = 1; i < mv.size(); ++i) {
+            if (mv[i].kind != MoveKind::Feed) {
+                continue;
+            }
+            if (mv[i].jetPower > 0.0) {
+                ++checkedStrokes;  // a burn: the scenes do reach the border
+            } else {
+                const double len = std::hypot(mv[i].to.x - mv[i - 1].to.x, mv[i].to.y - mv[i - 1].to.y);
+                CHECK(len > 1e-9);
+            }
+        }
+    }
+    CHECK(checkedStrokes > 0);
+}

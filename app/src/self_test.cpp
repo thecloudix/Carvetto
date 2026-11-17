@@ -60,6 +60,7 @@
 #include "carvetto/viewmodel/tiling_form.hpp"
 #include "carvetto/tooling/machine.hpp"
 #include "tool_panel.hpp"
+#include "tool_setup_dialog.hpp"
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "gadgets_menu.hpp"
@@ -1107,6 +1108,11 @@ int runSelfTest() {
     // 15. Clipart library browser (T-0333): folders, worker-thread thumbnails, search, favourites,
     // insert and drop as single undo steps, hostile files refused.
     if (const std::string why = clipartSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 16. Tool database dialog: machine laser flag set and cleared (T-0326).
+    if (const std::string why = toolSetupSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

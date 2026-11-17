@@ -106,3 +106,11 @@ so every posted record has them; the term keeps the check about what is written)
 border and is never used (`> 0` guards both uses). The form dialog's source box has no unit mutants: a wrong
 `usesBitmap` / `readsModel` / `boundaryUsesVectors` routing is a `std::get` failure or a wrongly enabled OK in the
 self-test, and the three predicates are tested in `toolpath_laser_test.cpp`.
+- Overscan epsilon (round 2): a burn ending exactly on the border left an overscan of about 1e-15 mm (rounding) and a
+  near-zero beam-off feed was emitted (`> 0` guards). The guards are now `> kOverscanEps` (1e-9 mm); the test "a burn
+  ending on the limit border leaves no zero-length beam-off move" sweeps hatch angles and kills `after > 0`,
+  `after >= 0` and the unguarded form.
+- App level (`laser_self_test.cpp`, `tool_setup_self_test.cpp`, run by `carvetto --self-test`): S3, the machine flag
+  not committed (`m.laser = m.laser` in the setup dialog) survived while `toolSetupSelfTest` was never called by
+  `runSelfTest`; it is now step 16 of the self-test and S3 fails it ("the laser check box did not reach the database").
+  A repo-wide check of every declared `*SelfTest(` function found no other one that is never called.
