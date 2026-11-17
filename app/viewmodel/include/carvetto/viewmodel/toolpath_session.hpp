@@ -188,6 +188,11 @@ class ToolpathSession {
     /// tool is NOT chosen (the user picks), the selector is the current selection when something
     /// is selected, else every vector.
     ToolpathForm newForm(document::ToolpathOperation operation);
+    /// Wrapped Fluting Layout (T-0340): the flute depth (mm) of the layout object `layout`. A Fluting form made while
+    /// that object is part of the selection starts with this depth. Cleared by passing a null id.
+    void setLayoutFlutingDepth(document::ObjectId layout, double depthMm);
+    /// The remembered layout depth when `layout` (a vector object) is in the document, else nullopt.
+    std::optional<double> layoutFlutingDepth(const std::vector<document::ObjectId>& selection) const;
     /// A form for Project Toolpath onto Model (`tabs` false) or 3D Tabs (`tabs` true: tabs on, ramped) of toolpath
     /// `source` (T-0311): the tool is the source's when it suits, the name derives from the source's. A source that
     /// does not exist leaves the source field unset (the form then reports it).
@@ -278,6 +283,8 @@ class ToolpathSession {
     const RoutedJob& keepOutRouting();
 
    private:
+    document::ObjectId layoutObject_{};
+    double layoutDepth_{0.0};
     using MovesKey = std::weak_ptr<const std::vector<toolpath::Move>>;
 
     /// What a toolpath's moves were computed from. Keyed by the identity of the moves (shared by

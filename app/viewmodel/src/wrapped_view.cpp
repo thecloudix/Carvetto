@@ -316,6 +316,34 @@ std::vector<ModelPath> wrappedVectorPaths(const document::Document& doc, std::ui
     return out;
 }
 
+std::vector<ModelPath> wrappedContourPaths(const std::vector<geometry::Contour>& contours, const document::Job& job,
+                                           std::uint32_t colour) {
+    std::vector<ModelPath> out;
+    const double z = job.rotarySurfaceZ();
+    ModelPath path;
+    path.colour = colour;
+    for (const geometry::Contour& c : contours) {
+        if (c.isEmpty()) {
+            continue;
+        }
+        const geometry::Polyline poly = c.polygonise(geometry::Tolerance{});
+        std::vector<ModelPathPoint> run;
+        for (const geometry::Vec2& p : poly.points) {
+            run.push_back({p.x, p.y, z});
+        }
+        if (poly.closed && !run.empty()) {
+            run.push_back(run.front());
+        }
+        if (run.size() > 1) {
+            path.runs.push_back(std::move(run));
+        }
+    }
+    if (!path.runs.empty()) {
+        out.push_back(std::move(path));
+    }
+    return out;
+}
+
 std::vector<ModelPath> wrappedToolpathPaths(const std::vector<document::ToolpathRecord>& records, double arcStepRad,
                                             std::size_t maxPoints) {
     static constexpr std::uint32_t kColours[] = {0xFFD02020u, 0xFF2060D0u, 0xFF20A040u, 0xFFA020C0u, 0xFFD08010u};
