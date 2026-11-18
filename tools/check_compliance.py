@@ -20,6 +20,7 @@ import argparse
 import hashlib
 import os
 import re
+import subprocess
 import sys
 
 FORBIDDEN = {
@@ -49,7 +50,7 @@ FORBIDDEN = {
     "773aa1e91538d3792cdf",
     "9b90a9496047ba136fab",
 }
-SKIP_DIRS = {".git", ".claude", "node_modules", "__pycache__"}
+SKIP_DIRS = {".git", ".claude", ".fc-src", "node_modules", "__pycache__"}
 SKIP_PREFIXES = ("build",)
 TOKEN = re.compile(r"[A-Za-z0-9]+")
 # Notice rows may name a dependency differently from its FetchContent name.
@@ -88,7 +89,27 @@ def load_allowlist(path):
     return entries
 
 
+def git_files(root):
+    """Tracked plus untracked-but-not-ignored files, or None when root is not a git checkout."""
+    if not os.path.exists(os.path.join(root, ".git")):
+        return None
+    try:
+        out = subprocess.run(["git", "-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+                             capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return sorted(set(x for x in out.decode("utf-8", errors="replace").split("\0") if x))
+
+
 def walk(root):
+    """Our own files only: git's file list in a checkout, else a directory walk skipping fetched/build dirs."""
+    listed = git_files(root)
+    if listed is not None:
+        for rel in listed:
+            full = os.path.join(root, rel)
+            if os.path.isfile(full):
+                yield rel, full
+        return
     for d, dirs, files in os.walk(root):
         dirs[:] = sorted(x for x in dirs if x not in SKIP_DIRS and not x.startswith(SKIP_PREFIXES))
         for f in sorted(files):
