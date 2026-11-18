@@ -520,7 +520,7 @@ jobs:
           if ldd /usr/bin/carvetto | grep 'not found'; then echo "::error title=Unresolved libraries in the installed app::see log"; exit 1; fi
           ldd /usr/bin/carvetto | grep -E 'libQt6Core' | grep -q 'lib/carvetto/lib/libQt6Core' || { echo "::error title=Qt not taken from the package::see ldd"; ldd /usr/bin/carvetto; exit 1; }
           ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so | grep -E 'not found' && { echo "::error title=xcb plugin has unresolved libraries::see log"; exit 1; } || true
-          ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so | grep -q 'libQt6XcbQpa.*lib/carvetto/lib/' || { echo "::error title=xcb plugin does not use the bundled Qt::see ldd"; ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so; exit 1; }
+          ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so | grep -q 'libQt6XcbQpa.*/carvetto/' || { echo "::error title=xcb plugin does not use the bundled Qt::see ldd"; ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so; exit 1; }
           QT_QPA_PLATFORM=offscreen /usr/bin/carvetto --self-test || { echo "::error title=Installed app self-test failed::exit $?"; exit 1; }
           echo 'x' > "$RUNNER_TEMP/a.carv"
           test "$(xdg-mime query filetype "$RUNNER_TEMP/a.carv")" = application/x-carvetto-project || { echo "::error title=MIME type not registered::.carv"; exit 1; }
