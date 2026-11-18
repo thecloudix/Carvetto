@@ -1760,7 +1760,7 @@ Goal: A Windows installer (CPack with NSIS or WiX, whichever installs cleanly on
 Acceptance criteria:
   1. CI produces a Windows installer artifact whose installed app passes --self-test; uninstall removes everything it installed.
 
-### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: verifying — PR #221]
+### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: verifying]
 Phase: 4   Module: packaging + CI   Depends on: none
 Goal: Linux packaging: install rules (binary, share/carvetto posts/gadgets/tooldb/translations), .desktop file, MIME type for .carv, icon set (own artwork), CPack DEB/RPM and an AppImage built in CI on Ubuntu 24.04; smoke job installs and runs --self-test offscreen.
 Acceptance criteria:
