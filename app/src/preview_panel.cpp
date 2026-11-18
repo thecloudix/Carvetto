@@ -1,4 +1,5 @@
 #include "preview_panel.hpp"
+#include "vm_text.hpp"
 
 #include <QAction>
 #include <QCheckBox>
@@ -43,13 +44,13 @@ QString clockText(double seconds) {
 const char* diagnosticName(simulate::DiagnosticKind kind) {
     switch (kind) {
         case simulate::DiagnosticKind::RapidInMaterial:
-            return "Rapid in material";
+            return QT_TRANSLATE_NOOP("PreviewPanel", "Rapid in material");
         case simulate::DiagnosticKind::BelowTable:
-            return "Below the table";
+            return QT_TRANSLATE_NOOP("PreviewPanel", "Below the table");
         case simulate::DiagnosticKind::ToolTooDeep:
-            return "Tool too deep";
+            return QT_TRANSLATE_NOOP("PreviewPanel", "Tool too deep");
         case simulate::DiagnosticKind::ToolChangeWithoutRetract:
-            return "Tool change without retract";
+            return QT_TRANSLATE_NOOP("PreviewPanel", "Tool change without retract");
     }
     return "";
 }
@@ -88,17 +89,17 @@ void PreviewPanel::build() {
     auto* col = new QVBoxLayout(body);
 
     // --- 2D preview ---
-    auto* preview = new QGroupBox(QStringLiteral("Toolpath preview (2D view)"), body);
+    auto* preview = new QGroupBox(QCoreApplication::translate("PreviewPanel", "Toolpath preview (2D view)"), body);
     auto* pv = new QVBoxLayout(preview);
-    show_ = new QCheckBox(QStringLiteral("Show toolpaths on the canvas"), preview);
+    show_ = new QCheckBox(QCoreApplication::translate("PreviewPanel", "Show toolpaths on the canvas"), preview);
     show_->setChecked(true);
-    selectedOnly_ = new QCheckBox(QStringLiteral("Only the selected toolpath"), preview);
+    selectedOnly_ = new QCheckBox(QCoreApplication::translate("PreviewPanel", "Only the selected toolpath"), preview);
     pv->addWidget(show_);
     pv->addWidget(selectedOnly_);
     for (std::size_t i = 0; i < viewmodel::kMoveClassCount; ++i) {
         const auto cls = static_cast<viewmodel::MoveClass>(i);
         const viewmodel::PreviewColour c = viewmodel::colourOf(cls);
-        auto* box = new QCheckBox(QString::fromUtf8(viewmodel::nameOf(cls)), preview);
+        auto* box = new QCheckBox(vmText(viewmodel::nameOf(cls)), preview);
         box->setChecked(true);
         box->setStyleSheet(QStringLiteral("QCheckBox { color: rgb(%1,%2,%3); font-weight: bold; }")
                                .arg(c.r)
@@ -112,13 +113,13 @@ void PreviewPanel::build() {
         });
     }
     list_ = new QTreeWidget(preview);
-    list_->setHeaderLabels({QStringLiteral("Show toolpath")});
+    list_->setHeaderLabels({QCoreApplication::translate("PreviewPanel", "Show toolpath")});
     list_->setRootIsDecorated(false);
     list_->setMaximumHeight(130);
     pv->addWidget(list_);
     col->addWidget(preview);
 
-    showAction_ = new QAction(QStringLiteral("Show &Toolpath Preview"), this);
+    showAction_ = new QAction(QCoreApplication::translate("PreviewPanel", "Show &Toolpath Preview"), this);
     showAction_->setCheckable(true);
     showAction_->setChecked(true);
     showAction_->setShortcut(QKeySequence(QStringLiteral("F5")));
@@ -138,21 +139,21 @@ void PreviewPanel::build() {
     });
 
     // --- time ---
-    auto* timeBox = new QGroupBox(QStringLiteral("Machining time"), body);
+    auto* timeBox = new QGroupBox(QCoreApplication::translate("PreviewPanel", "Machining time"), body);
     auto* tv = new QVBoxLayout(timeBox);
     time_ = new QLabel(timeBox);
     time_->setWordWrap(true);
     time_->setTextInteractionFlags(Qt::TextSelectableByMouse);
     tv->addWidget(time_);
     auto* rateRow = new QHBoxLayout();
-    rateRow->addWidget(new QLabel(QStringLiteral("Rapid rate:"), timeBox));
+    rateRow->addWidget(new QLabel(QCoreApplication::translate("PreviewPanel", "Rapid rate:"), timeBox));
     rapid_ = new QDoubleSpinBox(timeBox);
     rapid_->setRange(0.0, 100000.0);
     rapid_->setDecimals(0);
     rapid_->setSingleStep(500.0);
-    rapid_->setSuffix(QStringLiteral(" mm/min"));
-    rapid_->setSpecialValueText(QStringLiteral("not set"));
-    rapid_->setToolTip(QStringLiteral("The machine's rapid travel rate. Without it rapid moves are left out of the "
+    rapid_->setSuffix(QCoreApplication::translate("PreviewPanel", " mm/min"));
+    rapid_->setSpecialValueText(QCoreApplication::translate("PreviewPanel", "not set"));
+    rapid_->setToolTip(QCoreApplication::translate("PreviewPanel", "The machine's rapid travel rate. Without it rapid moves are left out of the "
                                       "time estimate (the playback assumes 5000 mm/min)."));
     rateRow->addWidget(rapid_);
     rateRow->addStretch();
@@ -161,24 +162,24 @@ void PreviewPanel::build() {
     connect(rapid_, &QDoubleSpinBox::valueChanged, this, [this]() { applyRapidRate(); });
 
     // --- simulation ---
-    auto* simBox = new QGroupBox(QStringLiteral("Simulation (3D View tab)"), body);
+    auto* simBox = new QGroupBox(QCoreApplication::translate("PreviewPanel", "Simulation (3D View tab)"), body);
     auto* sv = new QVBoxLayout(simBox);
     auto* form = new QFormLayout();
     quality_ = new QComboBox(simBox);
-    quality_->addItem(QStringLiteral("Coarse (0.5 mm)"), static_cast<int>(simulate::Quality::Coarse));
-    quality_->addItem(QStringLiteral("Medium (0.25 mm)"), static_cast<int>(simulate::Quality::Medium));
-    quality_->addItem(QStringLiteral("Fine (0.125 mm)"), static_cast<int>(simulate::Quality::Fine));
+    quality_->addItem(QCoreApplication::translate("PreviewPanel", "Coarse (0.5 mm)"), static_cast<int>(simulate::Quality::Coarse));
+    quality_->addItem(QCoreApplication::translate("PreviewPanel", "Medium (0.25 mm)"), static_cast<int>(simulate::Quality::Medium));
+    quality_->addItem(QCoreApplication::translate("PreviewPanel", "Fine (0.125 mm)"), static_cast<int>(simulate::Quality::Fine));
     quality_->setCurrentIndex(1);
     colour_ = new QComboBox(simBox);
-    colour_->addItem(QStringLiteral("By depth"));
-    colour_->addItem(QStringLiteral("By toolpath"));
-    form->addRow(QStringLiteral("Quality:"), quality_);
-    form->addRow(QStringLiteral("Colour:"), colour_);
+    colour_->addItem(QCoreApplication::translate("PreviewPanel", "By depth"));
+    colour_->addItem(QCoreApplication::translate("PreviewPanel", "By toolpath"));
+    form->addRow(QCoreApplication::translate("PreviewPanel", "Quality:"), quality_);
+    form->addRow(QCoreApplication::translate("PreviewPanel", "Colour:"), colour_);
     sv->addLayout(form);
     auto* runRow = new QHBoxLayout();
-    simulate_ = new QPushButton(QStringLiteral("Simulate"), simBox);
-    stop_ = new QPushButton(QStringLiteral("Stop"), simBox);
-    clear_ = new QPushButton(QStringLiteral("Clear"), simBox);
+    simulate_ = new QPushButton(QCoreApplication::translate("PreviewPanel", "Simulate"), simBox);
+    stop_ = new QPushButton(QCoreApplication::translate("PreviewPanel", "Stop"), simBox);
+    clear_ = new QPushButton(QCoreApplication::translate("PreviewPanel", "Clear"), simBox);
     runRow->addWidget(simulate_);
     runRow->addWidget(stop_);
     runRow->addWidget(clear_);
@@ -199,18 +200,18 @@ void PreviewPanel::build() {
     sv->addWidget(scrubber_);
     auto* playRow = new QHBoxLayout();
     stepBack_ = new QPushButton(QStringLiteral("|<"), simBox);
-    play_ = new QPushButton(QStringLiteral("Play"), simBox);
+    play_ = new QPushButton(QCoreApplication::translate("PreviewPanel", "Play"), simBox);
     stepForward_ = new QPushButton(QStringLiteral(">|"), simBox);
-    stepBack_->setToolTip(QStringLiteral("Step back one move"));
-    stepForward_->setToolTip(QStringLiteral("Step forward one move"));
+    stepBack_->setToolTip(QCoreApplication::translate("PreviewPanel", "Step back one move"));
+    stepForward_->setToolTip(QCoreApplication::translate("PreviewPanel", "Step forward one move"));
     stepBack_->setAutoRepeat(true);
     stepForward_->setAutoRepeat(true);
     speed_ = new QComboBox(simBox);
     for (const double s : viewmodel::PlaybackModel::kSpeeds) {
-        speed_->addItem(QStringLiteral("%1x").arg(s), s);
+        speed_->addItem(QStringLiteral("%1x").arg(s), s);  // lint: no-tr
     }
     speed_->setCurrentIndex(3);  // 10x
-    speed_->setToolTip(QStringLiteral("Playback speed relative to machine time"));
+    speed_->setToolTip(QCoreApplication::translate("PreviewPanel", "Playback speed relative to machine time"));
     playRow->addWidget(stepBack_);
     playRow->addWidget(play_);
     playRow->addWidget(stepForward_);
@@ -218,7 +219,7 @@ void PreviewPanel::build() {
     sv->addLayout(playRow);
     diagnostics_ = new QListWidget(simBox);
     diagnostics_->setMaximumHeight(110);
-    diagnostics_->setToolTip(QStringLiteral("Simulation warnings: rapids through material, cuts below the table, ..."));
+    diagnostics_->setToolTip(QCoreApplication::translate("PreviewPanel", "Simulation warnings: rapids through material, cuts below the table, ..."));
     sv->addWidget(diagnostics_);
     col->addWidget(simBox);
     col->addStretch();
@@ -291,7 +292,7 @@ void PreviewPanel::refresh() {
         const viewmodel::SimulationValidity v = viewmodel::checkSimulationCurrent(sim_.setup(), toolpaths_->session());
         simCurrent_ = v.current;
         simReason_ = v.reason;
-        relief_->setBanner(v.current ? QString() : qs("Out of date: " + v.reason + " Press Simulate to update."));
+        relief_->setBanner(v.current ? QString() : QCoreApplication::translate("PreviewPanel", "Out of date: %1 Press Simulate to update.").arg(qs(v.reason)));
     } else {
         simCurrent_ = false;
         simReason_.clear();
@@ -349,11 +350,11 @@ void PreviewPanel::rebuildToolpathList() {
     for (const viewmodel::PreviewToolpath& tp : model_.scene().toolpaths) {
         QString text = qs(tp.name);
         if (!tp.computed) {
-            text += QStringLiteral(" (not computed)");
+            text += QCoreApplication::translate("PreviewPanel", " (not computed)");
         } else if (!tp.enabled) {
-            text += QStringLiteral(" (disabled)");
+            text += QCoreApplication::translate("PreviewPanel", " (disabled)");
         } else if (tp.stale) {
-            text += QStringLiteral(" (needs recalculation)");
+            text += QCoreApplication::translate("PreviewPanel", " (needs recalculation)");
         }
         auto* item = new QTreeWidgetItem(list_);
         item->setText(0, text);
@@ -372,7 +373,7 @@ void PreviewPanel::updateTime() {
         updatingUi_ = false;
     }
     const viewmodel::TimeReadout r = viewmodel::makeTimeReadout(session.summary());
-    QString text = qs(r.headline);
+    QString text = vmText(r.headline);
     if (!r.breakdown.empty()) {
         text += QStringLiteral("\n") + qs(r.breakdown);
     }
@@ -380,7 +381,7 @@ void PreviewPanel::updateTime() {
         text += QStringLiteral("\n- ") + qs(w);
     }
     if (!r.perToolpath.empty()) {
-        text += QStringLiteral("\nPer toolpath:");
+        text += QCoreApplication::translate("PreviewPanel", "\nPer toolpath:");
         for (const std::string& line : r.perToolpath) {
             text += QStringLiteral("\n  ") + qs(line);
         }
@@ -402,7 +403,7 @@ void PreviewPanel::applyRapidRate() {
 
 bool PreviewPanel::startSimulation() {
     if (toolpaths_->busy()) {
-        status_->setText(QStringLiteral("Wait for the toolpath calculation to finish."));
+        status_->setText(QCoreApplication::translate("PreviewPanel", "Wait for the toolpath calculation to finish."));
         return false;
     }
     viewmodel::SimulationRequest request;
@@ -426,10 +427,10 @@ bool PreviewPanel::startSimulation() {
     diagnostics_->clear();
     relief_->setFrame(nullptr, geometry::Box2{});
     if (!sim_.start(std::move(setup), options)) {
-        status_->setText(QStringLiteral("The simulation could not start."));
+        status_->setText(QCoreApplication::translate("PreviewPanel", "The simulation could not start."));
         return false;
     }
-    relief_->setEmptyText(QStringLiteral("Preparing the simulation..."));
+    relief_->setEmptyText(QCoreApplication::translate("PreviewPanel", "Preparing the simulation..."));
     QString notes;
     for (const std::string& n : setupNotes_) {
         notes += (notes.isEmpty() ? QString() : QStringLiteral("\n")) + qs(n);
@@ -455,7 +456,7 @@ void PreviewPanel::clearSimulation() {
     relief_->setTool(std::nullopt, 0.0);
     relief_->setStatus(QString());
     relief_->setBanner(QString());
-    relief_->setEmptyText(QStringLiteral("Simulation view: run Simulate in the Preview panel to see the cut stock."));
+    relief_->setEmptyText(QCoreApplication::translate("PreviewPanel", "Simulation view: run Simulate in the Preview panel to see the cut stock."));
     refresh();
 }
 
@@ -535,8 +536,8 @@ void PreviewPanel::showFrame(const std::shared_ptr<const viewmodel::SimulationFr
         if (shown++ >= kMaxDiagnosticLines) {
             break;
         }
-        diagnostics_->addItem(QStringLiteral("%1 (move %2): %3")
-                                  .arg(QString::fromUtf8(diagnosticName(d.kind)))
+        diagnostics_->addItem(QCoreApplication::translate("PreviewPanel", "%1 (move %2): %3")
+                                  .arg(QCoreApplication::translate("PreviewPanel", diagnosticName(d.kind)))
                                   .arg(d.move + 1)
                                   .arg(qs(d.message)));
     }
@@ -544,7 +545,7 @@ void PreviewPanel::showFrame(const std::shared_ptr<const viewmodel::SimulationFr
                                   ? frame->diagnostics.size() - kMaxDiagnosticLines
                                   : 0;
     if (extra + frame->droppedDiagnostics > 0) {
-        diagnostics_->addItem(QStringLiteral("... and %1 more").arg(extra + frame->droppedDiagnostics));
+        diagnostics_->addItem(QCoreApplication::translate("PreviewPanel", "... and %1 more").arg(extra + frame->droppedDiagnostics));
     }
 }
 
@@ -555,36 +556,36 @@ void PreviewPanel::updateStatus() {
         case viewmodel::SimState::Idle:
             break;
         case viewmodel::SimState::Preparing:
-            text = QStringLiteral("Preparing the simulation...");
+            text = QCoreApplication::translate("PreviewPanel", "Preparing the simulation...");
             progress_->setRange(0, 0);
             break;
         case viewmodel::SimState::Working:
             progress_->setRange(0, 100);
             progress_->setValue(static_cast<int>(p.fraction() * 100.0));
-            text = QStringLiteral("Simulating... move %1 of %2").arg(p.movesDone).arg(p.moveCount);
+            text = QCoreApplication::translate("PreviewPanel", "Simulating... move %1 of %2").arg(p.movesDone).arg(p.moveCount);
             break;
         case viewmodel::SimState::Ready:
             progress_->setRange(0, 100);
             progress_->setValue(100);
-            text = p.cancelled ? QStringLiteral("Stopped at move %1 of %2").arg(p.movesDone).arg(p.moveCount)
-                               : QStringLiteral("Move %1 of %2").arg(p.movesDone).arg(p.moveCount);
+            text = p.cancelled ? QCoreApplication::translate("PreviewPanel", "Stopped at move %1 of %2").arg(p.movesDone).arg(p.moveCount)
+                               : QCoreApplication::translate("PreviewPanel", "Move %1 of %2").arg(p.movesDone).arg(p.moveCount);
             break;
         case viewmodel::SimState::Failed:
             progress_->setRange(0, 100);
             progress_->setValue(0);
-            text = QStringLiteral("The simulation failed: ") + qs(sim_.error());
+            text = QCoreApplication::translate("PreviewPanel", "The simulation failed: ") + qs(sim_.error());
             break;
     }
     if (!simReason_.empty() && sim_.active()) {
-        text += QStringLiteral("\nOut of date: ") + qs(simReason_);
+        text += QCoreApplication::translate("PreviewPanel", "\nOut of date: ") + qs(simReason_);
     }
     status_->setText(text);
     const auto frame = sim_.frame();
     if (frame && playbackReady_) {
-        QString line = QStringLiteral("Move %1 / %2 - %3 / %4").arg(frame->move).arg(playback_.moveCount())
+        QString line = QCoreApplication::translate("PreviewPanel", "Move %1 / %2 - %3 / %4").arg(frame->move).arg(playback_.moveCount())
                            .arg(clockText(frame->seconds), clockText(playback_.totalSeconds()));
         if (!frame->diagnostics.empty()) {
-            line += QStringLiteral(" - %1 warning(s)").arg(frame->diagnostics.size() + frame->droppedDiagnostics);
+            line += QCoreApplication::translate("PreviewPanel", " - %1 warning(s)").arg(frame->diagnostics.size() + frame->droppedDiagnostics);
         }
         relief_->setStatus(line);
     }
@@ -630,7 +631,7 @@ void PreviewPanel::updateControls() {
     stepBack_->setEnabled(ready && playback_.position() > 0);
     stepForward_->setEnabled(ready && !playback_.atEnd());
     play_->setEnabled(ready);
-    play_->setText(playback_.playing() ? QStringLiteral("Pause") : QStringLiteral("Play"));
+    play_->setText(playback_.playing() ? QCoreApplication::translate("PreviewPanel", "Pause") : QCoreApplication::translate("PreviewPanel", "Play"));
     speed_->setEnabled(true);
     if (!active) {
         progress_->setRange(0, 100);

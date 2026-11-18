@@ -1,5 +1,6 @@
 #include "model_io_dialogs.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -33,31 +34,31 @@ QDoubleSpinBox* makeSpin(double lo, double hi, double value, int decimals, QWidg
 
 MeshImportDialog::MeshImportDialog(io::TriangleMesh mesh, const QString& fileName, QWidget* parent)
     : QDialog(parent), mesh_(std::move(mesh)) {
-    setWindowTitle(QStringLiteral("Orientate Model"));
+    setWindowTitle(QCoreApplication::translate("MeshImportDialog", "Orientate Model"));
     name_ = QFileInfo(fileName).completeBaseName().toStdString();
 
     units_ = new QComboBox(this);
-    units_->addItems({QStringLiteral("Millimetres"), QStringLiteral("Inches")});
+    units_->addItems({QCoreApplication::translate("MeshImportDialog", "Millimetres"), QCoreApplication::translate("MeshImportDialog", "Inches")});
     top_ = new QComboBox(this);
-    top_->addItems({QStringLiteral("Top (+Z)"), QStringLiteral("Bottom (-Z)"), QStringLiteral("Right (+X)"),
-                    QStringLiteral("Left (-X)"), QStringLiteral("Back (+Y)"), QStringLiteral("Front (-Y)")});
+    top_->addItems({QCoreApplication::translate("MeshImportDialog", "Top (+Z)"), QCoreApplication::translate("MeshImportDialog", "Bottom (-Z)"), QCoreApplication::translate("MeshImportDialog", "Right (+X)"),
+                    QCoreApplication::translate("MeshImportDialog", "Left (-X)"), QCoreApplication::translate("MeshImportDialog", "Back (+Y)"), QCoreApplication::translate("MeshImportDialog", "Front (-Y)")});
     rotation_ = new QComboBox(this);
-    rotation_->addItems({QStringLiteral("0 degrees"), QStringLiteral("90 degrees"), QStringLiteral("180 degrees"),
-                         QStringLiteral("270 degrees")});
-    resize_ = new QCheckBox(QStringLiteral("Resize to"), this);
-    lock_ = new QCheckBox(QStringLiteral("Lock aspect ratio"), this);
+    rotation_->addItems({QCoreApplication::translate("MeshImportDialog", "0 degrees"), QCoreApplication::translate("MeshImportDialog", "90 degrees"), QCoreApplication::translate("MeshImportDialog", "180 degrees"),
+                         QCoreApplication::translate("MeshImportDialog", "270 degrees")});
+    resize_ = new QCheckBox(QCoreApplication::translate("MeshImportDialog", "Resize to"), this);
+    lock_ = new QCheckBox(QCoreApplication::translate("MeshImportDialog", "Lock aspect ratio"), this);
     lock_->setChecked(true);
     driver_ = new QComboBox(this);
-    driver_->addItems({QStringLiteral("driven by X"), QStringLiteral("driven by Y"), QStringLiteral("driven by Z")});
+    driver_->addItems({QCoreApplication::translate("MeshImportDialog", "driven by X"), QCoreApplication::translate("MeshImportDialog", "driven by Y"), QCoreApplication::translate("MeshImportDialog", "driven by Z")});
     sizeX_ = makeSpin(0.001, 100000.0, 100.0, 3, this);
     sizeY_ = makeSpin(0.001, 100000.0, 100.0, 3, this);
     sizeZ_ = makeSpin(0.001, 100000.0, 10.0, 3, this);
-    centre_ = new QCheckBox(QStringLiteral("Centre model on the origin"), this);
+    centre_ = new QCheckBox(QCoreApplication::translate("MeshImportDialog", "Centre model on the origin"), this);
     centre_->setChecked(true);
-    zeroBottom_ = new QCheckBox(QStringLiteral("Zero plane at the bottom of the model"), this);
+    zeroBottom_ = new QCheckBox(QCoreApplication::translate("MeshImportDialog", "Zero plane at the bottom of the model"), this);
     zeroBottom_->setChecked(true);
     zero_ = makeSpin(-100000.0, 100000.0, 0.0, 3, this);
-    discard_ = new QCheckBox(QStringLiteral("Discard model below the zero plane"), this);
+    discard_ = new QCheckBox(QCoreApplication::translate("MeshImportDialog", "Discard model below the zero plane"), this);
     discard_->setChecked(true);
     cell_ = makeSpin(0.001, 100.0, 0.5, 3, this);
 
@@ -73,19 +74,19 @@ MeshImportDialog::MeshImportDialog(io::TriangleMesh mesh, const QString& fileNam
     connect(buttons_, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Model units"), units_);
-    form->addRow(QStringLiteral("Face that becomes the top"), top_);
-    form->addRow(QStringLiteral("Rotate about Z"), rotation_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Model units"), units_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Face that becomes the top"), top_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Rotate about Z"), rotation_);
     form->addRow(resize_, driver_);
-    form->addRow(QStringLiteral("Width (X)"), sizeX_);
-    form->addRow(QStringLiteral("Height (Y)"), sizeY_);
-    form->addRow(QStringLiteral("Thickness (Z)"), sizeZ_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Width (X)"), sizeX_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Height (Y)"), sizeY_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Thickness (Z)"), sizeZ_);
     form->addRow(lock_);
     form->addRow(centre_);
     form->addRow(zeroBottom_);
-    form->addRow(QStringLiteral("Zero plane Z"), zero_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Zero plane Z"), zero_);
     form->addRow(discard_);
-    form->addRow(QStringLiteral("Cell size (mm)"), cell_);
+    form->addRow(QCoreApplication::translate("MeshImportDialog", "Cell size (mm)"), cell_);
     auto* side = new QVBoxLayout;
     side->addWidget(picture_);
     side->addWidget(undercuts_);
@@ -202,13 +203,13 @@ void MeshImportDialog::update() {
     picture_->setPixmap(QPixmap::fromImage(
         img.scaled(kPreviewSide, kPreviewSide, Qt::KeepAspectRatio, Qt::FastTransformation)));
     if (preview_.undercutCells > 0) {
-        undercuts_->setText(QStringLiteral("Undercuts: %1 cells (red) are hidden below the top surface and are "
+        undercuts_->setText(QCoreApplication::translate("MeshImportDialog", "Undercuts: %1 cells (red) are hidden below the top surface and are "
                                            "lost in a height field.")
                                 .arg(preview_.undercutCells));
     } else {
-        undercuts_->setText(QStringLiteral("No undercuts."));
+        undercuts_->setText(QCoreApplication::translate("MeshImportDialog", "No undercuts."));
     }
-    info_->setText(QStringLiteral("Size %1 x %2 x %3 mm; material needed above the zero plane: %4 mm.")
+    info_->setText(QCoreApplication::translate("MeshImportDialog", "Size %1 x %2 x %3 mm; material needed above the zero plane: %4 mm.")
                        .arg(preview_.size.x, 0, 'f', 2)
                        .arg(preview_.size.y, 0, 'f', 2)
                        .arg(preview_.size.z, 0, 'f', 2)
@@ -217,25 +218,25 @@ void MeshImportDialog::update() {
 
 ModelExportDialog::ModelExportDialog(viewmodel::ModelExportKind kind, double autoBackZ, QWidget* parent)
     : QDialog(parent), kind_(kind), autoZ_(autoBackZ) {
-    setWindowTitle(QStringLiteral("Export Model"));
+    setWindowTitle(QCoreApplication::translate("MeshImportDialog", "Export Model"));
     back_ = new QComboBox(this);
-    back_->addItems({QStringLiteral("Closed solid with flat back"), QStringLiteral("Top surface only")});
-    auto_ = new QCheckBox(QStringLiteral("Back Z chosen automatically"), this);
+    back_->addItems({QCoreApplication::translate("MeshImportDialog", "Closed solid with flat back"), QCoreApplication::translate("MeshImportDialog", "Top surface only")});
+    auto_ = new QCheckBox(QCoreApplication::translate("MeshImportDialog", "Back Z chosen automatically"), this);
     auto_->setChecked(true);
     backZ_ = makeSpin(-100000.0, 100000.0, autoBackZ, 3, this);
     format_ = new QComboBox(this);
-    format_->addItems({QStringLiteral("PNG, 16 bit"), QStringLiteral("PGM, 16 bit")});
+    format_->addItems({QCoreApplication::translate("MeshImportDialog", "PNG, 16 bit"), QCoreApplication::translate("MeshImportDialog", "PGM, 16 bit")});
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     auto* form = new QFormLayout(this);
     if (kind == viewmodel::ModelExportKind::Heightmap) {
-        form->addRow(QStringLiteral("Image format"), format_);
-        form->addRow(new QLabel(QStringLiteral("Lowest point is black, highest is white."), this));
+        form->addRow(QCoreApplication::translate("MeshImportDialog", "Image format"), format_);
+        form->addRow(new QLabel(QCoreApplication::translate("MeshImportDialog", "Lowest point is black, highest is white."), this));
     } else {
-        form->addRow(QStringLiteral("Back"), back_);
+        form->addRow(QCoreApplication::translate("MeshImportDialog", "Back"), back_);
         form->addRow(auto_);
-        form->addRow(QStringLiteral("Back Z (mm)"), backZ_);
+        form->addRow(QCoreApplication::translate("MeshImportDialog", "Back Z (mm)"), backZ_);
     }
     form->addRow(buttons);
     connect(back_, &QComboBox::currentIndexChanged, this, [this]() { sync(); });

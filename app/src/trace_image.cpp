@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QCoreApplication>
 #include <QBuffer>
 #include <QFileInfo>
 #include <QImage>
@@ -18,18 +19,18 @@ DecodedImage decodeFromReader(QImageReader& reader) {
     reader.setAutoTransform(true);
     const QByteArray format = reader.format().toLower();
     if (format != "png" && format != "jpeg" && format != "jpg" && format != "bmp") {
-        out.error = QStringLiteral("Only PNG, JPEG and BMP images can be traced.");
+        out.error = QCoreApplication::translate("TraceImage", "Only PNG, JPEG and BMP images can be traced.");
         return out;
     }
     const QSize size = reader.size();  // from the header, no pixel data decoded yet
     if (!size.isValid() || size.width() <= 0 || size.height() <= 0) {
-        out.error = QStringLiteral("The image size could not be read; the file may be damaged.");
+        out.error = QCoreApplication::translate("TraceImage", "The image size could not be read; the file may be damaged.");
         return out;
     }
     const QSize& shown = size;  // a 90 degree EXIF turn swaps the edges; both are capped alike
     if (shown.width() > io::kMaxImageEdge || shown.height() > io::kMaxImageEdge ||
         static_cast<std::size_t>(shown.width()) * static_cast<std::size_t>(shown.height()) > io::kMaxImagePixels) {
-        out.error = QStringLiteral("The image is too large to trace (%1 x %2 pixels; at most %3 pixels on a side and 16 million in all).")
+        out.error = QCoreApplication::translate("TraceImage", "The image is too large to trace (%1 x %2 pixels; at most %3 pixels on a side and 16 million in all).")
                         .arg(shown.width())
                         .arg(shown.height())
                         .arg(io::kMaxImageEdge);
@@ -38,12 +39,12 @@ DecodedImage decodeFromReader(QImageReader& reader) {
     reader.setAllocationLimit(256);  // MB, Qt's own guard on top of ours
     QImage img = reader.read();
     if (img.isNull()) {
-        out.error = QStringLiteral("The image could not be decoded: %1").arg(reader.errorString());
+        out.error = QCoreApplication::translate("TraceImage", "The image could not be decoded: %1").arg(reader.errorString());
         return out;
     }
     if (img.width() > io::kMaxImageEdge || img.height() > io::kMaxImageEdge ||
         static_cast<std::size_t>(img.width()) * static_cast<std::size_t>(img.height()) > io::kMaxImagePixels) {
-        out.error = QStringLiteral("The image is too large to trace.");
+        out.error = QCoreApplication::translate("TraceImage", "The image is too large to trace.");
         return out;
     }
     if (img.hasAlphaChannel()) {
@@ -65,7 +66,7 @@ DecodedImage decodeFromReader(QImageReader& reader) {
         std::copy(line, line + rowBytes, raster.rgb.begin() + static_cast<std::ptrdiff_t>(rowBytes * static_cast<std::size_t>(y)));
     }
     if (!raster.valid()) {
-        out.error = QStringLiteral("The image is not usable.");
+        out.error = QCoreApplication::translate("TraceImage", "The image is not usable.");
         return out;
     }
     out.image = std::move(raster);
@@ -79,12 +80,12 @@ DecodedImage decodeImageFile(const QString& path) {
     const QFileInfo info(path);
     if (!info.exists() || !info.isFile()) {
         DecodedImage out;
-        out.error = QStringLiteral("The file does not exist.");
+        out.error = QCoreApplication::translate("TraceImage", "The file does not exist.");
         return out;
     }
     if (info.size() > kTraceMaxFileBytes) {
         DecodedImage out;
-        out.error = QStringLiteral("The image file is too large (over 64 MB).");
+        out.error = QCoreApplication::translate("TraceImage", "The image file is too large (over 64 MB).");
         return out;
     }
     QImageReader reader(path);
@@ -94,7 +95,7 @@ DecodedImage decodeImageFile(const QString& path) {
 DecodedImage decodeImageBytes(const QByteArray& bytes) {
     if (bytes.size() > kTraceMaxFileBytes) {
         DecodedImage out;
-        out.error = QStringLiteral("The image is too large (over 64 MB).");
+        out.error = QCoreApplication::translate("TraceImage", "The image is too large (over 64 MB).");
         return out;
     }
     QByteArray copy = bytes;

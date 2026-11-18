@@ -1,5 +1,6 @@
 #include "relief_view.hpp"
 
+#include <QCoreApplication>
 #include <QFontMetrics>
 #include <QMouseEvent>
 #include <QPaintEvent>
@@ -20,7 +21,7 @@ constexpr int kStatusHeight = 24;
 ReliefView::ReliefView(QWidget* parent) : QWidget(parent) {
     setMinimumSize(200, 150);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
-    emptyText_ = QStringLiteral("Simulation view: run Simulate in the Preview panel to see the cut stock.");
+    emptyText_ = QCoreApplication::translate("ReliefView", "Simulation view: run Simulate in the Preview panel to see the cut stock.");
 }
 
 void ReliefView::setFrame(std::shared_ptr<const viewmodel::SimulationFrame> frame, const geometry::Box2& stockMm) {

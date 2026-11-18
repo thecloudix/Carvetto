@@ -1,5 +1,6 @@
 #include "sculpt_panel.hpp"
 
+#include <QCoreApplication>
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QFileDialog>
@@ -19,6 +20,11 @@
 namespace carvetto::app {
 
 namespace {
+
+// Texts that come from the view model are looked up at run time; the English text stays the lookup key.
+QString vmText(const char* s) {
+    return *s == '\0' ? QString() : QCoreApplication::translate("SculptPanel", s);
+}
 
 QString qs(const std::string& s) {
     return QString::fromStdString(s);
@@ -49,17 +55,17 @@ double fromSlider(int v, viewmodel::Range r) {
 
 SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std::move(getter), parent) {
     auto* outer = new QVBoxLayout(this);
-    startButton_ = new QPushButton(QStringLiteral("Start Sculpting"), this);
+    startButton_ = new QPushButton(QCoreApplication::translate("SculptPanel", "Start Sculpting"), this);
     startButton_->setObjectName(QStringLiteral("Sculpt: Start"));
-    startButton_->setToolTip(QStringLiteral(
-        "Sculpt the selected component (or the only one) in the Model view; left-drag paints"));
+    startButton_->setToolTip(QCoreApplication::translate(
+        "SculptPanel", "Sculpt the selected component (or the only one) in the Model view; left-drag paints"));
     outer->addWidget(startButton_);
 
     auto* palette = new QGridLayout();
     auto* group = new QButtonGroup(this);
     int n = 0;
     for (const relief::BrushKind kind : viewmodel::allBrushKinds()) {
-        auto* b = new QPushButton(QString::fromUtf8(viewmodel::brushKindName(kind)), this);
+        auto* b = new QPushButton(vmText(viewmodel::brushKindName(kind)), this);
         b->setCheckable(true);
         b->setObjectName(QStringLiteral("Brush: ") + QString::fromUtf8(viewmodel::brushKindName(kind)));
         b->setProperty("brushKind", static_cast<int>(kind));
@@ -74,9 +80,9 @@ SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
     }
     outer->addLayout(palette);
 
-    auto addSlider = [this, outer](const char* label) {
+    auto addSlider = [this, outer](const char* label, const char* shown) {
         auto* row = new QHBoxLayout();
-        row->addWidget(new QLabel(QString::fromUtf8(label), this));
+        row->addWidget(new QLabel(QCoreApplication::translate("SculptPanel", shown), this));
         auto* s = new QSlider(Qt::Horizontal, this);
         s->setRange(0, kSliderSteps);
         s->setObjectName(QStringLiteral("Sculpt: ") + QString::fromUtf8(label));
@@ -85,26 +91,26 @@ SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
         connect(s, &QSlider::valueChanged, this, [this]() { widgetsChanged(); });
         return s;
     };
-    addSlider("Diameter");
-    addSlider("Strength");
-    addSlider("Smoothness");
+    addSlider("Diameter", QT_TRANSLATE_NOOP("SculptPanel", "Diameter"));
+    addSlider("Strength", QT_TRANSLATE_NOOP("SculptPanel", "Strength"));
+    addSlider("Smoothness", QT_TRANSLATE_NOOP("SculptPanel", "Smoothness"));
     readout_ = new QLabel(this);
     readout_->setObjectName(QStringLiteral("Sculpt: Readout"));
     outer->addWidget(readout_);
 
     auto* modeRow = new QHBoxLayout();
-    modeRow->addWidget(new QLabel(QStringLiteral("Mode"), this));
+    modeRow->addWidget(new QLabel(QCoreApplication::translate("SculptPanel", "Mode"), this));
     auto* mode = new QComboBox(this);
     mode->setObjectName(QStringLiteral("Sculpt: Mode"));
     for (const relief::SculptMode m : {relief::SculptMode::Normal, relief::SculptMode::Raise, relief::SculptMode::Lower}) {
-        mode->addItem(QString::fromUtf8(viewmodel::sculptModeName(m)), static_cast<int>(m));
+        mode->addItem(vmText(viewmodel::sculptModeName(m)), static_cast<int>(m));
     }
     modeRow->addWidget(mode, 1);
     outer->addLayout(modeRow);
     connect(mode, &QComboBox::currentIndexChanged, this, [this]() { widgetsChanged(); });
-    auto* preserve = new QCheckBox(QStringLiteral("Preserve transparency"), this);
+    auto* preserve = new QCheckBox(QCoreApplication::translate("SculptPanel", "Preserve transparency"), this);
     preserve->setObjectName(QStringLiteral("Sculpt: Preserve transparency"));
-    preserve->setToolTip(QStringLiteral("Transparent (empty) cells of the component stay empty"));
+    preserve->setToolTip(QCoreApplication::translate("SculptPanel", "Transparent (empty) cells of the component stay empty"));
     outer->addWidget(preserve);
     connect(preserve, &QCheckBox::toggled, this, [this]() { widgetsChanged(); });
 
@@ -112,51 +118,51 @@ SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
     presetBox_ = new QComboBox(this);
     presetBox_->setObjectName(QStringLiteral("Sculpt: Preset"));
     presetRow->addWidget(presetBox_, 1);
-    auto* saveBtn = new QPushButton(QStringLiteral("Save Preset..."), this);
+    auto* saveBtn = new QPushButton(QCoreApplication::translate("SculptPanel", "Save Preset..."), this);
     presetRow->addWidget(saveBtn);
     outer->addLayout(presetRow);
     connect(presetBox_, &QComboBox::activated, this, [this](int i) {
-        applyPreset(presetBox_->itemText(i).toStdString());
+        applyPreset(presetBox_->itemData(i).toString().toStdString());
     });
     connect(saveBtn, &QPushButton::clicked, this, [this]() {
         bool ok = false;
-        const QString name = QInputDialog::getText(this, QStringLiteral("Save brush preset"),
-                                                   QStringLiteral("Preset name"), QLineEdit::Normal, {}, &ok);
+        const QString name = QInputDialog::getText(this, QCoreApplication::translate("SculptPanel", "Save brush preset"),
+                                                   QCoreApplication::translate("SculptPanel", "Preset name"), QLineEdit::Normal, {}, &ok);
         if (ok) {
             savePreset(name.toStdString());
         }
     });
 
-    auto* delBtn = new QPushButton(QStringLiteral("Delete Preset"), this);
+    auto* delBtn = new QPushButton(QCoreApplication::translate("SculptPanel", "Delete Preset"), this);
     delBtn->setObjectName(QStringLiteral("Sculpt: Delete Preset"));
     outer->addWidget(delBtn);
     connect(delBtn, &QPushButton::clicked, this, [this]() {
         if (presetBox_->currentIndex() >= 0) {
-            removePreset(presetBox_->currentText().toStdString());
+            removePreset(presetBox_->currentData().toString().toStdString());
         }
     });
 
     // Custom brush from an image.
     auto* stampRow = new QHBoxLayout();
-    auto* stampBtn = new QPushButton(QStringLiteral("Brush Image..."), this);
+    auto* stampBtn = new QPushButton(QCoreApplication::translate("SculptPanel", "Brush Image..."), this);
     stampBtn->setObjectName(QStringLiteral("Sculpt: Brush Image"));
-    stampBtn->setToolTip(QStringLiteral("Use a picture as the brush shape: light is high, transparent is no effect"));
-    auto* stampClear = new QPushButton(QStringLiteral("Round Brush"), this);
+    stampBtn->setToolTip(QCoreApplication::translate("SculptPanel", "Use a picture as the brush shape: light is high, transparent is no effect"));
+    auto* stampClear = new QPushButton(QCoreApplication::translate("SculptPanel", "Round Brush"), this);
     stampClear->setObjectName(QStringLiteral("Sculpt: Round Brush"));
     stampRow->addWidget(stampBtn);
     stampRow->addWidget(stampClear);
     outer->addLayout(stampRow);
-    auto* invert = new QCheckBox(QStringLiteral("Invert image"), this);
+    auto* invert = new QCheckBox(QCoreApplication::translate("SculptPanel", "Invert image"), this);
     invert->setObjectName(QStringLiteral("Sculpt: Invert image"));
-    auto* rotate = new QCheckBox(QStringLiteral("Rotate with stroke"), this);
+    auto* rotate = new QCheckBox(QCoreApplication::translate("SculptPanel", "Rotate with stroke"), this);
     rotate->setObjectName(QStringLiteral("Sculpt: Rotate with stroke"));
     outer->addWidget(invert);
     outer->addWidget(rotate);
     connect(stampBtn, &QPushButton::clicked, this, [this]() {
-        const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Brush image"), {},
-                                                          QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
+        const QString path = QFileDialog::getOpenFileName(this, QCoreApplication::translate("SculptPanel", "Brush image"), {},
+                                                          QCoreApplication::translate("SculptPanel", "Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
         if (!path.isEmpty() && !setBrushImage(loadImageFile(path))) {
-            message("That picture could not be used as a brush", true);
+            message(QT_TRANSLATE_NOOP("SculptPanel", "That picture could not be used as a brush"), true);
         }
     });
     connect(stampClear, &QPushButton::clicked, this, [this]() { clearBrushImage(); });
@@ -171,16 +177,16 @@ SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
 
     // Reference (overlay) image over the model.
     auto* overlayRow = new QHBoxLayout();
-    auto* overlayBtn = new QPushButton(QStringLiteral("Overlay Image..."), this);
+    auto* overlayBtn = new QPushButton(QCoreApplication::translate("SculptPanel", "Overlay Image..."), this);
     overlayBtn->setObjectName(QStringLiteral("Sculpt: Overlay Image"));
-    overlayBtn->setToolTip(QStringLiteral("Lay a reference picture over the model in the Model view"));
-    auto* overlayClear = new QPushButton(QStringLiteral("Clear Overlay"), this);
+    overlayBtn->setToolTip(QCoreApplication::translate("SculptPanel", "Lay a reference picture over the model in the Model view"));
+    auto* overlayClear = new QPushButton(QCoreApplication::translate("SculptPanel", "Clear Overlay"), this);
     overlayClear->setObjectName(QStringLiteral("Sculpt: Clear Overlay"));
     overlayRow->addWidget(overlayBtn);
     overlayRow->addWidget(overlayClear);
     outer->addLayout(overlayRow);
     auto* opacityRow = new QHBoxLayout();
-    opacityRow->addWidget(new QLabel(QStringLiteral("Overlay opacity"), this));
+    opacityRow->addWidget(new QLabel(QCoreApplication::translate("SculptPanel", "Overlay opacity"), this));
     auto* opacity = new QSlider(Qt::Horizontal, this);
     opacity->setRange(0, kSliderSteps);
     opacity->setValue(kSliderSteps / 2);
@@ -188,10 +194,10 @@ SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
     opacityRow->addWidget(opacity, 1);
     outer->addLayout(opacityRow);
     connect(overlayBtn, &QPushButton::clicked, this, [this]() {
-        const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Overlay image"), {},
-                                                          QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
+        const QString path = QFileDialog::getOpenFileName(this, QCoreApplication::translate("SculptPanel", "Overlay image"), {},
+                                                          QCoreApplication::translate("SculptPanel", "Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
         if (!path.isEmpty() && !setOverlayImage(loadImageFile(path))) {
-            message("That picture could not be used as an overlay", true);
+            message(QT_TRANSLATE_NOOP("SculptPanel", "That picture could not be used as an overlay"), true);
         }
     });
     connect(overlayClear, &QPushButton::clicked, this, [this]() { clearOverlayImage(); });
@@ -199,14 +205,14 @@ SculptPanel::SculptPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
             [this](int v) { setOverlayOpacity(static_cast<double>(v) / kSliderSteps); });
 
     auto* row = new QHBoxLayout();
-    undoButton_ = new QPushButton(QStringLiteral("Undo Stroke"), this);
+    undoButton_ = new QPushButton(QCoreApplication::translate("SculptPanel", "Undo Stroke"), this);
     undoButton_->setObjectName(QStringLiteral("Sculpt: Undo Stroke"));
-    keepButton_ = new QPushButton(QStringLiteral("Keep"), this);
+    keepButton_ = new QPushButton(QCoreApplication::translate("SculptPanel", "Keep"), this);
     keepButton_->setObjectName(QStringLiteral("Sculpt: Keep"));
-    keepButton_->setToolTip(QStringLiteral("Write the sculpted result into the model (one undo step)"));
-    discardButton_ = new QPushButton(QStringLiteral("Discard"), this);
+    keepButton_->setToolTip(QCoreApplication::translate("SculptPanel", "Write the sculpted result into the model (one undo step)"));
+    discardButton_ = new QPushButton(QCoreApplication::translate("SculptPanel", "Discard"), this);
     discardButton_->setObjectName(QStringLiteral("Sculpt: Discard"));
-    discardButton_->setToolTip(QStringLiteral("Throw away the strokes since the last Keep"));
+    discardButton_->setToolTip(QCoreApplication::translate("SculptPanel", "Throw away the strokes since the last Keep"));
     row->addWidget(undoButton_);
     row->addWidget(keepButton_);
     row->addWidget(discardButton_);
@@ -246,15 +252,20 @@ QCheckBox* SculptPanel::check(const QString& name) const {
     return findChild<QCheckBox*>(name);
 }
 
+void SculptPanel::messageText(const QString& text, bool error) {
+    status_->setText(text);
+    status_->setStyleSheet(error ? QStringLiteral("color: #b00020;") : QString());
+}
+
 void SculptPanel::message(const std::string& text, bool error) {
-    status_->setText(qs(text));
+    status_->setText(text.empty() ? QString() : QCoreApplication::translate("SculptPanel", text.c_str()));
     status_->setStyleSheet(error ? QStringLiteral("color: #b00020;") : QString());
 }
 
 void SculptPanel::fillPresets() {
     presetBox_->clear();
     for (const viewmodel::BrushPreset& p : presets_.all()) {
-        presetBox_->addItem(qs(p.name));
+        presetBox_->addItem(p.builtin ? vmText(p.name.c_str()) : qs(p.name), qs(p.name));
     }
     presetBox_->setCurrentIndex(-1);
 }
@@ -275,7 +286,7 @@ void SculptPanel::writeWidgets(const viewmodel::BrushSettings& s) {
     QComboBox* mode = combo(QStringLiteral("Sculpt: Mode"));
     mode->setCurrentIndex(mode->findData(static_cast<int>(c.mode)));
     check(QStringLiteral("Sculpt: Preserve transparency"))->setChecked(c.preserveTransparency);
-    readout_->setText(QStringLiteral("Diameter %1 mm, strength %2, smoothness %3")
+    readout_->setText(QCoreApplication::translate("SculptPanel", "Diameter %1 mm, strength %2, smoothness %3")
                           .arg(c.diameter, 0, 'f', 1)
                           .arg(c.strength, 0, 'f', 2)
                           .arg(c.smoothness, 0, 'f', 2));
@@ -306,11 +317,11 @@ viewmodel::BrushSettings SculptPanel::brush() const {
 bool SculptPanel::applyPreset(const std::string& name) {
     const viewmodel::BrushPreset* p = presets_.find(name);
     if (p == nullptr) {
-        message("Unknown preset", true);
+        message(QT_TRANSLATE_NOOP("SculptPanel", "Unknown preset"), true);
         return false;
     }
     writeWidgets(p->brush);
-    message("Preset \"" + name + "\" selected.", false);
+    messageText(QCoreApplication::translate("SculptPanel", "Preset \"%1\" selected.").arg(qs(name)), false);
     return true;
 }
 
@@ -321,19 +332,19 @@ bool SculptPanel::savePreset(const std::string& name) {
         return false;
     }
     fillPresets();
-    presetBox_->setCurrentIndex(presetBox_->findText(qs(name)));
-    message("Preset \"" + name + "\" saved.", false);
+    presetBox_->setCurrentIndex(presetBox_->findData(qs(name)));
+    messageText(QCoreApplication::translate("SculptPanel", "Preset \"%1\" saved.").arg(qs(name)), false);
     persistPresets();
     return true;
 }
 
 bool SculptPanel::removePreset(const std::string& name) {
     if (!presets_.remove(name)) {
-        message("\"" + name + "\" is a built-in preset or does not exist", true);
+        messageText(QCoreApplication::translate("SculptPanel", "\"%1\" is a built-in preset or does not exist").arg(qs(name)), true);
         return false;
     }
     fillPresets();
-    message("Preset \"" + name + "\" deleted.", false);
+    messageText(QCoreApplication::translate("SculptPanel", "Preset \"%1\" deleted.").arg(qs(name)), false);
     persistPresets();
     return true;
 }
@@ -381,16 +392,14 @@ bool SculptPanel::setBrushImage(const QImage& image) {
     if (brushImage_.isNull()) {
         return false;
     }
-    message("Brush shape taken from the picture (" + std::to_string(image.width()) + " x " +
-                std::to_string(image.height()) + ").",
-            false);
+    messageText(QCoreApplication::translate("SculptPanel", "Brush shape taken from the picture (%1 x %2).").arg(image.width()).arg(image.height()), false);
     return true;
 }
 
 void SculptPanel::clearBrushImage() {
     brushImage_ = QImage();
     brush_.custom.reset();
-    message("Round brush.", false);
+    message(QT_TRANSLATE_NOOP("SculptPanel", "Round brush."), false);
 }
 
 void SculptPanel::setBrushImageOptions(bool invert, bool rotateWithStroke) {
@@ -438,7 +447,7 @@ void SculptPanel::overlayChanged() {
 
 void SculptPanel::updateButtons() {
     const bool on = sculpting();
-    startButton_->setText(on ? QStringLiteral("Stop Sculpting") : QStringLiteral("Start Sculpting"));
+    startButton_->setText(on ? QCoreApplication::translate("SculptPanel", "Stop Sculpting") : QCoreApplication::translate("SculptPanel", "Start Sculpting"));
     undoButton_->setEnabled(on && controller_.canUndoStroke());
     keepButton_->setEnabled(on && controller_.dirty());
     discardButton_->setEnabled(on && controller_.dirty());
@@ -477,9 +486,9 @@ bool SculptPanel::startSculpting() {
         return false;
     }
     const document::ReliefComponent* c = d->findReliefComponent(controller_.target());
-    message("Sculpting \"" + (c != nullptr ? c->data.name : std::string()) +
-                "\": left-drag in the Model view paints; Keep writes it into the model.",
-            false);
+    messageText(QCoreApplication::translate("SculptPanel", "Sculpting \"%1\": left-drag in the Model view paints; Keep writes it into the model.")
+                    .arg(qs(c != nullptr ? c->data.name : std::string())),
+                false);
     if (onActiveChanged) {
         onActiveChanged(true);
     }
@@ -502,7 +511,7 @@ void SculptPanel::stopSculpting() {
         onActiveChanged(false);
     }
     updateButtons();
-    message(dropped ? "Sculpting stopped; strokes that were not kept were dropped." : "Sculpting stopped.", false);
+    message(dropped ? QT_TRANSLATE_NOOP("SculptPanel", "Sculpting stopped; strokes that were not kept were dropped.") : QT_TRANSLATE_NOOP("SculptPanel", "Sculpting stopped."), false);
 }
 
 bool SculptPanel::keep() {
@@ -511,7 +520,7 @@ bool SculptPanel::keep() {
         return false;
     }
     const viewmodel::EditResult r = controller_.keep(*d);
-    message(r.ok ? "Kept." : r.message, !r.ok);
+    message(r.ok ? QT_TRANSLATE_NOOP("SculptPanel", "Kept.") : r.message, !r.ok);
     const bool ok = finish(r);
     updateButtons();
     return ok && r.changed;
@@ -519,7 +528,7 @@ bool SculptPanel::keep() {
 
 void SculptPanel::discard() {
     controller_.discard();
-    message("Discarded the strokes since the last Keep.", false);
+    message(QT_TRANSLATE_NOOP("SculptPanel", "Discarded the strokes since the last Keep."), false);
     showWorking();
 }
 
@@ -567,7 +576,7 @@ void SculptPanel::refresh() {
     const document::Document* d = doc();
     if (d == nullptr || d->findReliefComponent(controller_.target()) == nullptr) {
         stopSculpting();
-        message("The sculpted component is gone; sculpting stopped.", true);
+        message(QT_TRANSLATE_NOOP("SculptPanel", "The sculpted component is gone; sculpting stopped."), true);
         return;
     }
     if (!controller_.dirty() && !controller_.documentMatches(*d)) {
@@ -593,36 +602,36 @@ void SculptPanel::refresh() {
 LevelEffectsPanel::LevelEffectsPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std::move(getter), parent) {
     auto* outer = new QVBoxLayout(this);
     outer->setContentsMargins(4, 4, 4, 4);
-    outer->addWidget(new QLabel(QStringLiteral("Level effects"), this));
+    outer->addWidget(new QLabel(QCoreApplication::translate("SculptPanel", "Level effects"), this));
     summary_ = new QLabel(this);
     summary_->setObjectName(QStringLiteral("Effects: Summary"));
     summary_->setWordWrap(true);
     outer->addWidget(summary_);
     auto* clipRow = new QHBoxLayout();
-    apply_ = new QPushButton(QStringLiteral("Apply Clipping"), this);
+    apply_ = new QPushButton(QCoreApplication::translate("SculptPanel", "Apply Clipping"), this);
     apply_->setObjectName(QStringLiteral("Effects: Apply Clipping"));
-    apply_->setToolTip(QStringLiteral("Clip the level by the selected closed vectors (applying again updates it)"));
-    remove_ = new QPushButton(QStringLiteral("Remove Clipping"), this);
+    apply_->setToolTip(QCoreApplication::translate("SculptPanel", "Clip the level by the selected closed vectors (applying again updates it)"));
+    remove_ = new QPushButton(QCoreApplication::translate("SculptPanel", "Remove Clipping"), this);
     remove_->setObjectName(QStringLiteral("Effects: Remove Clipping"));
     clipRow->addWidget(apply_);
     clipRow->addWidget(remove_);
     outer->addLayout(clipRow);
     auto* mirrorRow = new QHBoxLayout();
-    mirrorRow->addWidget(new QLabel(QStringLiteral("Mirror Mode"), this));
+    mirrorRow->addWidget(new QLabel(QCoreApplication::translate("SculptPanel", "Mirror Mode"), this));
     mirror_ = new QComboBox(this);
     mirror_->setObjectName(QStringLiteral("Effects: Mirror Mode"));
     for (const relief::MirrorMode m : viewmodel::allMirrorModes()) {
-        mirror_->addItem(QString::fromUtf8(viewmodel::mirrorModeName(m)), static_cast<int>(m));
+        mirror_->addItem(vmText(viewmodel::mirrorModeName(m)), static_cast<int>(m));
     }
     mirrorRow->addWidget(mirror_, 1);
     outer->addLayout(mirrorRow);
-    wrapping_ = new QCheckBox(QStringLiteral("Wrapping (rotary)"), this);
+    wrapping_ = new QCheckBox(QCoreApplication::translate("SculptPanel", "Wrapping (rotary)"), this);
     wrapping_->setObjectName(QStringLiteral("Effects: Wrapping"));
-    wrapping_->setToolTip(QStringLiteral("Wrap the level round the cylinder of a rotary job"));
+    wrapping_->setToolTip(QCoreApplication::translate("SculptPanel", "Wrap the level round the cylinder of a rotary job"));
     outer->addWidget(wrapping_);
-    bake_ = new QPushButton(QStringLiteral("Bake Effects"), this);
+    bake_ = new QPushButton(QCoreApplication::translate("SculptPanel", "Bake Effects"), this);
     bake_->setObjectName(QStringLiteral("Effects: Bake"));
-    bake_->setToolTip(QStringLiteral("Make the clipping and mirror permanent in one merged component"));
+    bake_->setToolTip(QCoreApplication::translate("SculptPanel", "Make the clipping and mirror permanent in one merged component"));
     outer->addWidget(bake_);
     connect(apply_, &QPushButton::clicked, this, [this]() { applyClip(); });
     connect(remove_, &QPushButton::clicked, this, [this]() { removeClip(); });
@@ -647,7 +656,7 @@ void LevelEffectsPanel::refresh() {
         s = viewmodel::summarizeEffects(*d, level());
     }
     if (!s) {
-        summary_->setText(QStringLiteral("No relief level."));
+        summary_->setText(QCoreApplication::translate("SculptPanel", "No relief level."));
     } else {
         summary_->setText(qs(s->text()));
         const int idx = mirror_->findData(static_cast<int>(s->mirror));

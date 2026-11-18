@@ -1,5 +1,6 @@
 #include "bitmap_decoder.hpp"
 
+#include <QCoreApplication>
 #include <QByteArray>
 #include <QImage>
 #include <QPainter>
@@ -17,19 +18,19 @@ document::BitmapDecoder qtBitmapDecoder() {
     return [](std::span<const std::uint8_t> bytes) -> geometry::ShapeResult<io::RasterImage> {
         using R = geometry::ShapeResult<io::RasterImage>;
         if (bytes.empty() || bytes.size() > static_cast<std::size_t>(INT32_MAX)) {
-            return R(std::string("the image file is empty or too large"));
+            return R(QCoreApplication::translate("BitmapDecoder", "the image file is empty or too large").toStdString());
         }
         const QByteArray data = QByteArray::fromRawData(reinterpret_cast<const char*>(bytes.data()),
                                                         static_cast<qsizetype>(bytes.size()));
         QImage image = QImage::fromData(data);
         if (image.isNull()) {
-            return R(std::string("the image format is not supported or the file is damaged"));
+            return R(QCoreApplication::translate("BitmapDecoder", "the image format is not supported or the file is damaged").toStdString());
         }
         const int w = image.width();
         const int h = image.height();
         if (w <= 0 || h <= 0 || w > io::kMaxImageEdge || h > io::kMaxImageEdge ||
             static_cast<std::size_t>(w) * static_cast<std::size_t>(h) > io::kMaxImagePixels) {
-            return R(std::string("the image is too large (at most 16384 pixels an edge, 16 million pixels)"));
+            return R(QCoreApplication::translate("BitmapDecoder", "the image is too large (at most 16384 pixels an edge, 16 million pixels)").toStdString());
         }
         if (image.hasAlphaChannel()) {
             QImage flat(w, h, QImage::Format_RGB32);

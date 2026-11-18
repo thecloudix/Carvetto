@@ -1,5 +1,6 @@
 #include "new_job_dialog.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -33,7 +34,7 @@ QDoubleSpinBox* makeLengthBox(QWidget* parent, double minimum) {
 
 template <class Enum>
 void addChoice(QComboBox* combo, const char* text, Enum value) {
-    combo->addItem(QString::fromUtf8(text), QVariant(static_cast<int>(value)));
+    combo->addItem(QCoreApplication::translate("NewJobDialog", text), QVariant(static_cast<int>(value)));
 }
 
 template <class Enum>
@@ -52,16 +53,16 @@ void select(QComboBox* combo, Enum value) {
 }  // namespace
 
 NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent) : QDialog(parent) {
-    setWindowTitle(QStringLiteral("New Job"));
+    setWindowTitle(QCoreApplication::translate("NewJobDialog", "New Job"));
 
     type_ = new QComboBox(this);
-    addChoice(type_, "Single sided", JobType::SingleSided);
-    addChoice(type_, "Double sided", JobType::DoubleSided);
-    addChoice(type_, "Rotary", JobType::Rotary);
+    addChoice(type_, QT_TRANSLATE_NOOP("NewJobDialog", "Single sided"), JobType::SingleSided);
+    addChoice(type_, QT_TRANSLATE_NOOP("NewJobDialog", "Double sided"), JobType::DoubleSided);
+    addChoice(type_, QT_TRANSLATE_NOOP("NewJobDialog", "Rotary"), JobType::Rotary);
 
     units_ = new QComboBox(this);
-    addChoice(units_, "Millimetres", Units::Millimetres);
-    addChoice(units_, "Inches", Units::Inches);
+    addChoice(units_, QT_TRANSLATE_NOOP("NewJobDialog", "Millimetres"), Units::Millimetres);
+    addChoice(units_, QT_TRANSLATE_NOOP("NewJobDialog", "Inches"), Units::Inches);
 
     width_ = makeLengthBox(this, 0.0);
     height_ = makeLengthBox(this, 0.0);
@@ -70,37 +71,37 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
     diameter_ = makeLengthBox(this, 0.0);
 
     rotaryAxis_ = new QComboBox(this);
-    addChoice(rotaryAxis_, "Along X", RotaryAxis::X);
-    addChoice(rotaryAxis_, "Along Y", RotaryAxis::Y);
+    addChoice(rotaryAxis_, QT_TRANSLATE_NOOP("NewJobDialog", "Along X"), RotaryAxis::X);
+    addChoice(rotaryAxis_, QT_TRANSLATE_NOOP("NewJobDialog", "Along Y"), RotaryAxis::Y);
 
     rotaryAxis_->setObjectName(QStringLiteral("rotaryAxis"));
-    flipDesign_ = new QCheckBox(QStringLiteral("Flip design"), this);
+    flipDesign_ = new QCheckBox(QCoreApplication::translate("NewJobDialog", "Flip design"), this);
     flipDesign_->setObjectName(QStringLiteral("flipDesign"));
     length_->setObjectName(QStringLiteral("rotaryLength"));
     diameter_->setObjectName(QStringLiteral("rotaryDiameter"));
 
     flip_ = new QComboBox(this);
-    addChoice(flip_, "Flip left-right", FlipDirection::Horizontal);
-    addChoice(flip_, "Flip top-bottom", FlipDirection::Vertical);
+    addChoice(flip_, QT_TRANSLATE_NOOP("NewJobDialog", "Flip left-right"), FlipDirection::Horizontal);
+    addChoice(flip_, QT_TRANSLATE_NOOP("NewJobDialog", "Flip top-bottom"), FlipDirection::Vertical);
 
-    zeroOffSame_ = new QCheckBox(QStringLiteral("Zero off same side"), this);
+    zeroOffSame_ = new QCheckBox(QCoreApplication::translate("NewJobDialog", "Zero off same side"), this);
     zeroOffSame_->setObjectName(QStringLiteral("zeroOffSameSide"));
     flip_->setObjectName(QStringLiteral("flipDirection"));
 
     zZero_ = new QComboBox(this);
     zZero_->setObjectName(QStringLiteral("zZero"));
-    addChoice(zZero_, "Top of material (rotary: cylinder surface)", ZZero::MaterialSurface);
-    addChoice(zZero_, "Machine bed", ZZero::MachineBed);
-    addChoice(zZero_, "Cylinder axis (rotary)", ZZero::CylinderAxis);
+    addChoice(zZero_, QT_TRANSLATE_NOOP("NewJobDialog", "Top of material (rotary: cylinder surface)"), ZZero::MaterialSurface);
+    addChoice(zZero_, QT_TRANSLATE_NOOP("NewJobDialog", "Machine bed"), ZZero::MachineBed);
+    addChoice(zZero_, QT_TRANSLATE_NOOP("NewJobDialog", "Cylinder axis (rotary)"), ZZero::CylinderAxis);
 
     datum_ = new QComboBox(this);
-    addChoice(datum_, "Bottom left", Datum::BottomLeft);
-    addChoice(datum_, "Bottom right", Datum::BottomRight);
-    addChoice(datum_, "Top left", Datum::TopLeft);
-    addChoice(datum_, "Top right", Datum::TopRight);
-    addChoice(datum_, "Centre", Datum::Centre);
+    addChoice(datum_, QT_TRANSLATE_NOOP("NewJobDialog", "Bottom left"), Datum::BottomLeft);
+    addChoice(datum_, QT_TRANSLATE_NOOP("NewJobDialog", "Bottom right"), Datum::BottomRight);
+    addChoice(datum_, QT_TRANSLATE_NOOP("NewJobDialog", "Top left"), Datum::TopLeft);
+    addChoice(datum_, QT_TRANSLATE_NOOP("NewJobDialog", "Top right"), Datum::TopRight);
+    addChoice(datum_, QT_TRANSLATE_NOOP("NewJobDialog", "Centre"), Datum::Centre);
 
-    useOffset_ = new QCheckBox(QStringLiteral("Place datum at an offset"), this);
+    useOffset_ = new QCheckBox(QCoreApplication::translate("NewJobDialog", "Place datum at an offset"), this);
     offsetX_ = makeLengthBox(this, -100000.0);
     offsetY_ = makeLengthBox(this, -100000.0);
 
@@ -110,22 +111,22 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
     errors_->hide();
 
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Job type:"), type_);
-    form->addRow(QStringLiteral("Units:"), units_);
-    form->addRow(QStringLiteral("Width (X):"), width_);
-    form->addRow(QStringLiteral("Height (Y):"), height_);
-    form->addRow(QStringLiteral("Thickness (Z):"), thickness_);
-    form->addRow(QStringLiteral("Rotary length:"), length_);
-    form->addRow(QStringLiteral("Rotary diameter:"), diameter_);
-    form->addRow(QStringLiteral("Rotary axis:"), rotaryAxis_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Job type:"), type_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Units:"), units_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Width (X):"), width_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Height (Y):"), height_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Thickness (Z):"), thickness_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Rotary length:"), length_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Rotary diameter:"), diameter_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Rotary axis:"), rotaryAxis_);
     form->addRow(QString(), flipDesign_);
-    form->addRow(QStringLiteral("Second side:"), flip_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Second side:"), flip_);
     form->addRow(QString(), zeroOffSame_);
-    form->addRow(QStringLiteral("Z zero:"), zZero_);
-    form->addRow(QStringLiteral("XY datum:"), datum_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Z zero:"), zZero_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "XY datum:"), datum_);
     form->addRow(QString(), useOffset_);
-    form->addRow(QStringLiteral("Datum X:"), offsetX_);
-    form->addRow(QStringLiteral("Datum Y:"), offsetY_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Datum X:"), offsetX_);
+    form->addRow(QCoreApplication::translate("NewJobDialog", "Datum Y:"), offsetY_);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() { accept(); });

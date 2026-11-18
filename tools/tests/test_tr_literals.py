@@ -40,6 +40,18 @@ class TrLiterals(unittest.TestCase):
         self.assertEqual(run({"a.cpp": src}, "app/src/a.cpp 2\n"), 0)
         self.assertEqual(run({"a.cpp": src}, "app/src/a.cpp 1\n"), 1)
 
+    def test_combo_items_message_boxes_and_suffixes_are_flagged(self):
+        self.assertEqual(run({"a.cpp": 'c->addItem(QStringLiteral("Coarse"));\n'}), 1)
+        self.assertEqual(run({"a.cpp": 'QMessageBox box(QMessageBox::Warning, QStringLiteral("Oops"), t);\n'}), 1)
+        self.assertEqual(run({"a.cpp": 'b->setSuffix(QStringLiteral(" mm"));\n'}), 1)
+
+    def test_escape_sequences_are_not_text(self):
+        self.assertEqual(run({"a.cpp": 'e->setText(lines.join(QStringLiteral("\\n")));\n'}), 0)
+
+    def test_empty_baseline_after_the_sweep(self):
+        base = chk.load_baseline(Path(__file__).resolve().parent.parent / "tr_literals_baseline.txt")
+        self.assertEqual(base, {})
+
     def test_self_tests_are_exempt(self):
         self.assertEqual(run({"a_self_test.cpp": 'x->setText(QStringLiteral("Hello"));\n'}), 0)
 

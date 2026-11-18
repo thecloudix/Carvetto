@@ -1,5 +1,6 @@
 #include "clipart_panel.hpp"
 
+#include <QCoreApplication>
 #include <QAbstractItemView>
 #include <QCheckBox>
 #include <QComboBox>
@@ -108,15 +109,15 @@ ClipartPanel::ClipartPanel(DocumentGetter getter, QWidget* parent)
     service_ = std::make_unique<viewmodel::ClipartThumbnailService>(cfg, qtBitmapDecoder());
 
     search_ = new QLineEdit(this);
-    search_->setPlaceholderText(QStringLiteral("Search clipart by name"));
+    search_->setPlaceholderText(QCoreApplication::translate("ClipartPanel", "Search clipart by name"));
     search_->setClearButtonEnabled(true);
-    favouritesOnly_ = new QCheckBox(QStringLiteral("Favourites only"), this);
+    favouritesOnly_ = new QCheckBox(QCoreApplication::translate("ClipartPanel", "Favourites only"), this);
     folders_ = new QComboBox(this);
-    auto* add = new QPushButton(QStringLiteral("Add Folder..."), this);
-    auto* remove = new QPushButton(QStringLiteral("Remove Folder"), this);
-    auto* refresh = new QPushButton(QStringLiteral("Refresh"), this);
-    insert_ = new QPushButton(QStringLiteral("Insert"), this);
-    favourite_ = new QPushButton(QStringLiteral("Favourite"), this);
+    auto* add = new QPushButton(QCoreApplication::translate("ClipartPanel", "Add Folder..."), this);
+    auto* remove = new QPushButton(QCoreApplication::translate("ClipartPanel", "Remove Folder"), this);
+    auto* refresh = new QPushButton(QCoreApplication::translate("ClipartPanel", "Refresh"), this);
+    insert_ = new QPushButton(QCoreApplication::translate("ClipartPanel", "Insert"), this);
+    favourite_ = new QPushButton(QCoreApplication::translate("ClipartPanel", "Favourite"), this);
 
     list_ = new ClipartList(this);
     list_->setViewMode(QListView::IconMode);
@@ -155,7 +156,7 @@ ClipartPanel::ClipartPanel(DocumentGetter getter, QWidget* parent)
     connect(search_, &QLineEdit::textChanged, this, [this](const QString& t) { setSearch(fromQ(t)); });
     connect(favouritesOnly_, &QCheckBox::toggled, this, [this](bool on) { setFavouritesOnly(on); });
     connect(add, &QPushButton::clicked, this, [this]() {
-        const QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("Add Clipart Folder"));
+        const QString dir = QFileDialog::getExistingDirectory(this, QCoreApplication::translate("ClipartPanel", "Add Clipart Folder"));
         if (!dir.isEmpty()) {
             addFolder(fromQ(dir));
         }
@@ -272,7 +273,10 @@ void ClipartPanel::rebuildList() {
 }
 
 void ClipartPanel::updateStatus(const std::string& extra) {
-    std::string text = std::to_string(shown_.size()) + " of " + std::to_string(library_->entries().size()) + " clipart file(s)";
+    std::string text = QCoreApplication::translate("ClipartPanel", "%1 of %2 clipart file(s)")
+                           .arg(shown_.size())
+                           .arg(library_->entries().size())
+                           .toStdString();
     for (const std::string& m : library_->messages()) {
         text += "\n" + m;
     }
@@ -372,7 +376,7 @@ viewmodel::ClipartInsertOutcome ClipartPanel::insertRow(int row, std::optional<g
     const std::string path = pathOfRow(row);
     if (path.empty()) {
         viewmodel::ClipartInsertOutcome none;
-        none.error = "Select a clipart file first.";
+        none.error = QCoreApplication::translate("ClipartPanel", "Select a clipart file first.").toStdString();
         if (onMessage) {
             onMessage(none.error);
         }
@@ -385,7 +389,7 @@ viewmodel::ClipartInsertOutcome ClipartPanel::insertPath(const std::string& path
     viewmodel::ClipartInsertOutcome out;
     document::Document* d = doc();
     if (d == nullptr) {
-        out.error = "There is no document to insert into.";
+        out.error = QCoreApplication::translate("ClipartPanel", "There is no document to insert into.").toStdString();
         return out;
     }
     viewmodel::ClipartInsertOptions options;
@@ -396,7 +400,9 @@ viewmodel::ClipartInsertOutcome ClipartPanel::insertPath(const std::string& path
         if (onEdited) {
             onEdited();
         }
-        std::string msg = "Inserted " + std::to_string(out.objectsAdded) + " object(s) from the clipart.";
+        std::string msg = QCoreApplication::translate("ClipartPanel", "Inserted %1 object(s) from the clipart.")
+                              .arg(out.objectsAdded)
+                              .toStdString();
         if (!out.warnings.empty()) {
             msg += " " + out.warnings.front();
         }

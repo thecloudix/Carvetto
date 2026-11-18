@@ -1,6 +1,7 @@
 // Setup menu of the main window (T-0235): job setup and the tool / machine / material editor.
 // Kept apart from main_window.cpp; the window's other code only wires the actions.
 
+#include <QCoreApplication>
 #include <QComboBox>
 #include <QDir>
 #include <QMessageBox>
@@ -44,14 +45,14 @@ QString toQ(const std::string& s) {
 
 void MainWindow::jobSetupDialog() {
     NewJobDialog dialog(viewmodel::formFromJob(session_.document().job()), this);
-    dialog.setWindowTitle(QStringLiteral("Job Setup"));
+    dialog.setWindowTitle(QCoreApplication::translate("MainWindow", "Job Setup"));
     if (dialog.exec() != QDialog::Accepted || !dialog.job().has_value()) {
         return;
     }
     // Double-sided jobs pair or unpair their sheets together with the job type (T-0261).
     const viewmodel::EditResult result = viewmodel::applyJobSetup(session_.document(), *dialog.job());
     if (!result.ok && !quiet_) {
-        QMessageBox::warning(this, QStringLiteral("Job Setup"), toQ(result.message));
+        QMessageBox::warning(this, QCoreApplication::translate("MainWindow", "Job Setup"), toQ(result.message));
     }
     if (result.changed) {
         toolpaths_->invalidate();
@@ -71,7 +72,7 @@ void MainWindow::materialSetupDialog() {
     }
     const viewmodel::EditResult result = viewmodel::applyRotaryMaterial(session_.document(), *dialog.result());
     if (!result.ok && !quiet_) {
-        QMessageBox::warning(this, QStringLiteral("Material Setup"), toQ(result.message));
+        QMessageBox::warning(this, QCoreApplication::translate("MainWindow", "Material Setup"), toQ(result.message));
     }
     if (result.changed) {
         toolpaths_->invalidate();
@@ -82,8 +83,8 @@ void MainWindow::materialSetupDialog() {
 void MainWindow::toolSetupDialog() {
     if (toolpaths_->busy()) {
         if (!quiet_) {
-            QMessageBox::information(this, QStringLiteral("Tools, Machines and Materials"),
-                                     QStringLiteral("Wait for the toolpath calculation to finish."));
+            QMessageBox::information(this, QCoreApplication::translate("MainWindow", "Tools, Machines and Materials"),
+                                     QCoreApplication::translate("MainWindow", "Wait for the toolpath calculation to finish."));
         }
         return;
     }
@@ -103,8 +104,8 @@ void MainWindow::toolSetupDialog() {
     }
     toolpaths_->applySetup(dialog.database(), dialog.activeMachineId());
     if (!toolpaths_->setupSaveError().empty() && !quiet_) {
-        QMessageBox::warning(this, QStringLiteral("Tools, Machines and Materials"),
-                             QStringLiteral("The setup could not be saved: ") + toQ(toolpaths_->setupSaveError()));
+        QMessageBox::warning(this, QCoreApplication::translate("MainWindow", "Tools, Machines and Materials"),
+                             QCoreApplication::translate("MainWindow", "The setup could not be saved: ") + toQ(toolpaths_->setupSaveError()));
     }
     documentChanged();
 }
@@ -112,8 +113,8 @@ void MainWindow::toolSetupDialog() {
 void MainWindow::variablesDialog() {
     if (toolpaths_->busy()) {
         if (!quiet_) {
-            QMessageBox::information(this, QStringLiteral("Document Variables"),
-                                     QStringLiteral("Wait for the toolpath calculation to finish."));
+            QMessageBox::information(this, QCoreApplication::translate("MainWindow", "Document Variables"),
+                                     QCoreApplication::translate("MainWindow", "Wait for the toolpath calculation to finish."));
         }
         return;
     }
@@ -137,7 +138,7 @@ void MainWindow::loadUserSetup(const QString& activeMachine) {
     }
     const std::string message = toolpaths_->useSetupFile(file, activeMachine.toStdString());
     if (!message.empty() && !quiet_) {
-        QMessageBox::warning(this, QStringLiteral("Tool setup"), toQ(message));
+        QMessageBox::warning(this, QCoreApplication::translate("MainWindow", "Tool setup"), toQ(message));
     }
 }
 
@@ -205,7 +206,7 @@ void MainWindow::optionsDialog() {
     }
     const std::vector<viewmodel::PrefIssue> issues = setPreferences(dialog.edited());
     if (!issues.empty() && !quiet_) {
-        QMessageBox::warning(this, QStringLiteral("Options"), toQ(issues.front().message));
+        QMessageBox::warning(this, QCoreApplication::translate("MainWindow", "Options"), toQ(issues.front().message));
     }
 }
 
@@ -253,7 +254,7 @@ bool MainWindow::applyRotaryLayout(const viewmodel::RotaryLayoutForm& form) {
     const viewmodel::RotaryLayoutResult result = form.apply(doc);
     if (!result.ok) {
         if (!quiet_) {
-            QMessageBox::warning(this, QStringLiteral("Rotary layout"), toQ(result.message));
+            QMessageBox::warning(this, QCoreApplication::translate("MainWindow", "Rotary layout"), toQ(result.message));
         }
         return false;
     }

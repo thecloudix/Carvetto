@@ -28,11 +28,11 @@ QString dirPath(const std::filesystem::path& p) { return QString::fromStdString(
 
 std::filesystem::path userDocsDir() {
     const QString app = QCoreApplication::applicationDirPath();
-    const QString candidates[] = {app + QStringLiteral("/docs/user"),
-                                  app + QStringLiteral("/../share/carvetto/docs/user"),
+    const QString candidates[] = {app + QCoreApplication::translate("HelpViewer", "/docs/user"),
+                                  app + QCoreApplication::translate("HelpViewer", "/../share/carvetto/docs/user"),
                                   QString::fromUtf8(CARVETTO_USER_DOCS_DIR)};
     for (const QString& c : candidates) {
-        if (!c.isEmpty() && QFile::exists(c + QStringLiteral("/README.md"))) {
+        if (!c.isEmpty() && QFile::exists(c + QCoreApplication::translate("HelpViewer", "/README.md"))) {
             return std::filesystem::path(QDir::cleanPath(c).toStdString());
         }
     }

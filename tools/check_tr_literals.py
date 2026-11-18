@@ -16,8 +16,10 @@ from pathlib import Path
 CALLS = (r"addMenu|addAction|addSection|setWindowTitle|setText|setToolTip|setStatusTip|setWhatsThis|"
          r"setPlaceholderText|setTitle|setLabelText|addRow|setHeaderLabels|setHorizontalHeaderLabels|"
          r"QLabel|QPushButton|QCheckBox|QRadioButton|QGroupBox|QAction|addTab|QMessageBox::\w+|"
-         r"getOpenFileName|getSaveFileName|getExistingDirectory|showMessage")
-LITERAL = r'(?:QStringLiteral\(\s*"[^"]*[A-Za-z][^"]*"\s*\)|QLatin1String\(\s*"[^"]*[A-Za-z][^"]*"\s*\))'
+         r"getOpenFileName|getSaveFileName|getExistingDirectory|showMessage|addItem|addItems|setSuffix|setSpecialValueText|"
+         r"setEmptyText|addButton|addToolBar|getColor|getItem|getText|QMessageBox\s+\w+")
+_BODY = r'(?:[^"\\]|\\.)*[A-Za-z](?:[^"\\]|\\.)*'  # a letter outside escape sequences like \n
+LITERAL = (r'(?:QStringLiteral\(\s*"' + _BODY + r'"\s*\)|QLatin1String\(\s*"' + _BODY + r'"\s*\))')
 OFFENDING = re.compile(r"\b(?:%s)\s*\([^;]*?%s" % (CALLS, LITERAL))
 SAFE = re.compile(r"\btr\(|\btranslate\(|QT_TR_NOOP|QT_TRANSLATE_NOOP|lint:\s*no-tr")
 

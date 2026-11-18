@@ -1,6 +1,7 @@
 #include "document_panels.hpp"
 #include "variable_menu.hpp"
 
+#include <QCoreApplication>
 #include <QBrush>
 #include <QColor>
 #include <QColorDialog>
@@ -35,8 +36,8 @@ QString qs(const std::string& s) {
 }
 
 QPushButton* button(const char* text, const char* tip, QWidget* parent) {
-    auto* b = new QPushButton(QString::fromUtf8(text), parent);
-    b->setToolTip(QString::fromUtf8(tip));
+    auto* b = new QPushButton(QCoreApplication::translate("LayersPanel", text), parent);
+    b->setToolTip(QCoreApplication::translate("LayersPanel", tip));
     return b;
 }
 
@@ -70,27 +71,27 @@ LayersPanel::LayersPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
     auto* outer = new QVBoxLayout(this);
     tree_ = new QTreeWidget(this);
     tree_->setColumnCount(4);
-    tree_->setHeaderLabels({QStringLiteral("Layer"), QStringLiteral("Show"), QStringLiteral("Lock"),
-                            QStringLiteral("Colour")});
+    tree_->setHeaderLabels({QCoreApplication::translate("LayersPanel", "Layer"), QCoreApplication::translate("LayersPanel", "Show"), QCoreApplication::translate("LayersPanel", "Lock"),
+                            QCoreApplication::translate("LayersPanel", "Colour")});
     tree_->setRootIsDecorated(false);
     tree_->setUniformRowHeights(true);
-    tree_->setToolTip(QStringLiteral("Stacking order, bottom first. Double-click a name to rename it."));
+    tree_->setToolTip(QCoreApplication::translate("LayersPanel", "Stacking order, bottom first. Double-click a name to rename it."));
     tree_->header()->setStretchLastSection(false);
     tree_->header()->setSectionResizeMode(kColName, QHeaderView::Stretch);
     outer->addWidget(tree_, 1);
 
     auto* row1 = new QHBoxLayout();
-    QPushButton* add = button("Add", "Add a layer on top", this);
-    QPushButton* del = button("Delete", "Delete the selected layer", this);
-    QPushButton* up = button("Up", "Move the layer down the stacking order (towards the bottom)", this);
-    QPushButton* down = button("Down", "Move the layer up the stacking order (towards the top)", this);
+    QPushButton* add = button(QT_TRANSLATE_NOOP("LayersPanel", "Add"), QT_TRANSLATE_NOOP("LayersPanel", "Add a layer on top"), this);
+    QPushButton* del = button(QT_TRANSLATE_NOOP("LayersPanel", "Delete"), QT_TRANSLATE_NOOP("LayersPanel", "Delete the selected layer"), this);
+    QPushButton* up = button(QT_TRANSLATE_NOOP("LayersPanel", "Up"), QT_TRANSLATE_NOOP("LayersPanel", "Move the layer down the stacking order (towards the bottom)"), this);
+    QPushButton* down = button(QT_TRANSLATE_NOOP("LayersPanel", "Down"), QT_TRANSLATE_NOOP("LayersPanel", "Move the layer up the stacking order (towards the top)"), this);
     for (QPushButton* b : {add, del, up, down}) {
         row1->addWidget(b);
     }
     outer->addLayout(row1);
     auto* row2 = new QHBoxLayout();
-    QPushButton* colour = button("Colour...", "Choose the colour of the selected layer", this);
-    QPushButton* moveHere = button("Move selection here", "Move the selected objects to this layer", this);
+    QPushButton* colour = button(QT_TRANSLATE_NOOP("LayersPanel", "Colour..."), QT_TRANSLATE_NOOP("LayersPanel", "Choose the colour of the selected layer"), this);
+    QPushButton* moveHere = button(QT_TRANSLATE_NOOP("LayersPanel", "Move selection here"), QT_TRANSLATE_NOOP("LayersPanel", "Move the selected objects to this layer"), this);
     row2->addWidget(colour);
     row2->addWidget(moveHere);
     outer->addLayout(row2);
@@ -143,7 +144,7 @@ void LayersPanel::refresh() {
     while (tree_->topLevelItemCount() < want) {
         auto* item = new QTreeWidgetItem(tree_);
         item->setFlags(item->flags() | Qt::ItemIsEditable | Qt::ItemIsUserCheckable);
-        item->setToolTip(kColColour, QStringLiteral("Use the Colour button to change it"));
+        item->setToolTip(kColColour, QCoreApplication::translate("LayersPanel", "Use the Colour button to change it"));
     }
     if (d != nullptr) {
         int active = 0;
@@ -233,11 +234,11 @@ void LayersPanel::askDelete() {
     }
     bool deleteContents = false;
     if (!d->layerIsEmpty(id)) {
-        QMessageBox box(QMessageBox::Question, QStringLiteral("Delete layer"),
-                        QStringLiteral("The layer \"%1\" holds objects.").arg(qs(d->layers()[static_cast<std::size_t>(row)].name)),
+        QMessageBox box(QMessageBox::Question, QCoreApplication::translate("LayersPanel", "Delete layer"),
+                        QCoreApplication::translate("LayersPanel", "The layer \"%1\" holds objects.").arg(qs(d->layers()[static_cast<std::size_t>(row)].name)),
                         QMessageBox::NoButton, this);
-        QPushButton* move = box.addButton(QStringLiteral("Move objects to the first layer"), QMessageBox::AcceptRole);
-        QPushButton* erase = box.addButton(QStringLiteral("Delete the objects too"), QMessageBox::DestructiveRole);
+        QPushButton* move = box.addButton(QCoreApplication::translate("LayersPanel", "Move objects to the first layer"), QMessageBox::AcceptRole);
+        QPushButton* erase = box.addButton(QCoreApplication::translate("LayersPanel", "Delete the objects too"), QMessageBox::DestructiveRole);
         box.addButton(QMessageBox::Cancel);
         box.exec();
         if (box.clickedButton() == erase) {
@@ -257,7 +258,7 @@ void LayersPanel::askColour() {
     }
     const QColor initial = toQColor(d->layers()[static_cast<std::size_t>(row)].colour);
     const document::LayerId id = idAt(row);
-    const QColor picked = QColorDialog::getColor(initial, this, QStringLiteral("Layer colour"));
+    const QColor picked = QColorDialog::getColor(initial, this, QCoreApplication::translate("LayersPanel", "Layer colour"));
     if (!picked.isValid()) {
         return;
     }
@@ -277,11 +278,11 @@ void LayersPanel::askColour() {
 SheetsPanel::SheetsPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std::move(getter), parent) {
     auto* outer = new QVBoxLayout(this);
     list_ = new QListWidget(this);
-    list_->setToolTip(QStringLiteral("Double-click a name to rename the sheet."));
+    list_->setToolTip(QCoreApplication::translate("LayersPanel", "Double-click a name to rename the sheet."));
     outer->addWidget(list_, 1);
     auto* row = new QHBoxLayout();
-    QPushButton* add = button("Add", "Add a sheet with the same material block", this);
-    QPushButton* del = button("Delete", "Delete the selected sheet and the objects on it", this);
+    QPushButton* add = button(QT_TRANSLATE_NOOP("LayersPanel", "Add"), QT_TRANSLATE_NOOP("LayersPanel", "Add a sheet with the same material block"), this);
+    QPushButton* del = button(QT_TRANSLATE_NOOP("LayersPanel", "Delete"), QT_TRANSLATE_NOOP("LayersPanel", "Delete the selected sheet and the objects on it"), this);
     row->addWidget(add);
     row->addWidget(del);
     outer->addLayout(row);
@@ -295,15 +296,15 @@ SheetsPanel::SheetsPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std
         attachVariableMenu(e);
     }
     zZero_ = new QComboBox(this);
-    zZero_->addItems({QStringLiteral("Material surface"), QStringLiteral("Machine bed"), QStringLiteral("Cylinder axis")});
+    zZero_->addItems({QCoreApplication::translate("LayersPanel", "Material surface"), QCoreApplication::translate("LayersPanel", "Machine bed"), QCoreApplication::translate("LayersPanel", "Cylinder axis")});
     datum_ = new QComboBox(this);
-    datum_->addItems({QStringLiteral("Bottom left"), QStringLiteral("Bottom right"), QStringLiteral("Top left"),
-                      QStringLiteral("Top right"), QStringLiteral("Centre")});
-    form->addRow(QStringLiteral("Material width"), width_);
-    form->addRow(QStringLiteral("Material height"), height_);
-    form->addRow(QStringLiteral("Thickness"), thickness_);
-    form->addRow(QStringLiteral("Z zero"), zZero_);
-    form->addRow(QStringLiteral("XY datum"), datum_);
+    datum_->addItems({QCoreApplication::translate("LayersPanel", "Bottom left"), QCoreApplication::translate("LayersPanel", "Bottom right"), QCoreApplication::translate("LayersPanel", "Top left"),
+                      QCoreApplication::translate("LayersPanel", "Top right"), QCoreApplication::translate("LayersPanel", "Centre")});
+    form->addRow(QCoreApplication::translate("LayersPanel", "Material width"), width_);
+    form->addRow(QCoreApplication::translate("LayersPanel", "Material height"), height_);
+    form->addRow(QCoreApplication::translate("LayersPanel", "Thickness"), thickness_);
+    form->addRow(QCoreApplication::translate("LayersPanel", "Z zero"), zZero_);
+    form->addRow(QCoreApplication::translate("LayersPanel", "XY datum"), datum_);
     outer->addLayout(form);
 
     connect(add, &QPushButton::clicked, this, [this]() { addSheet(); });
@@ -397,13 +398,16 @@ void SheetsPanel::fillForm() {
     const document::Sheet& sheet = d->sheets()[static_cast<std::size_t>(row)];
     const document::Units u = d->job().displayUnits;
     const bool rotary = d->job().type == document::JobType::Rotary;
-    const char* labels[3] = {rotary ? "Length (along the cylinder)" : "Material width",
-                             rotary ? "Circumference (flat design height)" : "Material height",
-                             rotary ? "Diameter (set in Material Setup)" : "Thickness"};
+    const char* labels[3] = {rotary ? QT_TRANSLATE_NOOP("LayersPanel", "Length (along the cylinder)")
+                                    : QT_TRANSLATE_NOOP("LayersPanel", "Material width"),
+                             rotary ? QT_TRANSLATE_NOOP("LayersPanel", "Circumference (flat design height)")
+                                    : QT_TRANSLATE_NOOP("LayersPanel", "Material height"),
+                             rotary ? QT_TRANSLATE_NOOP("LayersPanel", "Diameter (set in Material Setup)")
+                                    : QT_TRANSLATE_NOOP("LayersPanel", "Thickness")};
     int labelIndex = 0;
     for (QLineEdit* edit : {width_, height_, thickness_}) {
         if (auto* label = qobject_cast<QLabel*>(sizeForm_->labelForField(edit))) {
-            label->setText(QString::fromLatin1(labels[labelIndex]));
+            label->setText(QCoreApplication::translate("LayersPanel", labels[labelIndex]));
         }
         ++labelIndex;
     }
@@ -462,7 +466,9 @@ bool SheetsPanel::setMaterial(int row, const std::string& width, const std::stri
         const viewmodel::ParsedNumber n = viewmodel::parseNumber(text, viewmodel::FieldKind::Length, units);
         if (!n.ok) {
             if (onMessage) {
-                onMessage(std::string("Material ") + what + ": " + n.error);
+                onMessage(QCoreApplication::translate("LayersPanel", "Material %1: %2")
+                              .arg(QCoreApplication::translate("LayersPanel", what), QString::fromStdString(n.error))
+                              .toStdString());
             }
             return false;
         }
@@ -470,9 +476,9 @@ bool SheetsPanel::setMaterial(int row, const std::string& width, const std::stri
         return true;
     };
     const bool rotary = d->job().type == document::JobType::Rotary;
-    const bool parsed = rotary ? parse(width, &edit.lengthMm, "length")
-                               : parse(width, &edit.widthMm, "width") && parse(height, &edit.heightMm, "height") &&
-                                     parse(thickness, &edit.thicknessMm, "thickness");
+    const bool parsed = rotary ? parse(width, &edit.lengthMm, QT_TRANSLATE_NOOP("LayersPanel", "length"))
+                               : parse(width, &edit.widthMm, QT_TRANSLATE_NOOP("LayersPanel", "width")) && parse(height, &edit.heightMm, QT_TRANSLATE_NOOP("LayersPanel", "height")) &&
+                                     parse(thickness, &edit.thicknessMm, QT_TRANSLATE_NOOP("LayersPanel", "thickness"));
     if (!parsed) {
         fillForm();
         return false;
@@ -499,8 +505,8 @@ void SheetsPanel::askDelete() {
     }
     if (!d->objectsOnSheet(id).empty()) {
         const QMessageBox::StandardButton answer = QMessageBox::question(
-            this, QStringLiteral("Delete sheet"),
-            QStringLiteral("The sheet \"%1\" holds objects. Delete it together with them?")
+            this, QCoreApplication::translate("LayersPanel", "Delete sheet"),
+            QCoreApplication::translate("LayersPanel", "The sheet \"%1\" holds objects. Delete it together with them?")
                 .arg(qs(d->sheets()[static_cast<std::size_t>(row)].name)),
             QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
         if (answer != QMessageBox::Yes) {
@@ -519,7 +525,7 @@ void SheetsPanel::askDelete() {
 HistoryPanel::HistoryPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std::move(getter), parent) {
     auto* outer = new QVBoxLayout(this);
     list_ = new QListWidget(this);
-    list_->setToolTip(QStringLiteral("Click a step to return to the state after it. Steps in grey were undone."));
+    list_->setToolTip(QCoreApplication::translate("LayersPanel", "Click a step to return to the state after it. Steps in grey were undone."));
     outer->addWidget(list_, 1);
     connect(list_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
         if (!refreshing_ && item != nullptr) {
@@ -550,7 +556,7 @@ void HistoryPanel::refresh() {
         new QListWidgetItem(list_);
     }
     if (d != nullptr) {
-        list_->item(0)->setText(QStringLiteral("(start)"));
+        list_->item(0)->setText(QCoreApplication::translate("LayersPanel", "(start)"));
         for (std::size_t i = 0; i < entries.size(); ++i) {
             QListWidgetItem* item = list_->item(static_cast<int>(i) + 1);
             item->setText(qs(entries[i].text));
@@ -568,7 +574,7 @@ bool HistoryPanel::jumpTo(std::size_t applied) {
     }
     if (historyBlocked && historyBlocked()) {
         if (onMessage) {
-            onMessage("The history cannot change while a toolpath is being calculated.");
+            onMessage(QCoreApplication::translate("LayersPanel", "The history cannot change while a toolpath is being calculated.").toStdString());
         }
         refresh();
         return false;

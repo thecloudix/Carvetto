@@ -1,6 +1,7 @@
 #include "tool_panel.hpp"
 #include "variable_menu.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
@@ -60,17 +61,17 @@ void ToolPanel::addOptionRows(ToolKind tool) {
     viewmodel::ToolController& ctl = canvas_->tools();
     if (tool == ToolKind::Rectangle) {
         auto* corner = new QComboBox(this);
-        corner->addItems({QStringLiteral("Square"), QStringLiteral("Rounded"), QStringLiteral("Chamfered")});
+        corner->addItems({QCoreApplication::translate("ToolPanel", "Square"), QCoreApplication::translate("ToolPanel", "Rounded"), QCoreApplication::translate("ToolPanel", "Chamfered")});
         corner->setCurrentIndex(static_cast<int>(ctl.options().cornerStyle));
-        form_->addRow(QStringLiteral("Corners"), corner);
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Corners"), corner);
         connect(corner, &QComboBox::currentIndexChanged, this, [this](int i) {
             canvas_->tools().options().cornerStyle = static_cast<document::RectangleParams::CornerStyle>(i);
             canvas_->update();
         });
         auto* size = new QLineEdit(this);
         attachVariableMenu(size);
-        size->setPlaceholderText(QStringLiteral("corner size"));
-        form_->addRow(QStringLiteral("Corner size"), size);
+        size->setPlaceholderText(QCoreApplication::translate("ToolPanel", "corner size"));
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Corner size"), size);
         connect(size, &QLineEdit::textEdited, this, [this, size](const QString& t) {
             const viewmodel::ParsedNumber n = viewmodel::parseNumber(
                 t.toStdString(), FieldKind::Length, canvas_->tools().displayUnits());
@@ -85,7 +86,7 @@ void ToolPanel::addOptionRows(ToolKind tool) {
         auto* sides = new QSpinBox(this);
         sides->setRange(3, 1000);
         sides->setValue(ctl.options().polygonSides);
-        form_->addRow(QStringLiteral("Sides"), sides);
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Sides"), sides);
         connect(sides, &QSpinBox::valueChanged, this, [this](int v) {
             canvas_->tools().options().polygonSides = v;
             canvas_->update();
@@ -94,7 +95,7 @@ void ToolPanel::addOptionRows(ToolKind tool) {
         auto* points = new QSpinBox(this);
         points->setRange(3, 1000);
         points->setValue(ctl.options().starPoints);
-        form_->addRow(QStringLiteral("Points"), points);
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Points"), points);
         connect(points, &QSpinBox::valueChanged, this, [this](int v) {
             canvas_->tools().options().starPoints = v;
             canvas_->update();
@@ -103,7 +104,7 @@ void ToolPanel::addOptionRows(ToolKind tool) {
         inner->setRange(1, 99);
         inner->setSuffix(QStringLiteral(" %"));
         inner->setValue(static_cast<int>(ctl.options().starInnerPercent));
-        form_->addRow(QStringLiteral("Inner radius"), inner);
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Inner radius"), inner);
         connect(inner, &QSpinBox::valueChanged, this, [this](int v) {
             canvas_->tools().options().starInnerPercent = static_cast<double>(v);
             canvas_->update();
@@ -111,13 +112,13 @@ void ToolPanel::addOptionRows(ToolKind tool) {
     } else if (tool == ToolKind::NodeEdit) {
         viewmodel::NodeEditor& editor = ctl.nodeEditor();
         auto* mirror = new QComboBox(this);
-        mirror->addItems({QStringLiteral("Off"), QStringLiteral("Horizontal"), QStringLiteral("Vertical")});
+        mirror->addItems({QCoreApplication::translate("ToolPanel", "Off"), QCoreApplication::translate("ToolPanel", "Horizontal"), QCoreApplication::translate("ToolPanel", "Vertical")});
         mirror->setCurrentIndex(static_cast<int>(editor.options().mirror));
-        form_->addRow(QStringLiteral("Mirror mode"), mirror);
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Mirror mode"), mirror);
         connect(mirror, &QComboBox::currentIndexChanged, this, [this](int i) {
             canvas_->tools().nodeEditor().setMirror(static_cast<viewmodel::MirrorMode>(i));
         });
-        auto* keep = new QCheckBox(QStringLiteral("Keep Bezier tangency"), this);
+        auto* keep = new QCheckBox(QCoreApplication::translate("ToolPanel", "Keep Bezier tangency"), this);
         keep->setChecked(editor.options().keepBezierTangency);
         form_->addRow(QString(), keep);
         connect(keep, &QCheckBox::toggled, this,
@@ -128,10 +129,10 @@ void ToolPanel::addOptionRows(ToolKind tool) {
         addDimensionRows();
     } else if (tool == ToolKind::Arc) {
         auto* mode = new QComboBox(this);
-        mode->addItems({QStringLiteral("Through 3 points"), QStringLiteral("Centre, start, end"),
-                        QStringLiteral("Start, end, radius"), QStringLiteral("Start, end, height")});
+        mode->addItems({QCoreApplication::translate("ToolPanel", "Through 3 points"), QCoreApplication::translate("ToolPanel", "Centre, start, end"),
+                        QCoreApplication::translate("ToolPanel", "Start, end, radius"), QCoreApplication::translate("ToolPanel", "Start, end, height")});
         mode->setCurrentIndex(static_cast<int>(ctl.options().arcMode));
-        form_->addRow(QStringLiteral("Arc"), mode);
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Arc"), mode);
         connect(mode, &QComboBox::currentIndexChanged, this, [this](int i) {
             canvas_->tools().key(viewmodel::ToolKey::Escape);
             canvas_->tools().options().arcMode = static_cast<viewmodel::ArcMode>(i);
@@ -139,15 +140,15 @@ void ToolPanel::addOptionRows(ToolKind tool) {
             canvas_->update();
         });
         auto* dir = new QComboBox(this);
-        dir->addItems({QStringLiteral("Counter-clockwise"), QStringLiteral("Clockwise")});
+        dir->addItems({QCoreApplication::translate("ToolPanel", "Counter-clockwise"), QCoreApplication::translate("ToolPanel", "Clockwise")});
         dir->setCurrentIndex(ctl.options().arcDirection == geometry::ArcDirection::CCW ? 0 : 1);
-        form_->addRow(QStringLiteral("Direction"), dir);
+        form_->addRow(QCoreApplication::translate("ToolPanel", "Direction"), dir);
         connect(dir, &QComboBox::currentIndexChanged, this, [this](int i) {
             canvas_->tools().options().arcDirection =
                 i == 0 ? geometry::ArcDirection::CCW : geometry::ArcDirection::CW;
             canvas_->update();
         });
-        auto* large = new QCheckBox(QStringLiteral("Larger arc"), this);
+        auto* large = new QCheckBox(QCoreApplication::translate("ToolPanel", "Larger arc"), this);
         large->setChecked(ctl.options().arcLarge);
         form_->addRow(QString(), large);
         connect(large, &QCheckBox::toggled, this, [this](bool on) {
@@ -162,14 +163,14 @@ void ToolPanel::addDimensionRows() {
     auto* kind = new QComboBox(this);
     kind->setObjectName(QStringLiteral("dimensionKindCombo"));
     const std::pair<const char*, document::DimensionKind> kinds[] = {
-        {"Aligned", document::DimensionKind::Aligned},
-        {"Horizontal", document::DimensionKind::Linear},
-        {"Vertical", document::DimensionKind::Linear},
-        {"Angular", document::DimensionKind::Angular},
-        {"Radius", document::DimensionKind::Radial},
-        {"Diameter", document::DimensionKind::Radial}};
+        {QT_TRANSLATE_NOOP("ToolPanel", "Aligned"), document::DimensionKind::Aligned},
+        {QT_TRANSLATE_NOOP("ToolPanel", "Horizontal"), document::DimensionKind::Linear},
+        {QT_TRANSLATE_NOOP("ToolPanel", "Vertical"), document::DimensionKind::Linear},
+        {QT_TRANSLATE_NOOP("ToolPanel", "Angular"), document::DimensionKind::Angular},
+        {QT_TRANSLATE_NOOP("ToolPanel", "Radius"), document::DimensionKind::Radial},
+        {QT_TRANSLATE_NOOP("ToolPanel", "Diameter"), document::DimensionKind::Radial}};
     for (const auto& [name, k] : kinds) {
-        kind->addItem(QString::fromUtf8(name), static_cast<int>(k));
+        kind->addItem(QCoreApplication::translate("ToolPanel", name), static_cast<int>(k));
     }
     // Rows 1 and 5 are the vertical linear and the diameter variants.
     int row = 0;
@@ -180,7 +181,7 @@ void ToolPanel::addDimensionRows() {
         case document::DimensionKind::Radial: row = dt.options().diameter ? 5 : 4; break;
     }
     kind->setCurrentIndex(row);
-    form_->addRow(QStringLiteral("Kind"), kind);
+    form_->addRow(QCoreApplication::translate("ToolPanel", "Kind"), kind);
     connect(kind, &QComboBox::currentIndexChanged, this, [this, kind](int index) {
         viewmodel::DimensionOptions o = canvas_->tools().dimensionTool().options();
         o.kind = static_cast<document::DimensionKind>(kind->itemData(index).toInt());
@@ -189,7 +190,7 @@ void ToolPanel::addDimensionRows() {
         status_->setText(QString::fromStdString(canvas_->tools().dimensionTool().setOptions(o).message));
         canvas_->update();
     });
-    auto* options = new QPushButton(QStringLiteral("Options..."), this);
+    auto* options = new QPushButton(QCoreApplication::translate("ToolPanel", "Options..."), this);
     options->setObjectName(QStringLiteral("dimensionOptionsButton"));
     form_->addRow(options);
     connect(options, &QPushButton::clicked, this, [this]() {
@@ -203,7 +204,7 @@ void ToolPanel::addDimensionRows() {
             rebuild();
         }
     });
-    form_->addRow(new QLabel(QStringLiteral("Click the points, then the line position.\nShift-click a dimension to edit it."), this));
+    form_->addRow(new QLabel(QCoreApplication::translate("ToolPanel", "Click the points, then the line position.\nShift-click a dimension to edit it."), this));
 }
 
 void ToolPanel::addTextRows() {
@@ -222,14 +223,14 @@ void ToolPanel::addTextRows() {
     fontLayout->setContentsMargins(0, 0, 0, 0);
     auto* fontName = new QLabel(qs(ed.fontName()), fontRow);
     fontName->setObjectName(QStringLiteral("textFontName"));
-    auto* choose = new QPushButton(QStringLiteral("Choose..."), fontRow);
-    choose->setToolTip(QStringLiteral("Pick a TrueType or OpenType font file; it is embedded in the document"));
+    auto* choose = new QPushButton(QCoreApplication::translate("ToolPanel", "Choose..."), fontRow);
+    choose->setToolTip(QCoreApplication::translate("ToolPanel", "Pick a TrueType or OpenType font file; it is embedded in the document"));
     fontLayout->addWidget(fontName, 1);
     fontLayout->addWidget(choose);
-    form_->addRow(QStringLiteral("Font"), fontRow);
+    form_->addRow(QCoreApplication::translate("ToolPanel", "Font"), fontRow);
     connect(choose, &QPushButton::clicked, this, [this, fontName, report]() {
-        const QString file = QFileDialog::getOpenFileName(this, QStringLiteral("Choose a font"), QString(),
-                                                          QStringLiteral("Fonts (*.ttf *.otf *.ttc)"));
+        const QString file = QFileDialog::getOpenFileName(this, QCoreApplication::translate("ToolPanel", "Choose a font"), QString(),
+                                                          QCoreApplication::translate("ToolPanel", "Fonts (*.ttf *.otf *.ttc)"));
         if (file.isEmpty()) {
             return;
         }
@@ -242,10 +243,10 @@ void ToolPanel::addTextRows() {
     });
 
     auto* mode = new QComboBox(this);
-    mode->addItems({QStringLiteral("Point (click)"), QStringLiteral("In a box (drag)"),
-                    QStringLiteral("On a curve (click a curve)")});
+    mode->addItems({QCoreApplication::translate("ToolPanel", "Point (click)"), QCoreApplication::translate("ToolPanel", "In a box (drag)"),
+                    QCoreApplication::translate("ToolPanel", "On a curve (click a curve)")});
     mode->setCurrentIndex(static_cast<int>(ed.settings().mode));
-    form_->addRow(QStringLiteral("Mode"), mode);
+    form_->addRow(QCoreApplication::translate("ToolPanel", "Mode"), mode);
     connect(mode, &QComboBox::currentIndexChanged, this, [this, report](int i) {
         report(canvas_->tools().textEditor().setMode(static_cast<document::TextMode>(i)));
         if (canvas_->onDocumentEdited) {
@@ -259,15 +260,15 @@ void ToolPanel::addTextRows() {
     size->setRange(0.01, 10000.0);
     size->setValue(document::toDisplay(ed.settings().sizeMm, units));
     size->setSuffix(QStringLiteral(" ") + QString::fromUtf8(document::unitSuffix(units).data()));
-    form_->addRow(QStringLiteral("Size (em)"), size);
+    form_->addRow(QCoreApplication::translate("ToolPanel", "Size (em)"), size);
     connect(size, &QDoubleSpinBox::valueChanged, this, [this, report, units](double v) {
         report(canvas_->tools().textEditor().setSize(document::fromDisplay(v, units)));
     });
 
     auto* align = new QComboBox(this);
-    align->addItems({QStringLiteral("Left"), QStringLiteral("Centre"), QStringLiteral("Right")});
+    align->addItems({QCoreApplication::translate("ToolPanel", "Left"), QCoreApplication::translate("ToolPanel", "Centre"), QCoreApplication::translate("ToolPanel", "Right")});
     align->setCurrentIndex(static_cast<int>(ed.settings().align));
-    form_->addRow(QStringLiteral("Alignment"), align);
+    form_->addRow(QCoreApplication::translate("ToolPanel", "Alignment"), align);
     connect(align, &QComboBox::currentIndexChanged, this, [this, report](int i) {
         report(canvas_->tools().textEditor().setAlign(static_cast<document::TextAlign>(i)));
     });
@@ -276,8 +277,8 @@ void ToolPanel::addTextRows() {
     letter->setDecimals(3);
     letter->setRange(-1000.0, 1000.0);
     letter->setValue(ed.settings().letterSpacingMm);
-    letter->setSuffix(QStringLiteral(" mm"));
-    form_->addRow(QStringLiteral("Letter spacing"), letter);
+    letter->setSuffix(QCoreApplication::translate("ToolPanel", " mm"));
+    form_->addRow(QCoreApplication::translate("ToolPanel", "Letter spacing"), letter);
     connect(letter, &QDoubleSpinBox::valueChanged, this,
             [this, report](double v) { report(canvas_->tools().textEditor().setLetterSpacing(v)); });
 
@@ -286,17 +287,17 @@ void ToolPanel::addTextRows() {
     line->setRange(0.0, 100.0);
     line->setSingleStep(0.1);
     line->setValue(ed.settings().lineSpacing);
-    form_->addRow(QStringLiteral("Line spacing"), line);
+    form_->addRow(QCoreApplication::translate("ToolPanel", "Line spacing"), line);
     connect(line, &QDoubleSpinBox::valueChanged, this,
             [this, report](double v) { report(canvas_->tools().textEditor().setLineSpacing(v)); });
 
-    auto* kerning = new QCheckBox(QStringLiteral("Kerning"), this);
+    auto* kerning = new QCheckBox(QCoreApplication::translate("ToolPanel", "Kerning"), this);
     kerning->setChecked(ed.settings().kerning);
     form_->addRow(QString(), kerning);
     connect(kerning, &QCheckBox::toggled, this,
             [this, report](bool on) { report(canvas_->tools().textEditor().setKerning(on)); });
 
-    auto* place = new QPushButton(QStringLiteral("Place text (Ctrl+Enter)"), this);
+    auto* place = new QPushButton(QCoreApplication::translate("ToolPanel", "Place text (Ctrl+Enter)"), this);
     form_->addRow(QString(), place);
     connect(place, &QPushButton::clicked, this, [this, report]() {
         const viewmodel::ToolResult r = canvas_->tools().key(viewmodel::ToolKey::Enter);
@@ -310,7 +311,7 @@ void ToolPanel::addTextRows() {
         canvas_->update();
         (void)report;
     });
-    auto* convert = new QPushButton(QStringLiteral("Convert selected text to curves"), this);
+    auto* convert = new QPushButton(QCoreApplication::translate("ToolPanel", "Convert selected text to curves"), this);
     form_->addRow(QString(), convert);
     connect(convert, &QPushButton::clicked, this, [this, report]() {
         const viewmodel::TextEditResult r = canvas_->tools().textEditor().convertSelectionToCurves();
@@ -324,7 +325,7 @@ void ToolPanel::addTextRows() {
 void ToolPanel::rebuild() {
     clearForm();
     viewmodel::ToolController& ctl = canvas_->tools();
-    title_->setText(QStringLiteral("<b>%1</b>").arg(QString::fromUtf8(viewmodel::toolName(ctl.tool()))));
+    title_->setText(QStringLiteral("<b>%1</b>").arg(QCoreApplication::translate("ToolPanel", viewmodel::toolName(ctl.tool()))));  // lint: no-tr
     status_->clear();
     addOptionRows(ctl.tool());
     const document::Units units = ctl.displayUnits();
@@ -335,7 +336,7 @@ void ToolPanel::rebuild() {
         if (f.kind == FieldKind::Length) {
             label += QStringLiteral(" (%1)").arg(QString::fromUtf8(document::unitSuffix(units).data()));
         } else if (f.kind == FieldKind::Angle) {
-            label += QStringLiteral(" (deg)");
+            label += QCoreApplication::translate("ToolPanel", " (deg)");
         }
         form_->addRow(label, edit);
         edits_[f.id] = edit;

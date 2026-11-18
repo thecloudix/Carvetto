@@ -100,7 +100,8 @@ class SculptPanel : public PanelBase {
     void widgetsChanged();
     void writeWidgets(const viewmodel::BrushSettings& s);
     void updateButtons();
-    void message(const std::string& text, bool error);
+    void message(const std::string& text, bool error);  // literal or view-model text, translated at run time
+    void messageText(const QString& text, bool error);
     void showWorking();
     void rebuildMerged();
     void fillPresets();

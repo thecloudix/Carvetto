@@ -1,5 +1,6 @@
 #include "vector_ops_menu.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
@@ -27,25 +28,25 @@ using viewmodel::VectorOpResult;
 
 OffsetDialog::OffsetDialog(document::Units units, const OffsetOptions& initial, QWidget* parent)
     : QDialog(parent), units_(units) {
-    setWindowTitle(QStringLiteral("Offset Vectors"));
+    setWindowTitle(QCoreApplication::translate("VectorOpsMenu", "Offset Vectors"));
     distance_ = new QDoubleSpinBox(this);
     distance_->setDecimals(4);
     distance_->setRange(0.0001, 100000.0);
     distance_->setSuffix(QStringLiteral(" ") + QString::fromUtf8(document::unitSuffix(units).data(),
                                                                   static_cast<int>(document::unitSuffix(units).size())));
     direction_ = new QComboBox(this);
-    direction_->addItem(QStringLiteral("Outwards (open: right)"), static_cast<int>(OffsetDirection::Outwards));
-    direction_->addItem(QStringLiteral("Inwards (open: left)"), static_cast<int>(OffsetDirection::Inwards));
+    direction_->addItem(QCoreApplication::translate("VectorOpsMenu", "Outwards (open: right)"), static_cast<int>(OffsetDirection::Outwards));
+    direction_->addItem(QCoreApplication::translate("VectorOpsMenu", "Inwards (open: left)"), static_cast<int>(OffsetDirection::Inwards));
     join_ = new QComboBox(this);
-    join_->addItem(QStringLiteral("Round corners"), static_cast<int>(geometry::JoinType::Round));
-    join_->addItem(QStringLiteral("Sharp corners"), static_cast<int>(geometry::JoinType::Sharp));
-    join_->addItem(QStringLiteral("Square corners"), static_cast<int>(geometry::JoinType::Square));
-    deleteOriginals_ = new QCheckBox(QStringLiteral("Delete original vectors"), this);
+    join_->addItem(QCoreApplication::translate("VectorOpsMenu", "Round corners"), static_cast<int>(geometry::JoinType::Round));
+    join_->addItem(QCoreApplication::translate("VectorOpsMenu", "Sharp corners"), static_cast<int>(geometry::JoinType::Sharp));
+    join_->addItem(QCoreApplication::translate("VectorOpsMenu", "Square corners"), static_cast<int>(geometry::JoinType::Square));
+    deleteOriginals_ = new QCheckBox(QCoreApplication::translate("VectorOpsMenu", "Delete original vectors"), this);
 
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Distance"), distance_);
-    form->addRow(QStringLiteral("Direction"), direction_);
-    form->addRow(QStringLiteral("Corners"), join_);
+    form->addRow(QCoreApplication::translate("VectorOpsMenu", "Distance"), distance_);
+    form->addRow(QCoreApplication::translate("VectorOpsMenu", "Direction"), direction_);
+    form->addRow(QCoreApplication::translate("VectorOpsMenu", "Corners"), join_);
     form->addRow(deleteOriginals_);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() { accept(); });
@@ -82,13 +83,13 @@ void OffsetDialog::accept() {
 }
 
 VectorOpsMenu::VectorOpsMenu(MainWindow& window, QMenu* editMenu) : window_(window) {
-    QMenu* menu = editMenu->addMenu(QStringLiteral("&Vectors"));
-    weld_ = menu->addAction(QStringLiteral("&Weld"));
-    subtract_ = menu->addAction(QStringLiteral("&Subtract (last selected from the others)"));
-    intersect_ = menu->addAction(QStringLiteral("&Overlap (intersect with last selected)"));
-    exclude_ = menu->addAction(QStringLiteral("&Exclude"));
+    QMenu* menu = editMenu->addMenu(QCoreApplication::translate("VectorOpsMenu", "&Vectors"));
+    weld_ = menu->addAction(QCoreApplication::translate("VectorOpsMenu", "&Weld"));
+    subtract_ = menu->addAction(QCoreApplication::translate("VectorOpsMenu", "&Subtract (last selected from the others)"));
+    intersect_ = menu->addAction(QCoreApplication::translate("VectorOpsMenu", "&Overlap (intersect with last selected)"));
+    exclude_ = menu->addAction(QCoreApplication::translate("VectorOpsMenu", "&Exclude"));
     menu->addSeparator();
-    offset_ = menu->addAction(QStringLiteral("&Offset..."));
+    offset_ = menu->addAction(QCoreApplication::translate("VectorOpsMenu", "&Offset..."));
     QObject::connect(weld_, &QAction::triggered, menu, [this]() { runBoolean(BooleanKind::Weld); });
     QObject::connect(subtract_, &QAction::triggered, menu, [this]() { runBoolean(BooleanKind::Subtract); });
     QObject::connect(intersect_, &QAction::triggered, menu, [this]() { runBoolean(BooleanKind::Intersect); });
@@ -101,8 +102,8 @@ VectorOpsMenu::VectorOpsMenu(MainWindow& window, QMenu* editMenu) : window_(wind
         }
     });
     menu->addSeparator();
-    QAction* validate = menu->addAction(QStringLiteral("&Validate Vectors..."));
-    QAction* selectDuplicates = menu->addAction(QStringLiteral("Select All Duplicate Vectors"));
+    QAction* validate = menu->addAction(QCoreApplication::translate("VectorOpsMenu", "&Validate Vectors..."));
+    QAction* selectDuplicates = menu->addAction(QCoreApplication::translate("VectorOpsMenu", "Select All Duplicate Vectors"));
     QObject::connect(validate, &QAction::triggered, menu, [this]() { runValidator(); });
     QObject::connect(selectDuplicates, &QAction::triggered, menu, [this]() {
         document::Document& doc = window_.currentDocument();
@@ -112,7 +113,7 @@ VectorOpsMenu::VectorOpsMenu(MainWindow& window, QMenu* editMenu) : window_(wind
         if (n > 0) {
             window_.documentChanged();
         } else {
-            QMessageBox::information(&window_, QStringLiteral("Vectors"), QStringLiteral("No duplicate vectors found."));
+            QMessageBox::information(&window_, QCoreApplication::translate("VectorOpsMenu", "Vectors"), QCoreApplication::translate("VectorOpsMenu", "No duplicate vectors found."));
         }
     });
     QObject::connect(menu, &QMenu::aboutToShow, menu, [this]() { refresh(); });
@@ -161,17 +162,17 @@ void VectorOpsMenu::runValidator() {
     viewmodel::ValidatorOptions options;
     options.scope = viewmodel::defaultValidatorScope(doc);
     QMessageBox box(&window_);
-    box.setWindowTitle(QStringLiteral("Vector Validator"));
-    auto* vBitMode = new QCheckBox(QStringLiteral("V-carving mode (ignore crossings inside text)"), &box);
+    box.setWindowTitle(QCoreApplication::translate("VectorOpsMenu", "Vector Validator"));
+    auto* vBitMode = new QCheckBox(QCoreApplication::translate("VectorOpsMenu", "V-carving mode (ignore crossings inside text)"), &box);
     vBitMode->setChecked(lastVCarvingMode_);
     box.setCheckBox(vBitMode);
-    QPushButton* fix = box.addButton(QStringLiteral("Fix"), QMessageBox::AcceptRole);
-    QPushButton* select = box.addButton(QStringLiteral("Select Offenders"), QMessageBox::ActionRole);
-    QPushButton* search = box.addButton(QStringLiteral("Search"), QMessageBox::ActionRole);
+    QPushButton* fix = box.addButton(QCoreApplication::translate("VectorOpsMenu", "Fix"), QMessageBox::AcceptRole);
+    QPushButton* select = box.addButton(QCoreApplication::translate("VectorOpsMenu", "Select Offenders"), QMessageBox::ActionRole);
+    QPushButton* search = box.addButton(QCoreApplication::translate("VectorOpsMenu", "Search"), QMessageBox::ActionRole);
     box.addButton(QMessageBox::Close);
     const QString scope = options.scope == viewmodel::ValidatorScope::Selection
-                              ? QStringLiteral("Checking the selected vectors.")
-                              : QStringLiteral("Checking all visible vectors on this sheet.");
+                              ? QCoreApplication::translate("VectorOpsMenu", "Checking the selected vectors.")
+                              : QCoreApplication::translate("VectorOpsMenu", "Checking all visible vectors on this sheet.");
     for (;;) {
         options.vCarvingMode = vBitMode->isChecked();
         lastVCarvingMode_ = options.vCarvingMode;
@@ -200,7 +201,7 @@ void VectorOpsMenu::report(const VectorOpResult& result, bool showErrors) {
     if (result.ok) {
         window_.documentChanged();
     } else if (showErrors) {
-        QMessageBox::warning(&window_, QStringLiteral("Vectors"), QString::fromStdString(result.message));
+        QMessageBox::warning(&window_, QCoreApplication::translate("VectorOpsMenu", "Vectors"), QString::fromStdString(result.message));
     }
 }
 

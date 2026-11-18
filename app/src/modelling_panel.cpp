@@ -1,5 +1,6 @@
 #include "modelling_panel.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QFileDialog>
@@ -23,15 +24,21 @@ std::string str(const QLineEdit* e) {
     return e->text().toStdString();
 }
 
+// Texts that come from the view model (tool names, field labels, tips) are looked up at run time; the
+// English text stays the lookup key (object names, stored values) and is the fallback.
+QString vmText(const std::string& s) {
+    return s.empty() ? QString() : QCoreApplication::translate("ModellingPanel", s.c_str());
+}
+
 QPushButton* button(const char* text, const char* tip, QWidget* parent) {
-    auto* b = new QPushButton(QString::fromUtf8(text), parent);
-    b->setToolTip(QString::fromUtf8(tip));
+    auto* b = new QPushButton(QCoreApplication::translate("ModellingPanel", text), parent);
+    b->setToolTip(QCoreApplication::translate("ModellingPanel", tip));
     return b;
 }
 
 void fillModeBox(QComboBox* box) {
     for (const relief::CombineMode m : viewmodel::allCombineModes()) {
-        box->addItem(QString::fromUtf8(viewmodel::combineModeName(m)), static_cast<int>(m));
+        box->addItem(vmText(viewmodel::combineModeName(m)), static_cast<int>(m));
     }
 }
 
@@ -45,11 +52,12 @@ void setMode(QComboBox* box, relief::CombineMode m) {
 
 }  // namespace
 
-QLineEdit* ModellingPanel::addEdit(QFormLayout* form, const QString& prefix, const QString& label, const char* tip) {
+QLineEdit* ModellingPanel::addEdit(QFormLayout* form, const QString& prefix, const char* label, const char* tip) {
     auto* e = new QLineEdit(this);
-    e->setObjectName(prefix + QStringLiteral(": ") + label);
-    e->setToolTip(QString::fromUtf8(tip));
-    form->addRow(label, e);
+    // The English source text is the lookup key (object name); only the visible text is translated.
+    e->setObjectName(prefix + QStringLiteral(": ") + QString::fromUtf8(label));
+    e->setToolTip(QCoreApplication::translate("ModellingPanel", tip));
+    form->addRow(QCoreApplication::translate("ModellingPanel", label), e);
     return e;
 }
 
@@ -67,15 +75,15 @@ ModellingPanel::ModellingPanel(DocumentGetter getter, QWidget* parent) : PanelBa
     auto* outer = new QVBoxLayout(this);
     toolBox_ = new QComboBox(this);
     toolBox_->setObjectName(QStringLiteral("Modelling tool"));
-    toolBox_->addItem(QStringLiteral("Create Shape"));
-    toolBox_->addItem(QStringLiteral("Bitmap to Relief"));
-    toolBox_->addItem(QStringLiteral("Zero Plane"));
-    toolBox_->addItem(QStringLiteral("Scale Model Z"));
+    toolBox_->addItem(QCoreApplication::translate("ModellingPanel", "Create Shape"));
+    toolBox_->addItem(QCoreApplication::translate("ModellingPanel", "Bitmap to Relief"));
+    toolBox_->addItem(QCoreApplication::translate("ModellingPanel", "Zero Plane"));
+    toolBox_->addItem(QCoreApplication::translate("ModellingPanel", "Scale Model Z"));
     for (int i = 0; i < viewmodel::kBuildToolCount; ++i) {
-        toolBox_->addItem(QString::fromUtf8(viewmodel::buildToolName(static_cast<viewmodel::BuildTool>(i))));
+        toolBox_->addItem(vmText(viewmodel::buildToolName(static_cast<viewmodel::BuildTool>(i))));
     }
     for (int i = 0; i < viewmodel::kModifyToolCount; ++i) {
-        toolBox_->addItem(QString::fromUtf8(viewmodel::modifyToolName(static_cast<viewmodel::ModifyTool>(i))));
+        toolBox_->addItem(vmText(viewmodel::modifyToolName(static_cast<viewmodel::ModifyTool>(i))));
     }
     outer->addWidget(toolBox_);
     stack_ = new QStackedWidget(this);
@@ -95,10 +103,10 @@ ModellingPanel::ModellingPanel(DocumentGetter getter, QWidget* parent) : PanelBa
     status_->setWordWrap(true);
     outer->addWidget(status_);
     auto* row = new QHBoxLayout();
-    previewButton_ = button("Preview", "Show the result alone in the Model view", this);
-    applyButton_ = button("Apply", "Add the result to the model (one undo step); applying again updates it", this);
-    resetButton_ = button("Reset", "Return the form to its defaults and clear the preview", this);
-    newButton_ = button("Start New Component", "The next Apply adds another component instead of updating", this);
+    previewButton_ = button(QT_TRANSLATE_NOOP("ModellingPanel", "Preview"), QT_TRANSLATE_NOOP("ModellingPanel", "Show the result alone in the Model view"), this);
+    applyButton_ = button(QT_TRANSLATE_NOOP("ModellingPanel", "Apply"), QT_TRANSLATE_NOOP("ModellingPanel", "Add the result to the model (one undo step); applying again updates it"), this);
+    resetButton_ = button(QT_TRANSLATE_NOOP("ModellingPanel", "Reset"), QT_TRANSLATE_NOOP("ModellingPanel", "Return the form to its defaults and clear the preview"), this);
+    newButton_ = button(QT_TRANSLATE_NOOP("ModellingPanel", "Start New Component"), QT_TRANSLATE_NOOP("ModellingPanel", "The next Apply adds another component instead of updating"), this);
     row->addWidget(previewButton_);
     row->addWidget(applyButton_);
     outer->addLayout(row);
@@ -130,33 +138,35 @@ QWidget* ModellingPanel::buildShapePage() {
     auto* page = new QWidget(this);
     auto* form = new QFormLayout(page);
     const QString p = QStringLiteral("Shape");
-    addEdit(form, p, QStringLiteral("Name"), "Name of the new component");
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Name"), QT_TRANSLATE_NOOP("ModellingPanel", "Name of the new component"));
     auto* kind = new QComboBox(page);
     kind->setObjectName(QStringLiteral("Shape: Kind"));
-    for (const char* k : {"Plane", "Round", "Angled", "Smooth", "Custom"}) {
-        kind->addItem(QString::fromUtf8(k));
+    for (const char* k : {QT_TRANSLATE_NOOP("ModellingPanel", "Plane"), QT_TRANSLATE_NOOP("ModellingPanel", "Round"),
+                          QT_TRANSLATE_NOOP("ModellingPanel", "Angled"), QT_TRANSLATE_NOOP("ModellingPanel", "Smooth"),
+                          QT_TRANSLATE_NOOP("ModellingPanel", "Custom")}) {
+        kind->addItem(QCoreApplication::translate("ModellingPanel", k));
     }
-    form->addRow(QStringLiteral("Kind"), kind);
-    addEdit(form, p, QStringLiteral("Angle"), "Edge angle in degrees (Angled: 0 to 90, Round: up to 90)");
-    addEdit(form, p, QStringLiteral("Profile"), "Custom kind: \"depth,height; depth,height; ...\", depth 0 to 1 rising");
-    auto* limitOn = new QCheckBox(QStringLiteral("Limit height"), page);
+    form->addRow(QCoreApplication::translate("ModellingPanel", "Kind"), kind);
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Angle"), QT_TRANSLATE_NOOP("ModellingPanel", "Edge angle in degrees (Angled: 0 to 90, Round: up to 90)"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Profile"), QT_TRANSLATE_NOOP("ModellingPanel", "Custom kind: \"depth,height; depth,height; ...\", depth 0 to 1 rising"));
+    auto* limitOn = new QCheckBox(QCoreApplication::translate("ModellingPanel", "Limit height"), page);
     limitOn->setObjectName(QStringLiteral("Shape: Limit height"));
     form->addRow(limitOn);
-    addEdit(form, p, QStringLiteral("Limit"), "Height cap in mm");
-    auto* corners = new QCheckBox(QStringLiteral("Preserve internal corners"), page);
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Limit"), QT_TRANSLATE_NOOP("ModellingPanel", "Height cap in mm"));
+    auto* corners = new QCheckBox(QCoreApplication::translate("ModellingPanel", "Preserve internal corners"), page);
     corners->setObjectName(QStringLiteral("Shape: Preserve internal corners"));
     form->addRow(corners);
-    auto* blend = new QCheckBox(QStringLiteral("Blend to inner vectors"), page);
+    auto* blend = new QCheckBox(QCoreApplication::translate("ModellingPanel", "Blend to inner vectors"), page);
     blend->setObjectName(QStringLiteral("Shape: Blend to inner vectors"));
     form->addRow(blend);
-    addEdit(form, p, QStringLiteral("Smoothing"), "-1 concave, 0 linear, +1 convex (Smooth)");
-    addEdit(form, p, QStringLiteral("Scale %"), "Shape height in percent");
-    addEdit(form, p, QStringLiteral("Base height"), "Z offset in mm");
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Smoothing"), QT_TRANSLATE_NOOP("ModellingPanel", "-1 concave, 0 linear, +1 convex (Smooth)"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Scale %"), QT_TRANSLATE_NOOP("ModellingPanel", "Shape height in percent"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Base height"), QT_TRANSLATE_NOOP("ModellingPanel", "Z offset in mm"));
     auto* mode = new QComboBox(page);
     mode->setObjectName(QStringLiteral("Shape: Combine mode"));
     fillModeBox(mode);
-    form->addRow(QStringLiteral("Combine mode"), mode);
-    addEdit(form, p, QStringLiteral("Cell size"), "Resolution of the surface in mm");
+    form->addRow(QCoreApplication::translate("ModellingPanel", "Combine mode"), mode);
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Cell size"), QT_TRANSLATE_NOOP("ModellingPanel", "Resolution of the surface in mm"));
     return page;
 }
 
@@ -164,29 +174,29 @@ QWidget* ModellingPanel::buildBitmapPage() {
     auto* page = new QWidget(this);
     auto* form = new QFormLayout(page);
     const QString p = QStringLiteral("Bitmap");
-    addEdit(form, p, QStringLiteral("Name"), "Name of the new component");
-    auto* file = addEdit(form, p, QStringLiteral("File"), "Image file; empty uses the selected bitmap");
-    auto* browse = button("Browse...", "Choose an image file", page);
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Name"), QT_TRANSLATE_NOOP("ModellingPanel", "Name of the new component"));
+    auto* file = addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "File"), QT_TRANSLATE_NOOP("ModellingPanel", "Image file; empty uses the selected bitmap"));
+    auto* browse = button(QT_TRANSLATE_NOOP("ModellingPanel", "Browse..."), QT_TRANSLATE_NOOP("ModellingPanel", "Choose an image file"), page);
     form->addRow(browse);
-    auto* use = button("Use selected bitmap", "Take size and position from the selected bitmap", page);
+    auto* use = button(QT_TRANSLATE_NOOP("ModellingPanel", "Use selected bitmap"), QT_TRANSLATE_NOOP("ModellingPanel", "Take size and position from the selected bitmap"), page);
     form->addRow(use);
-    addEdit(form, p, QStringLiteral("Width"), "Model width in mm");
-    addEdit(form, p, QStringLiteral("Z height"), "Height of white in mm");
-    addEdit(form, p, QStringLiteral("Corner X"), "Lower-left corner, mm");
-    addEdit(form, p, QStringLiteral("Corner Y"), "Lower-left corner, mm");
-    auto* invert = new QCheckBox(QStringLiteral("Invert"), page);
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Width"), QT_TRANSLATE_NOOP("ModellingPanel", "Model width in mm"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Z height"), QT_TRANSLATE_NOOP("ModellingPanel", "Height of white in mm"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Corner X"), QT_TRANSLATE_NOOP("ModellingPanel", "Lower-left corner, mm"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Corner Y"), QT_TRANSLATE_NOOP("ModellingPanel", "Lower-left corner, mm"));
+    auto* invert = new QCheckBox(QCoreApplication::translate("ModellingPanel", "Invert"), page);
     invert->setObjectName(QStringLiteral("Bitmap: Invert"));
     form->addRow(invert);
-    auto* autoScale = new QCheckBox(QStringLiteral("Auto-scale"), page);
+    auto* autoScale = new QCheckBox(QCoreApplication::translate("ModellingPanel", "Auto-scale"), page);
     autoScale->setObjectName(QStringLiteral("Bitmap: Auto-scale"));
     form->addRow(autoScale);
     auto* mode = new QComboBox(page);
     mode->setObjectName(QStringLiteral("Bitmap: Combine mode"));
     fillModeBox(mode);
-    form->addRow(QStringLiteral("Combine mode"), mode);
+    form->addRow(QCoreApplication::translate("ModellingPanel", "Combine mode"), mode);
     connect(browse, &QPushButton::clicked, this, [this, file]() {
-        const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Image"), {},
-                                                          QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif *.pgm *.ppm *.pbm)"));
+        const QString path = QFileDialog::getOpenFileName(this, QCoreApplication::translate("ModellingPanel", "Image"), {},
+                                                          QCoreApplication::translate("ModellingPanel", "Images (*.png *.jpg *.jpeg *.bmp *.gif *.pgm *.ppm *.pbm)"));
         if (!path.isEmpty()) {
             file->setText(path);
         }
@@ -199,10 +209,10 @@ QWidget* ModellingPanel::buildZeroPlanePage() {
     auto* page = new QWidget(this);
     auto* form = new QFormLayout(page);
     const QString p = QStringLiteral("Zero Plane");
-    addEdit(form, p, QStringLiteral("Name"), "Name of the new component");
-    addEdit(form, p, QStringLiteral("Cell size"), "Resolution in mm; the plane covers the job");
-    addEdit(form, p, QStringLiteral("Corner X"), "Lower-left corner, mm");
-    addEdit(form, p, QStringLiteral("Corner Y"), "Lower-left corner, mm");
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Name"), QT_TRANSLATE_NOOP("ModellingPanel", "Name of the new component"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Cell size"), QT_TRANSLATE_NOOP("ModellingPanel", "Resolution in mm; the plane covers the job"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Corner X"), QT_TRANSLATE_NOOP("ModellingPanel", "Lower-left corner, mm"));
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Corner Y"), QT_TRANSLATE_NOOP("ModellingPanel", "Lower-left corner, mm"));
     return page;
 }
 
@@ -212,14 +222,14 @@ QWidget* ModellingPanel::buildScaleZPage() {
     const QString p = QStringLiteral("Scale Z");
     auto* kind = new QComboBox(page);
     kind->setObjectName(QStringLiteral("Scale Z: Kind"));
-    kind->addItem(QStringLiteral("Percent"));
-    kind->addItem(QStringLiteral("Exact height"));
-    form->addRow(QStringLiteral("Scale by"), kind);
-    addEdit(form, p, QStringLiteral("Value"), "Percent, or the exact height in mm");
-    auto* both = new QCheckBox(QStringLiteral("Both sides of the zero plane"), page);
+    kind->addItem(QCoreApplication::translate("ModellingPanel", "Percent"));
+    kind->addItem(QCoreApplication::translate("ModellingPanel", "Exact height"));
+    form->addRow(QCoreApplication::translate("ModellingPanel", "Scale by"), kind);
+    addEdit(form, p, QT_TRANSLATE_NOOP("ModellingPanel", "Value"), QT_TRANSLATE_NOOP("ModellingPanel", "Percent, or the exact height in mm"));
+    auto* both = new QCheckBox(QCoreApplication::translate("ModellingPanel", "Both sides of the zero plane"), page);
     both->setObjectName(QStringLiteral("Scale Z: Both sides"));
     form->addRow(both);
-    form->addRow(new QLabel(QStringLiteral("Scales the selected components, or the whole model when none is selected."), page));
+    form->addRow(new QLabel(QCoreApplication::translate("ModellingPanel", "Scales the selected components, or the whole model when none is selected."), page));
     return page;
 }
 
@@ -228,30 +238,29 @@ QWidget* ModellingPanel::buildFieldsPage(const QString& p, const std::vector<vie
     auto* page = new QWidget(this);
     auto* form = new QFormLayout(page);
     for (const viewmodel::ModifyField& spec : fields) {
-        const QString label = qs(spec.label);
-        const QString name = p + QStringLiteral(": ") + label;
+        const QString name = p + QStringLiteral(": ") + qs(spec.label);
         switch (spec.kind) {
-            case viewmodel::ModifyField::Kind::Number: addEdit(form, p, label, spec.tip.c_str()); break;
+            case viewmodel::ModifyField::Kind::Number: addEdit(form, p, spec.label.c_str(), spec.tip.c_str()); break;
             case viewmodel::ModifyField::Kind::Check: {
-                auto* c = new QCheckBox(label, page);
+                auto* c = new QCheckBox(vmText(spec.label), page);
                 c->setObjectName(name);
-                c->setToolTip(qs(spec.tip));
+                c->setToolTip(vmText(spec.tip));
                 form->addRow(c);
                 break;
             }
             case viewmodel::ModifyField::Kind::Choice: {
                 auto* c = new QComboBox(page);
                 c->setObjectName(name);
-                c->setToolTip(qs(spec.tip));
+                c->setToolTip(vmText(spec.tip));
                 for (const std::string& ch : spec.choices) {
-                    c->addItem(qs(ch));
+                    c->addItem(vmText(ch), qs(ch));
                 }
-                form->addRow(label, c);
+                form->addRow(vmText(spec.label), c);
                 break;
             }
         }
     }
-    auto* help = new QLabel(QString::fromUtf8(helpText), page);
+    auto* help = new QLabel(vmText(helpText), page);
     help->setWordWrap(true);
     form->addRow(help);
     return page;
@@ -369,7 +378,7 @@ void ModellingPanel::writeModify(const viewmodel::ModifyForm& f) {
         switch (spec.kind) {
             case viewmodel::ModifyField::Kind::Number: field(name)->setText(qs(v)); break;
             case viewmodel::ModifyField::Kind::Check: check(name)->setChecked(v == "true"); break;
-            case viewmodel::ModifyField::Kind::Choice: combo(name)->setCurrentText(qs(v)); break;
+            case viewmodel::ModifyField::Kind::Choice: combo(name)->setCurrentIndex(combo(name)->findData(qs(v))); break;
         }
     }
 }
@@ -383,7 +392,7 @@ void ModellingPanel::writeBuild(const viewmodel::BuildForm& f) {
         switch (spec.kind) {
             case viewmodel::ModifyField::Kind::Number: field(name)->setText(qs(v)); break;
             case viewmodel::ModifyField::Kind::Check: check(name)->setChecked(v == "true"); break;
-            case viewmodel::ModifyField::Kind::Choice: combo(name)->setCurrentText(qs(v)); break;
+            case viewmodel::ModifyField::Kind::Choice: combo(name)->setCurrentIndex(combo(name)->findData(qs(v))); break;
         }
     }
 }
@@ -400,7 +409,7 @@ viewmodel::BuildForm ModellingPanel::readBuild() const {
                 f.values[spec.label] = check(name)->isChecked() ? "true" : "false";
                 break;
             case viewmodel::ModifyField::Kind::Choice:
-                f.values[spec.label] = combo(name)->currentText().toStdString();
+                f.values[spec.label] = combo(name)->currentData().toString().toStdString();
                 break;
         }
     }
@@ -419,7 +428,7 @@ viewmodel::ModifyForm ModellingPanel::readModify() const {
                 f.values[spec.label] = check(name)->isChecked() ? "true" : "false";
                 break;
             case viewmodel::ModifyField::Kind::Choice:
-                f.values[spec.label] = combo(name)->currentText().toStdString();
+                f.values[spec.label] = combo(name)->currentData().toString().toStdString();
                 break;
         }
     }
@@ -457,7 +466,7 @@ viewmodel::ModifyTool ModellingPanel::modifyTool() const {
 }
 
 void ModellingPanel::message(const std::string& text, bool error) {
-    status_->setText(qs(text));
+    status_->setText(text.empty() ? QString() : QCoreApplication::translate("ModellingPanel", text.c_str()));
     status_->setStyleSheet(error ? QStringLiteral("color: #b00020;") : QString());
 }
 
@@ -573,7 +582,10 @@ bool ModellingPanel::apply() {
     if (!r.ok) {
         message(r.message, true);
     } else {
-        message(tool() == Tool::ScaleZ ? "Scaled." : tool() == Tool::Modify ? "Done." : "Applied.", false);
+        message(tool() == Tool::ScaleZ ? QT_TRANSLATE_NOOP("ModellingPanel", "Scaled.")
+                                       : tool() == Tool::Modify ? QT_TRANSLATE_NOOP("ModellingPanel", "Done.")
+                                                                : QT_TRANSLATE_NOOP("ModellingPanel", "Applied."),
+            false);
     }
     return finish(r);
 }
@@ -602,7 +614,7 @@ void ModellingPanel::reset() {
 void ModellingPanel::startNew() {
     session_.startNew();
     clearPreview();
-    message("The next Apply adds a new component.", false);
+    message(QT_TRANSLATE_NOOP("ModellingPanel", "The next Apply adds a new component."), false);
 }
 
 }  // namespace carvetto::app

@@ -1,5 +1,6 @@
 #include "rotary_material_dialog.hpp"
 
+#include <QCoreApplication>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
@@ -28,14 +29,14 @@ QDoubleSpinBox* makeBox(QWidget* parent, const char* name, double minimum) {
 
 RotaryMaterialDialog::RotaryMaterialDialog(const viewmodel::RotaryMaterialForm& initial, QWidget* parent)
     : QDialog(parent) {
-    setWindowTitle(QStringLiteral("Material Setup (rotary)"));
+    setWindowTitle(QCoreApplication::translate("RotaryMaterialDialog", "Material Setup (rotary)"));
     diameter_ = makeBox(this, "materialDiameter", 0.0);
     gapOutside_ = makeBox(this, "gapOutside", 0.0);
     gapInside_ = makeBox(this, "gapInside", 0.0);
     zZero_ = new QComboBox(this);
     zZero_->setObjectName(QStringLiteral("materialZZero"));
-    zZero_->addItem(QStringLiteral("Cylinder surface"), QVariant(static_cast<int>(ZZero::MaterialSurface)));
-    zZero_->addItem(QStringLiteral("Cylinder axis (centre)"), QVariant(static_cast<int>(ZZero::CylinderAxis)));
+    zZero_->addItem(QCoreApplication::translate("RotaryMaterialDialog", "Cylinder surface"), QVariant(static_cast<int>(ZZero::MaterialSurface)));
+    zZero_->addItem(QCoreApplication::translate("RotaryMaterialDialog", "Cylinder axis (centre)"), QVariant(static_cast<int>(ZZero::CylinderAxis)));
     thickness_ = new QLabel(this);
     thickness_->setObjectName(QStringLiteral("modelThickness"));
     errors_ = new QLabel(this);
@@ -44,11 +45,11 @@ RotaryMaterialDialog::RotaryMaterialDialog(const viewmodel::RotaryMaterialForm& 
     errors_->hide();
 
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Diameter:"), diameter_);
-    form->addRow(QStringLiteral("Side Z zero:"), zZero_);
-    form->addRow(QStringLiteral("Gap outside model:"), gapOutside_);
-    form->addRow(QStringLiteral("Gap inside model:"), gapInside_);
-    form->addRow(QStringLiteral("Model thickness:"), thickness_);
+    form->addRow(QCoreApplication::translate("RotaryMaterialDialog", "Diameter:"), diameter_);
+    form->addRow(QCoreApplication::translate("RotaryMaterialDialog", "Side Z zero:"), zZero_);
+    form->addRow(QCoreApplication::translate("RotaryMaterialDialog", "Gap outside model:"), gapOutside_);
+    form->addRow(QCoreApplication::translate("RotaryMaterialDialog", "Gap inside model:"), gapInside_);
+    form->addRow(QCoreApplication::translate("RotaryMaterialDialog", "Model thickness:"), thickness_);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() { accept(); });
     connect(buttons, &QDialogButtonBox::rejected, this, [this]() { reject(); });

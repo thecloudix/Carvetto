@@ -1,6 +1,7 @@
 #include "node_edit_menu.hpp"
 #include "variable_menu.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QCheckBox>
 #include <QDialogButtonBox>
@@ -31,7 +32,7 @@ using viewmodel::NodeOp;
 NodePropertiesDialog::NodePropertiesDialog(document::Units units, std::optional<geometry::Vec2> current,
                                            QWidget* parent)
     : QDialog(parent), units_(units) {
-    setWindowTitle(QStringLiteral("Node Properties"));
+    setWindowTitle(QCoreApplication::translate("NodeEditMenu", "Node Properties"));
     auto* layout = new QVBoxLayout(this);
     auto* form = new QFormLayout();
     layout->addLayout(form);
@@ -44,11 +45,11 @@ NodePropertiesDialog::NodePropertiesDialog(document::Units units, std::optional<
         x_->setText(QString::fromStdString(viewmodel::formatLength(current->x, units)));
         y_->setText(QString::fromStdString(viewmodel::formatLength(current->y, units)));
     }
-    form->addRow(QStringLiteral("X (%1)").arg(suffix), x_);
-    form->addRow(QStringLiteral("Y (%1)").arg(suffix), y_);
-    relative_ = new QCheckBox(QStringLiteral("Relative (move the selected nodes by these amounts)"), this);
+    form->addRow(QCoreApplication::translate("NodeEditMenu", "X (%1)").arg(suffix), x_);
+    form->addRow(QCoreApplication::translate("NodeEditMenu", "Y (%1)").arg(suffix), y_);
+    relative_ = new QCheckBox(QCoreApplication::translate("NodeEditMenu", "Relative (move the selected nodes by these amounts)"), this);
     layout->addWidget(relative_);
-    layout->addWidget(new QLabel(QStringLiteral("Leave a field empty to keep that coordinate."), this));
+    layout->addWidget(new QLabel(QCoreApplication::translate("NodeEditMenu", "Leave a field empty to keep that coordinate."), this));
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() { accept(); });
     connect(buttons, &QDialogButtonBox::rejected, this, [this]() { reject(); });
@@ -78,7 +79,7 @@ bool NodePropertiesDialog::values(Values* out, std::string* error) const {
     }
     if (!v.xMm.has_value() && !v.yMm.has_value()) {
         if (error != nullptr) {
-            *error = "enter an X or Y value";
+            *error = QCoreApplication::translate("NodeEditMenu", "enter an X or Y value").toStdString();
         }
         return false;
     }
@@ -114,7 +115,7 @@ void NodeEditMenu::report(const viewmodel::NodeEditResult& result, bool showErro
     }
     const QString text = QString::fromStdString(result.message);
     if (showErrors) {
-        QMessageBox::warning(&window_, QStringLiteral("Node editing"), text);
+        QMessageBox::warning(&window_, QCoreApplication::translate("NodeEditMenu", "Node editing"), text);
     } else if (!text.isEmpty()) {
         window_.statusBar()->showMessage(text, 6000);
     }
@@ -147,7 +148,7 @@ void NodeEditMenu::showProperties() {
     viewmodel::NodeEditor& editor = window_.canvas()->tools().nodeEditor();
     const auto nodes = editor.selectedNodes();
     if (nodes.empty()) {
-        window_.statusBar()->showMessage(QStringLiteral("Select a node first"), 4000);
+        window_.statusBar()->showMessage(QCoreApplication::translate("NodeEditMenu", "Select a node first"), 4000);
         return;
     }
     NodePropertiesDialog dialog(window_.currentDocument().job().displayUnits, editor.nodePosition(nodes.front()),
@@ -181,41 +182,41 @@ QMenu* NodeEditMenu::buildMenu(HandleType kind, geometry::Vec2 posMm) {
     at.positionMm = posMm;
     const bool spanMenu = kind == HandleType::Span || kind == HandleType::Midpoint || kind == HandleType::Control;
     if (spanMenu) {
-        add(QStringLiteral("Convert to &Line"), NodeOp::ConvertLine);
-        add(QStringLiteral("Convert to &Bezier"), NodeOp::ConvertBezier);
-        add(QStringLiteral("Convert to &Arc"), NodeOp::ConvertArc);
+        add(QCoreApplication::translate("NodeEditMenu", "Convert to &Line"), NodeOp::ConvertLine);
+        add(QCoreApplication::translate("NodeEditMenu", "Convert to &Bezier"), NodeOp::ConvertBezier);
+        add(QCoreApplication::translate("NodeEditMenu", "Convert to &Arc"), NodeOp::ConvertArc);
         menu->addSeparator();
-        add(QStringLiteral("&Insert Point"), NodeOp::InsertPoint, at);
-        add(QStringLiteral("Insert &Midpoint"), NodeOp::InsertMidpoint);
-        add(QStringLiteral("&Cut Vector"), NodeOp::CutVector, at);
-        add(QStringLiteral("&Delete Span"), NodeOp::DeleteSpan);
+        add(QCoreApplication::translate("NodeEditMenu", "&Insert Point"), NodeOp::InsertPoint, at);
+        add(QCoreApplication::translate("NodeEditMenu", "Insert &Midpoint"), NodeOp::InsertMidpoint);
+        add(QCoreApplication::translate("NodeEditMenu", "&Cut Vector"), NodeOp::CutVector, at);
+        add(QCoreApplication::translate("NodeEditMenu", "&Delete Span"), NodeOp::DeleteSpan);
         menu->addSeparator();
-        QAction* keep = menu->addAction(QStringLiteral("&Keep Bezier Tangency"));
+        QAction* keep = menu->addAction(QCoreApplication::translate("NodeEditMenu", "&Keep Bezier Tangency"));
         keep->setCheckable(true);
         keep->setChecked(editor.options().keepBezierTangency);
         QObject::connect(keep, &QAction::toggled, menu, [this](bool on) {
             window_.canvas()->tools().nodeEditor().options().keepBezierTangency = on;
         });
-        add(QStringLiteral("&Reverse"), NodeOp::Reverse);
-        add(QStringLiteral("Clos&e"), NodeOp::Close);
-        add(QStringLiteral("&Join"), NodeOp::Join);
+        add(QCoreApplication::translate("NodeEditMenu", "&Reverse"), NodeOp::Reverse);
+        add(QCoreApplication::translate("NodeEditMenu", "Clos&e"), NodeOp::Close);
+        add(QCoreApplication::translate("NodeEditMenu", "&Join"), NodeOp::Join);
     } else {
-        add(QStringLiteral("&Delete Point"), NodeOp::DeletePoint);
-        add(QStringLiteral("&Smooth"), NodeOp::Smooth);
-        add(QStringLiteral("&Insert Point at virtual midpoint"), NodeOp::InsertMidpoint);
-        add(QStringLiteral("&Cut Vector"), NodeOp::CutVector);
-        add(QStringLiteral("S&tart Point"), NodeOp::StartPoint);
-        add(QStringLiteral("E&xtend"), NodeOp::Extend);
+        add(QCoreApplication::translate("NodeEditMenu", "&Delete Point"), NodeOp::DeletePoint);
+        add(QCoreApplication::translate("NodeEditMenu", "&Smooth"), NodeOp::Smooth);
+        add(QCoreApplication::translate("NodeEditMenu", "&Insert Point at virtual midpoint"), NodeOp::InsertMidpoint);
+        add(QCoreApplication::translate("NodeEditMenu", "&Cut Vector"), NodeOp::CutVector);
+        add(QCoreApplication::translate("NodeEditMenu", "S&tart Point"), NodeOp::StartPoint);
+        add(QCoreApplication::translate("NodeEditMenu", "E&xtend"), NodeOp::Extend);
         menu->addSeparator();
-        QMenu* mirror = menu->addMenu(QStringLiteral("&Mirror Mode"));
+        QMenu* mirror = menu->addMenu(QCoreApplication::translate("NodeEditMenu", "&Mirror Mode"));
         const struct {
             const char* text;
             viewmodel::MirrorMode mode;
-        } modes[] = {{"Off", viewmodel::MirrorMode::Off},
-                     {"Horizontal", viewmodel::MirrorMode::Horizontal},
-                     {"Vertical", viewmodel::MirrorMode::Vertical}};
+        } modes[] = {{QT_TRANSLATE_NOOP("NodeEditMenu", "Off"), viewmodel::MirrorMode::Off},
+                     {QT_TRANSLATE_NOOP("NodeEditMenu", "Horizontal"), viewmodel::MirrorMode::Horizontal},
+                     {QT_TRANSLATE_NOOP("NodeEditMenu", "Vertical"), viewmodel::MirrorMode::Vertical}};
         for (const auto& m : modes) {
-            QAction* a = mirror->addAction(QString::fromUtf8(m.text));
+            QAction* a = mirror->addAction(QCoreApplication::translate("NodeEditMenu", m.text));
             a->setCheckable(true);
             a->setChecked(editor.options().mirror == m.mode);
             const viewmodel::MirrorMode mode = m.mode;
@@ -225,14 +226,14 @@ QMenu* NodeEditMenu::buildMenu(HandleType kind, geometry::Vec2 posMm) {
             });
         }
         menu->addSeparator();
-        add(QStringLiteral("Clos&e"), NodeOp::Close);
-        add(QStringLiteral("&Join"), NodeOp::Join);
-        QAction* props = menu->addAction(QStringLiteral("&Properties..."));
+        add(QCoreApplication::translate("NodeEditMenu", "Clos&e"), NodeOp::Close);
+        add(QCoreApplication::translate("NodeEditMenu", "&Join"), NodeOp::Join);
+        QAction* props = menu->addAction(QCoreApplication::translate("NodeEditMenu", "&Properties..."));
         props->setEnabled(!editor.selectedNodes().empty());
         QObject::connect(props, &QAction::triggered, menu, [this]() { showProperties(); });
     }
     menu->addSeparator();
-    QAction* exitAction = menu->addAction(QStringLiteral("Exit"));
+    QAction* exitAction = menu->addAction(QCoreApplication::translate("NodeEditMenu", "Exit"));
     QObject::connect(exitAction, &QAction::triggered, menu, [this]() { exit(); });
     return menu;
 }

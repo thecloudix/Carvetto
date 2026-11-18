@@ -1,5 +1,6 @@
 #include "rotary_tools_dialogs.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
@@ -57,24 +58,24 @@ void report(MainWindow& window, const QString& title, const std::string& why, st
 // --- Vector Unwrapper ----------------------------------------------------------------------------------
 
 UnwrapperDialog::UnwrapperDialog(QWidget* parent) : QDialog(parent) {
-    setWindowTitle(QStringLiteral("Vector Unwrapper"));
+    setWindowTitle(QCoreApplication::translate("UnwrapperDialog", "Vector Unwrapper"));
     setObjectName(QStringLiteral("unwrapperDialog"));
     auto* form = new QFormLayout();
     centre_ = new QComboBox(this);
     centre_->setObjectName(QStringLiteral("unwrapCentre"));
-    centre_->addItems({QStringLiteral("Centre of the contour"), QStringLiteral("Centre of the workspace"),
-                       QStringLiteral("Custom point")});
+    centre_->addItems({QCoreApplication::translate("UnwrapperDialog", "Centre of the contour"), QCoreApplication::translate("UnwrapperDialog", "Centre of the workspace"),
+                       QCoreApplication::translate("UnwrapperDialog", "Custom point")});
     centreX_ = spin(-100000.0, 100000.0, 0.0, 3, "unwrapCentreX", this);
     centreY_ = spin(-100000.0, 100000.0, 0.0, 3, "unwrapCentreY", this);
-    refine_ = new QCheckBox(QStringLiteral("Refine unwrapped vectors"), this);
+    refine_ = new QCheckBox(QCoreApplication::translate("UnwrapperDialog", "Refine unwrapped vectors"), this);
     refine_->setObjectName(QStringLiteral("unwrapRefine"));
     refine_->setChecked(true);
     tolerance_ = spin(0.0001, 10.0, 0.01, 4, "unwrapTolerance", this);
-    form->addRow(QStringLiteral("Unwrap round"), centre_);
-    form->addRow(QStringLiteral("Custom X (mm)"), centreX_);
-    form->addRow(QStringLiteral("Custom Y (mm)"), centreY_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Unwrap round"), centre_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Custom X (mm)"), centreX_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Custom Y (mm)"), centreY_);
     form->addRow(refine_);
-    form->addRow(QStringLiteral("Tolerance (mm)"), tolerance_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Tolerance (mm)"), tolerance_);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     auto* outer = new QVBoxLayout(this);
     outer->addLayout(form);
@@ -124,44 +125,44 @@ void UnwrapperDialog::setSettings(const viewmodel::UnwrapperSettings& s) {
 // --- Rotary import -------------------------------------------------------------------------------------
 
 RotaryImportDialog::RotaryImportDialog(QWidget* parent) : QDialog(parent) {
-    setWindowTitle(QStringLiteral("Import 3D Model into Rotary Job"));
+    setWindowTitle(QCoreApplication::translate("UnwrapperDialog", "Import 3D Model into Rotary Job"));
     setObjectName(QStringLiteral("rotaryImportDialog"));
     auto* form = new QFormLayout();
     units_ = new QComboBox(this);
     units_->setObjectName(QStringLiteral("rotImportUnits"));
-    units_->addItems({QStringLiteral("Millimetres"), QStringLiteral("Inches")});
+    units_->addItems({QCoreApplication::translate("UnwrapperDialog", "Millimetres"), QCoreApplication::translate("UnwrapperDialog", "Inches")});
     type_ = new QComboBox(this);
     type_->setObjectName(QStringLiteral("rotImportType"));
-    type_->addItems({QStringLiteral("Full 3D (wrapped round the cylinder)"), QStringLiteral("Flat (top-down)")});
+    type_->addItems({QCoreApplication::translate("UnwrapperDialog", "Full 3D (wrapped round the cylinder)"), QCoreApplication::translate("UnwrapperDialog", "Flat (top-down)")});
     top_ = new QComboBox(this);
     top_->setObjectName(QStringLiteral("rotImportTop"));
-    top_->addItems({QStringLiteral("+Z"), QStringLiteral("-Z"), QStringLiteral("+X"), QStringLiteral("-X"),
+    top_->addItems({QStringLiteral("+Z"), QStringLiteral("-Z"), QStringLiteral("+X"), QStringLiteral("-X"),  // lint: no-tr
                     QStringLiteral("+Y"), QStringLiteral("-Y")});
     rotation_ = new QComboBox(this);
     rotation_->setObjectName(QStringLiteral("rotImportRotation"));
     rotation_->addItems({QStringLiteral("0"), QStringLiteral("90"), QStringLiteral("180"), QStringLiteral("270")});
-    fit_ = new QCheckBox(QStringLiteral("Fit to material"), this);
+    fit_ = new QCheckBox(QCoreApplication::translate("UnwrapperDialog", "Fit to material"), this);
     fit_->setObjectName(QStringLiteral("rotImportFit"));
-    moveAxis_ = new QCheckBox(QStringLiteral("Rotation axis movement"), this);
+    moveAxis_ = new QCheckBox(QCoreApplication::translate("UnwrapperDialog", "Rotation axis movement"), this);
     moveAxis_->setObjectName(QStringLiteral("rotImportMoveAxis"));
     shiftA_ = spin(-100000.0, 100000.0, 0.0, 3, "rotImportShiftA", this);
     shiftB_ = spin(-100000.0, 100000.0, 0.0, 3, "rotImportShiftB", this);
-    centreAlong_ = new QCheckBox(QStringLiteral("Centre along the axis"), this);
+    centreAlong_ = new QCheckBox(QCoreApplication::translate("UnwrapperDialog", "Centre along the axis"), this);
     centreAlong_->setObjectName(QStringLiteral("rotImportCentre"));
     centreAlong_->setChecked(true);
     along_ = spin(-100000.0, 100000.0, 0.0, 3, "rotImportAlong", this);
     cell_ = spin(0.01, 100.0, 0.5, 3, "rotImportCell", this);
-    form->addRow(QStringLiteral("Model type"), type_);
-    form->addRow(QStringLiteral("File units"), units_);
-    form->addRow(QStringLiteral("Top face"), top_);
-    form->addRow(QStringLiteral("Rotate about Z (degrees)"), rotation_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Model type"), type_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "File units"), units_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Top face"), top_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Rotate about Z (degrees)"), rotation_);
     form->addRow(fit_);
     form->addRow(moveAxis_);
-    form->addRow(QStringLiteral("Axis shift across the axis, first (mm)"), shiftA_);
-    form->addRow(QStringLiteral("Axis shift across the axis, second (mm)"), shiftB_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Axis shift across the axis, first (mm)"), shiftA_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Axis shift across the axis, second (mm)"), shiftB_);
     form->addRow(centreAlong_);
-    form->addRow(QStringLiteral("Start along the axis (mm)"), along_);
-    form->addRow(QStringLiteral("Cell size, flat model (mm)"), cell_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Start along the axis (mm)"), along_);
+    form->addRow(QCoreApplication::translate("UnwrapperDialog", "Cell size, flat model (mm)"), cell_);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     auto* outer = new QVBoxLayout(this);
     outer->addLayout(form);
@@ -231,7 +232,7 @@ bool unwrapSelection(MainWindow& window, const std::optional<viewmodel::Unwrappe
     }
     const viewmodel::VectorOpResult r = viewmodel::unwrapSelectedVectors(window.currentDocument(), use);
     if (!r.ok) {
-        report(window, QStringLiteral("Vector Unwrapper"), r.message, error);
+        report(window, QCoreApplication::translate("UnwrapperDialog", "Vector Unwrapper"), r.message, error);
         return false;
     }
     window.documentChanged();
@@ -240,7 +241,7 @@ bool unwrapSelection(MainWindow& window, const std::optional<viewmodel::Unwrappe
 
 bool importRotaryMeshFile(MainWindow& window, const std::filesystem::path& path,
                           const std::optional<viewmodel::RotaryImportSettings>& settings, std::string* error) {
-    const QString title = QStringLiteral("Import 3D Model into Rotary Job");
+    const QString title = QCoreApplication::translate("UnwrapperDialog", "Import 3D Model into Rotary Job");
     auto mesh = io::readMeshFile(viewmodel::pathToUtf8(path));
     if (!mesh.ok()) {
         report(window, title, mesh.error(), error);
@@ -268,15 +269,15 @@ bool importRotaryMeshFile(MainWindow& window, const std::filesystem::path& path,
 }
 
 void addRotaryToolsActions(MainWindow& window, QMenu* menu) {
-    QAction* unwrap = menu->addAction(QStringLiteral("&Vector Unwrapper (rotary)..."));
+    QAction* unwrap = menu->addAction(QCoreApplication::translate("UnwrapperDialog", "&Vector Unwrapper (rotary)..."));
     unwrap->setObjectName(QStringLiteral("vectorUnwrapperAction"));
     QObject::connect(unwrap, &QAction::triggered, &window, [&window]() { unwrapSelection(window, std::nullopt); });
-    QAction* import = menu->addAction(QStringLiteral("&Import 3D Model into Rotary Job..."));
+    QAction* import = menu->addAction(QCoreApplication::translate("UnwrapperDialog", "&Import 3D Model into Rotary Job..."));
     import->setObjectName(QStringLiteral("rotaryImportAction"));
     QObject::connect(import, &QAction::triggered, &window, [&window]() {
-        const QString name = QFileDialog::getOpenFileName(&window, QStringLiteral("Import 3D Model into Rotary Job"),
+        const QString name = QFileDialog::getOpenFileName(&window, QCoreApplication::translate("UnwrapperDialog", "Import 3D Model into Rotary Job"),
                                                           QString(),
-                                                          QStringLiteral("3D models (*.stl *.obj);;All files (*)"));
+                                                          QCoreApplication::translate("UnwrapperDialog", "3D models (*.stl *.obj);;All files (*)"));
         if (!name.isEmpty()) {
             importRotaryMeshFile(window, viewmodel::pathFromUtf8(name.toStdString()), std::nullopt);
         }

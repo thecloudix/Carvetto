@@ -1,5 +1,7 @@
 #include "tool_setup_dialog.hpp"
+#include "vm_text.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -83,24 +85,24 @@ ToolSetupDialog::ToolSetupDialog(tooling::ToolDatabase db, std::string activeMac
       activeMachineId_(std::move(activeMachineId)),
       units_(units),
       uses_(std::move(toolpathUses)) {
-    setWindowTitle(QStringLiteral("Tools, Machines and Materials"));
+    setWindowTitle(QCoreApplication::translate("ToolSetupDialog", "Tools, Machines and Materials"));
     setObjectName(QStringLiteral("ToolSetupDialog"));
     resize(980, 640);
 
     auto* outer = new QVBoxLayout(this);
     auto* top = new QHBoxLayout();
-    top->addWidget(new QLabel(QStringLiteral("Show lengths in:"), this));
+    top->addWidget(new QLabel(QCoreApplication::translate("ToolSetupDialog", "Show lengths in:"), this));
     unitsBox_ = new QComboBox(this);
     unitsBox_->setObjectName(QStringLiteral("setupUnits"));
-    unitsBox_->addItem(QStringLiteral("Millimetres"), static_cast<int>(document::Units::Millimetres));
-    unitsBox_->addItem(QStringLiteral("Inches"), static_cast<int>(document::Units::Inches));
+    unitsBox_->addItem(QCoreApplication::translate("ToolSetupDialog", "Millimetres"), static_cast<int>(document::Units::Millimetres));
+    unitsBox_->addItem(QCoreApplication::translate("ToolSetupDialog", "Inches"), static_cast<int>(document::Units::Inches));
     unitsBox_->setCurrentIndex(units_ == document::Units::Inches ? 1 : 0);
     top->addWidget(unitsBox_);
     top->addStretch(1);
-    QPushButton* importButton = button(this, "setupImport", QStringLiteral("Import tools..."));
-    QPushButton* exportButton = button(this, "setupExport", QStringLiteral("Export tools..."));
-    importButton->setToolTip(QStringLiteral("Add the tools, machines and materials of a tool database file that are not here yet"));
-    exportButton->setToolTip(QStringLiteral("Save the whole tool database to a file"));
+    QPushButton* importButton = button(this, "setupImport", QCoreApplication::translate("ToolSetupDialog", "Import tools..."));
+    QPushButton* exportButton = button(this, "setupExport", QCoreApplication::translate("ToolSetupDialog", "Export tools..."));
+    importButton->setToolTip(QCoreApplication::translate("ToolSetupDialog", "Add the tools, machines and materials of a tool database file that are not here yet"));
+    exportButton->setToolTip(QCoreApplication::translate("ToolSetupDialog", "Save the whole tool database to a file"));
     top->addWidget(importButton);
     top->addWidget(exportButton);
     outer->addLayout(top);
@@ -113,9 +115,9 @@ ToolSetupDialog::ToolSetupDialog(tooling::ToolDatabase db, std::string activeMac
     buildTools(toolsPage);
     buildMachines(machinesPage);
     buildMaterials(materialsPage);
-    tabs_->addTab(toolsPage, QStringLiteral("Tools"));
-    tabs_->addTab(machinesPage, QStringLiteral("Machines"));
-    tabs_->addTab(materialsPage, QStringLiteral("Materials"));
+    tabs_->addTab(toolsPage, QCoreApplication::translate("ToolSetupDialog", "Tools"));
+    tabs_->addTab(machinesPage, QCoreApplication::translate("ToolSetupDialog", "Machines"));
+    tabs_->addTab(materialsPage, QCoreApplication::translate("ToolSetupDialog", "Materials"));
     outer->addWidget(tabs_, 1);
 
     errors_ = new QLabel(this);
@@ -134,16 +136,16 @@ ToolSetupDialog::ToolSetupDialog(tooling::ToolDatabase db, std::string activeMac
         setUnits(static_cast<document::Units>(unitsBox_->currentData().toInt()));
     });
     connect(importButton, &QPushButton::clicked, this, [this]() {
-        const QString file = QFileDialog::getOpenFileName(this, QStringLiteral("Import tool database"), QString(),
-                                                          QStringLiteral("Tool database (*.json);;All files (*)"));
+        const QString file = QFileDialog::getOpenFileName(this, QCoreApplication::translate("ToolSetupDialog", "Import tool database"), QString(),
+                                                          QCoreApplication::translate("ToolSetupDialog", "Tool database (*.json);;All files (*)"));
         if (!file.isEmpty()) {
             importFile(viewmodel::pathFromUtf8(ss(file)));
         }
     });
     connect(exportButton, &QPushButton::clicked, this, [this]() {
-        const QString file = QFileDialog::getSaveFileName(this, QStringLiteral("Export tool database"),
-                                                          QStringLiteral("tools.json"),
-                                                          QStringLiteral("Tool database (*.json)"));
+        const QString file = QFileDialog::getSaveFileName(this, QCoreApplication::translate("ToolSetupDialog", "Export tool database"),
+                                                          QCoreApplication::translate("ToolSetupDialog", "tools.json"),
+                                                          QCoreApplication::translate("ToolSetupDialog", "Tool database (*.json)"));
         if (!file.isEmpty()) {
             exportFile(viewmodel::pathFromUtf8(ss(file)));
         }
@@ -161,20 +163,20 @@ void ToolSetupDialog::buildTools(QWidget* page) {
     toolList_ = new QTreeWidget(page);
     toolList_->setObjectName(QStringLiteral("toolList"));
     toolList_->setColumnCount(2);
-    toolList_->setHeaderLabels({QStringLiteral("Tool"), QStringLiteral("Type")});
+    toolList_->setHeaderLabels({QCoreApplication::translate("ToolSetupDialog", "Tool"), QCoreApplication::translate("ToolSetupDialog", "Type")});
     toolList_->setRootIsDecorated(false);
     left->addWidget(toolList_, 1);
     auto* buttons = new QHBoxLayout();
-    auto* add = button(page, "toolAdd", QStringLiteral("Add"));
+    auto* add = button(page, "toolAdd", QCoreApplication::translate("ToolSetupDialog", "Add"));
     auto* addMenu = new QMenu(add);
     for (const tooling::ToolType type : tooling::allToolTypes()) {
-        QAction* a = addMenu->addAction(qs(viewmodel::toolTypeLabel(type)));
+        QAction* a = addMenu->addAction(vmText(viewmodel::toolTypeLabel(type)));
         a->setObjectName(QStringLiteral("toolAdd_") + qs(std::string(tooling::toString(type))));
         connect(a, &QAction::triggered, this, [this, type]() { addTool(type); });
     }
     add->setMenu(addMenu);
-    toolDuplicate_ = button(page, "toolDuplicate", QStringLiteral("Duplicate"));
-    toolDelete_ = button(page, "toolDelete", QStringLiteral("Delete"));
+    toolDuplicate_ = button(page, "toolDuplicate", QCoreApplication::translate("ToolSetupDialog", "Duplicate"));
+    toolDelete_ = button(page, "toolDelete", QCoreApplication::translate("ToolSetupDialog", "Delete"));
     buttons->addWidget(add);
     buttons->addWidget(toolDuplicate_);
     buttons->addWidget(toolDelete_);
@@ -189,11 +191,11 @@ void ToolSetupDialog::buildTools(QWidget* page) {
     toolType_ = new QComboBox(toolForm_);
     toolType_->setObjectName(QStringLiteral("toolType"));
     for (const tooling::ToolType type : tooling::allToolTypes()) {
-        toolType_->addItem(qs(viewmodel::toolTypeLabel(type)), static_cast<int>(type));
+        toolType_->addItem(vmText(viewmodel::toolTypeLabel(type)), static_cast<int>(type));
     }
     toolDiameter_ = makeBox(toolForm_, "toolDiameter");
     toolAngle_ = makeBox(toolForm_, "toolAngle", 179.0);
-    toolAngle_->setSuffix(QStringLiteral(" deg"));
+    toolAngle_->setSuffix(QCoreApplication::translate("ToolSetupDialog", " deg"));
     toolTip_ = makeBox(toolForm_, "toolTip");
     toolCorner_ = makeBox(toolForm_, "toolCorner");
     toolShank_ = makeBox(toolForm_, "toolShank");
@@ -206,7 +208,7 @@ void ToolSetupDialog::buildTools(QWidget* page) {
     toolProfile_ = new QPlainTextEdit(toolForm_);
     toolProfile_->setObjectName(QStringLiteral("toolProfile"));
     toolProfile_->setMaximumHeight(70);
-    toolProfile_->setToolTip(QStringLiteral("One point per line: radius, height above the tip (right-hand half profile)"));
+    toolProfile_->setToolTip(QCoreApplication::translate("ToolSetupDialog", "One point per line: radius, height above the tip (right-hand half profile)"));
     toolNotes_ = new QLineEdit(toolForm_);
     toolNotes_->setObjectName(QStringLiteral("toolNotes"));
     const auto addRow = [&](const QString& label, QWidget* w, std::vector<QWidget*>* group) {
@@ -217,22 +219,22 @@ void ToolSetupDialog::buildTools(QWidget* page) {
             group->push_back(w);
         }
     };
-    addRow(QStringLiteral("Name"), toolName_, nullptr);
-    addRow(QStringLiteral("Type"), toolType_, nullptr);
-    addRow(QStringLiteral("Diameter"), toolDiameter_, &diameterWidgets_);
-    addRow(QStringLiteral("Included angle"), toolAngle_, &angleWidgets_);
-    addRow(QStringLiteral("Tip / ball diameter"), toolTip_, &tipWidgets_);
-    addRow(QStringLiteral("Corner radius"), toolCorner_, &cornerWidgets_);
-    addRow(QStringLiteral("Shank diameter (S)"), toolShank_, &threadWidgets_);
-    addRow(QStringLiteral("Tooth height (H)"), toolToothHeight_, &threadWidgets_);
-    addRow(QStringLiteral("Tooth offset (O)"), toolToothOffset_, &threadWidgets_);
-    addRow(QStringLiteral("Threaded length (0 = single point)"), toolThreadedLength_, &threadWidgets_);
-    addRow(QStringLiteral("Profile"), toolProfile_, &profileWidgets_);
-    addRow(QStringLiteral("Flutes"), toolFlutes_, nullptr);
-    addRow(QStringLiteral("Notes"), toolNotes_, nullptr);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Name"), toolName_, nullptr);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Type"), toolType_, nullptr);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Diameter"), toolDiameter_, &diameterWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Included angle"), toolAngle_, &angleWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Tip / ball diameter"), toolTip_, &tipWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Corner radius"), toolCorner_, &cornerWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Shank diameter (S)"), toolShank_, &threadWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Tooth height (H)"), toolToothHeight_, &threadWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Tooth offset (O)"), toolToothOffset_, &threadWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Threaded length (0 = single point)"), toolThreadedLength_, &threadWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Profile"), toolProfile_, &profileWidgets_);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Flutes"), toolFlutes_, nullptr);
+    addRow(QCoreApplication::translate("ToolSetupDialog", "Notes"), toolNotes_, nullptr);
     right->addLayout(form);
 
-    right->addWidget(new QLabel(QStringLiteral("Feeds and speeds (default and per machine and material):"), toolForm_));
+    right->addWidget(new QLabel(QCoreApplication::translate("ToolSetupDialog", "Feeds and speeds (default and per machine and material):"), toolForm_));
     cuttingTable_ = new QTableWidget(toolForm_);
     cuttingTable_->setObjectName(QStringLiteral("cuttingTable"));
     right->addWidget(cuttingTable_, 1);
@@ -241,8 +243,8 @@ void ToolSetupDialog::buildTools(QWidget* page) {
     entryMachine_->setObjectName(QStringLiteral("entryMachine"));
     entryMaterial_ = new QComboBox(toolForm_);
     entryMaterial_->setObjectName(QStringLiteral("entryMaterial"));
-    auto* addEntry = button(toolForm_, "entryAdd", QStringLiteral("Add entry"));
-    auto* removeEntry = button(toolForm_, "entryRemove", QStringLiteral("Remove entry"));
+    auto* addEntry = button(toolForm_, "entryAdd", QCoreApplication::translate("ToolSetupDialog", "Add entry"));
+    auto* removeEntry = button(toolForm_, "entryRemove", QCoreApplication::translate("ToolSetupDialog", "Remove entry"));
     entry->addWidget(entryMachine_);
     entry->addWidget(entryMaterial_);
     entry->addWidget(addEntry);
@@ -318,13 +320,13 @@ void ToolSetupDialog::buildMachines(QWidget* page) {
     machineList_ = new QTreeWidget(page);
     machineList_->setObjectName(QStringLiteral("machineList"));
     machineList_->setColumnCount(2);
-    machineList_->setHeaderLabels({QStringLiteral("Machine"), QStringLiteral("")});
+    machineList_->setHeaderLabels({QCoreApplication::translate("ToolSetupDialog", "Machine"), QStringLiteral("")});
     machineList_->setRootIsDecorated(false);
     left->addWidget(machineList_, 1);
     auto* buttons = new QHBoxLayout();
-    auto* add = button(page, "machineAdd", QStringLiteral("Add"));
-    machineDuplicate_ = button(page, "machineDuplicate", QStringLiteral("Duplicate"));
-    machineDelete_ = button(page, "machineDelete", QStringLiteral("Delete"));
+    auto* add = button(page, "machineAdd", QCoreApplication::translate("ToolSetupDialog", "Add"));
+    machineDuplicate_ = button(page, "machineDuplicate", QCoreApplication::translate("ToolSetupDialog", "Duplicate"));
+    machineDelete_ = button(page, "machineDelete", QCoreApplication::translate("ToolSetupDialog", "Delete"));
     buttons->addWidget(add);
     buttons->addWidget(machineDuplicate_);
     buttons->addWidget(machineDelete_);
@@ -344,38 +346,38 @@ void ToolSetupDialog::buildMachines(QWidget* page) {
     accelY_ = makeBox(machineForm_, "machineAccelY");
     accelZ_ = makeBox(machineForm_, "machineAccelZ");
     accelAngular_ = makeBox(machineForm_, "machineAccelAngular");
-    accelAngular_->setSuffix(QStringLiteral(" deg/s2"));
+    accelAngular_->setSuffix(QCoreApplication::translate("ToolSetupDialog", " deg/s2"));
     maxSpindle_ = makeBox(machineForm_, "machineMaxSpindle");
-    maxSpindle_->setSuffix(QStringLiteral(" rpm"));
+    maxSpindle_->setSuffix(QCoreApplication::translate("ToolSetupDialog", " rpm"));
     maxFeed_ = makeBox(machineForm_, "machineMaxFeed");
     for (QDoubleSpinBox* b : {workX_, workY_, workZ_, rapid_, accelX_, accelY_, accelZ_, maxSpindle_, maxFeed_, accelAngular_}) {
-        b->setSpecialValueText(QStringLiteral("not set"));
+        b->setSpecialValueText(QCoreApplication::translate("ToolSetupDialog", "not set"));
     }
-    machineLaser_ = new QCheckBox(QStringLiteral("Laser machine"), machineForm_);
+    machineLaser_ = new QCheckBox(QCoreApplication::translate("ToolSetupDialog", "Laser machine"), machineForm_);
     machineLaser_->setObjectName(QStringLiteral("machineLaser"));
-    machineLaser_->setToolTip(QStringLiteral("The machine carries a laser: laser toolpaths can be saved for it (with a post that declares laser support)"));
+    machineLaser_->setToolTip(QCoreApplication::translate("ToolSetupDialog", "The machine carries a laser: laser toolpaths can be saved for it (with a post that declares laser support)"));
     posts_ = new QLineEdit(machineForm_);
     posts_->setObjectName(QStringLiteral("machinePosts"));
-    posts_->setToolTip(QStringLiteral("Names of the posts usable with this machine, separated by commas"));
+    posts_->setToolTip(QCoreApplication::translate("ToolSetupDialog", "Names of the posts usable with this machine, separated by commas"));
     defaultPost_ = new QComboBox(machineForm_);
     defaultPost_->setObjectName(QStringLiteral("machineDefaultPost"));
-    form->addRow(QStringLiteral("Name"), machineName_);
-    form->addRow(QStringLiteral("Work area X"), workX_);
-    form->addRow(QStringLiteral("Work area Y"), workY_);
-    form->addRow(QStringLiteral("Work area Z"), workZ_);
-    form->addRow(QStringLiteral("Rapid rate"), rapid_);
-    form->addRow(QStringLiteral("Acceleration X"), accelX_);
-    form->addRow(QStringLiteral("Acceleration Y"), accelY_);
-    form->addRow(QStringLiteral("Acceleration Z"), accelZ_);
-    form->addRow(QStringLiteral("Rotary acceleration"), accelAngular_);
-    form->addRow(QStringLiteral("Spindle speed limit"), maxSpindle_);
-    form->addRow(QStringLiteral("Feed rate limit"), maxFeed_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Name"), machineName_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Work area X"), workX_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Work area Y"), workY_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Work area Z"), workZ_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Rapid rate"), rapid_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Acceleration X"), accelX_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Acceleration Y"), accelY_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Acceleration Z"), accelZ_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Rotary acceleration"), accelAngular_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Spindle speed limit"), maxSpindle_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Feed rate limit"), maxFeed_);
     form->addRow(QString(), machineLaser_);
-    form->addRow(QStringLiteral("Associated posts"), posts_);
-    form->addRow(QStringLiteral("Default post"), defaultPost_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Associated posts"), posts_);
+    form->addRow(QCoreApplication::translate("ToolSetupDialog", "Default post"), defaultPost_);
     right->addLayout(form);
-    machineUse_ = button(machineForm_, "machineUse", QStringLiteral("Use this machine"));
-    machineUse_->setToolTip(QStringLiteral("The machine whose rapid rate and acceleration are used for the time estimate"));
+    machineUse_ = button(machineForm_, "machineUse", QCoreApplication::translate("ToolSetupDialog", "Use this machine"));
+    machineUse_->setToolTip(QCoreApplication::translate("ToolSetupDialog", "The machine whose rapid rate and acceleration are used for the time estimate"));
     right->addWidget(machineUse_);
     right->addStretch(1);
     row->addWidget(machineForm_, 5);
@@ -418,14 +420,14 @@ void ToolSetupDialog::buildMaterials(QWidget* page) {
     materialList_ = new QTreeWidget(page);
     materialList_->setObjectName(QStringLiteral("materialList"));
     materialList_->setColumnCount(1);
-    materialList_->setHeaderLabels({QStringLiteral("Material (double-click to rename)")});
+    materialList_->setHeaderLabels({QCoreApplication::translate("ToolSetupDialog", "Material (double-click to rename)")});
     materialList_->setRootIsDecorated(false);
     col->addWidget(materialList_, 1);
     auto* buttons = new QHBoxLayout();
-    auto* add = button(page, "materialAdd", QStringLiteral("Add"));
-    materialDuplicate_ = button(page, "materialDuplicate", QStringLiteral("Duplicate"));
-    materialDuplicate_->setToolTip(QStringLiteral("Copy the material together with every tool's feeds and speeds for it"));
-    materialDelete_ = button(page, "materialDelete", QStringLiteral("Delete"));
+    auto* add = button(page, "materialAdd", QCoreApplication::translate("ToolSetupDialog", "Add"));
+    materialDuplicate_ = button(page, "materialDuplicate", QCoreApplication::translate("ToolSetupDialog", "Duplicate"));
+    materialDuplicate_->setToolTip(QCoreApplication::translate("ToolSetupDialog", "Copy the material together with every tool's feeds and speeds for it"));
+    materialDelete_ = button(page, "materialDelete", QCoreApplication::translate("ToolSetupDialog", "Delete"));
     buttons->addWidget(add);
     buttons->addWidget(materialDuplicate_);
     buttons->addWidget(materialDelete_);
@@ -441,7 +443,7 @@ void ToolSetupDialog::buildMaterials(QWidget* page) {
         }
         const std::string name = ss(item->text(0).trimmed());
         if (name.empty()) {
-            setError(QStringLiteral("A material needs a name."));
+            setError(QCoreApplication::translate("ToolSetupDialog", "A material needs a name."));
             loading_ = true;
             const auto* m = db_.findMaterial(ss(item->data(0, kIdRole).toString()));
             item->setText(0, m == nullptr ? QString() : qs(m->name));
@@ -524,11 +526,11 @@ void ToolSetupDialog::setUnits(document::Units units) {
         b->setDecimals(decimals);
     }
     for (QDoubleSpinBox* b : {rapid_, maxFeed_}) {
-        b->setSuffix(len + QStringLiteral("/min"));
+        b->setSuffix(len + QCoreApplication::translate("ToolSetupDialog", "/min"));
         b->setDecimals(in ? 3 : 1);
     }
     for (QDoubleSpinBox* b : {accelX_, accelY_, accelZ_}) {
-        b->setSuffix(len + QStringLiteral("/s2"));
+        b->setSuffix(len + QCoreApplication::translate("ToolSetupDialog", "/s2"));
         b->setDecimals(in ? 3 : 1);
     }
     loadTool();
@@ -558,7 +560,7 @@ void ToolSetupDialog::refreshTools() {
     for (const tooling::Tool* t : tools) {
         auto* item = new QTreeWidgetItem(toolList_);
         item->setText(0, qs(t->name));
-        item->setText(1, qs(viewmodel::toolTypeLabel(t->type)));
+        item->setText(1, vmText(viewmodel::toolTypeLabel(t->type)));
         item->setData(0, kIdRole, qs(t->id));
     }
     entryMachine_->clear();
@@ -585,7 +587,7 @@ void ToolSetupDialog::refreshMachines() {
     for (const auto& [id, m] : db_.machines()) {
         auto* item = new QTreeWidgetItem(machineList_);
         item->setText(0, qs(m.name));
-        item->setText(1, id == activeMachineId_ ? QStringLiteral("in use") : QString());
+        item->setText(1, id == activeMachineId_ ? QCoreApplication::translate("ToolSetupDialog", "in use") : QString());
         item->setData(0, kIdRole, qs(id));
     }
     loading_ = false;
@@ -623,8 +625,15 @@ void ToolSetupDialog::refreshMaterials() {
 
 namespace {
 
-const char* const kColumns[] = {"Pass depth", "Stepover", "Final stepover", "Clearance stepover", "Spindle (rpm)",
-                                "Feed", "Plunge", "Max burn", "Tool no."};
+const char* const kColumns[] = {QT_TRANSLATE_NOOP("ToolSetupDialog", "Pass depth"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Stepover"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Final stepover"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Clearance stepover"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Spindle (rpm)"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Feed"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Plunge"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Max burn"),
+                                QT_TRANSLATE_NOOP("ToolSetupDialog", "Tool no.")};
 
 }  // namespace
 
@@ -646,13 +655,13 @@ void ToolSetupDialog::updateFieldVisibility() {
 
 void ToolSetupDialog::fillCuttingTable(const tooling::Tool& tool) {
     const bool in = units_ == document::Units::Inches;
-    const QString feedUnit = in ? QStringLiteral("in/min") : QStringLiteral("mm/min");
+    const QString feedUnit = in ? QCoreApplication::translate("ToolSetupDialog", "in/min") : QCoreApplication::translate("ToolSetupDialog", "mm/min");
     const QString lenUnit = in ? QStringLiteral("in") : QStringLiteral("mm");
     cuttingTable_->clear();
     cuttingTable_->setColumnCount(9);
     QStringList headers;
     for (int c = 0; c < 9; ++c) {
-        QString h = QString::fromLatin1(kColumns[c]);
+        QString h = QCoreApplication::translate("ToolSetupDialog", kColumns[c]);
         if (c <= 3) {
             h += QStringLiteral(" (") + lenUnit + QStringLiteral(")");
         } else if (c >= 5 && c <= 7) {
@@ -670,7 +679,7 @@ void ToolSetupDialog::fillCuttingTable(const tooling::Tool& tool) {
         const tooling::CuttingData* data;
     };
     std::vector<RowData> rows;
-    rows.push_back({QStringLiteral("Default"), QString(), QString(), &tool.defaultCuttingData});
+    rows.push_back({QCoreApplication::translate("ToolSetupDialog", "Default"), QString(), QString(), &tool.defaultCuttingData});
     for (const auto& [key, entryData] : tool.cuttingData) {
         const tooling::Machine* m = db_.findMachine(key.machineId);
         const tooling::Material* mat = db_.findMaterial(key.materialId);
@@ -707,7 +716,7 @@ bool ToolSetupDialog::readCuttingTable(tooling::Tool& tool, QString& error) {
         for (int c = 0; c < 9; ++c) {
             const QTableWidgetItem* item = cuttingTable_->item(r, c);
             if (item == nullptr) {
-                error = QStringLiteral("A feeds and speeds cell is empty.");
+                error = QCoreApplication::translate("ToolSetupDialog", "A feeds and speeds cell is empty.");
                 return false;
             }
             if (item->text() == item->data(kMmRole + 1).toString()) {
@@ -717,7 +726,7 @@ bool ToolSetupDialog::readCuttingTable(tooling::Tool& tool, QString& error) {
             bool ok = false;
             double x = item->text().trimmed().toDouble(&ok);
             if (!ok || !std::isfinite(x) || x < 0.0) {
-                error = QStringLiteral("Feeds and speeds must be numbers that are not negative.");
+                error = QCoreApplication::translate("ToolSetupDialog", "Feeds and speeds must be numbers that are not negative.");
                 return false;
             }
             if (c <= 3 || (c >= 5 && c <= 7)) {
@@ -818,7 +827,7 @@ void ToolSetupDialog::commitTool() {
                 const double x = parts.size() == 2 ? parts[0].toDouble(&okX) : 0.0;
                 const double y = parts.size() == 2 ? parts[1].toDouble(&okY) : 0.0;
                 if (!okX || !okY || !std::isfinite(x) || !std::isfinite(y)) {
-                    setError(QStringLiteral("Each profile line needs two numbers: radius, height."));
+                    setError(QCoreApplication::translate("ToolSetupDialog", "Each profile line needs two numbers: radius, height."));
                     return;
                 }
                 profile.push_back({lengthFromUi(x), lengthFromUi(y)});
@@ -869,7 +878,7 @@ void ToolSetupDialog::commitTool() {
         if (QTreeWidgetItem* item = toolList_->currentItem()) {
             loading_ = true;
             item->setText(0, qs(t.name));
-            item->setText(1, qs(viewmodel::toolTypeLabel(t.type)));
+            item->setText(1, vmText(viewmodel::toolTypeLabel(t.type)));
             loading_ = false;
         }
     }
@@ -878,7 +887,7 @@ void ToolSetupDialog::commitTool() {
 void ToolSetupDialog::addTool(tooling::ToolType type) {
     tooling::Tool t = viewmodel::defaultTool(type);
     t.id = viewmodel::newToolId(db_);
-    t.name = "New " + viewmodel::toolTypeLabel(type);
+    t.name = QCoreApplication::translate("ToolSetupDialog", "New %1").arg(vmText(viewmodel::toolTypeLabel(type))).toStdString();
     if (db_.addTool(t)) {
         setError(QString());
         refreshTools();
@@ -903,21 +912,21 @@ void ToolSetupDialog::deleteTool() {
     if (t == nullptr) {
         return;
     }
-    QString text = QStringLiteral("Delete the tool \"%1\"?").arg(qs(t->name));
+    QString text = QCoreApplication::translate("ToolSetupDialog", "Delete the tool \"%1\"?").arg(qs(t->name));
     if (uses_) {
         const std::vector<std::string> used = uses_(t->id);
         if (!used.empty()) {
-            text += QStringLiteral("\n\nToolpaths made with it keep their moves but can no longer be recalculated: ");
+            text += QCoreApplication::translate("ToolSetupDialog", "\n\nToolpaths made with it keep their moves but can no longer be recalculated: ");
             for (std::size_t i = 0; i < used.size() && i < 5; ++i) {
                 text += (i == 0 ? QString() : QStringLiteral(", ")) + qs(used[i]);
             }
             if (used.size() > 5) {
-                text += QStringLiteral(" and %1 more").arg(used.size() - 5);
+                text += QCoreApplication::translate("ToolSetupDialog", " and %1 more").arg(used.size() - 5);
             }
             text += QStringLiteral(".");
         }
     }
-    if (!confirm(QStringLiteral("Delete tool"), text)) {
+    if (!confirm(QCoreApplication::translate("ToolSetupDialog", "Delete tool"), text)) {
         return;
     }
     db_.removeTool(t->id);
@@ -928,13 +937,13 @@ void ToolSetupDialog::deleteTool() {
 void ToolSetupDialog::addCuttingEntry() {
     const tooling::Tool* current = db_.findTool(currentToolId());
     if (current == nullptr || entryMachine_->currentIndex() < 0 || entryMaterial_->currentIndex() < 0) {
-        setError(QStringLiteral("Add a machine and a material first."));
+        setError(QCoreApplication::translate("ToolSetupDialog", "Add a machine and a material first."));
         return;
     }
     const std::string machine = ss(entryMachine_->currentData().toString());
     const std::string material = ss(entryMaterial_->currentData().toString());
     if (current->findCuttingData(machine, material) != nullptr) {
-        setError(QStringLiteral("That machine and material already have an entry."));
+        setError(QCoreApplication::translate("ToolSetupDialog", "That machine and material already have an entry."));
         return;
     }
     tooling::Tool t = *current;
@@ -948,7 +957,7 @@ void ToolSetupDialog::removeCuttingEntry() {
     const tooling::Tool* current = db_.findTool(currentToolId());
     const int row = cuttingTable_->currentRow();
     if (current == nullptr || row < 1) {
-        setError(QStringLiteral("Select a machine/material row to remove (the default row stays)."));
+        setError(QCoreApplication::translate("ToolSetupDialog", "Select a machine/material row to remove (the default row stays)."));
         return;
     }
     const QTableWidgetItem* header = cuttingTable_->verticalHeaderItem(row);
@@ -1065,7 +1074,7 @@ void ToolSetupDialog::commitMachine() {
 }
 
 void ToolSetupDialog::addMachine() {
-    tooling::Machine m = viewmodel::defaultMachine("New machine");
+    tooling::Machine m = viewmodel::defaultMachine(QCoreApplication::translate("ToolSetupDialog", "New machine").toStdString());
     m.id = viewmodel::newMachineId(db_);
     if (db_.addMachine(m)) {
         setError(QString());
@@ -1096,8 +1105,8 @@ void ToolSetupDialog::deleteMachine() {
     if (m == nullptr) {
         return;
     }
-    if (!confirm(QStringLiteral("Delete machine"),
-                 QStringLiteral("Delete the machine \"%1\" and every tool's feeds and speeds for it?").arg(qs(m->name)))) {
+    if (!confirm(QCoreApplication::translate("ToolSetupDialog", "Delete machine"),
+                 QCoreApplication::translate("ToolSetupDialog", "Delete the machine \"%1\" and every tool's feeds and speeds for it?").arg(qs(m->name)))) {
         return;
     }
     const std::string id = m->id;
@@ -1120,7 +1129,7 @@ void ToolSetupDialog::selectMachine(const std::string& id) {
 // -------------------------------------------------------------------------------------- materials
 
 void ToolSetupDialog::addMaterial() {
-    tooling::Material m{viewmodel::newMaterialId(db_), "New material"};
+    tooling::Material m{viewmodel::newMaterialId(db_), QCoreApplication::translate("ToolSetupDialog", "New material").toStdString()};
     if (db_.addMaterial(m)) {
         setError(QString());
         refreshMaterials();
@@ -1151,8 +1160,8 @@ void ToolSetupDialog::deleteMaterial() {
     if (m == nullptr) {
         return;
     }
-    if (!confirm(QStringLiteral("Delete material"),
-                 QStringLiteral("Delete the material \"%1\" and every tool's feeds and speeds for it?").arg(qs(m->name)))) {
+    if (!confirm(QCoreApplication::translate("ToolSetupDialog", "Delete material"),
+                 QCoreApplication::translate("ToolSetupDialog", "Delete the material \"%1\" and every tool's feeds and speeds for it?").arg(qs(m->name)))) {
         return;
     }
     db_.removeMaterial(m->id);
@@ -1168,7 +1177,7 @@ bool ToolSetupDialog::importFile(const std::filesystem::path& path) {
     if (!r.ok) {
         setError(qs(r.error));
         if (!quiet_) {
-            QMessageBox::warning(this, QStringLiteral("Import tools"), qs(r.error));
+            QMessageBox::warning(this, QCoreApplication::translate("ToolSetupDialog", "Import tools"), qs(r.error));
         }
         return false;
     }
@@ -1177,8 +1186,8 @@ bool ToolSetupDialog::importFile(const std::filesystem::path& path) {
     refreshAll();
     if (!quiet_) {
         QMessageBox::information(
-            this, QStringLiteral("Import tools"),
-            QStringLiteral("Added %1 tool(s), %2 machine(s) and %3 material(s); items that were already here were kept.")
+            this, QCoreApplication::translate("ToolSetupDialog", "Import tools"),
+            QCoreApplication::translate("ToolSetupDialog", "Added %1 tool(s), %2 machine(s) and %3 material(s); items that were already here were kept.")
                 .arg(report.tools.added)
                 .arg(report.machines.added)
                 .arg(report.materials.added));
@@ -1191,7 +1200,7 @@ bool ToolSetupDialog::exportFile(const std::filesystem::path& path) {
     if (!viewmodel::writeToolDatabaseFile(path, db_, error)) {
         setError(qs(error));
         if (!quiet_) {
-            QMessageBox::warning(this, QStringLiteral("Export tools"), qs(error));
+            QMessageBox::warning(this, QCoreApplication::translate("ToolSetupDialog", "Export tools"), qs(error));
         }
         return false;
     }

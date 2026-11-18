@@ -43,8 +43,8 @@ QString qs(const std::string& s) {
 }
 
 QPushButton* button(const char* text, const char* tip, QWidget* parent) {
-    auto* b = new QPushButton(QString::fromUtf8(text), parent);
-    b->setToolTip(QString::fromUtf8(tip));
+    auto* b = new QPushButton(QCoreApplication::translate("ReliefPanels", text), parent);
+    b->setToolTip(QCoreApplication::translate("ReliefPanels", tip));
     return b;
 }
 
@@ -58,7 +58,7 @@ bool isLevel(const QTreeWidgetItem* item) {
 
 void fillModeBox(QComboBox* box) {
     for (const relief::CombineMode m : viewmodel::allCombineModes()) {
-        box->addItem(QString::fromUtf8(viewmodel::combineModeName(m)), static_cast<int>(m));
+        box->addItem(QCoreApplication::translate("ReliefPanels", viewmodel::combineModeName(m)), static_cast<int>(m));
     }
 }
 
@@ -101,41 +101,41 @@ ComponentTreePanel::ComponentTreePanel(DocumentGetter getter, QWidget* parent)
     auto* outer = new QVBoxLayout(this);
     tree_ = new ReliefTreeWidget(this);
     tree_->setColumnCount(3);
-    tree_->setHeaderLabels({QStringLiteral("Component"), QStringLiteral("Mode"), QStringLiteral("Show")});
+    tree_->setHeaderLabels({QCoreApplication::translate("ReliefPanels", "Component"), QCoreApplication::translate("ReliefPanels", "Mode"), QCoreApplication::translate("ReliefPanels", "Show")});
     tree_->setUniformRowHeights(true);
     tree_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree_->setDragDropMode(QAbstractItemView::InternalMove);
     tree_->setDragEnabled(true);
     tree_->setAcceptDrops(true);
-    tree_->setToolTip(QStringLiteral("Levels and components, top of the stack first. Double-click to rename; "
+    tree_->setToolTip(QCoreApplication::translate("ReliefPanels", "Levels and components, top of the stack first. Double-click to rename; "
                                      "drag a component to reorder it or move it to another level."));
     tree_->header()->setStretchLastSection(false);
     tree_->header()->setSectionResizeMode(kColName, QHeaderView::Stretch);
     outer->addWidget(tree_, 1);
 
     auto* row1 = new QHBoxLayout();
-    QPushButton* addLevelBtn = button("Add level", "Add a level on top", this);
-    QPushButton* dup = button("Duplicate", "Duplicate the selected component", this);
-    QPushButton* del = button("Delete", "Delete the selected components", this);
+    QPushButton* addLevelBtn = button(QT_TRANSLATE_NOOP("ReliefPanels", "Add level"), QT_TRANSLATE_NOOP("ReliefPanels", "Add a level on top"), this);
+    QPushButton* dup = button(QT_TRANSLATE_NOOP("ReliefPanels", "Duplicate"), QT_TRANSLATE_NOOP("ReliefPanels", "Duplicate the selected component"), this);
+    QPushButton* del = button(QT_TRANSLATE_NOOP("ReliefPanels", "Delete"), QT_TRANSLATE_NOOP("ReliefPanels", "Delete the selected components"), this);
     for (QPushButton* b : {addLevelBtn, dup, del}) {
         row1->addWidget(b);
     }
     outer->addLayout(row1);
     auto* row2 = new QHBoxLayout();
-    QPushButton* up = button("Up", "Move up the stack", this);
-    QPushButton* down = button("Down", "Move down the stack", this);
-    QPushButton* only = button("Show only", "Show only the selected component", this);
-    QPushButton* all = button("Show all", "Show every component", this);
+    QPushButton* up = button(QT_TRANSLATE_NOOP("ReliefPanels", "Up"), QT_TRANSLATE_NOOP("ReliefPanels", "Move up the stack"), this);
+    QPushButton* down = button(QT_TRANSLATE_NOOP("ReliefPanels", "Down"), QT_TRANSLATE_NOOP("ReliefPanels", "Move down the stack"), this);
+    QPushButton* only = button(QT_TRANSLATE_NOOP("ReliefPanels", "Show only"), QT_TRANSLATE_NOOP("ReliefPanels", "Show only the selected component"), this);
+    QPushButton* all = button(QT_TRANSLATE_NOOP("ReliefPanels", "Show all"), QT_TRANSLATE_NOOP("ReliefPanels", "Show every component"), this);
     for (QPushButton* b : {up, down, only, all}) {
         row2->addWidget(b);
     }
     outer->addLayout(row2);
     auto* row3 = new QHBoxLayout();
     mode_ = new QComboBox(this);
-    mode_->setToolTip(QStringLiteral("Combine mode of the selected component"));
+    mode_->setToolTip(QCoreApplication::translate("ReliefPanels", "Combine mode of the selected component"));
     fillModeBox(mode_);
     moveTo_ = new QComboBox(this);
-    moveTo_->setToolTip(QStringLiteral("Move the selected component to this level"));
+    moveTo_->setToolTip(QCoreApplication::translate("ReliefPanels", "Move the selected component to this level"));
     row3->addWidget(mode_);
     row3->addWidget(moveTo_, 1);
     outer->addLayout(row3);
@@ -271,7 +271,7 @@ void ComponentTreePanel::refresh() {
 
 void ComponentTreePanel::updateMoveTargets() {
     moveTo_->clear();
-    moveTo_->addItem(QStringLiteral("Move to level..."), 0);
+    moveTo_->addItem(QCoreApplication::translate("ReliefPanels", "Move to level..."), 0);
     const document::Document* d = doc();
     if (d == nullptr) {
         return;
@@ -351,7 +351,7 @@ bool ComponentTreePanel::duplicateSelected() {
     const document::ComponentId id = d->componentSelection().single();
     if (!id) {
         if (onMessage) {
-            onMessage("Select one component to duplicate");
+            onMessage(QCoreApplication::translate("ReliefPanels", "Select one component to duplicate").toStdString());
         }
         return false;
     }
@@ -448,46 +448,46 @@ ComponentPropertiesPanel::ComponentPropertiesPanel(DocumentGetter getter, QWidge
     auto edit = [this, form](const char* label, const char* tip) {
         auto* e = new QLineEdit(this);
         e->setObjectName(QString::fromUtf8(label));
-        e->setToolTip(QString::fromUtf8(tip));
-        form->addRow(QString::fromUtf8(label), e);
+        e->setToolTip(tip[0] != '\0' ? QCoreApplication::translate("ReliefPanels", tip) : QString());
+        form->addRow(QCoreApplication::translate("ReliefPanels", label), e);
         return e;
     };
-    name_ = edit("Name", "Name of the component");
+    name_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Name"), QT_TRANSLATE_NOOP("ReliefPanels", "Name of the component"));
     mode_ = new QComboBox(this);
     mode_->setObjectName(QStringLiteral("Combine mode"));
     fillModeBox(mode_);
-    form->addRow(QStringLiteral("Combine mode"), mode_);
+    form->addRow(QCoreApplication::translate("ReliefPanels", "Combine mode"), mode_);
     appearance_ = new QComboBox(this);
     appearance_->setObjectName(QStringLiteral("Appearance"));
-    appearance_->setToolTip(QStringLiteral("How the Model view colours this item; Color from Children is for levels"));
-    form->addRow(QStringLiteral("Appearance"), appearance_);
+    appearance_->setToolTip(QCoreApplication::translate("ReliefPanels", "How the Model view colours this item; Color from Children is for levels"));
+    form->addRow(QCoreApplication::translate("ReliefPanels", "Appearance"), appearance_);
     appearanceMaterial_ = new QComboBox(this);
     appearanceMaterial_->setObjectName(QStringLiteral("Appearance material"));
     for (const relief::AppearanceMaterial m : viewmodel::appearanceMaterials()) {
-        appearanceMaterial_->addItem(QString::fromUtf8(viewmodel::appearanceMaterialName(m)), static_cast<int>(m));
+        appearanceMaterial_->addItem(QCoreApplication::translate("ReliefPanels", viewmodel::appearanceMaterialName(m)), static_cast<int>(m));
     }
-    form->addRow(QStringLiteral("Material"), appearanceMaterial_);
-    appearanceColour_ = edit("Appearance color", "Solid color as #RRGGBB");
-    shape_ = edit("Shape height %", "Scale of the stored height, 0 to 1000 %");
-    base_ = edit("Base height", "Z offset added after the shape height, in mm");
-    fadeOn_ = new QCheckBox(QStringLiteral("Fade"), this);
+    form->addRow(QCoreApplication::translate("ReliefPanels", "Material"), appearanceMaterial_);
+    appearanceColour_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Appearance color"), QT_TRANSLATE_NOOP("ReliefPanels", "Solid color as #RRGGBB"));
+    shape_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Shape height %"), QT_TRANSLATE_NOOP("ReliefPanels", "Scale of the stored height, 0 to 1000 %"));
+    base_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Base height"), QT_TRANSLATE_NOOP("ReliefPanels", "Z offset added after the shape height, in mm"));
+    fadeOn_ = new QCheckBox(QCoreApplication::translate("ReliefPanels", "Fade"), this);
     form->addRow(fadeOn_);
-    fadePct_ = edit("Fade %", "Height lost at the second point");
-    fadeAx_ = edit("Fade anchor X", "Fade anchor point, mm");
-    fadeAy_ = edit("Fade anchor Y", "");
-    fadeBx_ = edit("Fade second X", "Second point of the fade, mm");
-    fadeBy_ = edit("Fade second Y", "");
-    tiltOn_ = new QCheckBox(QStringLiteral("Tilt"), this);
+    fadePct_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Fade %"), QT_TRANSLATE_NOOP("ReliefPanels", "Height lost at the second point"));
+    fadeAx_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Fade anchor X"), QT_TRANSLATE_NOOP("ReliefPanels", "Fade anchor point, mm"));
+    fadeAy_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Fade anchor Y"), "");
+    fadeBx_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Fade second X"), QT_TRANSLATE_NOOP("ReliefPanels", "Second point of the fade, mm"));
+    fadeBy_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Fade second Y"), "");
+    tiltOn_ = new QCheckBox(QCoreApplication::translate("ReliefPanels", "Tilt"), this);
     form->addRow(tiltOn_);
-    tiltAngle_ = edit("Tilt angle", "Degrees, below 89");
-    tiltPx_ = edit("Tilt pivot X", "Pivot point, mm");
-    tiltPy_ = edit("Tilt pivot Y", "");
-    tiltRx_ = edit("Tilt raise X", "Point to raise, mm");
-    tiltRy_ = edit("Tilt raise Y", "");
+    tiltAngle_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Tilt angle"), QT_TRANSLATE_NOOP("ReliefPanels", "Degrees, below 89"));
+    tiltPx_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Tilt pivot X"), QT_TRANSLATE_NOOP("ReliefPanels", "Pivot point, mm"));
+    tiltPy_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Tilt pivot Y"), "");
+    tiltRx_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Tilt raise X"), QT_TRANSLATE_NOOP("ReliefPanels", "Point to raise, mm"));
+    tiltRy_ = edit(QT_TRANSLATE_NOOP("ReliefPanels", "Tilt raise Y"), "");
     outer->addLayout(form);
     info_ = new QLabel(this);
     outer->addWidget(info_);
-    apply_ = button("Apply", "Write the values to the model (one undo step)", this);
+    apply_ = button(QT_TRANSLATE_NOOP("ReliefPanels", "Apply"), QT_TRANSLATE_NOOP("ReliefPanels", "Write the values to the model (one undo step)"), this);
     outer->addWidget(apply_);
     outer->addStretch(1);
     connect(apply_, &QPushButton::clicked, this, [this]() { apply(); });
@@ -533,7 +533,7 @@ void ComponentPropertiesPanel::fill() {
     // The appearance menu: a component has no children, so no Color from Children for it.
     appearance_->clear();
     for (const relief::AppearanceKind k : viewmodel::appearanceKinds(levelMode)) {
-        appearance_->addItem(QString::fromUtf8(viewmodel::appearanceKindName(k)), static_cast<int>(k));
+        appearance_->addItem(QCoreApplication::translate("ReliefPanels", viewmodel::appearanceKindName(k)), static_cast<int>(k));
     }
     if (levelMode || showing_) {
         viewmodel::ReliefPropertiesForm shown = form;
@@ -549,7 +549,7 @@ void ComponentPropertiesPanel::fill() {
         name_->setText(qs(l->name));
         mode_->setCurrentIndex(mode_->findData(static_cast<int>(l->mode)));
         base_->setText(QString::number(l->baseHeight, 'g', 10));
-        info_->setText(QStringLiteral("Level: name, combine mode and base height"));
+        info_->setText(QCoreApplication::translate("ReliefPanels", "Level: name, combine mode and base height"));
     } else if (showing_) {
         name_->setText(qs(form.name));
         mode_->setCurrentIndex(mode_->findData(static_cast<int>(form.mode)));
@@ -573,7 +573,7 @@ void ComponentPropertiesPanel::fill() {
                              tiltPy_, tiltRx_, tiltRy_}) {
             e->clear();
         }
-        info_->setText(QStringLiteral("Select a component or a level"));
+        info_->setText(QCoreApplication::translate("ReliefPanels", "Select a component or a level"));
     }
     refreshing_ = false;
 }
@@ -638,38 +638,38 @@ ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(paren
     setMinimumSize(200, 150);
     setMouseTracking(true);  // the brush ring follows the pointer
     setFocusPolicy(Qt::StrongFocus);
-    setToolTip(QStringLiteral("Right-drag orbits, the wheel zooms, middle-drag or Ctrl+right-drag pans"));
+    setToolTip(QCoreApplication::translate("ReliefPanels", "Right-drag orbits, the wheel zooms, middle-drag or Ctrl+right-drag pans"));
     auto* bar = new QHBoxLayout(this);
     bar->setContentsMargins(6, 6, 6, 6);
     auto view = [this, bar](const char* text, void (viewmodel::OrbitCamera::*fn)()) {
-        auto* b = new QPushButton(QString::fromUtf8(text), this);
+        auto* b = new QPushButton(QCoreApplication::translate("ReliefPanels", text), this);
         connect(b, &QPushButton::clicked, this, [this, fn]() {
             (camera_.*fn)();
             cameraChanged();
         });
         bar->addWidget(b);
     };
-    view("Top", &viewmodel::OrbitCamera::viewTop);
-    view("Front", &viewmodel::OrbitCamera::viewFront);
-    view("Right", &viewmodel::OrbitCamera::viewRight);
-    view("Fit", &viewmodel::OrbitCamera::reset);
+    view(QT_TRANSLATE_NOOP("ReliefPanels", "Top"), &viewmodel::OrbitCamera::viewTop);
+    view(QT_TRANSLATE_NOOP("ReliefPanels", "Front"), &viewmodel::OrbitCamera::viewFront);
+    view(QT_TRANSLATE_NOOP("ReliefPanels", "Right"), &viewmodel::OrbitCamera::viewRight);
+    view(QT_TRANSLATE_NOOP("ReliefPanels", "Fit"), &viewmodel::OrbitCamera::reset);
     materialBox_ = new QComboBox(this);
     for (const viewmodel::ModelMaterial m :
          {viewmodel::ModelMaterial::SolidColour, viewmodel::ModelMaterial::Wood, viewmodel::ModelMaterial::Metal,
           viewmodel::ModelMaterial::Stone, viewmodel::ModelMaterial::Plastic}) {
-        materialBox_->addItem(QString::fromUtf8(viewmodel::modelMaterialName(m)), static_cast<int>(m));
+        materialBox_->addItem(QCoreApplication::translate("ReliefPanels", viewmodel::modelMaterialName(m)), static_cast<int>(m));
     }
     materialBox_->setCurrentIndex(materialBox_->findData(static_cast<int>(options_.material)));
     connect(materialBox_, &QComboBox::activated, this, [this](int index) {
         setMaterial(static_cast<viewmodel::ModelMaterial>(materialBox_->itemData(index).toInt()));
     });
     bar->addWidget(materialBox_);
-    wrappedButton_ = new QPushButton(QStringLiteral("Wrapped"), this);
+    wrappedButton_ = new QPushButton(QCoreApplication::translate("ReliefPanels", "Wrapped"), this);
     wrappedButton_->setObjectName(QStringLiteral("wrappedToggle"));
     wrappedButton_->setCheckable(true);
     wrappedButton_->setChecked(true);
     wrappedButton_->setVisible(false);
-    wrappedButton_->setToolTip(QStringLiteral("Show the rotary job wrapped round its cylinder or flat"));
+    wrappedButton_->setToolTip(QCoreApplication::translate("ReliefPanels", "Show the rotary job wrapped round its cylinder or flat"));
     connect(wrappedButton_, &QPushButton::clicked, this, [this](bool on) {
         setWrapped(on);
         if (onWrappedToggled) {
@@ -740,7 +740,7 @@ void ModelView3D::setPreview(const relief::HeightField& field) {
     viewmodel::ModelSurface s;
     const std::size_t longest = std::max(field.width(), field.height());
     if (field.empty()) {
-        s.problem = "Nothing to preview";
+        s.problem = QCoreApplication::translate("ReliefPanels", "Nothing to preview").toStdString();
     } else if (longest <= viewmodel::kMaxSurfaceDimension) {
         s.field = field;
     } else {
@@ -748,7 +748,7 @@ void ModelView3D::setPreview(const relief::HeightField& field) {
         const relief::Grid g{(field.width() + s.stride - 1) / s.stride, (field.height() + s.stride - 1) / s.stride,
                              field.cellSize() * static_cast<double>(s.stride), field.origin()};
         if (field.resample(g, s.field) != relief::Status::Ok) {
-            s.problem = "The preview is too large to show";
+            s.problem = QCoreApplication::translate("ReliefPanels", "The preview is too large to show").toStdString();
         }
     }
     previewSurface_ = std::move(s);
@@ -943,7 +943,7 @@ void ModelView3D::paintEvent(QPaintEvent*) {
     if (!surface_.ok() && !showingWrapped()) {
         p.setPen(QColor(90, 90, 90));
         p.drawText(rect(), Qt::AlignCenter | Qt::TextWordWrap,
-                   surface_.problem.empty() ? QStringLiteral("No model") : qs(surface_.problem));
+                   surface_.problem.empty() ? QCoreApplication::translate("ReliefPanels", "No model") : qs(surface_.problem));
     }
 }
 

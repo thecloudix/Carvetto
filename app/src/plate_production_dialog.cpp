@@ -1,4 +1,5 @@
 #include "plate_production_dialog.hpp"
+#include "vm_text.hpp"
 
 #include <QCheckBox>
 #include <QCoreApplication>
@@ -48,7 +49,7 @@ PlateProductionDialog::PlateProductionDialog(const document::Document& doc, QWid
     auto* root = new QVBoxLayout(this);
 
     root->addWidget(new QLabel(
-        QStringLiteral("The selected objects are the template. One plate is made per data row; use !!NAME!! in "
+        QCoreApplication::translate("PlateProductionDialog", "The selected objects are the template. One plate is made per data row; use !!NAME!! in "
                        "template text for a column value."),
         this));
     csv_ = new QPlainTextEdit(this);
@@ -59,10 +60,10 @@ PlateProductionDialog::PlateProductionDialog(const document::Document& doc, QWid
     auto* importButton = new QPushButton(QCoreApplication::translate("PlateProductionDialog", "Import from file..."), this);
     importRow->addWidget(importButton);
     separator_ = new QComboBox(this);
-    separator_->addItem(QStringLiteral("Comma"), QVariant(QLatin1Char(',')));
-    separator_->addItem(QStringLiteral("Tab"), QVariant(QLatin1Char('\t')));
-    separator_->addItem(QStringLiteral("Semicolon"), QVariant(QLatin1Char(';')));
-    separator_->addItem(QStringLiteral("Space"), QVariant(QLatin1Char(' ')));
+    separator_->addItem(QCoreApplication::translate("PlateProductionDialog", "Comma"), QVariant(QLatin1Char(',')));
+    separator_->addItem(QCoreApplication::translate("PlateProductionDialog", "Tab"), QVariant(QLatin1Char('\t')));
+    separator_->addItem(QCoreApplication::translate("PlateProductionDialog", "Semicolon"), QVariant(QLatin1Char(';')));
+    separator_->addItem(QCoreApplication::translate("PlateProductionDialog", "Space"), QVariant(QLatin1Char(' ')));
     importRow->addWidget(new QLabel(QCoreApplication::translate("PlateProductionDialog", "Separator"), this));
     importRow->addWidget(separator_);
     firstRowNames_ = new QCheckBox(QCoreApplication::translate("PlateProductionDialog", "First row is column names"), this);
@@ -77,7 +78,7 @@ PlateProductionDialog::PlateProductionDialog(const document::Document& doc, QWid
 
     auto* counterForm = new QFormLayout();
     counterEnabled_ = new QCheckBox(QCoreApplication::translate("PlateProductionDialog", "Serial number counter"), this);
-    counterName_ = new QLineEdit(QStringLiteral("SERIAL"), this);
+    counterName_ = new QLineEdit(QCoreApplication::translate("PlateProductionDialog", "SERIAL"), this);
     counterStart_ = new QDoubleSpinBox(this);
     counterStart_->setDecimals(0);
     counterStart_->setRange(-kCounterLimit, kCounterLimit);
@@ -102,9 +103,9 @@ PlateProductionDialog::PlateProductionDialog(const document::Document& doc, QWid
 
     auto* layoutForm = new QFormLayout();
     layout_ = new QComboBox(this);
-    layout_->addItem(QStringLiteral("Fill sheets (overflow to new sheets)"),
+    layout_->addItem(QCoreApplication::translate("PlateProductionDialog", "Fill sheets (overflow to new sheets)"),
                      static_cast<int>(viewmodel::MergeLayout::Grid));
-    layout_->addItem(QStringLiteral("One plate per sheet"), static_cast<int>(viewmodel::MergeLayout::OnePerSheet));
+    layout_->addItem(QCoreApplication::translate("PlateProductionDialog", "One plate per sheet"), static_cast<int>(viewmodel::MergeLayout::OnePerSheet));
     marginLeft_ = lengthBox(this, units_, viewmodel::kMaxMergeLengthMm);
     marginRight_ = lengthBox(this, units_, viewmodel::kMaxMergeLengthMm);
     marginTop_ = lengthBox(this, units_, viewmodel::kMaxMergeLengthMm);
@@ -139,7 +140,7 @@ PlateProductionDialog::PlateProductionDialog(const document::Document& doc, QWid
     root->addWidget(problems_);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    auto* previewButton = buttons->addButton(QStringLiteral("Preview"), QDialogButtonBox::ActionRole);
+    auto* previewButton = buttons->addButton(QCoreApplication::translate("PlateProductionDialog", "Preview"), QDialogButtonBox::ActionRole);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() { accept(); });
     connect(buttons, &QDialogButtonBox::rejected, this, [this]() { reject(); });
     connect(previewButton, &QPushButton::clicked, this, [this]() { refreshPreview(); });
@@ -172,7 +173,7 @@ QString PlateProductionDialog::problems() const { return problems_->toPlainText(
 
 void PlateProductionDialog::importFile() {
     const QString path = QFileDialog::getOpenFileName(this, QCoreApplication::translate("PlateProductionDialog", "Data file"), QString(),
-                                                      QStringLiteral("Data files (*.csv *.txt *.tsv);;All files (*)"));
+                                                      QCoreApplication::translate("PlateProductionDialog", "Data files (*.csv *.txt *.tsv);;All files (*)"));
     if (path.isEmpty()) {
         return;
     }
@@ -214,10 +215,10 @@ void PlateProductionDialog::rebuildAssignments() {
     const std::size_t columns = io::parseDelimited(csv_->toPlainText().toStdString(), csvOptions).columns;
     for (const std::string& name : placeholders_) {
         auto* box = new QComboBox(this);
-        box->addItem(QStringLiteral("(none)"), -1);
+        box->addItem(QCoreApplication::translate("PlateProductionDialog", "(none)"), -1);
         for (std::size_t c = 0; c < columns; ++c) {
             const QString header = c < headers.size() ? QString::fromStdString(headers[c]) : QString();
-            box->addItem(QStringLiteral("Column %1 %2").arg(c + 1).arg(header).trimmed(), static_cast<int>(c));
+            box->addItem(QCoreApplication::translate("PlateProductionDialog", "Column %1 %2").arg(c + 1).arg(header).trimmed(), static_cast<int>(c));
         }
         int chosen = -1;
         for (const auto& a : previous) {
@@ -282,11 +283,11 @@ void PlateProductionDialog::refreshPreview() {
     const DataMergeResult r = viewmodel::previewDataMerge(doc_, csv_->toPlainText().toStdString(), options());
     QStringList lines;
     for (const viewmodel::MergeDiagnostic& d : r.diagnostics) {
-        lines << (d.line > 0 ? QStringLiteral("line %1: ").arg(d.line) : QString()) +
+        lines << (d.line > 0 ? QCoreApplication::translate("PlateProductionDialog", "line %1: ").arg(d.line) : QString()) +
                      QString::fromStdString(d.message);
     }
     for (const viewmodel::MergeDiagnostic& d : r.warnings) {
-        lines << QStringLiteral("line %1: note: ").arg(d.line) + QString::fromStdString(d.message);
+        lines << QCoreApplication::translate("PlateProductionDialog", "line %1: note: ").arg(d.line) + QString::fromStdString(d.message);
     }
     problems_->setPlainText(lines.join(QLatin1Char('\n')));
     if (r.ok) {
@@ -295,7 +296,7 @@ void PlateProductionDialog::refreshPreview() {
                               .arg(r.sheetsUsed)
                               .arg(r.platesPerSheet));
     } else {
-        summary_->setText(QString::fromStdString(r.message));
+        summary_->setText(vmText(r.message));
     }
 }
 

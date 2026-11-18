@@ -51,11 +51,16 @@ if(CARVETTO_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_compliance.py --root ${PROJECT_SOURCE_DIR})
     add_test(NAME lint.compliance_unit
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_compliance.py)
-    # T-0350: no new user-visible literal may bypass tr() (ratchet baseline, emptied by T-0351).
+    # T-0350/T-0351: no user-visible literal may bypass tr() (the ratchet baseline is empty).
     add_test(NAME lint.tr_literals
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_tr_literals.py --root ${PROJECT_SOURCE_DIR})
     add_test(NAME lint.tr_literals_unit
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_tr_literals.py)
+    # T-0351: the .ts catalogs list every translate()/QT_TRANSLATE_NOOP source string.
+    add_test(NAME lint.catalog
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_catalog.py --root ${PROJECT_SOURCE_DIR})
+    add_test(NAME lint.catalog_unit
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_catalog.py)
     # T-0355: user guide links and the menu names it quotes must match the app.
     add_test(NAME lint.user_docs
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_user_docs.py --root ${PROJECT_SOURCE_DIR})

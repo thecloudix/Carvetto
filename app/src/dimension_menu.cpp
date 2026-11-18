@@ -55,10 +55,10 @@ QString qs(const std::string& s) {
 
 const char* kindName(DimensionKind k) {
     switch (k) {
-        case DimensionKind::Linear: return "Linear (horizontal / vertical)";
-        case DimensionKind::Aligned: return "Aligned";
-        case DimensionKind::Angular: return "Angular";
-        case DimensionKind::Radial: return "Radius / diameter";
+        case DimensionKind::Linear: return QT_TRANSLATE_NOOP("DimensionMenu", "Linear (horizontal / vertical)");
+        case DimensionKind::Aligned: return QT_TRANSLATE_NOOP("DimensionMenu", "Aligned");
+        case DimensionKind::Angular: return QT_TRANSLATE_NOOP("DimensionMenu", "Angular");
+        case DimensionKind::Radial: return QT_TRANSLATE_NOOP("DimensionMenu", "Radius / diameter");
     }
     return "";
 }
@@ -68,7 +68,7 @@ const char* kindName(DimensionKind k) {
 DimensionDialog::DimensionDialog(document::Document& doc, const DimensionOptions& initial, bool editing,
                                  QWidget* parent)
     : QDialog(parent), doc_(doc), editing_(editing), units_(doc.job().displayUnits), initial_(initial) {
-    setWindowTitle(editing ? QStringLiteral("Edit Dimension") : QStringLiteral("Dimension Options"));
+    setWindowTitle(editing ? QCoreApplication::translate("DimensionMenu", "Edit Dimension") : QCoreApplication::translate("DimensionMenu", "Dimension Options"));
     const QString suffix = QString::fromUtf8(document::unitSuffix(units_).data(),
                                              static_cast<int>(document::unitSuffix(units_).size()));
     auto* form = new QFormLayout;
@@ -76,16 +76,16 @@ DimensionDialog::DimensionDialog(document::Document& doc, const DimensionOptions
     kind_->setObjectName(QStringLiteral("dimKind"));
     for (const DimensionKind k : {DimensionKind::Linear, DimensionKind::Aligned, DimensionKind::Angular,
                                   DimensionKind::Radial}) {
-        kind_->addItem(QString::fromUtf8(kindName(k)), static_cast<int>(k));
+        kind_->addItem(QCoreApplication::translate("DimensionMenu", kindName(k)), static_cast<int>(k));
     }
     kind_->setCurrentIndex(kind_->findData(static_cast<int>(initial.kind)));
     kind_->setEnabled(!editing);  // the kind is fixed once drawn
-    form->addRow(QStringLiteral("Kind"), kind_);
-    vertical_ = new QCheckBox(QStringLiteral("Linear: measure vertically"), this);
+    form->addRow(QCoreApplication::translate("DimensionMenu", "Kind"), kind_);
+    vertical_ = new QCheckBox(QCoreApplication::translate("DimensionMenu", "Linear: measure vertically"), this);
     vertical_->setObjectName(QStringLiteral("dimVertical"));
     vertical_->setChecked(initial.vertical);
     vertical_->setEnabled(!editing);
-    diameter_ = new QCheckBox(QStringLiteral("Radial: show the diameter"), this);
+    diameter_ = new QCheckBox(QCoreApplication::translate("DimensionMenu", "Radial: show the diameter"), this);
     diameter_->setObjectName(QStringLiteral("dimDiameter"));
     diameter_->setChecked(initial.diameter);
     diameter_->setEnabled(!editing);
@@ -95,50 +95,50 @@ DimensionDialog::DimensionDialog(document::Document& doc, const DimensionOptions
     decimals_->setObjectName(QStringLiteral("dimDecimals"));
     decimals_->setRange(0, document::kMaxDimensionDecimals);
     decimals_->setValue(initial.decimals);
-    form->addRow(QStringLiteral("Decimal places"), decimals_);
+    form->addRow(QCoreApplication::translate("DimensionMenu", "Decimal places"), decimals_);
     angleDecimals_ = new QSpinBox(this);
     angleDecimals_->setObjectName(QStringLiteral("dimAngleDecimals"));
     angleDecimals_->setRange(0, document::kMaxDimensionAngleDecimals);
     angleDecimals_->setValue(initial.angleDecimals);
-    form->addRow(QStringLiteral("Angle decimal places"), angleDecimals_);
+    form->addRow(QCoreApplication::translate("DimensionMenu", "Angle decimal places"), angleDecimals_);
     textHeight_ = new QLineEdit(viewmodel::formatLength(initial.textHeightMm, units_).c_str(), this);
     textHeight_->setObjectName(QStringLiteral("dimTextHeight"));
-    form->addRow(QStringLiteral("Text height (%1)").arg(suffix), textHeight_);
+    form->addRow(QCoreApplication::translate("DimensionMenu", "Text height (%1)").arg(suffix), textHeight_);
     offset_ = new QLineEdit(this);
     attachVariableMenu(textHeight_);
     attachVariableMenu(offset_);
     offset_->setObjectName(QStringLiteral("dimOffset"));
-    reflex_ = new QCheckBox(QStringLiteral("Angular: measure the reflex angle (more than 180 degrees)"), this);
+    reflex_ = new QCheckBox(QCoreApplication::translate("DimensionMenu", "Angular: measure the reflex angle (more than 180 degrees)"), this);
     reflex_->setObjectName(QStringLiteral("dimReflex"));
     if (editing) {
         offset_->setText(qs(viewmodel::formatLength(initial.offsetMm.value_or(0.0), units_)));
-        offset_->setToolTip(QStringLiteral("Dimension line position, arc radius or leader length"));
-        form->addRow(QStringLiteral("Offset (%1)").arg(suffix), offset_);
+        offset_->setToolTip(QCoreApplication::translate("DimensionMenu", "Dimension line position, arc radius or leader length"));
+        form->addRow(QCoreApplication::translate("DimensionMenu", "Offset (%1)").arg(suffix), offset_);
         reflex_->setChecked(initial.reflex.value_or(false));
         reflex_->setEnabled(initial.kind == DimensionKind::Angular);
         form->addRow(reflex_);
     }
-    useCustom_ = new QCheckBox(QStringLiteral("Use custom text"), this);
+    useCustom_ = new QCheckBox(QCoreApplication::translate("DimensionMenu", "Use custom text"), this);
     useCustom_->setObjectName(QStringLiteral("dimUseCustom"));
     useCustom_->setChecked(initial.useCustomText);
     customText_ = new QLineEdit(qs(initial.customText), this);
     customText_->setObjectName(QStringLiteral("dimCustomText"));
     customText_->setMaxLength(static_cast<int>(document::kMaxDimensionTextBytes / 4));
     form->addRow(useCustom_);
-    form->addRow(QStringLiteral("Custom text"), customText_);
+    form->addRow(QCoreApplication::translate("DimensionMenu", "Custom text"), customText_);
     font_ = new QComboBox(this);
     font_->setObjectName(QStringLiteral("dimFont"));
-    font_->addItem(QStringLiteral("Default (%1)").arg(QString::fromUtf8(viewmodel::starterFontName())), QString());
+    font_->addItem(QCoreApplication::translate("DimensionMenu", "Default (%1)").arg(QString::fromUtf8(viewmodel::starterFontName())), QString());
     for (const auto& [key, asset] : doc.fonts()) {
         font_->addItem(qs(viewmodel::dimensionFontName(doc, key)), qs(key));
     }
     font_->setCurrentIndex(std::max(0, font_->findData(qs(initial.fontKey))));
-    auto* addFont = new QPushButton(QStringLiteral("Add font file..."), this);
+    auto* addFont = new QPushButton(QCoreApplication::translate("DimensionMenu", "Add font file..."), this);
     addFont->setObjectName(QStringLiteral("dimAddFont"));
-    addFont->setToolTip(QStringLiteral("Embeds a TrueType/OpenType font in the document"));
+    addFont->setToolTip(QCoreApplication::translate("DimensionMenu", "Embeds a TrueType/OpenType font in the document"));
     connect(addFont, &QPushButton::clicked, this, [this]() {
-        const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Add font"), QString(),
-                                                          QStringLiteral("Fonts (*.ttf *.otf)"));
+        const QString path = QFileDialog::getOpenFileName(this, QCoreApplication::translate("DimensionMenu", "Add font"), QString(),
+                                                          QCoreApplication::translate("DimensionMenu", "Fonts (*.ttf *.otf)"));
         if (!path.isEmpty()) {
             error_->setText(qs(addFontFile(path)));
         }
@@ -148,16 +148,16 @@ DimensionDialog::DimensionDialog(document::Document& doc, const DimensionOptions
     fontLayout->setContentsMargins(0, 0, 0, 0);
     fontLayout->addWidget(font_);
     fontLayout->addWidget(addFont);
-    form->addRow(QStringLiteral("Font"), fontRow);
+    form->addRow(QCoreApplication::translate("DimensionMenu", "Font"), fontRow);
     layer_ = new QComboBox(this);
     layer_->setObjectName(QStringLiteral("dimLayer"));
-    layer_->addItem(QStringLiteral("Dimensions (created when missing)"), QVariant::fromValue<qulonglong>(0));
+    layer_->addItem(QCoreApplication::translate("DimensionMenu", "Dimensions (created when missing)"), QVariant::fromValue<qulonglong>(0));
     for (const document::Layer& l : doc.layers()) {
         layer_->addItem(qs(l.name), QVariant::fromValue<qulonglong>(l.id.value));
     }
     layer_->setCurrentIndex(std::max(0, layer_->findData(QVariant::fromValue<qulonglong>(initial.layer.value))));
     if (!editing) {
-        form->addRow(QStringLiteral("Place on layer"), layer_);
+        form->addRow(QCoreApplication::translate("DimensionMenu", "Place on layer"), layer_);
     }
     error_ = new QLabel(this);
     error_->setObjectName(QStringLiteral("dimError"));
@@ -201,13 +201,13 @@ std::string DimensionDialog::problem() const {
     const viewmodel::ParsedNumber h =
         viewmodel::parseNumber(textHeight_->text().toStdString(), viewmodel::FieldKind::Length, units_);
     if (!h.ok) {
-        return "text height: " + h.error;
+        return QCoreApplication::translate("DimensionMenu", "text height: %1").arg(QString::fromStdString(h.error)).toStdString();
     }
     if (editing_) {
         const viewmodel::ParsedNumber off =
             viewmodel::parseNumber(offset_->text().toStdString(), viewmodel::FieldKind::Length, units_);
         if (!off.ok) {
-            return "offset: " + off.error;
+            return QCoreApplication::translate("DimensionMenu", "offset: %1").arg(QString::fromStdString(off.error)).toStdString();
         }
     }
     const DimensionOptions o = options();
@@ -226,12 +226,13 @@ std::string DimensionDialog::problem() const {
 std::string DimensionDialog::addFontFile(const QString& path) {
     const QFileInfo info(path);
     if (!info.isFile() || info.size() <= 0 || static_cast<std::size_t>(info.size()) > document::kMaxEmbeddedFontBytes) {
-        return "the font file is missing, empty or larger than " +
-               std::to_string(document::kMaxEmbeddedFontBytes >> 20) + " MB";
+        return QCoreApplication::translate("DimensionMenu", "the font file is missing, empty or larger than %1 MB")
+            .arg(document::kMaxEmbeddedFontBytes >> 20)
+            .toStdString();
     }
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        return "the font file cannot be read";
+        return QCoreApplication::translate("DimensionMenu", "the font file cannot be read").toStdString();
     }
     const QByteArray raw = file.readAll();
     document::FontAsset asset;
@@ -239,7 +240,7 @@ std::string DimensionDialog::addFontFile(const QString& path) {
                        reinterpret_cast<const std::uint8_t*>(raw.constData()) + raw.size());
     asset.key = document::fontKeyFor(asset.bytes);
     if (!text::Font::load(asset.bytes).ok()) {
-        return "not a usable TrueType/OpenType font";
+        return QCoreApplication::translate("DimensionMenu", "not a usable TrueType/OpenType font").toStdString();
     }
     if (const std::string why = doc_.fontProblem(asset); !why.empty()) {
         return why;
@@ -266,12 +267,12 @@ void DimensionDialog::accept() {
 // ---------------------------------------------------------------------------------------------
 
 DimensionMenu::DimensionMenu(MainWindow& window, QMenu* editMenu) : window_(window) {
-    QMenu* menu = editMenu->addMenu(QStringLiteral("&Dimensions"));
-    tool_ = menu->addAction(QStringLiteral("Dimension &Tool"));
-    options_ = menu->addAction(QStringLiteral("&Options..."));
+    QMenu* menu = editMenu->addMenu(QCoreApplication::translate("DimensionMenu", "&Dimensions"));
+    tool_ = menu->addAction(QCoreApplication::translate("DimensionMenu", "Dimension &Tool"));
+    options_ = menu->addAction(QCoreApplication::translate("DimensionMenu", "&Options..."));
     menu->addSeparator();
-    edit_ = menu->addAction(QStringLiteral("&Edit Selected Dimension..."));
-    delete_ = menu->addAction(QStringLiteral("&Delete Selected Dimension"));
+    edit_ = menu->addAction(QCoreApplication::translate("DimensionMenu", "&Edit Selected Dimension..."));
+    delete_ = menu->addAction(QCoreApplication::translate("DimensionMenu", "&Delete Selected Dimension"));
     QObject::connect(tool_, &QAction::triggered, menu, [this]() { window_.selectTool(viewmodel::ToolKind::Dimension); });
     QObject::connect(options_, &QAction::triggered, menu, [this]() { openOptions(); });
     QObject::connect(edit_, &QAction::triggered, menu, [this]() { openEdit(); });
@@ -441,7 +442,7 @@ std::string dimensionSelfTest(MainWindow& window) {
         custom->setText(QString(5000, QLatin1Char('x')));
         height->setText(QStringLiteral("4"));
         DIM_REQUIRE(!dialog.problem().empty(), "an over-long custom text was accepted");
-        custom->setText(QStringLiteral("TYP"));
+        custom->setText(QCoreApplication::translate("DimensionMenu", "TYP"));
         decimals->setValue(3);
         DIM_REQUIRE(dialog.problem().empty(), "valid entries were refused");
         window.dimensions()->applyToolOptions(dialog.options());
@@ -596,9 +597,9 @@ std::string dimensionSelfTest(MainWindow& window) {
         auto* decimals = dialog.findChild<QSpinBox*>(QStringLiteral("dimAngleDecimals"));
         auto* kind = dialog.findChild<QComboBox*>(QStringLiteral("dimKind"));
         DIM_REQUIRE(offset && reflex && decimals && kind && !kind->isEnabled(), "edit dialog widgets missing");
-        offset->setText(QStringLiteral("1e12"));
+        offset->setText(QCoreApplication::translate("DimensionMenu", "1e12"));
         DIM_REQUIRE(!dialog.problem().empty(), "a hostile offset was accepted");
-        offset->setText(QStringLiteral("inf"));
+        offset->setText(QCoreApplication::translate("DimensionMenu", "inf"));
         DIM_REQUIRE(!dialog.problem().empty(), "an infinite offset was accepted");
         offset->setText(QStringLiteral("25"));
         reflex->setChecked(false);
@@ -633,7 +634,7 @@ std::string dimensionSelfTest(MainWindow& window) {
         DIM_REQUIRE(doc.fonts().empty(), "a refused font was embedded");
         DIM_REQUIRE(dialog.addFontFile(good.fileName()).empty(), "a font file was refused");
         DIM_REQUIRE(doc.fonts().size() == 1, "the font was not embedded");
-        DIM_REQUIRE(dialog.addFontFile(QStringLiteral("/nonexistent/font.ttf")) != "", "a missing file was accepted");
+        DIM_REQUIRE(dialog.addFontFile(QCoreApplication::translate("DimensionMenu", "/nonexistent/font.ttf")) != "", "a missing file was accepted");
         DIM_REQUIRE(dialog.problem().empty(), "the dialog is not valid after adding a font");
         DIM_REQUIRE(window.dimensions()->applyEdit(id, dialog.options()), "choosing the font was refused");
         DIM_REQUIRE(dimOf(doc, id)->fontKey == doc.fonts().begin()->first, "the dimension does not use the font");
