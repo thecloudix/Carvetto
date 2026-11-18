@@ -1,4 +1,4 @@
-# ADR-0118: Windows installer (CPack NSIS)
+# ADR-0120: Windows installer (CPack NSIS)
 
 Date: 2026-11-17 · Status: accepted (T-0352)
 

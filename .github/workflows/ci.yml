@@ -370,7 +370,7 @@ jobs:
             build/app/cli/carvetto-cli.exe
           if-no-files-found: warn
 
-  # T-0352: Windows installer (CPack NSIS, ADR-0118). Separate from windows-app so the existing jobs
+  # T-0352: Windows installer (CPack NSIS, ADR-0120). Separate from windows-app so the existing jobs
   # are unaffected. Runs on main, on version tags, on demand, and on PRs from task/T-0352* branches
   # or labelled `packaging` (it is a long job; ordinary PRs skip it). It installs the artifact silently,
   # runs `carvetto --self-test` from the installed copy, then uninstalls and checks nothing is left.
@@ -434,7 +434,7 @@ jobs:
           $p = Start-Process -FilePath $setup -ArgumentList '/S', '/D=C:\carvetto-inst' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Host "::error title=Install failed::installer exit $($p.ExitCode)"; exit 1 }
           Get-ChildItem C:\carvetto-inst -Recurse -File | Measure-Object | ForEach-Object { Write-Host "$($_.Count) files installed" }
-          $need = 'bin\carvetto.exe', 'bin\carvetto-cli.exe', 'bin\Qt6Widgets.dll', 'bin\platforms\qwindows.dll', 'Uninstall.exe',
+          $need = 'bin\carvetto.exe', 'bin\carvetto-cli.exe', 'bin\Qt6Widgets.dll', 'plugins\platforms\qwindows.dll', 'bin\qt.conf', 'Uninstall.exe',
                   'share\carvetto\posts\grbl_mm.pp', 'share\carvetto\gadgets', 'share\carvetto\tooldb\starter_tools.json',
                   'share\carvetto\licenses\LICENSE', 'share\carvetto\licenses\THIRD_PARTY_NOTICES.md'
           $missing = $need | Where-Object { -not (Test-Path (Join-Path 'C:\carvetto-inst' $_)) }

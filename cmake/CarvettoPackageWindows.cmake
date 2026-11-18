@@ -1,10 +1,16 @@
-# T-0352: Windows installer (CPack NSIS, ADR-0118). Included only when WIN32 and the app is built.
+# T-0352: Windows installer (CPack NSIS, ADR-0120). Included only when WIN32 and the app is built.
 # Layout and shared rules: cmake/CarvettoInstall.cmake.
 
 # Qt DLLs, plugins and translations: Qt's deploy script runs windeployqt at install time.
 qt_generate_deploy_app_script(TARGET carvetto OUTPUT_SCRIPT carvetto_deploy_script
                               NO_UNSUPPORTED_PLATFORM_ERROR)
 install(SCRIPT ${carvetto_deploy_script})
+# windeployqt puts plugins/translations beside bin/ (plugins/platforms/...), and the deploy script writes
+# no qt.conf, so tell Qt where they are: paths are relative to the directory holding qt.conf.
+install(CODE [[
+  file(WRITE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/qt.conf"
+       "[Paths]\nPrefix = ..\nPlugins = plugins\nTranslations = translations\n")
+]])
 
 # MSVC runtime (VCRUNTIME/MSVCP/UCRT) beside the executables, so a clean machine needs no redistributable.
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)

@@ -75,7 +75,7 @@ if(CARVETTO_BUILD_APP)
   endif()
 endif()
 
-# T-0352: install rules (shared with Linux packaging) and the Windows installer (CPack NSIS, ADR-0118).
+# T-0352: install rules (shared with Linux packaging) and the Windows installer (CPack NSIS, ADR-0120).
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CarvettoInstall)
 if(WIN32 AND TARGET carvetto)
