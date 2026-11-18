@@ -37,6 +37,35 @@ def run(files, allow=None):
 
 
 class Compliance(unittest.TestCase):
+    FETCHED = {".fc-src/x-src/docs/log.txt": "about " + WORD + "\n",
+               ".fc-src/y-src/CMakeLists.txt": "FetchContent_Declare(googlebenchmark URL x)\n"}
+
+    def test_fetched_sources_skipped_in_walk(self):
+        code, out = run(self.FETCHED)
+        self.assertEqual(code, 0, out)
+
+    def test_fetched_sources_ignored_in_git_checkout(self):
+        with tempfile.TemporaryDirectory() as root:
+            files = {"LICENSE": "GPL\n", "THIRD_PARTY_NOTICES.md": "| Lua | 5.4 | MIT |\n",
+                     "CMakeLists.txt": CMAKE_OK, ".gitignore": "cache/\n",
+                     "cache/a/CMakeLists.txt": "FetchContent_Declare(zzz URL x)\n",
+                     "cache/a/t.txt": WORD + "\n"}
+            for rel, text in files.items():
+                full = os.path.join(root, rel)
+                os.makedirs(os.path.dirname(full), exist_ok=True)
+                with open(full, "w", encoding="utf-8") as fh:
+                    fh.write(text)
+            try:
+                subprocess.run(["git", "init", "-q", root], check=True)
+            except (OSError, subprocess.CalledProcessError):
+                self.skipTest("git unavailable")
+            r = subprocess.run([sys.executable, "-I", TOOL, "--root", root], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout)
+            with open(os.path.join(root, "own.txt"), "w") as fh:
+                fh.write(WORD + "\n")
+            r = subprocess.run([sys.executable, "-I", TOOL, "--root", root], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 1, r.stdout)
+
     def test_clean_tree_passes(self):
         rc, out = run({"docs/a.md": "A V-carve toolpath cuts a groove.\n"})
         self.assertEqual(rc, 0, out)
