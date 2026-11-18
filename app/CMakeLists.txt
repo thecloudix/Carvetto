@@ -15,6 +15,10 @@ configure_file(src/starter_tools_embedded.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/app
 
 qt_add_executable(carvetto
   src/main.cpp
+  src/localization.cpp
+  src/localization.hpp
+  src/l10n_self_test.cpp
+  src/l10n_self_test.hpp
   src/bitmap_decoder.cpp
   src/bitmap_decoder.hpp
   src/array_copy_menu.cpp
@@ -139,3 +143,19 @@ target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::W
 # Start-Process -Wait and redirected output. See ADR-0014.
 set_target_properties(carvetto PROPERTIES WIN32_EXECUTABLE ON)
 target_include_directories(carvetto PRIVATE src)
+
+# T-0350: translations. Catalogs live in app/translations/*.ts (lupdate: target `update_translations`);
+# the .qm files are built when Qt's LinguistTools are present and installed to share/carvetto/translations.
+# Without LinguistTools the app still runs in English (and the pseudo-locale), and the sample-catalog check
+# in --self-test is skipped.
+find_package(Qt6 COMPONENTS LinguistTools QUIET)
+if(Qt6LinguistTools_FOUND)
+  qt_add_translations(carvetto
+    TS_FILES translations/carvetto_de.ts
+    QM_FILES_OUTPUT_VARIABLE carvetto_qm_files)
+  target_compile_definitions(carvetto PRIVATE CARVETTO_TRANSLATIONS_DIR="${CMAKE_CURRENT_BINARY_DIR}"
+                                              CARVETTO_HAVE_SAMPLE_QM)
+  install(FILES ${carvetto_qm_files} DESTINATION share/carvetto/translations)
+else()
+  message(STATUS "Qt6 LinguistTools not found - translations are not built")
+endif()

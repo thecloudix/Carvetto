@@ -73,6 +73,14 @@ TEST_CASE("the field list matches the serialised keys exactly", "[viewmodel][pre
     CHECK(listed == stored);
 }
 
+TEST_CASE("every shipped language code is accepted", "[viewmodel][preferences][l10n]") {
+    for (const char* code : {"system", "en", "de", "pseudo"}) {
+        Preferences p;
+        p.language = code;
+        CHECK_FALSE(hasIssue(validate(p), "general/language"));
+    }
+}
+
 TEST_CASE("out-of-range values are refused", "[viewmodel][preferences]") {
     Preferences p;
     p.undoDepth = 5;

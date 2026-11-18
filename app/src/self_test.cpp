@@ -1,3 +1,4 @@
+#include "l10n_self_test.hpp"
 #include "self_test.hpp"
 
 #include <QApplication>
@@ -886,6 +887,11 @@ int runSelfTest() {
 
     // 9c6. Options dialog and preferences (T-0348).
     if (const std::string why = optionsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c7. Localization: pseudo-locale, English fallback, sample catalog (T-0350).
+    if (const std::string why = l10nSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

@@ -2,6 +2,7 @@
 #include "options_dialog.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QActionGroup>
 #include <QByteArray>
@@ -365,7 +366,7 @@ void MainWindow::buildDocks() {
 }
 
 void MainWindow::buildMenus() {
-    QMenu* file = menuBar()->addMenu(QStringLiteral("&File"));
+    QMenu* file = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&File"));
     QAction* newAction = file->addAction(QStringLiteral("&New Job..."));
     newAction->setShortcut(QKeySequence::New);
     connect(newAction, &QAction::triggered, this, [this]() { newJob(); });
@@ -427,7 +428,7 @@ void MainWindow::buildMenus() {
     connect(quitAction, &QAction::triggered, this, [this]() { close(); });
     rebuildRecentMenu();
 
-    QMenu* edit = menuBar()->addMenu(QStringLiteral("&Edit"));
+    QMenu* edit = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Edit"));
     undoAction_ = edit->addAction(QStringLiteral("&Undo"));
     undoAction_->setShortcut(QKeySequence::Undo);
     connect(undoAction_, &QAction::triggered, this, [this]() { undo(); });
@@ -459,7 +460,7 @@ void MainWindow::buildMenus() {
     variablesAction_->setObjectName(QStringLiteral("variablesAction"));
     connect(variablesAction_, &QAction::triggered, this, [this]() { variablesDialog(); });
 
-    QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
+    QMenu* view = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
     fit->setShortcut(QKeySequence(QStringLiteral("F4")));
     connect(fit, &QAction::triggered, this, [this]() { canvas_->zoomToMaterial(); });
@@ -490,7 +491,7 @@ void MainWindow::buildMenus() {
     connect(wrappedViewAction_, &QAction::toggled, this, [this](bool on) { setWrappedView(on); });
     modelView_->onWrappedToggled = [this](bool on) { setWrappedView(on); };
 
-    QMenu* setup = menuBar()->addMenu(QStringLiteral("&Setup"));
+    QMenu* setup = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Setup"));
     jobSetupAction_ = setup->addAction(QStringLiteral("&Job Setup..."));
     jobSetupAction_->setObjectName(QStringLiteral("jobSetupAction"));
     connect(jobSetupAction_, &QAction::triggered, this, [this]() { jobSetupDialog(); });
@@ -517,7 +518,7 @@ void MainWindow::buildMenus() {
 
     gadgets_ = std::make_unique<GadgetsMenu>(*this);
 
-    QMenu* help = menuBar()->addMenu(QStringLiteral("&Help"));
+    QMenu* help = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Help"));
     QAction* about = help->addAction(QStringLiteral("&About Carvetto"));
     connect(about, &QAction::triggered, this, [this]() {
         QMessageBox::about(this, QStringLiteral("About Carvetto"),

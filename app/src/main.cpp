@@ -6,7 +6,9 @@
 #include <QtGlobal>
 #include <cstring>
 
+#include "localization.hpp"
 #include "main_window.hpp"
+#include "options_dialog.hpp"
 #include "self_test.hpp"
 
 int main(int argc, char* argv[]) {
@@ -30,6 +32,12 @@ int main(int argc, char* argv[]) {
         return carvetto::app::runSelfTest();
     }
 
+    {
+        // The stored language applies before any window exists (the self-test keeps the source language).
+        carvetto::app::QSettingsPreferencesStore store;
+        const carvetto::viewmodel::Preferences stored = carvetto::viewmodel::deserialize(store.load());
+        carvetto::app::l10n::installLanguage(QString::fromStdString(stored.language));
+    }
     carvetto::app::MainWindow window;
     window.setPersistLayout(true);
     {

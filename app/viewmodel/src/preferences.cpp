@@ -206,8 +206,8 @@ bool colourFromString(const std::string& text, std::uint32_t& rgb) {
 
 std::vector<PrefIssue> validate(const Preferences& p, const PrefValidation& opts) {
     std::vector<PrefIssue> out;
-    if (p.language != "system" && p.language != "en") {
-        out.push_back({"general/language", "Choose System or English."});
+    if (p.language != "system" && p.language != "en" && p.language != "de" && p.language != "pseudo") {
+        out.push_back({"general/language", "Choose System, English, Deutsch or the pseudo-locale."});
     }
     if (p.undoDepth < kUndoMin || p.undoDepth > kUndoMax) {
         out.push_back({"editing/undoDepth", "Undo steps must be between 10 and 10000."});
