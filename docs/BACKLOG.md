@@ -1730,7 +1730,7 @@ Goal: Plate production / data merge from the feature inventory: a template job w
 Acceptance criteria:
   1. A 20-row CSV produces 20 plates with the right text/variables, laid out and toolpath-ready, as one undo step; malformed rows give line-numbered diagnostics; caps on rows and size; self-test drives it.
 
-### T-0348 Options dialog parity: a complete, persisted settings model and dialog   [status: verifying]
+### T-0348 Options dialog parity: a complete, persisted settings model and dialog   [status: done]
 Phase: 4   Module: app/viewmodel + app   Depends on: none
 Goal: Audit every user preference currently scattered across the app (units, grid and snap, colours, autosave, undo depth, default folders, simulation quality, display options, tool database paths, language placeholder) into one Qt-free Settings model with defaults, validation, versioned persistence (QSettings in the app only) and an Options dialog with categories and Restore Defaults. Existing ad hoc settings migrate to it.
 Acceptance criteria:
