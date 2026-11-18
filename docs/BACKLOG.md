@@ -1712,7 +1712,7 @@ Acceptance criteria:
 
 ## Phase 4 — Polish & Linux (cards written 2026-11-17 from docs/PLAN.md §4; owner: start automatically, drive to a completed stage)
 
-### T-0345 3D-view drawing: draw vectors on the model's zero plane from the 3D view   [status: in-progress]
+### T-0345 3D-view drawing: draw vectors on the model's zero plane from the 3D view   [status: verifying]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0299
 Goal: In the 3D (Model) view the user can draw the basic shapes (line, polyline, rectangle, circle, ellipse, polygon) by clicking on the zero plane through a ray-to-plane pick, creating ordinary document vectors in one undo step each. Qt-free ray/plane projection and a drawing controller in viewmodel; app wiring and --self-test steps.
 Acceptance criteria:
@@ -1742,7 +1742,7 @@ Goal: File > Print and Print Preview for the 2D design (scale to fit or true siz
 Acceptance criteria:
   1. A design larger than a page tiles correctly at 1:1 with registration marks; fit-to-page scales; print to PDF in --self-test produces the expected page count.
 
-### T-0350 Localization infrastructure: translatable strings, language option, pseudo-locale test   [status: in-progress]
+### T-0350 Localization infrastructure: translatable strings, language option, pseudo-locale test   [status: verifying]
 Phase: 4   Module: app + CMake + tools   Depends on: T-0348 (language setting) — may start the Qt-linguist plumbing first
 Goal: Qt Linguist plumbing: CMake lupdate/lrelease targets, translation loading with fallback to English, a language choice in Options, a pseudo-locale and a lint check that no new user-visible literal bypasses tr() in new code, plus one real sample translation as proof (own wording). Translations ship as .qm in the install.
 Acceptance criteria:
@@ -1754,13 +1754,13 @@ Goal: Mechanically wrap every user-visible string in the app in tr()/QCoreApplic
 Acceptance criteria:
   1. Pseudo-locale run shows no untranslated visible string in a scripted sweep of all menus and dialogs; full test suite green on Linux and Windows.
 
-### T-0352 Windows installer: package the app (installer, file association, uninstall) built in CI   [status: verifying — PR #220]
+### T-0352 Windows installer: package the app (installer, file association, uninstall) built in CI   [status: done]
 Phase: 4   Module: packaging + CI   Depends on: none
 Goal: A Windows installer (CPack with NSIS or WiX, whichever installs cleanly on the CI runner) bundling Qt via windeployqt, shipped posts, gadgets, starter tool database, translations and licences; .carv file association; Start-menu entry; clean uninstall. CI builds it as an artifact on main/tag; a smoke job installs silently and runs `carvetto --self-test`.
 Acceptance criteria:
   1. CI produces a Windows installer artifact whose installed app passes --self-test; uninstall removes everything it installed.
 
-### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: in-progress]
+### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: verifying — PR #221]
 Phase: 4   Module: packaging + CI   Depends on: none
 Goal: Linux packaging: install rules (binary, share/carvetto posts/gadgets/tooldb/translations), .desktop file, MIME type for .carv, icon set (own artwork), CPack DEB/RPM and an AppImage built in CI on Ubuntu 24.04; smoke job installs and runs --self-test offscreen.
 Acceptance criteria:
