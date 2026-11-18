@@ -15,6 +15,7 @@
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
+#include <array>
 #include <QPen>
 #include <QPolygonF>
 #include <QTransform>
@@ -686,6 +687,11 @@ ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(paren
         drawBox_->addItem(QCoreApplication::translate("ReliefPanels", "Draw: %1").arg(QString::fromUtf8(viewmodel::draw3DShapeName(sh))),
                           static_cast<int>(sh));
     }
+    // T-0346: edit the drawn vectors from the 3D view with the 2D select / node-edit tools.
+    drawBox_->addItem(QCoreApplication::translate("ReliefPanels", "Edit: select, move, scale, rotate"),
+                      static_cast<int>(viewmodel::Draw3DShape::Select));
+    drawBox_->addItem(QCoreApplication::translate("ReliefPanels", "Edit: nodes"),
+                      static_cast<int>(viewmodel::Draw3DShape::NodeEdit));
     connect(drawBox_, &QComboBox::activated, this, [this](int index) {
         const int v = drawBox_->itemData(index).toInt();
         setDrawShape(v < 0 ? std::nullopt : std::optional<viewmodel::Draw3DShape>(static_cast<viewmodel::Draw3DShape>(v)));
@@ -910,6 +916,9 @@ void ModelView3D::paintEvent(QPaintEvent*) {
         p.setPen(QPen(QColor(20, 20, 20), 1.0));
         p.drawPolygon(poly);
     }
+    if (drawShape_ && draw_.editing() && !showingWrapped()) {
+        paintEditHandles(p);
+    }
     if (drawShape_ && draw_.active() && !showingWrapped()) {
         const viewmodel::ToolPreview pv = draw_.preview();
         p.setRenderHint(QPainter::Antialiasing, true);
@@ -967,6 +976,60 @@ void ModelView3D::setDrawShape(std::optional<viewmodel::Draw3DShape> shape) {
     refresh();
 }
 
+void ModelView3D::paintEditHandles(QPainter& p) {
+    // The overlays of the 2D editing tools, draped on the zero plane (the selection box and its handles,
+    // or the nodes and Bezier handles of the vectors being edited).
+    const auto proj = [this](const geometry::Vec2& q) {
+        return viewmodel::projectModelPoint(surface_, camera_, options_, q.x, q.y, 0.0);
+    };
+    p.setRenderHint(QPainter::Antialiasing, true);
+    if (drawShape_ == viewmodel::Draw3DShape::Select) {
+        const auto box = draw_.tools().selectionHandles();
+        if (!box) {
+            return;
+        }
+        const geometry::Box2& b = box->boundsMm;
+        const std::array<geometry::Vec2, 4> corners{geometry::Vec2{b.min.x, b.min.y}, geometry::Vec2{b.max.x, b.min.y},
+                                                    geometry::Vec2{b.max.x, b.max.y}, geometry::Vec2{b.min.x, b.max.y}};
+        QPolygonF poly;
+        for (const geometry::Vec2& c : corners) {
+            if (const auto s = proj(c)) {
+                poly << QPointF(s->x, s->y);
+            }
+        }
+        p.setPen(QPen(QColor(220, 90, 0), 1.0, Qt::DashLine));
+        p.setBrush(Qt::NoBrush);
+        p.drawPolygon(poly);
+        p.setPen(QPen(QColor(20, 20, 20), 1.0));
+        p.setBrush(Qt::white);
+        for (const viewmodel::Handle& h : box->handles) {
+            if (const auto s = proj(h.positionMm)) {
+                p.drawRect(QRectF(s->x - 3.5, s->y - 3.5, 7.0, 7.0));
+            }
+        }
+        return;
+    }
+    for (const viewmodel::NodeHandle& h : draw_.tools().nodeEditor().handles()) {
+        const auto s = proj(h.positionMm);
+        if (!s) {
+            continue;
+        }
+        if (h.type == viewmodel::HandleType::Control) {
+            if (const auto a = proj(h.anchorMm)) {
+                p.setPen(QPen(QColor(120, 120, 120), 1.0));
+                p.drawLine(QPointF(a->x, a->y), QPointF(s->x, s->y));
+            }
+        }
+        p.setPen(QPen(QColor(20, 20, 20), 1.0));
+        p.setBrush(h.selected ? QColor(220, 90, 0) : QColor(255, 255, 255));
+        if (h.type == viewmodel::HandleType::Node) {
+            p.drawRect(QRectF(s->x - 3.5, s->y - 3.5, 7.0, 7.0));
+        } else {
+            p.drawEllipse(QPointF(s->x, s->y), 3.0, 3.0);
+        }
+    }
+}
+
 std::optional<viewmodel::ScreenPoint> ModelView3D::planePixel(double x, double y) {
     const viewmodel::Draw3DView v = drawView();
     return viewmodel::projectModelPoint(*v.surface, *v.camera, *v.options, x, y, 0.0);
@@ -983,7 +1046,7 @@ void ModelView3D::finishDrawEvent(const viewmodel::Draw3DResult& r) {
     setToolTip(drawMessage_.isEmpty()
                    ? QCoreApplication::translate("ReliefPanels", "Right-drag orbits, the wheel zooms, middle-drag or Ctrl+right-drag pans")
                    : drawMessage_);
-    if (r.tool.committed) {
+    if (r.tool.committed || r.tool.selectionChanged || r.tool.transformed) {
         if (onDrawCommitted) {
             onDrawCommitted();  // the window refreshes everything, this view included
         } else {
@@ -1079,10 +1142,12 @@ void ModelView3D::mouseMoveEvent(QMouseEvent* event) {
         mods.ctrl = event->modifiers() & Qt::ControlModifier;
         mods.alt = event->modifiers() & Qt::AltModifier;
         const viewmodel::Draw3DResult r = draw_.pointerMove(drawView(), event->pos().x() + 0.5, event->pos().y() + 0.5, mods);
-        if (draw_.active()) {
+        if (r.tool.transformed || r.tool.committed) {
+            refresh();  // an edit drag step: the vectors on the plane follow the pointer
+        }
+        if (draw_.active() || draw_.editing()) {
             update();
         }
-        (void)r;
         return;
     }
     if (painting_) {

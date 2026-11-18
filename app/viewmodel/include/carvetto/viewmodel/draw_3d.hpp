@@ -45,7 +45,10 @@ ModelSurface drawingSurface(const document::Document& doc, const ModelSurface& s
 /// flat model.
 std::vector<ModelPath> planeVectorPaths(const document::Document& doc, std::uint32_t colour = 0xFF1A5FB4u);
 
-enum class Draw3DShape { Line, Polyline, Rectangle, Circle, Ellipse, Polygon };
+/// The 3D view's pointer mode: a drawing shape, or (T-0346, ADR-0125) Select / NodeEdit, which edit the
+/// document's vectors through the very same `ToolController` select (move / scale / rotate handles) and
+/// node-edit tools the 2D canvas uses.
+enum class Draw3DShape { Line, Polyline, Rectangle, Circle, Ellipse, Polygon, Select, NodeEdit };
 const char* draw3DShapeName(Draw3DShape shape);
 
 /// What the 3D view shows the controller for each pointer event.
@@ -83,6 +86,8 @@ class Draw3DController {
     Draw3DResult key(ToolKey k);
 
     bool active() const { return tool_.active(); }
+    /// True for the editing modes (Select, NodeEdit) as opposed to drawing a shape.
+    bool editing() const { return shape_ == Draw3DShape::Select || shape_ == Draw3DShape::NodeEdit; }
     /// Draft outline in design millimetres (drape it on the plane with `projectModelPoint`).
     ToolPreview preview() const { return tool_.preview(); }
 
