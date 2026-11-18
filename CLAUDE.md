@@ -22,3 +22,10 @@ Hard rules:
 - No code or assets from proprietary CAM products. `docs/reference/` describes behaviour only.
 - One task per branch (`task/T-XXXX-slug`); tests ship with the code; `main` stays green.
 - Product decisions go to the project owner through the director, never guessed.
+
+## Worktrees and disk space
+- When a task's branch is merged (or the task is abandoned), remove its worktree:
+  `git worktree remove .claude/worktrees/<name>` then `git worktree prune`.
+- Before creating a new worktree, run `~/bin/prune-worktrees.sh`.
+- Don't create extra build-* directories; reuse the worktree's single build dir.
+- Keep no more than 25 worktrees at a time

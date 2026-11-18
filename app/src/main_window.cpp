@@ -80,6 +80,7 @@
 #include "clipart_panel.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
+#include "rotary_tools_dialogs.hpp"
 
 namespace carvetto::app {
 
@@ -494,6 +495,17 @@ void MainWindow::buildMenus() {
     materialSetupAction_ = setup->addAction(QStringLiteral("&Material Setup (rotary)..."));
     materialSetupAction_->setObjectName(QStringLiteral("materialSetupAction"));
     connect(materialSetupAction_, &QAction::triggered, this, [this]() { materialSetupDialog(); });
+    addRotaryToolsActions(*this, setup);
+    flutingLayoutAction_ = setup->addAction(QStringLiteral("Wrapped &Fluting Layout (rotary)..."));
+    flutingLayoutAction_->setObjectName(QStringLiteral("flutingLayoutAction"));
+    flutingLayoutAction_->setEnabled(false);
+    connect(flutingLayoutAction_, &QAction::triggered, this,
+            [this]() { rotaryLayoutDialog(viewmodel::RotaryLayoutKind::Fluting); });
+    spiralLayoutAction_ = setup->addAction(QStringLiteral("Wrapped &Spiral Layout (rotary)..."));
+    spiralLayoutAction_->setObjectName(QStringLiteral("spiralLayoutAction"));
+    spiralLayoutAction_->setEnabled(false);
+    connect(spiralLayoutAction_, &QAction::triggered, this,
+            [this]() { rotaryLayoutDialog(viewmodel::RotaryLayoutKind::Spiral); });
     toolSetupAction_ = setup->addAction(QStringLiteral("&Tools, Machines and Materials..."));
     toolSetupAction_->setObjectName(QStringLiteral("toolSetupAction"));
     connect(toolSetupAction_, &QAction::triggered, this, [this]() { toolSetupDialog(); });
@@ -664,6 +676,15 @@ void MainWindow::setWrappedView(bool on) {
 void MainWindow::documentChanged() {
     if (materialSetupAction_) {
         materialSetupAction_->setEnabled(session_.document().job().type == document::JobType::Rotary);
+    }
+    {
+        const bool rotary = session_.document().job().type == document::JobType::Rotary;
+        if (flutingLayoutAction_) {
+            flutingLayoutAction_->setEnabled(rotary);
+        }
+        if (spiralLayoutAction_) {
+            spiralLayoutAction_->setEnabled(rotary);
+        }
     }
     if (wrappedViewAction_) {
         wrappedViewAction_->setEnabled(viewmodel::RotaryViewState::available(session_.document().job()));

@@ -39,6 +39,10 @@ qt_add_executable(carvetto
   src/document_panels.hpp
   src/new_job_dialog.cpp
   src/new_job_dialog.hpp
+  src/rotary_layout_dialog.cpp
+  src/rotary_layout_dialog.hpp
+  src/rotary_layout_self_test.cpp
+  src/rotary_layout_self_test.hpp
   src/rotary_material_dialog.cpp
   src/rotary_material_dialog.hpp
   src/parts_import_dialog.cpp
@@ -48,6 +52,9 @@ qt_add_executable(carvetto
   src/rotary_post_dialog.hpp
   src/rotary_self_test.cpp
   src/rotary_self_test.hpp
+  src/rotary_tools_dialogs.cpp
+  src/rotary_tools_dialogs.hpp
+  src/rotary_tools_self_test.cpp
   src/wrapped_view_self_test.cpp
   src/wrapped_view_self_test.hpp
   src/node_edit_menu.cpp

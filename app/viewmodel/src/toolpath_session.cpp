@@ -469,8 +469,30 @@ ToolpathForm ToolpathSession::newForm(ToolpathOperation operation) {
         if (!current.base.objects.empty()) {
             form.setSelector(std::move(current));
         }
+        if (operation == ToolpathOperation::Fluting) {
+            if (const std::optional<double> depth = layoutFlutingDepth(doc_->selection().ids()); depth.has_value()) {
+                form.setField("fluteDepth", std::to_string(document::toDisplay(*depth, form.units())));
+            }
+        }
     }
     return form;
+}
+
+void ToolpathSession::setLayoutFlutingDepth(document::ObjectId layout, double depthMm) {
+    layoutObject_ = layout;
+    layoutDepth_ = depthMm;
+}
+
+std::optional<double> ToolpathSession::layoutFlutingDepth(const std::vector<document::ObjectId>& selection) const {
+    if (doc_ == nullptr || layoutObject_.isNull() || doc_->findObject(layoutObject_) == nullptr) {
+        return std::nullopt;
+    }
+    for (const document::ObjectId id : selection) {
+        if (id == layoutObject_) {
+            return layoutDepth_;
+        }
+    }
+    return std::nullopt;
 }
 
 ToolpathForm ToolpathSession::newProjectForm(ToolpathId source, bool tabs) {

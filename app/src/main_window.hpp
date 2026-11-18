@@ -18,6 +18,7 @@
 #include "carvetto/viewmodel/model_io.hpp"
 #include "carvetto/viewmodel/parts_import_form.hpp"
 #include "carvetto/viewmodel/preview_component.hpp"
+#include "carvetto/viewmodel/rotary_layout_form.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
 class QAction;
@@ -39,6 +40,7 @@ class LayersPanel;
 class PropertiesPanel;
 class SheetsPanel;
 class RulerWidget;
+class RotaryLayoutDialog;
 class CopiesMenu;
 class DoubleSidedMenu;
 class DimensionMenu;
@@ -128,6 +130,15 @@ class MainWindow : public QMainWindow {
     bool wrappedView() const { return wrappedView_; }
     /// Shows rotary jobs wrapped round the cylinder (Model view, simulation view) or flat.
     void setWrappedView(bool on);
+    /// Setup > Wrapped Fluting Layout... / Wrapped Spiral Layout... (T-0340), rotary jobs only. The dialog is modal and
+    /// previews on the wrapped Model view; OK adds the vectors as one undo step. `applyRotaryLayout` is that step
+    /// without the dialog (the self-test uses it after driving the dialog widgets).
+    QAction* flutingLayoutAction() const { return flutingLayoutAction_; }
+    QAction* spiralLayoutAction() const { return spiralLayoutAction_; }
+    void rotaryLayoutDialog(viewmodel::RotaryLayoutKind kind);
+    /// Builds the dialog for `kind` (not shown); the preview is drawn on the Model view while it lives.
+    RotaryLayoutDialog* makeRotaryLayoutDialog(viewmodel::RotaryLayoutKind kind);
+    bool applyRotaryLayout(const viewmodel::RotaryLayoutForm& form);
     QAction* toolSetupAction() const { return toolSetupAction_; }
     void jobSetupDialog();
     void materialSetupDialog();
@@ -246,6 +257,8 @@ class MainWindow : public QMainWindow {
     QAction* jobSetupAction_{nullptr};
     QAction* materialSetupAction_{nullptr};
     QAction* wrappedViewAction_{nullptr};
+    QAction* flutingLayoutAction_{nullptr};
+    QAction* spiralLayoutAction_{nullptr};
     bool wrappedView_{true};
     QAction* toolSetupAction_{nullptr};
     QAction* variablesAction_{nullptr};

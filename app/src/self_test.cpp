@@ -45,7 +45,9 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
+#include "rotary_layout_self_test.hpp"
 #include "rotary_self_test.hpp"
+#include "rotary_tools_dialogs.hpp"
 #include "wrapped_view_self_test.hpp"
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
@@ -861,6 +863,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9c2b. Rotary tools UI: Wrapping toggle, Vector Unwrapper, rotary 3D import (T-0341).
+    if (const std::string why = rotaryToolsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9c3. The Auto-Wrapping View of rotary jobs: toggle, Model view, wrapped simulation, post dialog (T-0334).
     if (const std::string why = wrappedViewSelfTest(window); !why.empty()) {
         return fail(why);
@@ -868,6 +875,11 @@ int runSelfTest() {
 
     // 9c4. Import Parts List: dialog, diagnostics, partial import, one undo step (T-0336).
     if (const std::string why = partsImportSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c5. Wrapped Fluting and Spiral layouts: dialogs, wrapped preview, one undo step, Fluting depth (T-0340).
+    if (const std::string why = rotaryLayoutSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

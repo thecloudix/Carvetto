@@ -1680,13 +1680,13 @@ Goal: main's windows-app job failed from T-0328 on with `toolpath_form.cpp : fat
 Acceptance criteria:
   1. windows-app CI job passes on the PR and on main.
 
-### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: verifying — PR #218 conflict]
+### T-0340 App dialogs for the Wrapped Fluting and Spiral layouts, Fluting depth from the layout and a wrapped-view preview (T-0322 follow-up)   [status: done]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0322, T-0334
 Goal: T-0322 delivered the tested Qt-free RotaryLayoutForm (Fluting and Spiral) but no Qt dialog, menu entry or self-test. Add the dialogs and menu entries for rotary jobs, let a following Fluting toolpath take its depth from the layout, preview the layouts in the wrapped view (needs T-0334), and drive it all from --self-test.
 Acceptance criteria:
   1. A rotary job can create fluting and spiral layouts from the UI as one undo step with a wrapped preview; self-test drives it.
 
-### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: verifying — PR #219 in CI]
+### T-0341 App UI for the Wrapping effect, Vector Unwrapper form and rotary 3D import dialog (T-0321 follow-up)   [status: done]
 Phase: 3   Module: app + app/viewmodel   Depends on: T-0321, T-0334
 Goal: T-0321 delivered the Wrapping level effect, unwrapCrossSection and meshToRotaryField with viewmodel actions but no Qt UI. Add the Wrapping toggle in the level effects UI (and enable Bake for a wrapping-only level in sculpt_panel.cpp), the Vector Unwrapper form, the rotary 3D import dialog (orientation, fit, axis movement), and self-test steps driving them; interactive rotation rings, the orientation gizmo, Resize material block and Reimport remain optional.
 Acceptance criteria:
@@ -1730,7 +1730,7 @@ Goal: Plate production / data merge from the feature inventory: a template job w
 Acceptance criteria:
   1. A 20-row CSV produces 20 plates with the right text/variables, laid out and toolpath-ready, as one undo step; malformed rows give line-numbered diagnostics; caps on rows and size; self-test drives it.
 
-### T-0348 Options dialog parity: a complete, persisted settings model and dialog   [status: in-progress]
+### T-0348 Options dialog parity: a complete, persisted settings model and dialog   [status: verifying]
 Phase: 4   Module: app/viewmodel + app   Depends on: none
 Goal: Audit every user preference currently scattered across the app (units, grid and snap, colours, autosave, undo depth, default folders, simulation quality, display options, tool database paths, language placeholder) into one Qt-free Settings model with defaults, validation, versioned persistence (QSettings in the app only) and an Options dialog with categories and Restore Defaults. Existing ad hoc settings migrate to it.
 Acceptance criteria:
@@ -1754,7 +1754,7 @@ Goal: Mechanically wrap every user-visible string in the app in tr()/QCoreApplic
 Acceptance criteria:
   1. Pseudo-locale run shows no untranslated visible string in a scripted sweep of all menus and dialogs; full test suite green on Linux and Windows.
 
-### T-0352 Windows installer: package the app (installer, file association, uninstall) built in CI   [status: in-progress]
+### T-0352 Windows installer: package the app (installer, file association, uninstall) built in CI   [status: verifying — PR #220]
 Phase: 4   Module: packaging + CI   Depends on: none
 Goal: A Windows installer (CPack with NSIS or WiX, whichever installs cleanly on the CI runner) bundling Qt via windeployqt, shipped posts, gadgets, starter tool database, translations and licences; .carv file association; Start-menu entry; clean uninstall. CI builds it as an artifact on main/tag; a smoke job installs silently and runs `carvetto --self-test`.
 Acceptance criteria:
@@ -1766,7 +1766,7 @@ Goal: Linux packaging: install rules (binary, share/carvetto posts/gadgets/toold
 Acceptance criteria:
   1. CI produces DEB and AppImage artifacts that pass --self-test; `carvetto` finds its shipped resources from the install prefix (shipped-gadgets path already supports ../share/carvetto).
 
-### T-0354 End-to-end acceptance: the PLAN.md §5 MVP scenario as an automated test   [status: in-progress]
+### T-0354 End-to-end acceptance: the PLAN.md §5 MVP scenario as an automated test   [status: done]
 Phase: 4   Module: core/tests + app/viewmodel/tests   Depends on: none
 Goal: Automate the MVP acceptance test: open a DXF, add text on a curve, pocket + profile with tabs, V-carve the text with a clearance tool, simulate, post to a shipped Grbl post, and check the G-code (golden file) and simulation result; add a 3D variant (import STL, rough + finish, post) and a rotary variant. Any defect found is fixed in this card or split into a card with a reproducer.
 Acceptance criteria:
@@ -1778,7 +1778,7 @@ Goal: Own-wording user documentation under docs/user/ (quick start, drawing, edi
 Acceptance criteria:
   1. Quick-start walks the MVP scenario with the real menu names (checked by a test that greps menu object names/labels against the doc); Help menu opens the bundled docs; clean-room lint passes.
 
-### T-0356 Compliance audit: clean-room scan, licences/NOTICE, dependency inventory   [status: in-progress]
+### T-0356 Compliance audit: clean-room scan, licences/NOTICE, dependency inventory   [status: done]
 Phase: 4   Module: tools + docs   Depends on: none
 Goal: A scripted audit run in ctest and CI: no third-party product/trademark names or proprietary formats in code, docs, UI strings, samples or changelog (allowlist for factual compatibility claims like the .pp post format); NOTICE/THIRD_PARTY file listing every bundled dependency (Lua, miniz, ...) with licence text; SPDX headers or a licence file check.
 Acceptance criteria:

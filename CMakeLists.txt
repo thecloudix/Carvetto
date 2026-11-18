@@ -46,6 +46,11 @@ if(CARVETTO_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_windows_names.py --root ${PROJECT_SOURCE_DIR})
     add_test(NAME lint.windows_names_unit
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_windows_names.py)
+    # T-0356: clean-room / licence compliance audit (ADR-0118).
+    add_test(NAME lint.compliance
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_compliance.py --root ${PROJECT_SOURCE_DIR})
+    add_test(NAME lint.compliance_unit
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_compliance.py)
   else()
     message(STATUS "Python 3 not found - skipping the changelog tool tests (CI still runs the check)")
   endif()

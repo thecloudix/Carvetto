@@ -89,6 +89,14 @@ Survivors, argued (equivalent):
 - The cancel polls between passes: with the flag never set the output is identical, as in ADR-0111; the poll at the
   start is tested.
 
+## Layout dialogs (T-0340)
+Setup > Wrapped Fluting Layout / Wrapped Spiral Layout open a modal `RotaryLayoutDialog` generated from
+`RotaryLayoutForm::fields()/choices()`; the dialog never touches the document. Each accepted entry recomputes the
+preview, which the Model view draws on the cylinder (`ModelView3D::setLayoutPreview`, accent colour) until the dialog
+closes; OK is disabled while the preview reports a problem. OK applies the form (one object, one undo step). The depth
+of a Fluting layout is remembered by the `ToolpathSession` (not saved in the file) for that layout object: a new Fluting
+toolpath form starts with it while the object is selected. Both menu entries are enabled only for rotary jobs.
+
 ## Readings for owner review
 Method semantics (item 2), the inscribed square blank and face angles (3), the unwinding rapids of the lifted raster
 (2), the twist-direction convention (7), the offset and seam policy (6), and the stepover of Radial being an arc distance.

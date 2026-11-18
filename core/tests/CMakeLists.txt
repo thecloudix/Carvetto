@@ -220,6 +220,7 @@ add_executable(carvetto_tests
   toolpath/v_carve_test.cpp
   toolpath/v_carve_post_test.cpp
   toolpath/v_carve_corner_test.cpp
+  e2e/acceptance_test.cpp
 )
 # carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
@@ -240,6 +241,7 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_TEXT_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/text"
   CARVETTO_SVG_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/svg"
   CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
+  CARVETTO_E2E_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/e2e"
   CARVETTO_CLI_DATA_DIR="${PROJECT_SOURCE_DIR}/app/cli/tests/data"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)

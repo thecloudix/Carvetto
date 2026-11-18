@@ -161,6 +161,13 @@ class ModelView3D : public QWidget {
     /// The picture is the wrapped one now.
     bool showingWrapped() const { return rotaryAvailable_ && wrappedRequested(); }
     std::function<void(bool)> onWrappedToggled;
+    /// A layout being set up (T-0340): its flat contours are drawn on the cylinder (rotary jobs) in an accent colour
+    /// until cleared. Not part of the document.
+    void setLayoutPreview(std::vector<geometry::Contour> contours);
+    void clearLayoutPreview();
+    bool hasLayoutPreview() const { return !layoutPreview_.empty(); }
+    /// Number of path runs of the vectors/toolpaths/preview drawn on the wrapped cylinder now (self-test).
+    std::size_t wrappedPathRuns() const;
 
     /// Reference image laid over the model on the design plane at the model's top, drawn with
     /// `opacity` (0..1) (T-0309). It is a plane drawn over the surface, not occluded by it.
@@ -215,6 +222,7 @@ class ModelView3D : public QWidget {
     viewmodel::RotaryViewState rotaryView_;
     bool rotaryAvailable_{false};
     std::vector<viewmodel::ModelPath> wrappedPaths_;
+    std::vector<geometry::Contour> layoutPreview_;
 };
 
 }  // namespace carvetto::app
