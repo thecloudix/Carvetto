@@ -1718,7 +1718,7 @@ Goal: In the 3D (Model) view the user can draw the basic shapes (line, polyline,
 Acceptance criteria:
   1. A rectangle and a circle drawn in the 3D view appear as document vectors at the picked plane coordinates; undo removes each; picks off the plane or in wrapped rotary view are refused; self-test drives it.
 
-### T-0346 3D-view editing: move, scale and node-edit vectors from the 3D view   [status: blocked — waits on T-0345]
+### T-0346 3D-view editing: move, scale and node-edit vectors from the 3D view   [status: in-progress]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0345
 Goal: Select, move, scale, rotate and node-edit vectors directly in the 3D view using the same ray/plane pick, reusing the 2D editing commands (no duplicate geometry code). One undo step per drag.
 Acceptance criteria:
@@ -1736,7 +1736,7 @@ Goal: Audit every user preference currently scattered across the app (units, gri
 Acceptance criteria:
   1. One Options dialog edits all persisted preferences; invalid values are refused; restore defaults works; settings survive a restart (self-test round trip); no preference remains outside the model (audit list in the ADR).
 
-### T-0349 Printing: print the design, the toolpath preview and the job sheet, with print preview and tiling   [status: ready]
+### T-0349 Printing: print the design, the toolpath preview and the job sheet, with print preview and tiling   [status: in-progress]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0259
 Goal: File > Print and Print Preview for the 2D design (scale to fit or true size with tiling over pages), the toolpath preview, and the job sheet (existing HTML and PDF export reused). Qt-free page-layout/tiling model in viewmodel; QPrinter use in app only; PDF output path for headless self-test.
 Acceptance criteria:
@@ -1772,7 +1772,7 @@ Goal: Automate the MVP acceptance test: open a DXF, add text on a curve, pocket 
 Acceptance criteria:
   1. The three scenarios run in ctest headless and deterministically; golden files documented; defects found are fixed or carded.
 
-### T-0355 User documentation: guide, quick start, in-app help and reference index   [status: ready]
+### T-0355 User documentation: guide, quick start, in-app help and reference index   [status: in-progress]
 Phase: 4   Module: docs + app   Depends on: none
 Goal: Own-wording user documentation under docs/user/ (quick start, drawing, editing, toolpaths, 3D relief, rotary, laser, gadgets, posts and machines, FAQ), an in-app Help menu opening it (offline, bundled), and an index linking the ADR/post/gadget guides. No third-party product names.
 Acceptance criteria:
@@ -1784,7 +1784,7 @@ Goal: A scripted audit run in ctest and CI: no third-party product/trademark nam
 Acceptance criteria:
   1. Audit passes on main and fails on an injected violation (test); THIRD_PARTY lists all FetchContent/bundled deps with licences.
 
-### T-0357 Robustness: autosave and crash recovery, large-file and low-memory behaviour   [status: ready]
+### T-0357 Robustness: autosave and crash recovery, large-file and low-memory behaviour   [status: in-progress]
 Phase: 4   Module: app/viewmodel + app + core/document   Depends on: T-0348
 Goal: Autosave to a recovery file at an interval from Options, recovery prompt after an unclean exit, atomic save (write temp, fsync, rename) with backup of the previous file, and graceful refusal (not crash) on files/operations exceeding documented caps. Fuzz-style tests on .carv loading with truncated/corrupt files.
 Acceptance criteria:
