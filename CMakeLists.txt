@@ -56,6 +56,11 @@ if(CARVETTO_BUILD_TESTS)
       add_test(NAME packaging.linux_install
         COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_linux_install.py ${CMAKE_BINARY_DIR})
     endif()
+    # T-0350: no new user-visible literal may bypass tr() (ratchet baseline, emptied by T-0351).
+    add_test(NAME lint.tr_literals
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_tr_literals.py --root ${PROJECT_SOURCE_DIR})
+    add_test(NAME lint.tr_literals_unit
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_tr_literals.py)
   else()
     message(STATUS "Python 3 not found - skipping the changelog tool tests (CI still runs the check)")
   endif()

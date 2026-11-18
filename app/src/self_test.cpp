@@ -1,3 +1,4 @@
+#include "l10n_self_test.hpp"
 #include "self_test.hpp"
 
 #include <QApplication>
@@ -45,10 +46,12 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
+#include "plate_production_self_test.hpp"
 #include "rotary_layout_self_test.hpp"
 #include "rotary_self_test.hpp"
 #include "rotary_tools_dialogs.hpp"
 #include "wrapped_view_self_test.hpp"
+#include "draw_3d_self_test.hpp"
 #include "options_self_test.hpp"
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
@@ -874,6 +877,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9c3b. Drawing vectors on the zero plane of the 3D view (T-0345).
+    if (const std::string why = draw3dSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9c4. Import Parts List: dialog, diagnostics, partial import, one undo step (T-0336).
     if (const std::string why = partsImportSelfTest(window); !why.empty()) {
         return fail(why);
@@ -884,8 +892,18 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9c5b. Plate Production (data merge): dialog, 20 plates, one undo step (T-0347).
+    if (const std::string why = plateProductionSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9c6. Options dialog and preferences (T-0348).
     if (const std::string why = optionsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c7. Localization: pseudo-locale, English fallback, sample catalog (T-0350).
+    if (const std::string why = l10nSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "localization.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/viewmodel/double_sided_ops.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
@@ -186,6 +187,10 @@ void MainWindow::applyPreferences(const viewmodel::Preferences& p) {
         if (i >= 0) {
             combo->setCurrentIndex(i);
         }
+    }
+    if (!first && p.language != before.language) {
+        // New dialogs and menus built from now on use the language; open windows keep theirs until restart.
+        l10n::installLanguage(QString::fromStdString(p.language));
     }
     if (!first && persistLayout_ && p.toolDatabasePath != before.toolDatabasePath) {
         loadUserSetup(QString::fromStdString(toolpaths_->activeMachineId()));

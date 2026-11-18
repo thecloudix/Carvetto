@@ -1,6 +1,7 @@
 #include "options_dialog.hpp"
 
 #include <QCheckBox>
+#include <QCoreApplication>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -76,7 +77,7 @@ bool QSettingsPreferencesStore::save(const viewmodel::PrefKeyValues& values) {
 }
 
 OptionsDialog::OptionsDialog(const Preferences& initial, QWidget* parent) : QDialog(parent), base_(initial) {
-    setWindowTitle(QStringLiteral("Options"));
+    setWindowTitle(QCoreApplication::translate("OptionsDialog", "Options"));
     setObjectName(QStringLiteral("optionsDialog"));
     build();
     setPreferences(initial);
@@ -108,19 +109,21 @@ void OptionsDialog::build() {
         QFormLayout* form = forms[f.category];
         if (key == "general/units") {
             auto* c = new QComboBox(this);
-            c->addItem(QStringLiteral("Millimetres"), QStringLiteral("mm"));
-            c->addItem(QStringLiteral("Inches"), QStringLiteral("in"));
+            c->addItem(QCoreApplication::translate("OptionsDialog", "Millimetres"), QStringLiteral("mm"));
+            c->addItem(QCoreApplication::translate("OptionsDialog", "Inches"), QStringLiteral("in"));
             editor = c;
         } else if (key == "general/language") {
             auto* c = new QComboBox(this);
-            c->addItem(QStringLiteral("System default"), QStringLiteral("system"));
-            c->addItem(QStringLiteral("English"), QStringLiteral("en"));
+            c->addItem(QCoreApplication::translate("OptionsDialog", "System default"), QStringLiteral("system"));
+            c->addItem(QCoreApplication::translate("OptionsDialog", "English"), QStringLiteral("en"));
+            c->addItem(QStringLiteral("Deutsch"), QStringLiteral("de"));  // endonym: shown in its own language
+            c->addItem(QCoreApplication::translate("OptionsDialog", "Pseudo-locale (test)"), QStringLiteral("pseudo"));
             editor = c;
         } else if (key == "simulation/quality") {
             auto* c = new QComboBox(this);
-            c->addItem(QStringLiteral("Coarse"), QStringLiteral("coarse"));
-            c->addItem(QStringLiteral("Medium"), QStringLiteral("medium"));
-            c->addItem(QStringLiteral("Fine"), QStringLiteral("fine"));
+            c->addItem(QCoreApplication::translate("OptionsDialog", "Coarse"), QStringLiteral("coarse"));
+            c->addItem(QCoreApplication::translate("OptionsDialog", "Medium"), QStringLiteral("medium"));
+            c->addItem(QCoreApplication::translate("OptionsDialog", "Fine"), QStringLiteral("fine"));
             editor = c;
         } else if (key.rfind("colours/", 0) == 0) {
             auto* b = new QPushButton(this);
@@ -143,12 +146,12 @@ void OptionsDialog::build() {
                 auto* h = new QHBoxLayout(row);
                 h->setContentsMargins(0, 0, 0, 0);
                 h->addWidget(e, 1);
-                auto* browse = new QPushButton(QStringLiteral("Browse..."), row);
+                auto* browse = new QPushButton(QCoreApplication::translate("OptionsDialog", "Browse..."), row);
                 h->addWidget(browse);
                 connect(browse, &QPushButton::clicked, this, [this, e, isFolder]() {
                     const QString picked =
-                        isFolder ? QFileDialog::getExistingDirectory(this, QStringLiteral("Choose folder"), e->text())
-                                 : QFileDialog::getSaveFileName(this, QStringLiteral("Tool database file"), e->text(),
+                        isFolder ? QFileDialog::getExistingDirectory(this, QCoreApplication::translate("OptionsDialog", "Choose folder"), e->text())
+                                 : QFileDialog::getSaveFileName(this, QCoreApplication::translate("OptionsDialog", "Tool database file"), e->text(),
                                                                 QStringLiteral("Tool database (*.json);;All files (*)"));
                     if (!picked.isEmpty()) {
                         e->setText(picked);
@@ -168,7 +171,7 @@ void OptionsDialog::build() {
     error_->setWordWrap(true);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    restore_ = buttons->addButton(QStringLiteral("Restore Defaults"), QDialogButtonBox::ResetRole);
+    restore_ = buttons->addButton(QCoreApplication::translate("OptionsDialog", "Restore Defaults"), QDialogButtonBox::ResetRole);
     restore_->setObjectName(QStringLiteral("optionsRestore"));
     connect(restore_, &QPushButton::clicked, this, [this]() { restoreDefaults(); });
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() { tryAccept(); });

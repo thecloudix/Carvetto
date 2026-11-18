@@ -1712,19 +1712,19 @@ Acceptance criteria:
 
 ## Phase 4 — Polish & Linux (cards written 2026-11-17 from docs/PLAN.md §4; owner: start automatically, drive to a completed stage)
 
-### T-0345 3D-view drawing: draw vectors on the model's zero plane from the 3D view   [status: in-progress]
+### T-0345 3D-view drawing: draw vectors on the model's zero plane from the 3D view   [status: done]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0299
 Goal: In the 3D (Model) view the user can draw the basic shapes (line, polyline, rectangle, circle, ellipse, polygon) by clicking on the zero plane through a ray-to-plane pick, creating ordinary document vectors in one undo step each. Qt-free ray/plane projection and a drawing controller in viewmodel; app wiring and --self-test steps.
 Acceptance criteria:
   1. A rectangle and a circle drawn in the 3D view appear as document vectors at the picked plane coordinates; undo removes each; picks off the plane or in wrapped rotary view are refused; self-test drives it.
 
-### T-0346 3D-view editing: move, scale and node-edit vectors from the 3D view   [status: blocked — waits on T-0345]
+### T-0346 3D-view editing: move, scale and node-edit vectors from the 3D view   [status: in-progress]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0345
 Goal: Select, move, scale, rotate and node-edit vectors directly in the 3D view using the same ray/plane pick, reusing the 2D editing commands (no duplicate geometry code). One undo step per drag.
 Acceptance criteria:
   1. Dragging a selected vector in the 3D view moves it exactly as the 2D canvas does; node edit works; undo; self-test drives it.
 
-### T-0347 Plate production: data merge (CSV rows into a template with variables, one plate per row)   [status: in-progress]
+### T-0347 Plate production: data merge (CSV rows into a template with variables, one plate per row)   [status: done]
 Phase: 4   Module: core/io + app/viewmodel + app   Depends on: T-0257
 Goal: Plate production / data merge from the feature inventory: a template job with document variables and text fields is replicated once per CSV row (column to variable mapping, serial-number sequences, per-row text), laid out on sheets or output as one toolpath file per plate. Bounded and deterministic; clean-room, generic CSV, own UI copy. Qt-free engine and form, then a dialog and self-test.
 Acceptance criteria:
@@ -1736,13 +1736,13 @@ Goal: Audit every user preference currently scattered across the app (units, gri
 Acceptance criteria:
   1. One Options dialog edits all persisted preferences; invalid values are refused; restore defaults works; settings survive a restart (self-test round trip); no preference remains outside the model (audit list in the ADR).
 
-### T-0349 Printing: print the design, the toolpath preview and the job sheet, with print preview and tiling   [status: ready]
+### T-0349 Printing: print the design, the toolpath preview and the job sheet, with print preview and tiling   [status: in-progress]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0259
 Goal: File > Print and Print Preview for the 2D design (scale to fit or true size with tiling over pages), the toolpath preview, and the job sheet (existing HTML and PDF export reused). Qt-free page-layout/tiling model in viewmodel; QPrinter use in app only; PDF output path for headless self-test.
 Acceptance criteria:
   1. A design larger than a page tiles correctly at 1:1 with registration marks; fit-to-page scales; print to PDF in --self-test produces the expected page count.
 
-### T-0350 Localization infrastructure: translatable strings, language option, pseudo-locale test   [status: in-progress]
+### T-0350 Localization infrastructure: translatable strings, language option, pseudo-locale test   [status: done]
 Phase: 4   Module: app + CMake + tools   Depends on: T-0348 (language setting) — may start the Qt-linguist plumbing first
 Goal: Qt Linguist plumbing: CMake lupdate/lrelease targets, translation loading with fallback to English, a language choice in Options, a pseudo-locale and a lint check that no new user-visible literal bypasses tr() in new code, plus one real sample translation as proof (own wording). Translations ship as .qm in the install.
 Acceptance criteria:
@@ -1754,13 +1754,13 @@ Goal: Mechanically wrap every user-visible string in the app in tr()/QCoreApplic
 Acceptance criteria:
   1. Pseudo-locale run shows no untranslated visible string in a scripted sweep of all menus and dialogs; full test suite green on Linux and Windows.
 
-### T-0352 Windows installer: package the app (installer, file association, uninstall) built in CI   [status: verifying — PR #220]
+### T-0352 Windows installer: package the app (installer, file association, uninstall) built in CI   [status: done]
 Phase: 4   Module: packaging + CI   Depends on: none
 Goal: A Windows installer (CPack with NSIS or WiX, whichever installs cleanly on the CI runner) bundling Qt via windeployqt, shipped posts, gadgets, starter tool database, translations and licences; .carv file association; Start-menu entry; clean uninstall. CI builds it as an artifact on main/tag; a smoke job installs silently and runs `carvetto --self-test`.
 Acceptance criteria:
   1. CI produces a Windows installer artifact whose installed app passes --self-test; uninstall removes everything it installed.
 
-### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: in-progress]
+### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: verifying — PR #221]
 Phase: 4   Module: packaging + CI   Depends on: none
 Goal: Linux packaging: install rules (binary, share/carvetto posts/gadgets/tooldb/translations), .desktop file, MIME type for .carv, icon set (own artwork), CPack DEB/RPM and an AppImage built in CI on Ubuntu 24.04; smoke job installs and runs --self-test offscreen.
 Acceptance criteria:
@@ -1772,7 +1772,7 @@ Goal: Automate the MVP acceptance test: open a DXF, add text on a curve, pocket 
 Acceptance criteria:
   1. The three scenarios run in ctest headless and deterministically; golden files documented; defects found are fixed or carded.
 
-### T-0355 User documentation: guide, quick start, in-app help and reference index   [status: ready]
+### T-0355 User documentation: guide, quick start, in-app help and reference index   [status: in-progress]
 Phase: 4   Module: docs + app   Depends on: none
 Goal: Own-wording user documentation under docs/user/ (quick start, drawing, editing, toolpaths, 3D relief, rotary, laser, gadgets, posts and machines, FAQ), an in-app Help menu opening it (offline, bundled), and an index linking the ADR/post/gadget guides. No third-party product names.
 Acceptance criteria:
@@ -1784,7 +1784,7 @@ Goal: A scripted audit run in ctest and CI: no third-party product/trademark nam
 Acceptance criteria:
   1. Audit passes on main and fails on an injected violation (test); THIRD_PARTY lists all FetchContent/bundled deps with licences.
 
-### T-0357 Robustness: autosave and crash recovery, large-file and low-memory behaviour   [status: ready]
+### T-0357 Robustness: autosave and crash recovery, large-file and low-memory behaviour   [status: in-progress]
 Phase: 4   Module: app/viewmodel + app + core/document   Depends on: T-0348
 Goal: Autosave to a recovery file at an interval from Options, recovery prompt after an unclean exit, atomic save (write temp, fsync, rename) with backup of the previous file, and graceful refusal (not crash) on files/operations exceeding documented caps. Fuzz-style tests on .carv loading with truncated/corrupt files.
 Acceptance criteria:

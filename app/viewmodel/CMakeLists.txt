@@ -53,6 +53,7 @@ add_library(carvetto_viewmodel STATIC
   src/units_format.cpp
   src/canvas_scene.cpp
   src/array_copies.cpp
+  src/data_merge.cpp
   src/pixel_probe.cpp
   src/new_job_form.cpp
   src/rotary_material.cpp
@@ -77,6 +78,7 @@ add_library(carvetto_viewmodel STATIC
   src/rotary_layout_form.cpp
   src/texture_form.cpp
   src/tiling_form.cpp
+  src/draw_3d.cpp
 )
 find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)

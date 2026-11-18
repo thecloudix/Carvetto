@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "carvetto/document/ids.hpp"
+#include "carvetto/viewmodel/draw_3d.hpp"
 #include "carvetto/viewmodel/model_view.hpp"
 #include "carvetto/viewmodel/wrapped_view.hpp"
 #include "carvetto/viewmodel/relief_tree.hpp"
@@ -148,6 +149,18 @@ class ModelView3D : public QWidget {
     std::function<void(std::optional<relief::Point>, BrushPhase)> onBrush;
     /// Design-space point of the model under the widget position `pos`.
     std::optional<relief::Point> pickAt(QPoint pos);
+
+    /// Drawing in the 3D view (T-0345): with a shape set, left-click or left-drag on the zero plane draws it
+    /// as an ordinary document vector (one undo step); Enter / double-click finish a polyline, Escape cancels.
+    /// `onDrawCommitted` is called after each vector is added so the window can refresh.
+    void setDrawShape(std::optional<viewmodel::Draw3DShape> shape);
+    std::optional<viewmodel::Draw3DShape> drawShape() const { return drawShape_; }
+    viewmodel::Draw3DController& drawController() { return draw_; }
+    std::function<void()> onDrawCommitted;
+    /// Widget position of the zero-plane point (x, y) mm (self-test); nullopt without a surface.
+    std::optional<viewmodel::ScreenPoint> planePixel(double x, double y);
+    /// Last refusal message of a draw pick (empty when none); shown as the view's tooltip.
+    const QString& drawMessage() const { return drawMessage_; }
     viewmodel::OrbitCamera& camera() { return camera_; }
     void cameraChanged();
 
@@ -196,6 +209,8 @@ class ModelView3D : public QWidget {
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void leaveEvent(QEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
@@ -203,8 +218,15 @@ class ModelView3D : public QWidget {
 
    private:
     void invalidate();
+    viewmodel::Draw3DView drawView();
+    void finishDrawEvent(const viewmodel::Draw3DResult& r);
 
     DocumentGetter getter_;
+    viewmodel::Draw3DController draw_;
+    std::optional<viewmodel::Draw3DShape> drawShape_;
+    bool drawing_{false};
+    QString drawMessage_;
+    QComboBox* drawBox_{nullptr};
     viewmodel::ModelSurface surface_;
     viewmodel::OrbitCamera camera_;
     viewmodel::ModelRenderOptions options_;

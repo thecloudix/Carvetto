@@ -145,6 +145,7 @@ add_executable(carvetto_tests
   document/carv_v_carve_record_test.cpp
   io/dxf_import_test.cpp
   io/dxf_export_test.cpp
+  io/delimited_test.cpp
   io/dxf_curves_test.cpp
   io/dxf_fuzz_test.cpp
   io/bitmap_trace_test.cpp
