@@ -63,6 +63,7 @@ class GadgetsMenu;
 class VectorOpsMenu;
 class TraceBitmapMenu;
 class TextureMenu;
+class PrintController;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
 /// docked panels (Design, Sheets, Layers, Components, Library on the left; Toolpaths on the
@@ -96,6 +97,8 @@ class MainWindow : public QMainWindow {
     TraceBitmapMenu* traceBitmap() const { return traceBitmap_.get(); }
     /// Edit > Create Vector Texture (T-0254).
     TextureMenu* textureMenu() const { return textureMenu_.get(); }
+    /// File > Print, Print Preview, Print to PDF (T-0349).
+    PrintController* printing() const { return printing_.get(); }
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
@@ -280,6 +283,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<TraceBitmapMenu> traceBitmap_;
     std::unique_ptr<TextureMenu> textureMenu_;
+    std::unique_ptr<PrintController> printing_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;
     std::unique_ptr<GadgetsMenu> gadgets_;

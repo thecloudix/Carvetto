@@ -27,6 +27,10 @@ qt_add_executable(carvetto
   src/double_sided_menu.hpp
   src/array_copy_menu.hpp
   src/main_window.cpp
+  src/print_support.cpp
+  src/print_support.hpp
+  src/print_self_test.cpp
+  src/print_self_test.hpp
   src/gadget_dialogs.cpp
   src/gadget_dialogs.hpp
   src/gadgets_menu.cpp
@@ -148,6 +152,15 @@ target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJEC
                                                 CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
                                                 CARVETTO_USER_DOCS_DIR="${PROJECT_SOURCE_DIR}/docs/user")
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
+# T-0349: printing. PDF output needs only Qt Gui (QPdfWriter); QPrinter, the print dialog and the preview dialog
+# need Qt PrintSupport, which is optional: without it Print... and Print Preview... are disabled.
+find_package(Qt6 COMPONENTS PrintSupport QUIET)
+if(Qt6PrintSupport_FOUND)
+  target_link_libraries(carvetto PRIVATE Qt6::PrintSupport)
+  target_compile_definitions(carvetto PRIVATE CARVETTO_HAVE_PRINTSUPPORT)
+else()
+  message(STATUS "Qt6 PrintSupport not found - printing to PDF only")
+endif()
 # GUI subsystem on Windows (no console window). CI waits for `--self-test` with
 # Start-Process -Wait and redirected output. See ADR-0014.
 set_target_properties(carvetto PROPERTIES WIN32_EXECUTABLE ON)

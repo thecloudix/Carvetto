@@ -57,6 +57,7 @@
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
 #include "job_sheet_self_test.hpp"
+#include "print_self_test.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
 #include "modelling_panel.hpp"
@@ -1156,6 +1157,11 @@ int runSelfTest() {
 
     // 14. Create Job Sheet (T-0259): HTML, text and PDF files, hostile paths refused.
     if (const std::string why = jobSheetSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 14b. Printing (T-0349): fit-to-page and tiled PDFs, job sheet, refusals.
+    if (const std::string why = printSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

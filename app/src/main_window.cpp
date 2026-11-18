@@ -65,6 +65,7 @@
 #include "node_edit_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "preview_panel.hpp"
+#include "print_support.hpp"
 #include "properties_panel.hpp"
 #include "modelling_panel.hpp"
 #include "sculpt_panel.hpp"
@@ -388,6 +389,7 @@ void MainWindow::buildMenus() {
     createJobSheetAction_ = file->addAction(QStringLiteral("Create &Job Sheet..."));
     createJobSheetAction_->setObjectName(QStringLiteral("createJobSheetAction"));
     connect(createJobSheetAction_, &QAction::triggered, this, [this]() { createJobSheetDialog(); });
+    printing_ = std::make_unique<PrintController>(*this, file);
     file->addSeparator();
     QAction* importAction = file->addAction(QStringLiteral("&Import DXF..."));
     importAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+I")));
