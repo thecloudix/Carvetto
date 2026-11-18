@@ -317,3 +317,18 @@ TEST_CASE("wrapped paths: vectors and toolpaths in flat machine coordinates", "[
     CHECK(paths[0].runs[0].front().z == Approx(15.0));
     CHECK(wrappedVectorPaths(doc).empty());
 }
+
+TEST_CASE("T-0340: wrappedContourPaths draws flat contours at the cylinder surface", "[wrapped][rotary]") {
+    const document::Job job = document::Job::rotary(60, 20, document::Units::Millimetres);
+    CHECK(wrappedContourPaths({}, job).empty());
+    std::vector<geometry::Contour> contours{geometry::Contour::rectangle(geometry::Box2{{10, 10}, {50, 30}}),
+                                            geometry::Contour{}};
+    const std::vector<ModelPath> paths = wrappedContourPaths(contours, job, 0xFF112233u);
+    REQUIRE(paths.size() == 1);
+    CHECK(paths[0].colour == 0xFF112233u);
+    REQUIRE(paths[0].runs.size() == 1);  // the empty contour is skipped
+    const auto& run = paths[0].runs[0];
+    CHECK(run.size() == 5);  // closed: the first point is repeated
+    CHECK(run.front().x == run.back().x);
+    CHECK(run.front().z == Approx(job.rotarySurfaceZ()));
+}

@@ -18,6 +18,8 @@
 #include "carvetto/viewmodel/variables_model.hpp"
 #include "main_window.hpp"
 #include "new_job_dialog.hpp"
+#include "relief_panels.hpp"
+#include "rotary_layout_dialog.hpp"
 #include "rotary_material_dialog.hpp"
 #include "tool_setup_dialog.hpp"
 #include "variables_dialog.hpp"
@@ -128,6 +130,63 @@ void MainWindow::loadUserSetup(const QString& activeMachine) {
     if (!message.empty() && !quiet_) {
         QMessageBox::warning(this, QStringLiteral("Tool setup"), toQ(message));
     }
+}
+
+}  // namespace carvetto::app
+
+namespace carvetto::app {
+
+RotaryLayoutDialog* MainWindow::makeRotaryLayoutDialog(viewmodel::RotaryLayoutKind kind) {
+    document::Document& doc = session_.document();
+    if (doc.job().type != document::JobType::Rotary) {
+        return nullptr;
+    }
+    viewmodel::RotaryLayoutForm form(kind, doc.job().displayUnits);
+    form.startFrom(doc);
+    auto* dialog = new RotaryLayoutDialog(
+        std::move(form),
+        [this](const viewmodel::RotaryLayoutForm& f) { return f.preview(session_.document()); }, this);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    // The wrapped Model view shows the vectors while the dialog is open.
+    ModelView3D* view = modelView_;
+    dialog->setPreviewSink([view](const viewmodel::RotaryLayoutPreview& p) {
+        if (p.ok) {
+            view->setLayoutPreview(p.contours);
+        } else {
+            view->clearLayoutPreview();
+        }
+    });
+    connect(dialog, &QObject::destroyed, this, [view]() { view->clearLayoutPreview(); });
+    return dialog;
+}
+
+void MainWindow::rotaryLayoutDialog(viewmodel::RotaryLayoutKind kind) {
+    RotaryLayoutDialog* dialog = makeRotaryLayoutDialog(kind);
+    if (dialog == nullptr) {
+        return;
+    }
+    if (dialog->exec() == QDialog::Accepted) {
+        applyRotaryLayout(dialog->form());
+    }
+    delete dialog;
+}
+
+bool MainWindow::applyRotaryLayout(const viewmodel::RotaryLayoutForm& form) {
+    document::Document& doc = session_.document();
+    const viewmodel::RotaryLayoutResult result = form.apply(doc);
+    if (!result.ok) {
+        if (!quiet_) {
+            QMessageBox::warning(this, QStringLiteral("Rotary layout"), toQ(result.message));
+        }
+        return false;
+    }
+    modelView_->clearLayoutPreview();
+    if (form.kind() == viewmodel::RotaryLayoutKind::Fluting && result.created.has_value()) {
+        // A Fluting toolpath on this layout takes its depth from it.
+        toolpaths_->session().setLayoutFlutingDepth(*result.created, form.flutingParams(doc).depth);
+    }
+    documentChanged();
+    return true;
 }
 
 }  // namespace carvetto::app

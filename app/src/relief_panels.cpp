@@ -686,6 +686,8 @@ void ModelView3D::refresh() {
         wrappedPaths_ = viewmodel::wrappedVectorPaths(*d);
         std::vector<viewmodel::ModelPath> tp = viewmodel::wrappedToolpathPaths(d->toolpaths());
         wrappedPaths_.insert(wrappedPaths_.end(), std::make_move_iterator(tp.begin()), std::make_move_iterator(tp.end()));
+        std::vector<viewmodel::ModelPath> lp = viewmodel::wrappedContourPaths(layoutPreview_, d->job());
+        wrappedPaths_.insert(wrappedPaths_.end(), std::make_move_iterator(lp.begin()), std::make_move_iterator(lp.end()));
     }
     if (previewing_) {
         surface_ = previewSurface_;
@@ -732,6 +734,26 @@ void ModelView3D::clearPreview() {
         previewing_ = false;
         refresh();
     }
+}
+
+void ModelView3D::setLayoutPreview(std::vector<geometry::Contour> contours) {
+    layoutPreview_ = std::move(contours);
+    refresh();
+}
+
+void ModelView3D::clearLayoutPreview() {
+    if (!layoutPreview_.empty()) {
+        layoutPreview_.clear();
+        refresh();
+    }
+}
+
+std::size_t ModelView3D::wrappedPathRuns() const {
+    std::size_t n = 0;
+    for (const viewmodel::ModelPath& p : wrappedPaths_) {
+        n += p.runs.size();
+    }
+    return n;
 }
 
 void ModelView3D::setWrapped(bool on) {

@@ -7,6 +7,7 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/job.hpp"
 #include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/cylinder_map.hpp"
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/simulate/stock.hpp"
@@ -75,6 +76,9 @@ WrappedSurface wrappedBlankCylinder(const document::Job& job);
 
 /// The visible vector contours on the active sheet as flat paths at the cylinder surface (z = `job` surface Z).
 std::vector<ModelPath> wrappedVectorPaths(const document::Document& doc, std::uint32_t colour = 0xFF1A5FB4u);
+/// Flat contours (a layout still being set up, T-0340) as one path at the cylinder surface of `job`, drawn in `colour`.
+std::vector<ModelPath> wrappedContourPaths(const std::vector<geometry::Contour>& contours, const document::Job& job,
+                                           std::uint32_t colour = 0xFFE08000u);
 /// The cutting moves of every record with moves, in machine coordinates (arcs split into chords of at most
 /// `arcStepRad`), one path per record with colours cycling; rapids break a run.
 std::vector<ModelPath> wrappedToolpathPaths(const std::vector<document::ToolpathRecord>& records,

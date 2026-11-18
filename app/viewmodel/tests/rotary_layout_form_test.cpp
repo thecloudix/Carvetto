@@ -196,3 +196,35 @@ TEST_CASE("layout forms: the target layer, locked layers and reset", "[rotary][l
     RotaryLayoutForm spiral(RotaryLayoutKind::Spiral, Units::Millimetres);
     CHECK(find(spiral.fields(), "strands")->text == "1");
 }
+
+TEST_CASE("T-0340: a Fluting toolpath form takes its depth from the selected layout", "[rotary][layout][session]") {
+    Document doc(Job::rotary(120.0, 40.0, Units::Millimetres));
+    ToolpathSession session(&doc);
+    RotaryLayoutForm form(RotaryLayoutKind::Fluting, Units::Millimetres);
+    form.startFrom(doc);
+    REQUIRE(form.setField("depth", "3.5").ok);
+    const RotaryLayoutResult made = form.apply(doc);
+    REQUIRE(made.ok);
+    REQUIRE(made.created.has_value());
+    const auto depthOf = [&]() {
+        const ToolpathForm f = session.newForm(document::ToolpathOperation::Fluting);
+        return std::get<toolpath::FlutingParams>(f.definition().params).fluteDepth;
+    };
+    const double dflt = [&]() {
+        doc.selection().clear();
+        return depthOf();
+    }();
+    CHECK(dflt != Approx(3.5));
+    // Not remembered until the owner records it; then only with the layout selected.
+    doc.selection().assign({*made.created});
+    CHECK(depthOf() == Approx(dflt));
+    session.setLayoutFlutingDepth(*made.created, 3.5);
+    CHECK(depthOf() == Approx(3.5));
+    doc.selection().clear();
+    CHECK(depthOf() == Approx(dflt));
+    // Other operations are untouched and a deleted layout is forgotten.
+    doc.selection().assign({*made.created});
+    CHECK(session.layoutFlutingDepth(doc.selection().ids()).has_value());
+    REQUIRE(doc.undo());
+    CHECK_FALSE(session.layoutFlutingDepth({*made.created}).has_value());
+}
