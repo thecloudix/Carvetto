@@ -1712,7 +1712,7 @@ Acceptance criteria:
 
 ## Phase 4 — Polish & Linux (cards written 2026-11-17 from docs/PLAN.md §4; owner: start automatically, drive to a completed stage)
 
-### T-0345 3D-view drawing: draw vectors on the model's zero plane from the 3D view   [status: verifying]
+### T-0345 3D-view drawing: draw vectors on the model's zero plane from the 3D view   [status: done]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0299
 Goal: In the 3D (Model) view the user can draw the basic shapes (line, polyline, rectangle, circle, ellipse, polygon) by clicking on the zero plane through a ray-to-plane pick, creating ordinary document vectors in one undo step each. Qt-free ray/plane projection and a drawing controller in viewmodel; app wiring and --self-test steps.
 Acceptance criteria:
@@ -1724,7 +1724,7 @@ Goal: Select, move, scale, rotate and node-edit vectors directly in the 3D view 
 Acceptance criteria:
   1. Dragging a selected vector in the 3D view moves it exactly as the 2D canvas does; node edit works; undo; self-test drives it.
 
-### T-0347 Plate production: data merge (CSV rows into a template with variables, one plate per row)   [status: in-progress]
+### T-0347 Plate production: data merge (CSV rows into a template with variables, one plate per row)   [status: done]
 Phase: 4   Module: core/io + app/viewmodel + app   Depends on: T-0257
 Goal: Plate production / data merge from the feature inventory: a template job with document variables and text fields is replicated once per CSV row (column to variable mapping, serial-number sequences, per-row text), laid out on sheets or output as one toolpath file per plate. Bounded and deterministic; clean-room, generic CSV, own UI copy. Qt-free engine and form, then a dialog and self-test.
 Acceptance criteria:
@@ -1742,7 +1742,7 @@ Goal: File > Print and Print Preview for the 2D design (scale to fit or true siz
 Acceptance criteria:
   1. A design larger than a page tiles correctly at 1:1 with registration marks; fit-to-page scales; print to PDF in --self-test produces the expected page count.
 
-### T-0350 Localization infrastructure: translatable strings, language option, pseudo-locale test   [status: verifying]
+### T-0350 Localization infrastructure: translatable strings, language option, pseudo-locale test   [status: done]
 Phase: 4   Module: app + CMake + tools   Depends on: T-0348 (language setting) — may start the Qt-linguist plumbing first
 Goal: Qt Linguist plumbing: CMake lupdate/lrelease targets, translation loading with fallback to English, a language choice in Options, a pseudo-locale and a lint check that no new user-visible literal bypasses tr() in new code, plus one real sample translation as proof (own wording). Translations ship as .qm in the install.
 Acceptance criteria:
