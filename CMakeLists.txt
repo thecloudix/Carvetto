@@ -74,3 +74,10 @@ if(CARVETTO_BUILD_APP)
     message(STATUS "Qt6 not found - skipping the desktop app (core and tests still build)")
   endif()
 endif()
+
+# T-0352: install rules (shared with Linux packaging) and the Windows installer (CPack NSIS, ADR-0120).
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(CarvettoInstall)
+if(WIN32 AND TARGET carvetto)
+  include(CarvettoPackageWindows)
+endif()
