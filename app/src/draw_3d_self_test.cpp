@@ -12,6 +12,7 @@
 
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/object.hpp"
+#include "carvetto/geometry/box2.hpp"
 #include "main_window.hpp"
 #include "relief_panels.hpp"
 
@@ -88,8 +89,61 @@ std::string draw3dSelfTest(MainWindow& window) {
                    "the circle is not at the picked plane coordinates");
     }
 
-    // Undo removes each, one at a time.
+    // Editing from the 3D view (T-0346): drop the circle, then select, move and node-edit the rectangle.
     D3_REQUIRE(doc.undo() && doc.objects().size() == 1, "undo did not remove the circle");
+    window.documentChanged();
+    view->camera().viewTop();
+    view->cameraChanged();
+    const auto bounds = [&doc]() {
+        const document::Object& o = doc.objects().begin()->second;
+        geometry::Box2 box = o.asVector()->contours.front().bounds();
+        for (const geometry::Contour& contour : o.asVector()->contours) {
+            box.expand(contour.bounds());
+        }
+        return box;
+    };
+    const auto dragPlane = [&](double x0, double y0, double x1, double y1) -> bool {
+        const auto p0 = view->planePixel(x0, y0);
+        const auto p1 = view->planePixel(x1, y1);
+        if (!p0 || !p1) {
+            return false;
+        }
+        mouse(view, QEvent::MouseMove, {p0->x, p0->y}, Qt::NoButton, Qt::NoButton);
+        mouse(view, QEvent::MouseButtonPress, {p0->x, p0->y}, Qt::LeftButton, Qt::LeftButton);
+        mouse(view, QEvent::MouseMove, {0.5 * (p0->x + p1->x), 0.5 * (p0->y + p1->y)}, Qt::NoButton, Qt::LeftButton);
+        mouse(view, QEvent::MouseMove, {p1->x, p1->y}, Qt::NoButton, Qt::LeftButton);
+        mouse(view, QEvent::MouseButtonRelease, {p1->x, p1->y}, Qt::LeftButton, Qt::NoButton);
+        return true;
+    };
+    view->setDrawShape(viewmodel::Draw3DShape::Select);
+    doc.selection().clear();
+    const geometry::Box2 b0 = bounds();
+    D3_REQUIRE(dragPlane(b0.min.x, 0.5 * (b0.min.y + b0.max.y), b0.min.x, 0.5 * (b0.min.y + b0.max.y)),
+               "the rectangle edge has no screen position");
+    D3_REQUIRE(doc.selection().size() == 1, "a click in the 3D view did not select the vector");
+    const std::size_t stepsBefore = doc.undoStack().index();
+    const double cx = 0.5 * (b0.min.x + b0.max.x), cy = 0.5 * (b0.min.y + b0.max.y);
+    D3_REQUIRE(dragPlane(cx, cy, cx + 30.0, cy + 10.0), "the move drag has no screen position");
+    const geometry::Box2 b1 = bounds();
+    D3_REQUIRE(near(b1.min.x, b0.min.x + 30.0) && near(b1.min.y, b0.min.y + 10.0) &&
+                   near(b1.max.x - b1.min.x, b0.max.x - b0.min.x),
+               "dragging the selection in the 3D view did not move it by the pointer delta");
+    D3_REQUIRE(doc.undoStack().index() == stepsBefore + 1, "the move drag was not one undo step");
+    D3_REQUIRE(doc.undo() && near(bounds().min.x, b0.min.x), "undo did not restore the position");
+
+    view->setDrawShape(viewmodel::Draw3DShape::NodeEdit);
+    D3_REQUIRE(dragPlane(b0.min.x, 0.5 * (b0.min.y + b0.max.y), b0.min.x, 0.5 * (b0.min.y + b0.max.y)) &&
+                   doc.selection().size() == 1,
+               "node edit did not pick the vector");
+    const std::size_t nodeBefore = doc.undoStack().index();
+    D3_REQUIRE(dragPlane(b0.max.x, b0.max.y, b0.max.x + 20.0, b0.max.y + 15.0), "the node drag has no screen position");
+    const geometry::Box2 b2 = bounds();
+    D3_REQUIRE(near(b2.max.x, b0.max.x + 20.0) && near(b2.max.y, b0.max.y + 15.0) && near(b2.min.x, b0.min.x),
+               "node edit in the 3D view did not move the corner node");
+    D3_REQUIRE(doc.undoStack().index() == nodeBefore + 1, "the node drag was not one undo step");
+    D3_REQUIRE(doc.undo() && near(bounds().max.x, b0.max.x), "undo did not restore the node");
+
+    // Undo removes the rectangle.
     D3_REQUIRE(doc.undo() && doc.objects().empty(), "undo did not remove the rectangle");
     window.documentChanged();
 

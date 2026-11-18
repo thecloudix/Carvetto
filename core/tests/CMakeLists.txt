@@ -123,6 +123,7 @@ add_executable(carvetto_tests
   geometry/offset_unnested_hole_test.cpp
   geometry/hole_nesting_test.cpp
   document/carv_io_test.cpp
+  document/atomic_file_test.cpp
   document/carv_extras_member_test.cpp
   document/carv_toolpath_test.cpp
   document/carv_storage_residuals_test.cpp

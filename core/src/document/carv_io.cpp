@@ -1,5 +1,7 @@
 #include "carvetto/document/carv_io.hpp"
 
+#include "carvetto/document/atomic_file.hpp"
+
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -6079,28 +6081,9 @@ CarvStatus saveCarv(const Document& doc, const std::filesystem::path& path, cons
     if (!bytes) {
         return bytes.error();
     }
-    std::filesystem::path tmp = path;
-    tmp += ".tmp";
-    {
-        std::ofstream file(tmp, std::ios::binary | std::ios::trunc);
-        if (!file) {
-            return CarvError{CarvError::Code::Io, "cannot open '" + tmp.string() + "' for writing"};
-        }
-        const auto& data = bytes.value();
-        file.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
-        file.close();
-        if (!file) {
-            std::error_code ignored;
-            std::filesystem::remove(tmp, ignored);
-            return CarvError{CarvError::Code::Io, "cannot write '" + tmp.string() + "'"};
-        }
-    }
-    std::error_code ec;
-    std::filesystem::rename(tmp, path, ec);
-    if (ec) {
-        std::error_code ignored;
-        std::filesystem::remove(tmp, ignored);
-        return CarvError{CarvError::Code::Io, "cannot replace '" + path.string() + "': " + ec.message()};
+    std::string why;
+    if (!writeFileAtomic(path, bytes.value(), why)) {
+        return CarvError{CarvError::Code::Io, why};
     }
     return std::monostate{};
 }

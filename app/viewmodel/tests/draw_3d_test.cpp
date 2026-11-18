@@ -12,6 +12,7 @@
 using namespace carvetto;
 using namespace carvetto::document;
 using namespace carvetto::viewmodel;
+using carvetto::geometry::Box2;
 using Catch::Approx;
 
 namespace {
@@ -207,4 +208,109 @@ TEST_CASE("drawingSurface gives an empty job a plane and planeVectorPaths lists 
     REQUIRE(paths.size() == 1);
     CHECK(paths[0].runs.size() == 1);
     CHECK(paths[0].runs[0].front().z == 0.0);
+}
+
+namespace {
+
+Box2 vectorBounds(const Document& doc) {
+    REQUIRE(doc.objects().size() == 1);
+    const auto* v = doc.objects().begin()->second.asVector();
+    REQUIRE(v != nullptr);
+    Box2 b = v->contours.front().bounds();
+    for (const auto& c : v->contours) {
+        b.expand(c.bounds());
+    }
+    return b;
+}
+
+void click(Fixture& f, double x, double y) {
+    const ScreenPoint s = f.screen(x, y);
+    f.draw.pointerMove(f.view(), s.x, s.y);
+    f.draw.pointerPress(f.view(), s.x, s.y);
+    f.draw.pointerRelease(f.view(), s.x, s.y);
+}
+
+}  // namespace
+
+TEST_CASE("a selected vector is moved by dragging in the 3D view like on the 2D canvas", "[viewmodel][draw3d]") {
+    Fixture f;
+    f.draw.setShape(Draw3DShape::Rectangle);
+    REQUIRE(f.drag(20.0, 30.0, 80.0, 70.0).tool.committed);
+    f.draw.setShape(Draw3DShape::Select);
+    CHECK(f.draw.editing());
+    f.doc.selection().clear();
+    click(f, 20.0, 50.0);  // on the left edge
+    REQUIRE(f.doc.selection().size() == 1);
+    const std::size_t before = f.doc.undoStack().count();
+    // Drag the centre handle by (+30, +10) mm from a tilted view.
+    f.camera.azimuthRad = 0.7;
+    const Draw3DResult r = f.drag(50.0, 50.0, 80.0, 60.0);
+    CHECK(r.refused == false);
+    const Box2 b = vectorBounds(f.doc);
+    CHECK(b.min.x == Approx(50.0).margin(1e-6));
+    CHECK(b.min.y == Approx(40.0).margin(1e-6));
+    CHECK(b.max.x == Approx(110.0).margin(1e-6));
+    CHECK(b.max.y == Approx(80.0).margin(1e-6));
+    CHECK(f.doc.undoStack().count() == before + 1);  // the whole drag is one undo step
+    REQUIRE(f.doc.undo());
+    const Box2 b0 = vectorBounds(f.doc);
+    CHECK(b0.min.x == Approx(20.0).margin(1e-6));
+    CHECK(b0.max.y == Approx(70.0).margin(1e-6));
+}
+
+TEST_CASE("a corner handle scales the selection in the 3D view", "[viewmodel][draw3d]") {
+    Fixture f;
+    f.draw.setShape(Draw3DShape::Rectangle);
+    REQUIRE(f.drag(20.0, 30.0, 80.0, 70.0).tool.committed);
+    f.draw.setShape(Draw3DShape::Select);
+    f.doc.selection().clear();
+    click(f, 20.0, 50.0);
+    REQUIRE(f.doc.selection().size() == 1);
+    const std::size_t before = f.doc.undoStack().count();
+    f.drag(80.0, 70.0, 140.0, 110.0);  // top-right corner handle: width 60 -> 120, height 40 -> 80
+    const Box2 b = vectorBounds(f.doc);
+    CHECK((b.max.x - b.min.x) == Approx(120.0).margin(1e-6));
+    CHECK((b.max.y - b.min.y) == Approx(80.0).margin(1e-6));
+    CHECK(f.doc.undoStack().count() == before + 1);
+}
+
+TEST_CASE("node editing from the 3D view moves one node in one undo step; Escape reverts", "[viewmodel][draw3d]") {
+    Fixture f;
+    f.draw.setShape(Draw3DShape::Rectangle);
+    REQUIRE(f.drag(20.0, 30.0, 80.0, 70.0).tool.committed);
+    f.draw.setShape(Draw3DShape::NodeEdit);
+    REQUIRE(f.draw.editing());
+    f.doc.selection().clear();
+    click(f, 20.0, 50.0);  // picks the object
+    REQUIRE(f.doc.selection().size() == 1);
+    const std::size_t before = f.doc.undoStack().count();
+    f.drag(80.0, 70.0, 100.0, 90.0);
+    const Box2 b = vectorBounds(f.doc);
+    CHECK(b.max.x == Approx(100.0).margin(1e-6));
+    CHECK(b.max.y == Approx(90.0).margin(1e-6));
+    CHECK(b.min.x == Approx(20.0).margin(1e-6));
+    CHECK(f.doc.undoStack().count() == before + 1);
+    REQUIRE(f.doc.undo());
+    CHECK(vectorBounds(f.doc).max.x == Approx(80.0).margin(1e-6));
+
+    // Escape during a drag restores the geometry exactly.
+    const ScreenPoint a = f.screen(80.0, 70.0), c = f.screen(120.0, 100.0);
+    f.draw.pointerMove(f.view(), a.x, a.y);
+    f.draw.pointerPress(f.view(), a.x, a.y);
+    f.draw.pointerMove(f.view(), c.x, c.y);
+    CHECK(vectorBounds(f.doc).max.x == Approx(120.0).margin(1e-6));
+    f.draw.key(ToolKey::Escape);
+    CHECK(vectorBounds(f.doc).max.x == Approx(80.0).margin(1e-6));
+}
+
+TEST_CASE("editing in the wrapped or edge-on 3D view is refused", "[viewmodel][draw3d]") {
+    Fixture f;
+    f.draw.setShape(Draw3DShape::Rectangle);
+    REQUIRE(f.drag(20.0, 30.0, 80.0, 70.0).tool.committed);
+    f.draw.setShape(Draw3DShape::Select);
+    const ScreenPoint a = f.screen(50.0, 50.0);
+    CHECK(f.draw.pointerPress(f.view(true), a.x, a.y).refused);
+    f.camera.viewFront();
+    CHECK(f.draw.pointerPress(f.view(), 300, 240).refused);
+    CHECK(f.doc.objects().size() == 1);
 }

@@ -54,6 +54,7 @@ add_executable(carvetto_viewmodel_tests
   new_job_form_test.cpp
   rotary_material_test.cpp
   file_session_test.cpp
+  recovery_test.cpp
   node_edit_fuzz_test.cpp
   node_edit_test.cpp
   node_ops_test.cpp
@@ -92,6 +93,7 @@ add_executable(carvetto_viewmodel_tests
   texture_form_test.cpp
   rotary_layout_form_test.cpp
   toolpath_rounding_test.cpp
+  print_layout_test.cpp
 )
 # The toolpath tests drive carvetto-cli in process (cli::run) to compare its records with the session's.
 target_link_libraries(carvetto_viewmodel_tests PRIVATE carvetto::viewmodel Catch2::Catch2WithMain carvetto_warnings)

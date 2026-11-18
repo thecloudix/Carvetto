@@ -128,6 +128,8 @@ const char* draw3DShapeName(Draw3DShape shape) {
         case Draw3DShape::Circle: return "Circle";
         case Draw3DShape::Ellipse: return "Ellipse";
         case Draw3DShape::Polygon: return "Polygon";
+        case Draw3DShape::Select: return "Select";
+        case Draw3DShape::NodeEdit: return "Edit nodes";
     }
     return "";
 }
@@ -138,6 +140,8 @@ ToolKind toolFor(Draw3DShape s) {
     switch (s) {
         case Draw3DShape::Line:
         case Draw3DShape::Polyline: return ToolKind::Polyline;
+        case Draw3DShape::Select: return ToolKind::Select;
+        case Draw3DShape::NodeEdit: return ToolKind::NodeEdit;
         case Draw3DShape::Rectangle: return ToolKind::Rectangle;
         case Draw3DShape::Circle: return ToolKind::Circle;
         case Draw3DShape::Ellipse: return ToolKind::Ellipse;

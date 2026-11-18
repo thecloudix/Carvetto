@@ -226,7 +226,7 @@ void CanvasWidget::cancelPick() {
 }
 
 void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSize size) const {
-    painter.fillRect(QRectF(QPointF(0.0, 0.0), QSizeF(size)), canvasBackground());
+    painter.fillRect(QRectF(QPointF(0.0, 0.0), QSizeF(size)), printMode_ ? QColor(Qt::white) : canvasBackground());
     if (doc_ == nullptr) {
         return;
     }
@@ -237,7 +237,7 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
 
     if (!scene.materialPx.isEmpty()) {
         const QRectF material = toQt(scene.materialPx);
-        painter.fillRect(material, materialFill());
+        painter.fillRect(material, printMode_ ? QColor(Qt::white) : materialFill());
         QPen outline(QColor(120, 120, 120));
         outline.setWidthF(1.0);
         outline.setCosmetic(true);
@@ -388,25 +388,13 @@ QColor previewPenColour(const viewmodel::PreviewStyle& style) {
     return QColor(c.r, c.g, c.b, style.played ? 255 : 80);
 }
 
-}  // namespace
-
-void CanvasWidget::renderPreviewRange(QImage& layer, const ViewTransform& view, std::size_t from, std::size_t to,
-                                      bool played) const {
-    viewmodel::PreviewDrawOptions options;
-    options.fromMove = from;
-    options.toMove = to;
-    options.played = played;
-    options.classVisible = previewState_.classVisible;
-    options.maxPointsOut = 400000;  // bounds per-frame stroking cost; beyond it chunks draw as single strokes
-    const viewmodel::PreviewDrawList list = preview_->draw(view, options);
-    lastPreviewPoints_ += list.stats.pointsOut;
-    QPainter p(&layer);
-    p.setRenderHint(QPainter::Antialiasing, displayOptions().antialiasing && list.stats.pointsOut < 150000);
+void strokePreviewList(QPainter& p, const viewmodel::PreviewDrawList& list, bool antialias, double penScale) {
+    p.setRenderHint(QPainter::Antialiasing, antialias);
     std::vector<QPointF> buffer;
     for (const viewmodel::PreviewBatch& batch : list.batches) {
         QPen pen(previewPenColour(batch.style));
         pen.setCosmetic(true);
-        pen.setWidthF(batch.style.highlighted ? 2.5 : 1.0);
+        pen.setWidthF((batch.style.highlighted ? 2.5 : 1.0) * penScale);
         pen.setCapStyle(Qt::RoundCap);
         pen.setJoinStyle(Qt::RoundJoin);
         if (batch.style.cls == viewmodel::MoveClass::Rapid) {
@@ -424,7 +412,7 @@ void CanvasWidget::renderPreviewRange(QImage& layer, const ViewTransform& view, 
         for (const std::uint32_t len : batch.runLengths) {
             if (len == 1) {
                 QPen dot = pen;
-                dot.setWidthF(batch.style.highlighted ? 5.0 : 3.5);
+                dot.setWidthF((batch.style.highlighted ? 5.0 : 3.5) * penScale);
                 dot.setStyle(Qt::SolidLine);
                 p.setPen(dot);
                 p.drawPoint(buffer[at]);
@@ -435,6 +423,36 @@ void CanvasWidget::renderPreviewRange(QImage& layer, const ViewTransform& view, 
             at += len;
         }
     }
+}
+
+}  // namespace
+
+void CanvasWidget::renderPreviewRange(QImage& layer, const ViewTransform& view, std::size_t from, std::size_t to,
+                                      bool played) const {
+    viewmodel::PreviewDrawOptions options;
+    options.fromMove = from;
+    options.toMove = to;
+    options.played = played;
+    options.classVisible = previewState_.classVisible;
+    options.maxPointsOut = 400000;  // bounds per-frame stroking cost; beyond it chunks draw as single strokes
+    const viewmodel::PreviewDrawList list = preview_->draw(view, options);
+    lastPreviewPoints_ += list.stats.pointsOut;
+    QPainter p(&layer);
+    strokePreviewList(p, list, displayOptions().antialiasing && list.stats.pointsOut < 150000, 1.0);
+}
+
+void CanvasWidget::paintForPrint(QPainter& painter, const ViewTransform& view, QSize size, bool withToolpaths) const {
+    printMode_ = true;
+    paintScene(painter, view, size);
+    printMode_ = false;
+    if (!withToolpaths || preview_ == nullptr || !preview_->enabled() || preview_->scene().totalMoves == 0) {
+        return;
+    }
+    viewmodel::PreviewDrawOptions options;
+    options.classVisible = previewState_.classVisible;
+    options.maxPointsOut = 2000000;
+    const viewmodel::PreviewDrawList list = preview_->draw(view, options);
+    strokePreviewList(painter, list, true, 1.0);
 }
 
 void CanvasWidget::paintPreview(QPainter& painter, const ViewTransform& view, QSize size) const {

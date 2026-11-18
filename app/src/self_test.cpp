@@ -1,3 +1,4 @@
+#include "help_viewer.hpp"
 #include "l10n_self_test.hpp"
 #include "self_test.hpp"
 
@@ -53,9 +54,11 @@
 #include "wrapped_view_self_test.hpp"
 #include "draw_3d_self_test.hpp"
 #include "options_self_test.hpp"
+#include "recovery_self_test.hpp"
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
 #include "job_sheet_self_test.hpp"
+#include "print_self_test.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
 #include "modelling_panel.hpp"
@@ -902,8 +905,18 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9c6b. Autosave and crash recovery (T-0357).
+    if (const std::string why = recoverySelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9c7. Localization: pseudo-locale, English fallback, sample catalog (T-0350).
     if (const std::string why = l10nSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c8. Help menu and the bundled user guide (T-0355).
+    if (const std::string why = helpSelfTest(&window); !why.empty()) {
         return fail(why);
     }
 
@@ -1150,6 +1163,11 @@ int runSelfTest() {
 
     // 14. Create Job Sheet (T-0259): HTML, text and PDF files, hostile paths refused.
     if (const std::string why = jobSheetSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 14b. Printing (T-0349): fit-to-page and tiled PDFs, job sheet, refusals.
+    if (const std::string why = printSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

@@ -126,6 +126,10 @@ class CanvasWidget : public QWidget {
     /// same way `paintEvent` paints the widget. `usedView`, when given, receives that view.
     QImage renderFitted(QSize size, viewmodel::ViewTransform* usedView = nullptr) const;
 
+    /// Paints the design for printing (T-0349): white paper, no selection or overlay; with
+    /// `withToolpaths` the toolpath preview is stroked on top (vector, honouring the legend).
+    void paintForPrint(QPainter& painter, const viewmodel::ViewTransform& view, QSize size, bool withToolpaths) const;
+
     /// Called whenever the view transform changes (zoom, pan, resize).
     std::function<void()> onViewChanged;
     /// Called after a click changed (or tried to change) the selection.
@@ -174,6 +178,7 @@ class CanvasWidget : public QWidget {
     static viewmodel::Modifiers toolModifiers(Qt::KeyboardModifiers mods);
 
     void paintSides(QPainter& painter, const viewmodel::ViewTransform& view) const;
+    mutable bool printMode_{false};
     void paintScene(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
     void paintPreview(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
     void paintKeepOut(QPainter& painter, const viewmodel::CanvasScene& scene) const;

@@ -3,6 +3,7 @@
 #include <QImage>
 #include <QTreeWidget>
 #include <QWidget>
+#include <array>
 #include <functional>
 #include <optional>
 #include <string>
@@ -19,6 +20,7 @@ class QCheckBox;
 class QComboBox;
 class QLabel;
 class QLineEdit;
+class QPainter;
 class QPushButton;
 
 namespace carvetto::app {
@@ -220,6 +222,7 @@ class ModelView3D : public QWidget {
     void invalidate();
     viewmodel::Draw3DView drawView();
     void finishDrawEvent(const viewmodel::Draw3DResult& r);
+    void paintEditHandles(QPainter& p);
 
     DocumentGetter getter_;
     viewmodel::Draw3DController draw_;

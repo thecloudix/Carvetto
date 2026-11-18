@@ -180,6 +180,7 @@ void MainWindow::applyPreferences(const viewmodel::Preferences& p) {
     canvas_->refresh();
 
     session_.document().undoStack().setLimit(static_cast<std::size_t>(p.undoDepth));
+    updateAutosaveTimer();
     if (first || p.simulationQuality != before.simulationQuality) {
         // The preference is the starting quality; the Preview panel's own choice follows it when it changes.
         QComboBox* combo = preview_->qualityCombo();

@@ -44,6 +44,8 @@ int main(int argc, char* argv[]) {
         QSettings settings;
         window.restoreLayout(settings);
     }
+    window.enableRecovery();
     window.show();
+    window.offerRecovery();
     return app.exec();
 }

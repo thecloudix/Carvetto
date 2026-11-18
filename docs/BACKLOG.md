@@ -1718,7 +1718,7 @@ Goal: In the 3D (Model) view the user can draw the basic shapes (line, polyline,
 Acceptance criteria:
   1. A rectangle and a circle drawn in the 3D view appear as document vectors at the picked plane coordinates; undo removes each; picks off the plane or in wrapped rotary view are refused; self-test drives it.
 
-### T-0346 3D-view editing: move, scale and node-edit vectors from the 3D view   [status: in-progress]
+### T-0346 3D-view editing: move, scale and node-edit vectors from the 3D view   [status: done]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0345
 Goal: Select, move, scale, rotate and node-edit vectors directly in the 3D view using the same ray/plane pick, reusing the 2D editing commands (no duplicate geometry code). One undo step per drag.
 Acceptance criteria:
@@ -1736,7 +1736,7 @@ Goal: Audit every user preference currently scattered across the app (units, gri
 Acceptance criteria:
   1. One Options dialog edits all persisted preferences; invalid values are refused; restore defaults works; settings survive a restart (self-test round trip); no preference remains outside the model (audit list in the ADR).
 
-### T-0349 Printing: print the design, the toolpath preview and the job sheet, with print preview and tiling   [status: in-progress]
+### T-0349 Printing: print the design, the toolpath preview and the job sheet, with print preview and tiling   [status: done]
 Phase: 4   Module: app/viewmodel + app   Depends on: T-0259
 Goal: File > Print and Print Preview for the 2D design (scale to fit or true size with tiling over pages), the toolpath preview, and the job sheet (existing HTML and PDF export reused). Qt-free page-layout/tiling model in viewmodel; QPrinter use in app only; PDF output path for headless self-test.
 Acceptance criteria:
@@ -1748,7 +1748,7 @@ Goal: Qt Linguist plumbing: CMake lupdate/lrelease targets, translation loading 
 Acceptance criteria:
   1. Choosing the pseudo-locale visibly transforms menus and dialogs in --self-test; missing translations fall back to English; the lint test runs in ctest.
 
-### T-0351 Localization sweep: wrap all user-visible strings in tr() and extract the catalog   [status: blocked — waits on T-0350]
+### T-0351 Localization sweep: wrap all user-visible strings in tr() and extract the catalog   [status: in-progress]
 Phase: 4   Module: app   Depends on: T-0350
 Goal: Mechanically wrap every user-visible string in the app in tr()/QCoreApplication::translate with disambiguating context, keep plain-text rules, regenerate the .ts catalog, and make sure no self-test depends on English literals beyond object names. Large mechanical change: do it when few other app tasks are open (director schedules).
 Acceptance criteria:
@@ -1784,7 +1784,7 @@ Goal: A scripted audit run in ctest and CI: no third-party product/trademark nam
 Acceptance criteria:
   1. Audit passes on main and fails on an injected violation (test); THIRD_PARTY lists all FetchContent/bundled deps with licences.
 
-### T-0357 Robustness: autosave and crash recovery, large-file and low-memory behaviour   [status: in-progress]
+### T-0357 Robustness: autosave and crash recovery, large-file and low-memory behaviour   [status: done]
 Phase: 4   Module: app/viewmodel + app + core/document   Depends on: T-0348
 Goal: Autosave to a recovery file at an interval from Options, recovery prompt after an unclean exit, atomic save (write temp, fsync, rename) with backup of the previous file, and graceful refusal (not crash) on files/operations exceeding documented caps. Fuzz-style tests on .carv loading with truncated/corrupt files.
 Acceptance criteria:

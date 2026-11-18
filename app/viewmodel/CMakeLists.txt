@@ -66,6 +66,7 @@ add_library(carvetto_viewmodel STATIC
   src/clipart_library.cpp
   src/clipart_insert.cpp
   src/file_session.cpp
+  src/recovery.cpp
   src/node_edit.cpp
   src/node_ops.cpp
   src/snapping.cpp
@@ -79,6 +80,7 @@ add_library(carvetto_viewmodel STATIC
   src/texture_form.cpp
   src/tiling_form.cpp
   src/draw_3d.cpp
+  src/print_layout.cpp
 )
 find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)

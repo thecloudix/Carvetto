@@ -19,6 +19,7 @@
 #include "carvetto/viewmodel/parts_import_form.hpp"
 #include "carvetto/viewmodel/preferences.hpp"
 #include "carvetto/viewmodel/preview_component.hpp"
+#include "carvetto/viewmodel/recovery.hpp"
 #include "carvetto/viewmodel/rotary_layout_form.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
@@ -31,6 +32,7 @@ class QDockWidget;
 class QLabel;
 class QListWidget;
 class QSettings;
+class QTimer;
 class QTabWidget;
 
 namespace carvetto::app {
@@ -63,6 +65,7 @@ class GadgetsMenu;
 class VectorOpsMenu;
 class TraceBitmapMenu;
 class TextureMenu;
+class PrintController;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
 /// docked panels (Design, Sheets, Layers, Components, Library on the left; Toolpaths on the
@@ -96,6 +99,8 @@ class MainWindow : public QMainWindow {
     TraceBitmapMenu* traceBitmap() const { return traceBitmap_.get(); }
     /// Edit > Create Vector Texture (T-0254).
     TextureMenu* textureMenu() const { return textureMenu_.get(); }
+    /// File > Print, Print Preview, Print to PDF (T-0349).
+    PrintController* printing() const { return printing_.get(); }
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
@@ -233,6 +238,23 @@ class MainWindow : public QMainWindow {
     /// The Gadgets menu (T-0331).
     GadgetsMenu* gadgets() const { return gadgets_.get(); }
 
+    /// Autosave and crash recovery (T-0357, main_window_recovery.cpp). `enableRecovery` turns it on with the
+    /// snapshot folder `dir` (empty: the per-user data folder); the Options autosave preferences set the timer.
+    void enableRecovery(const std::filesystem::path& dir = {});
+    /// Turns autosave and recovery off again (stops the timer; leaves any snapshot where it is).
+    void disableRecovery();
+    /// True when a snapshot of an unclean exit waits.
+    bool hasRecoverable() const;
+    /// Loads the waiting snapshot into the window (File > Open path); false (with an error shown unless quiet) when
+    /// it is damaged.
+    bool recoverPending();
+    /// At start-up: asks whether to recover a waiting snapshot and recovers or discards it.
+    void offerRecovery();
+    /// One autosave step (the timer calls it): snapshot when there are unsaved changes.
+    void autosaveNow();
+    /// The autosave timer's interval in ms, 0 when stopped (for tests).
+    int autosaveIntervalMs() const;
+
    protected:
     void closeEvent(QCloseEvent* event) override;
 
@@ -280,6 +302,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<TraceBitmapMenu> traceBitmap_;
     std::unique_ptr<TextureMenu> textureMenu_;
+    std::unique_ptr<PrintController> printing_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;
     std::unique_ptr<GadgetsMenu> gadgets_;
@@ -340,6 +363,9 @@ class MainWindow : public QMainWindow {
     bool refreshing_{false};
     bool quiet_{false};
     std::string modelIoError_;
+    std::unique_ptr<viewmodel::RecoveryStore> recovery_;
+    QTimer* autosaveTimer_{nullptr};
+    void updateAutosaveTimer();
 };
 
 }  // namespace carvetto::app

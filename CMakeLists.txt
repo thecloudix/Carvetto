@@ -61,6 +61,11 @@ if(CARVETTO_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_tr_literals.py --root ${PROJECT_SOURCE_DIR})
     add_test(NAME lint.tr_literals_unit
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_tr_literals.py)
+    # T-0355: user guide links and the menu names it quotes must match the app.
+    add_test(NAME lint.user_docs
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_user_docs.py --root ${PROJECT_SOURCE_DIR})
+    add_test(NAME lint.user_docs_unit
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_user_docs.py)
   else()
     message(STATUS "Python 3 not found - skipping the changelog tool tests (CI still runs the check)")
   endif()

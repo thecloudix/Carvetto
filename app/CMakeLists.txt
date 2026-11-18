@@ -27,6 +27,10 @@ qt_add_executable(carvetto
   src/double_sided_menu.hpp
   src/array_copy_menu.hpp
   src/main_window.cpp
+  src/print_support.cpp
+  src/print_support.hpp
+  src/print_self_test.cpp
+  src/print_self_test.hpp
   src/gadget_dialogs.cpp
   src/gadget_dialogs.hpp
   src/gadgets_menu.cpp
@@ -93,6 +97,9 @@ qt_add_executable(carvetto
   src/model_io_dialogs.hpp
   src/model_io_self_test.cpp
   src/main_window_model_io.cpp
+  src/main_window_recovery.cpp
+  src/recovery_self_test.cpp
+  src/recovery_self_test.hpp
   src/relief_view.hpp
   src/tool_panel.cpp
   src/tool_panel.hpp
@@ -112,6 +119,8 @@ qt_add_executable(carvetto
   src/image_self_test.cpp
   src/laser_self_test.cpp
   src/v_carve_inlay_self_test.cpp
+  src/help_viewer.cpp
+  src/help_viewer.hpp
   src/self_test.cpp
   src/self_test.hpp
   src/starter_tools.hpp
@@ -143,8 +152,18 @@ qt_add_executable(carvetto
 )
 # Development builds find the shipped posts in the source tree (a packaged app has posts/ beside it).
 target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
-                                                CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock")
+                                                CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
+                                                CARVETTO_USER_DOCS_DIR="${PROJECT_SOURCE_DIR}/docs/user")
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
+# T-0349: printing. PDF output needs only Qt Gui (QPdfWriter); QPrinter, the print dialog and the preview dialog
+# need Qt PrintSupport, which is optional: without it Print... and Print Preview... are disabled.
+find_package(Qt6 COMPONENTS PrintSupport QUIET)
+if(Qt6PrintSupport_FOUND)
+  target_link_libraries(carvetto PRIVATE Qt6::PrintSupport)
+  target_compile_definitions(carvetto PRIVATE CARVETTO_HAVE_PRINTSUPPORT)
+else()
+  message(STATUS "Qt6 PrintSupport not found - printing to PDF only")
+endif()
 # GUI subsystem on Windows (no console window). CI waits for `--self-test` with
 # Start-Process -Wait and redirected output. See ADR-0014.
 set_target_properties(carvetto PROPERTIES WIN32_EXECUTABLE ON)
@@ -165,3 +184,10 @@ if(Qt6LinguistTools_FOUND)
 else()
   message(STATUS "Qt6 LinguistTools not found - translations are not built")
 endif()
+
+# T-0355: the user guide (and the pages it links) ship offline; the Help menu finds share/carvetto/docs/user.
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/docs/user DESTINATION share/carvetto/docs FILES_MATCHING PATTERN "*.md")
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/docs/adr DESTINATION share/carvetto/docs FILES_MATCHING PATTERN "*.md")
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/docs/gadgets DESTINATION share/carvetto/docs FILES_MATCHING PATTERN "*.md")
+install(FILES ${PROJECT_SOURCE_DIR}/docs/laser-post-guide.md DESTINATION share/carvetto/docs)
+install(FILES ${PROJECT_SOURCE_DIR}/posts/README.md DESTINATION share/carvetto/posts)
