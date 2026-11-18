@@ -1,4 +1,5 @@
 #include "main_window.hpp"
+#include "help_viewer.hpp"
 #include "options_dialog.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
 
@@ -520,6 +521,7 @@ void MainWindow::buildMenus() {
     gadgets_ = std::make_unique<GadgetsMenu>(*this);
 
     QMenu* help = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Help"));
+    installHelpActions(help, this);
     QAction* about = help->addAction(QStringLiteral("&About Carvetto"));
     connect(about, &QAction::triggered, this, [this]() {
         QMessageBox::about(this, QStringLiteral("About Carvetto"),

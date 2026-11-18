@@ -112,6 +112,8 @@ qt_add_executable(carvetto
   src/image_self_test.cpp
   src/laser_self_test.cpp
   src/v_carve_inlay_self_test.cpp
+  src/help_viewer.cpp
+  src/help_viewer.hpp
   src/self_test.cpp
   src/self_test.hpp
   src/starter_tools.hpp
@@ -143,7 +145,8 @@ qt_add_executable(carvetto
 )
 # Development builds find the shipped posts in the source tree (a packaged app has posts/ beside it).
 target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
-                                                CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock")
+                                                CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
+                                                CARVETTO_USER_DOCS_DIR="${PROJECT_SOURCE_DIR}/docs/user")
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
 # GUI subsystem on Windows (no console window). CI waits for `--self-test` with
 # Start-Process -Wait and redirected output. See ADR-0014.
@@ -165,3 +168,10 @@ if(Qt6LinguistTools_FOUND)
 else()
   message(STATUS "Qt6 LinguistTools not found - translations are not built")
 endif()
+
+# T-0355: the user guide (and the pages it links) ship offline; the Help menu finds share/carvetto/docs/user.
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/docs/user DESTINATION share/carvetto/docs FILES_MATCHING PATTERN "*.md")
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/docs/adr DESTINATION share/carvetto/docs FILES_MATCHING PATTERN "*.md")
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/docs/gadgets DESTINATION share/carvetto/docs FILES_MATCHING PATTERN "*.md")
+install(FILES ${PROJECT_SOURCE_DIR}/docs/laser-post-guide.md DESTINATION share/carvetto/docs)
+install(FILES ${PROJECT_SOURCE_DIR}/posts/README.md DESTINATION share/carvetto/posts)

@@ -1,3 +1,4 @@
+#include "help_viewer.hpp"
 #include "l10n_self_test.hpp"
 #include "self_test.hpp"
 
@@ -904,6 +905,11 @@ int runSelfTest() {
 
     // 9c7. Localization: pseudo-locale, English fallback, sample catalog (T-0350).
     if (const std::string why = l10nSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c8. Help menu and the bundled user guide (T-0355).
+    if (const std::string why = helpSelfTest(&window); !why.empty()) {
         return fail(why);
     }
 
