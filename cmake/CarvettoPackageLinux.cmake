@@ -105,6 +105,8 @@ set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/thecloudix/Carvetto")
 # resolve the bundled Qt libraries. Alternatives cover the t64 renames of Ubuntu 24.04 / Debian 13.
 set(CPACK_DEBIAN_PACKAGE_DEPENDS
     "libc6, libstdc++6, libgcc-s1, libgl1, libegl1, libxkbcommon0, libxkbcommon-x11-0, libxcb-cursor0, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-randr0, libxcb-render-util0, libxcb-shape0, libxcb-xkb1, libxcb-glx0, libxcb-sync1, libxcb-xfixes0, libxcb-xinerama0, libxcb1, libx11-6, libx11-xcb1, libfontconfig1, libfreetype6, libdbus-1-3, libglib2.0-0t64 | libglib2.0-0, libdouble-conversion3, libpcre2-16-0, libzstd1, zlib1g")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "shared-mime-info")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA ${_lin}/deb-postinst ${_lin}/deb-postrm)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
 
 set(CPACK_RPM_FILE_NAME "carvetto-${PROJECT_VERSION}-1.x86_64.rpm")
