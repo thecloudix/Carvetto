@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
+    tags: ['v*']   # T-0352: release tags build the installer (path filters do not apply to tags)
     # Backlog/ADR-only commits to main change no code: do not spend four runner jobs on them.
     paths-ignore: ['docs/**']
   pull_request:
@@ -367,3 +369,103 @@ jobs:
             build/app/carvetto.exe
             build/app/cli/carvetto-cli.exe
           if-no-files-found: warn
+
+  # T-0352: Windows installer (CPack NSIS, ADR-0118). Separate from windows-app so the existing jobs
+  # are unaffected. Runs on main, on version tags, on demand, and on PRs from task/T-0352* branches
+  # or labelled `packaging` (it is a long job; ordinary PRs skip it). It installs the artifact silently,
+  # runs `carvetto --self-test` from the installed copy, then uninstalls and checks nothing is left.
+  windows-installer:
+    if: >-
+      github.event_name != 'pull_request'
+      || startsWith(github.head_ref, 'task/T-0352')
+      || contains(github.event.pull_request.labels.*.name, 'packaging')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          cache: true
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Install Ninja
+        run: choco install ninja --no-progress -y
+      - name: Ensure NSIS
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue) -and -not (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe')) {
+            choco install nsis --no-progress -y
+          }
+          if (Test-Path 'C:\Program Files (x86)\NSIS') { "C:\Program Files (x86)\NSIS" | Out-File -Append -Encoding ascii $env:GITHUB_PATH }
+      - name: Cache FetchContent sources
+        uses: actions/cache@v4
+        with:
+          path: .fc-src
+          key: fc-src-windows-installer-${{ hashFiles('core/CMakeLists.txt', 'core/tests/CMakeLists.txt', 'app/**/CMakeLists.txt') }}
+      - name: Configure
+        shell: pwsh
+        run: tools/ci/configure.ps1 -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCARVETTO_BUILD_TESTS=OFF
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error title=Build failed::cmake --build exit $LASTEXITCODE"; exit 1 }
+      - name: Package (CPack NSIS)
+        shell: pwsh
+        run: |
+          cpack --config build/CPackConfig.cmake -G NSIS -B dist
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error title=CPack failed::exit $LASTEXITCODE"; exit 1 }
+          Get-ChildItem dist -Filter *.exe | Format-Table Name, Length
+          if (-not (Get-ChildItem dist -Filter 'Carvetto-*-win64.exe')) { Write-Host "::error title=CPack::no installer produced"; exit 1 }
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: carvetto-windows-installer
+          path: dist/Carvetto-*-win64.exe
+          if-no-files-found: error
+      - name: Silent install
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem dist -Filter 'Carvetto-*-win64.exe' | Select-Object -First 1).FullName
+          # NSIS: /S silent; /D= must be last and unquoted.
+          $p = Start-Process -FilePath $setup -ArgumentList '/S', '/D=C:\carvetto-inst' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Host "::error title=Install failed::installer exit $($p.ExitCode)"; exit 1 }
+          Get-ChildItem C:\carvetto-inst -Recurse -File | Measure-Object | ForEach-Object { Write-Host "$($_.Count) files installed" }
+          $need = 'bin\carvetto.exe', 'bin\carvetto-cli.exe', 'bin\Qt6Widgets.dll', 'bin\platforms\qwindows.dll', 'Uninstall.exe',
+                  'share\carvetto\posts\grbl_mm.pp', 'share\carvetto\gadgets', 'share\carvetto\tooldb\starter_tools.json',
+                  'share\carvetto\licenses\LICENSE', 'share\carvetto\licenses\THIRD_PARTY_NOTICES.md'
+          $missing = $need | Where-Object { -not (Test-Path (Join-Path 'C:\carvetto-inst' $_)) }
+          if ($missing) { Write-Host "::error title=Installed files missing::$($missing -join ', ')"; exit 1 }
+          if (-not (Test-Path 'HKLM:\Software\Classes\.carv')) { Write-Host "::error title=File association missing::.carv key not written"; exit 1 }
+          if (-not (Get-ChildItem 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Carvetto' -Filter *.lnk -ErrorAction SilentlyContinue)) {
+            Write-Host "::error title=Start menu entry missing::no shortcut under Programs\Carvetto"; exit 1
+          }
+      - name: Installed app self-test
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          # Run from an unrelated directory with Qt removed from PATH: only the installed copy may supply DLLs.
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch 'Qt' }) -join ';'
+          Set-Location $env:TEMP
+          $p = Start-Process -FilePath C:\carvetto-inst\bin\carvetto.exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow -RedirectStandardOutput selftest.out -RedirectStandardError selftest.err
+          $msg = ((Get-Content selftest.out -ErrorAction SilentlyContinue) + (Get-Content selftest.err -ErrorAction SilentlyContinue)) -join '%0A'
+          if ($p.ExitCode -ne 0) { Write-Host "::error title=Installed app self-test failed (exit $($p.ExitCode))::$msg"; exit 1 }
+          Write-Host "self-test passed: $msg"
+      - name: Uninstall and check nothing is left
+        shell: pwsh
+        run: |
+          # _?= keeps the uninstaller in place and makes it synchronous; remove it afterwards.
+          $p = Start-Process -FilePath C:\carvetto-inst\Uninstall.exe -ArgumentList '/S', '_?=C:\carvetto-inst' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Host "::error title=Uninstall failed::exit $($p.ExitCode)"; exit 1 }
+          $left = @(Get-ChildItem C:\carvetto-inst -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'Uninstall.exe' })
+          if ($left.Count -gt 0) {
+            Write-Host "::error title=Uninstall left files behind::$((($left | Select-Object -First 20 | ForEach-Object { $_.FullName }) -join '%0A'))"; exit 1
+          }
+          if (Test-Path 'HKLM:\Software\Classes\.carv') { Write-Host "::error title=Uninstall left the .carv association::"; exit 1 }
+          if (Test-Path 'HKLM:\Software\Classes\Carvetto.Document') { Write-Host "::error title=Uninstall left the Carvetto.Document key::"; exit 1 }
+          if (Test-Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Carvetto') { Write-Host "::error title=Uninstall left the Start menu folder::"; exit 1 }
+          Write-Host "uninstall clean"

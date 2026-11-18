@@ -17,8 +17,14 @@ FetchContent_MakeAvailable(nlohmann_json)
 # only the C++ library is built (no utils, examples, tests or the Z variant). Its headers are
 # consumed as SYSTEM includes so carvetto_warnings do not apply to third-party code.
 include(FetchContent)
+# T-0352: Clipper2 is linked statically; EXCLUDE_FROM_ALL (CMake 3.28+) keeps its headers, library and
+# cmake files out of `install` and so out of packages. Older CMake only installs a few extra files.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+  set(_carvetto_fc_exclude EXCLUDE_FROM_ALL)
+endif()
 FetchContent_Declare(
   Clipper2
+  ${_carvetto_fc_exclude}
   GIT_REPOSITORY https://github.com/AngusJohnson/Clipper2.git
   GIT_TAG        Clipper2_1.4.0
   GIT_SHALLOW    TRUE
