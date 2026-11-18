@@ -3,6 +3,7 @@
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
@@ -17,6 +18,7 @@
 
 #include "carvetto/document/units.hpp"
 #include "main_window.hpp"
+#include "plate_production_dialog.hpp"
 
 namespace carvetto::app {
 
@@ -276,8 +278,11 @@ CopiesMenu::CopiesMenu(MainWindow& window, QMenu* editMenu) : window_(window) {
             runAlong(lastAlong_);
         }
     });
+    menu->addSeparator();
+    plate_ = menu->addAction(QCoreApplication::translate("ArrayCopyMenu", "&Plate Production (Data Merge)..."));
+    QObject::connect(plate_, &QAction::triggered, menu, [this]() { showPlateProduction(window_); });
     QObject::connect(menu, &QMenu::aboutToShow, menu, [this]() { refresh(); });
-    for (QAction* action : {array_, circular_, along_}) {
+    for (QAction* action : {array_, circular_, along_, plate_}) {
         action->setEnabled(false);  // until the menu opens (the window may not have a document yet)
     }
 }
@@ -287,6 +292,7 @@ void CopiesMenu::refresh() {
     array_->setEnabled(viewmodel::canArrayCopy(doc));
     circular_->setEnabled(viewmodel::canCircularCopy(doc));
     along_->setEnabled(viewmodel::canCopyAlongVectors(doc));
+    plate_->setEnabled(viewmodel::canDataMerge(doc));
 }
 
 CopyResult CopiesMenu::runArray(const ArrayOptions& options, bool showErrors) {

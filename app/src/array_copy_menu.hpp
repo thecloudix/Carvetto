@@ -3,6 +3,7 @@
 #include <QDialog>
 
 #include "carvetto/viewmodel/array_copies.hpp"
+#include "carvetto/viewmodel/data_merge.hpp"
 
 class QAction;
 class QCheckBox;
@@ -87,6 +88,8 @@ class CopiesMenu {
     QAction* arrayAction() const { return array_; }
     QAction* circularAction() const { return circular_; }
     QAction* alongAction() const { return along_; }
+    /// Plate Production (data merge, T-0347); enabled when the selection holds a template.
+    QAction* plateAction() const { return plate_; }
 
     viewmodel::CopyResult runArray(const viewmodel::ArrayOptions& options, bool showErrors = true);
     viewmodel::CopyResult runCircular(const viewmodel::CircularOptions& options, bool showErrors = true);
@@ -99,6 +102,7 @@ class CopiesMenu {
     QAction* array_{nullptr};
     QAction* circular_{nullptr};
     QAction* along_{nullptr};
+    QAction* plate_{nullptr};
     viewmodel::ArrayOptions lastArray_;
     viewmodel::CircularOptions lastCircular_;
     viewmodel::AlongVectorOptions lastAlong_;

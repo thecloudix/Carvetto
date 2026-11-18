@@ -46,6 +46,7 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
+#include "plate_production_self_test.hpp"
 #include "rotary_layout_self_test.hpp"
 #include "rotary_self_test.hpp"
 #include "rotary_tools_dialogs.hpp"
@@ -888,6 +889,11 @@ int runSelfTest() {
 
     // 9c5. Wrapped Fluting and Spiral layouts: dialogs, wrapped preview, one undo step, Fluting depth (T-0340).
     if (const std::string why = rotaryLayoutSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c5b. Plate Production (data merge): dialog, 20 plates, one undo step (T-0347).
+    if (const std::string why = plateProductionSelfTest(window); !why.empty()) {
         return fail(why);
     }
 
