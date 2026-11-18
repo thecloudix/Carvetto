@@ -1,5 +1,8 @@
 #include "relief_panels.hpp"
 
+#include "carvetto/geometry/tolerance.hpp"
+
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDropEvent>
@@ -7,6 +10,7 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
+#include <QKeyEvent>
 #include <QLineEdit>
 #include <QMouseEvent>
 #include <QPaintEvent>
@@ -672,6 +676,21 @@ ModelView3D::ModelView3D(DocumentGetter getter, QWidget* parent) : QWidget(paren
         }
     });
     bar->addWidget(wrappedButton_);
+    drawBox_ = new QComboBox(this);
+    drawBox_->setObjectName(QStringLiteral("drawShapeBox"));
+    drawBox_->setToolTip(QCoreApplication::translate("ReliefPanels", "Draw a vector on the model's zero plane: click or drag in the view"));
+    drawBox_->addItem(QCoreApplication::translate("ReliefPanels", "Draw: off"), -1);
+    for (const viewmodel::Draw3DShape sh :
+         {viewmodel::Draw3DShape::Line, viewmodel::Draw3DShape::Polyline, viewmodel::Draw3DShape::Rectangle,
+          viewmodel::Draw3DShape::Circle, viewmodel::Draw3DShape::Ellipse, viewmodel::Draw3DShape::Polygon}) {
+        drawBox_->addItem(QCoreApplication::translate("ReliefPanels", "Draw: %1").arg(QString::fromUtf8(viewmodel::draw3DShapeName(sh))),
+                          static_cast<int>(sh));
+    }
+    connect(drawBox_, &QComboBox::activated, this, [this](int index) {
+        const int v = drawBox_->itemData(index).toInt();
+        setDrawShape(v < 0 ? std::nullopt : std::optional<viewmodel::Draw3DShape>(static_cast<viewmodel::Draw3DShape>(v)));
+    });
+    bar->addWidget(drawBox_);
     bar->addStretch(1);
     bar->setAlignment(Qt::AlignTop);
 }
@@ -689,12 +708,22 @@ void ModelView3D::refresh() {
         std::vector<viewmodel::ModelPath> lp = viewmodel::wrappedContourPaths(layoutPreview_, d->job());
         wrappedPaths_.insert(wrappedPaths_.end(), std::make_move_iterator(lp.begin()), std::make_move_iterator(lp.end()));
     }
+    if (d != draw_.document()) {
+        draw_.setDocument(d);
+    }
     if (previewing_) {
         surface_ = previewSurface_;
     } else if (d != nullptr) {
         surface_ = viewmodel::composeModelSurface(*d, d->activeSheet());
         // 3D toolpaths of the job are drawn over the model (T-0303).
         options_.paths = viewmodel::modelPathsFromToolpaths(d->toolpaths());
+        if (drawShape_) {
+            // Drawing needs a plane even without a model, and the drawn vectors must be seen (T-0345).
+            surface_ = viewmodel::drawingSurface(*d, surface_);
+            for (viewmodel::ModelPath& p : viewmodel::planeVectorPaths(*d)) {
+                options_.paths.push_back(std::move(p));
+            }
+        }
     } else {
         surface_ = viewmodel::ModelSurface{};
     }
@@ -881,6 +910,27 @@ void ModelView3D::paintEvent(QPaintEvent*) {
         p.setPen(QPen(QColor(20, 20, 20), 1.0));
         p.drawPolygon(poly);
     }
+    if (drawShape_ && draw_.active() && !showingWrapped()) {
+        const viewmodel::ToolPreview pv = draw_.preview();
+        p.setRenderHint(QPainter::Antialiasing, true);
+        p.setPen(QPen(QColor(220, 90, 0), 2.0));
+        for (const geometry::Contour& c : pv.contours) {
+            if (c.isEmpty()) {
+                continue;
+            }
+            const geometry::Polyline poly = c.polygonise(geometry::Tolerance{});
+            QPolygonF line;
+            for (const geometry::Vec2& q : poly.points) {
+                if (const auto s = viewmodel::projectModelPoint(surface_, camera_, options_, q.x, q.y, 0.0)) {
+                    line << QPointF(s->x, s->y);
+                }
+            }
+            if (poly.closed && !line.isEmpty()) {
+                line << line.first();
+            }
+            p.drawPolyline(line);
+        }
+    }
     if (!surface_.ok() && !showingWrapped()) {
         p.setPen(QColor(90, 90, 90));
         p.drawText(rect(), Qt::AlignCenter | Qt::TextWordWrap,
@@ -900,6 +950,78 @@ void ModelView3D::resizeEvent(QResizeEvent* event) {
     invalidate();
 }
 
+void ModelView3D::setDrawShape(std::optional<viewmodel::Draw3DShape> shape) {
+    drawShape_ = shape;
+    drawing_ = false;
+    drawMessage_.clear();
+    if (shape) {
+        draw_.setShape(*shape);
+    } else {
+        draw_.key(viewmodel::ToolKey::Escape);
+    }
+    if (drawBox_ != nullptr) {
+        const QSignalBlocker block(drawBox_);
+        drawBox_->setCurrentIndex(drawBox_->findData(shape ? static_cast<int>(*shape) : -1));
+    }
+    setCursor(shape ? Qt::CrossCursor : Qt::ArrowCursor);
+    refresh();
+}
+
+std::optional<viewmodel::ScreenPoint> ModelView3D::planePixel(double x, double y) {
+    const viewmodel::Draw3DView v = drawView();
+    return viewmodel::projectModelPoint(*v.surface, *v.camera, *v.options, x, y, 0.0);
+}
+
+viewmodel::Draw3DView ModelView3D::drawView() {
+    options_.width = static_cast<std::size_t>(std::max(width(), 1));
+    options_.height = static_cast<std::size_t>(std::max(height(), 1));
+    return viewmodel::Draw3DView{&surface_, &camera_, &options_, showingWrapped()};
+}
+
+void ModelView3D::finishDrawEvent(const viewmodel::Draw3DResult& r) {
+    drawMessage_ = qs(r.message);
+    setToolTip(drawMessage_.isEmpty()
+                   ? QCoreApplication::translate("ReliefPanels", "Right-drag orbits, the wheel zooms, middle-drag or Ctrl+right-drag pans")
+                   : drawMessage_);
+    if (r.tool.committed) {
+        if (onDrawCommitted) {
+            onDrawCommitted();  // the window refreshes everything, this view included
+        } else {
+            refresh();
+        }
+    }
+    update();
+}
+
+void ModelView3D::keyPressEvent(QKeyEvent* event) {
+    if (drawShape_ && draw_.tools().wantsKeys()) {
+        viewmodel::ToolKey k = viewmodel::ToolKey::Enter;
+        bool known = true;
+        switch (event->key()) {
+            case Qt::Key_Escape: k = viewmodel::ToolKey::Escape; break;
+            case Qt::Key_Return:
+            case Qt::Key_Enter: k = viewmodel::ToolKey::Enter; break;
+            case Qt::Key_Backspace: k = viewmodel::ToolKey::Backspace; break;
+            case Qt::Key_Tab: k = viewmodel::ToolKey::Close; break;
+            default: known = false; break;
+        }
+        if (known) {
+            finishDrawEvent(draw_.key(k));
+            event->accept();
+            return;
+        }
+    }
+    QWidget::keyPressEvent(event);
+}
+
+void ModelView3D::mouseDoubleClickEvent(QMouseEvent* event) {
+    if (drawShape_ && event->button() == Qt::LeftButton) {
+        finishDrawEvent(draw_.doubleClick(drawView(), event->pos().x() + 0.5, event->pos().y() + 0.5));
+        return;
+    }
+    QWidget::mouseDoubleClickEvent(event);
+}
+
 std::optional<relief::Point> ModelView3D::pickAt(QPoint pos) {
     if (showingWrapped()) {
         return std::nullopt;  // the flat design plane is not what is on screen
@@ -912,6 +1034,16 @@ std::optional<relief::Point> ModelView3D::pickAt(QPoint pos) {
 void ModelView3D::mousePressEvent(QMouseEvent* event) {
     last_ = event->pos();
     setFocus();
+    if (drawShape_ && event->button() == Qt::LeftButton) {
+        viewmodel::Modifiers mods;
+        mods.shift = event->modifiers() & Qt::ShiftModifier;
+        mods.ctrl = event->modifiers() & Qt::ControlModifier;
+        mods.alt = event->modifiers() & Qt::AltModifier;
+        const viewmodel::Draw3DResult r = draw_.pointerPress(drawView(), event->pos().x() + 0.5, event->pos().y() + 0.5, mods);
+        drawing_ = !r.refused;
+        finishDrawEvent(r);
+        return;
+    }
     if (onBrush && event->button() == Qt::LeftButton) {
         if (const auto hit = pickAt(event->pos())) {
             painting_ = true;
@@ -921,6 +1053,15 @@ void ModelView3D::mousePressEvent(QMouseEvent* event) {
 }
 
 void ModelView3D::mouseReleaseEvent(QMouseEvent* event) {
+    if (drawing_ && event->button() == Qt::LeftButton) {
+        drawing_ = false;
+        viewmodel::Modifiers mods;
+        mods.shift = event->modifiers() & Qt::ShiftModifier;
+        mods.ctrl = event->modifiers() & Qt::ControlModifier;
+        mods.alt = event->modifiers() & Qt::AltModifier;
+        finishDrawEvent(draw_.pointerRelease(drawView(), event->pos().x() + 0.5, event->pos().y() + 0.5, mods));
+        return;
+    }
     if (painting_ && event->button() == Qt::LeftButton) {
         painting_ = false;
         if (onBrush) {
@@ -932,6 +1073,18 @@ void ModelView3D::mouseReleaseEvent(QMouseEvent* event) {
 void ModelView3D::mouseMoveEvent(QMouseEvent* event) {
     const QPoint delta = event->pos() - last_;
     last_ = event->pos();
+    if (drawShape_ && (event->buttons() == Qt::NoButton || event->buttons() == Qt::LeftButton)) {
+        viewmodel::Modifiers mods;
+        mods.shift = event->modifiers() & Qt::ShiftModifier;
+        mods.ctrl = event->modifiers() & Qt::ControlModifier;
+        mods.alt = event->modifiers() & Qt::AltModifier;
+        const viewmodel::Draw3DResult r = draw_.pointerMove(drawView(), event->pos().x() + 0.5, event->pos().y() + 0.5, mods);
+        if (draw_.active()) {
+            update();
+        }
+        (void)r;
+        return;
+    }
     if (painting_) {
         if (event->buttons() == Qt::LeftButton && onBrush) {
             if (const auto hit = pickAt(event->pos())) {

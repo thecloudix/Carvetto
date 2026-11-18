@@ -490,6 +490,7 @@ void MainWindow::buildMenus() {
     wrappedViewAction_->setToolTip(QStringLiteral("Show a rotary job wrapped round its cylinder, or flat"));
     connect(wrappedViewAction_, &QAction::toggled, this, [this](bool on) { setWrappedView(on); });
     modelView_->onWrappedToggled = [this](bool on) { setWrappedView(on); };
+    modelView_->onDrawCommitted = [this]() { documentChanged(); };  // T-0345
 
     QMenu* setup = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Setup"));
     jobSetupAction_ = setup->addAction(QStringLiteral("&Job Setup..."));

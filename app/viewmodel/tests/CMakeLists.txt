@@ -36,6 +36,7 @@ add_executable(carvetto_viewmodel_tests
   ruler_test.cpp
   save_toolpaths_test.cpp
   tiling_form_test.cpp
+  draw_3d_test.cpp
   tools_test.cpp
   text_tool_test.cpp
   dimension_tool_test.cpp

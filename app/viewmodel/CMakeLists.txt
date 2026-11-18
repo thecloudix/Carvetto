@@ -77,6 +77,7 @@ add_library(carvetto_viewmodel STATIC
   src/rotary_layout_form.cpp
   src/texture_form.cpp
   src/tiling_form.cpp
+  src/draw_3d.cpp
 )
 find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)

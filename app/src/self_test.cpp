@@ -50,6 +50,7 @@
 #include "rotary_self_test.hpp"
 #include "rotary_tools_dialogs.hpp"
 #include "wrapped_view_self_test.hpp"
+#include "draw_3d_self_test.hpp"
 #include "options_self_test.hpp"
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
@@ -872,6 +873,11 @@ int runSelfTest() {
 
     // 9c3. The Auto-Wrapping View of rotary jobs: toggle, Model view, wrapped simulation, post dialog (T-0334).
     if (const std::string why = wrappedViewSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c3b. Drawing vectors on the zero plane of the 3D view (T-0345).
+    if (const std::string why = draw3dSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

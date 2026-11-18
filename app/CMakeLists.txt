@@ -64,6 +64,8 @@ qt_add_executable(carvetto
   src/rotary_tools_dialogs.hpp
   src/rotary_tools_self_test.cpp
   src/wrapped_view_self_test.cpp
+  src/draw_3d_self_test.cpp
+  src/draw_3d_self_test.hpp
   src/wrapped_view_self_test.hpp
   src/node_edit_menu.cpp
   src/node_edit_menu.hpp
