@@ -49,6 +49,7 @@
 #include "rotary_self_test.hpp"
 #include "rotary_tools_dialogs.hpp"
 #include "wrapped_view_self_test.hpp"
+#include "options_self_test.hpp"
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
 #include "job_sheet_self_test.hpp"
@@ -880,6 +881,11 @@ int runSelfTest() {
 
     // 9c5. Wrapped Fluting and Spiral layouts: dialogs, wrapped preview, one undo step, Fluting depth (T-0340).
     if (const std::string why = rotaryLayoutSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c6. Options dialog and preferences (T-0348).
+    if (const std::string why = optionsSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

@@ -58,6 +58,7 @@ add_library(carvetto_viewmodel STATIC
   src/rotary_material.cpp
   src/dxf_exchange.cpp
   src/parts_import_form.cpp
+  src/preferences.cpp
   src/bitmap_import.cpp
   src/clipart_files.cpp
   src/clipart_thumbnail.cpp

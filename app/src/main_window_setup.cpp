@@ -1,6 +1,8 @@
 // Setup menu of the main window (T-0235): job setup and the tool / machine / material editor.
 // Kept apart from main_window.cpp; the window's other code only wires the actions.
 
+#include <QComboBox>
+#include <QDir>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <filesystem>
@@ -16,7 +18,11 @@
 #include "carvetto/viewmodel/rotary_material.hpp"
 #include "carvetto/viewmodel/tool_setup.hpp"
 #include "carvetto/viewmodel/variables_model.hpp"
+#include "canvas_widget.hpp"
 #include "main_window.hpp"
+#include "options_dialog.hpp"
+#include "preview_panel.hpp"
+#include "ruler_widget.hpp"
 #include "new_job_dialog.hpp"
 #include "relief_panels.hpp"
 #include "rotary_layout_dialog.hpp"
@@ -121,14 +127,79 @@ void MainWindow::variablesDialog() {
 
 void MainWindow::loadUserSetup(const QString& activeMachine) {
     const QString folder = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    if (folder.isEmpty()) {
+    if (folder.isEmpty() && prefs_.current().toolDatabasePath.empty()) {
         return;
     }
-    const std::filesystem::path file =
-        viewmodel::pathFromUtf8(folder.toStdString()) / viewmodel::kSetupFileName;
+    std::filesystem::path file = viewmodel::pathFromUtf8(folder.toStdString()) / viewmodel::kSetupFileName;
+    if (!prefs_.current().toolDatabasePath.empty()) {
+        file = viewmodel::pathFromUtf8(prefs_.current().toolDatabasePath);  // the Options preference wins
+    }
     const std::string message = toolpaths_->useSetupFile(file, activeMachine.toStdString());
     if (!message.empty() && !quiet_) {
         QMessageBox::warning(this, QStringLiteral("Tool setup"), toQ(message));
+    }
+}
+
+bool MainWindow::rulersHidden() const {
+    return hRuler_->isHidden() && vRuler_->isHidden();
+}
+
+QString MainWindow::dialogStart(const std::string& folderUtf8, const QString& name) const {
+    if (folderUtf8.empty()) {
+        return name;
+    }
+    return QDir(toQ(folderUtf8)).filePath(name);
+}
+
+std::vector<viewmodel::PrefIssue> MainWindow::setPreferences(const viewmodel::Preferences& p) {
+    std::vector<viewmodel::PrefIssue> issues = prefs_.apply(p);
+    if (!issues.empty()) {
+        return issues;
+    }
+    applyPreferences(prefs_.current());
+    if (persistLayout_) {
+        QSettingsPreferencesStore store;
+        prefs_.save(store);
+    }
+    return issues;
+}
+
+void MainWindow::applyPreferences(const viewmodel::Preferences& p) {
+    const bool first = !applied_.has_value();
+    const viewmodel::Preferences before = applied_.value_or(viewmodel::Preferences{});
+    applied_ = p;
+
+    DisplayOptions& display = displayOptions();
+    display.background = QColor::fromRgb(p.canvasBackground);
+    display.material = QColor::fromRgb(p.materialFill);
+    display.antialiasing = p.antialiasing;
+    hRuler_->setVisible(p.showRulers);
+    vRuler_->setVisible(p.showRulers);
+    rulerCorner_->setVisible(p.showRulers);
+    canvas_->refresh();
+
+    session_.document().undoStack().setLimit(static_cast<std::size_t>(p.undoDepth));
+    if (first || p.simulationQuality != before.simulationQuality) {
+        // The preference is the starting quality; the Preview panel's own choice follows it when it changes.
+        QComboBox* combo = preview_->qualityCombo();
+        const int i = combo->findData(static_cast<int>(p.simulationQuality));
+        if (i >= 0) {
+            combo->setCurrentIndex(i);
+        }
+    }
+    if (!first && persistLayout_ && p.toolDatabasePath != before.toolDatabasePath) {
+        loadUserSetup(QString::fromStdString(toolpaths_->activeMachineId()));
+    }
+}
+
+void MainWindow::optionsDialog() {
+    OptionsDialog dialog(prefs_.current(), this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    const std::vector<viewmodel::PrefIssue> issues = setPreferences(dialog.edited());
+    if (!issues.empty() && !quiet_) {
+        QMessageBox::warning(this, QStringLiteral("Options"), toQ(issues.front().message));
     }
 }
 

@@ -45,6 +45,10 @@ qt_add_executable(carvetto
   src/rotary_layout_self_test.hpp
   src/rotary_material_dialog.cpp
   src/rotary_material_dialog.hpp
+  src/options_dialog.cpp
+  src/options_dialog.hpp
+  src/options_self_test.cpp
+  src/options_self_test.hpp
   src/parts_import_dialog.cpp
   src/parts_import_dialog.hpp
   src/parts_import_self_test.cpp

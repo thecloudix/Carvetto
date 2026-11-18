@@ -115,7 +115,7 @@ bool MainWindow::exportModelFile(const std::filesystem::path& path, const viewmo
 }
 
 void MainWindow::importMeshDialog() {
-    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Import 3D Model"), QString(),
+    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Import 3D Model"), dialogStart(preferences().openFolder),
                                                       QStringLiteral("3D models (*.stl *.obj);;All files (*)"));
     if (name.isEmpty()) {
         return;
@@ -136,7 +136,7 @@ void MainWindow::exportModelDialog(viewmodel::ModelExportKind kind) {
         return;
     }
     const viewmodel::ModelExportSettings settings = options.settings();
-    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Export 3D Model"), QString(),
+    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Export 3D Model"), dialogStart(preferences().exportFolder),
                                                       QString::fromUtf8(viewmodel::exportFilter(kind)));
     if (name.isEmpty()) {
         return;

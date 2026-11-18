@@ -34,13 +34,23 @@ class QWheelEvent;
 
 namespace carvetto::app {
 
+/// Colours and smoothing the canvas draws with; set from the user's preferences (T-0348).
+struct DisplayOptions {
+    QColor background{226, 228, 232};
+    QColor material{255, 255, 255};
+    bool antialiasing{true};
+};
+inline DisplayOptions& displayOptions() {
+    static DisplayOptions options;
+    return options;
+}
 /// Background outside the material.
 inline QColor canvasBackground() {
-    return QColor(226, 228, 232);
+    return displayOptions().background;
 }
 /// Fill of the material rectangle.
 inline QColor materialFill() {
-    return QColor(255, 255, 255);
+    return displayOptions().material;
 }
 
 /// What the toolpath preview overlay shows besides the model's own state (T-0223).

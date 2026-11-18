@@ -17,6 +17,7 @@
 #include "carvetto/viewmodel/job_sheet.hpp"
 #include "carvetto/viewmodel/model_io.hpp"
 #include "carvetto/viewmodel/parts_import_form.hpp"
+#include "carvetto/viewmodel/preferences.hpp"
 #include "carvetto/viewmodel/preview_component.hpp"
 #include "carvetto/viewmodel/rotary_layout_form.hpp"
 #include "carvetto/viewmodel/tools.hpp"
@@ -184,6 +185,17 @@ class MainWindow : public QMainWindow {
     /// the recent-files list is read from and written to them.
     void setPersistLayout(bool persist);
 
+    /// Setup > Options (T-0348): the user's preferences, the dialog, and applying them to the live app.
+    const viewmodel::Preferences& preferences() const { return prefs_.current(); }
+    /// Validates and adopts `p` (and applies it everywhere); returns the issues and changes nothing when invalid.
+    /// Saved to the settings when persisting.
+    std::vector<viewmodel::PrefIssue> setPreferences(const viewmodel::Preferences& p);
+    QAction* optionsAction() const { return optionsAction_; }
+    bool rulersHidden() const;
+    void optionsDialog();
+    /// Open / save / export dialogs start in the preferred folder; `name` is a suggested file name or "".
+    QString dialogStart(const std::string& folderUtf8, const QString& name = QString()) const;
+
     /// File operations without dialogs for the file name (the menu actions call them after the
     /// file dialog; the self-test calls them directly). They show an error box on failure unless
     /// `setQuiet(true)`; the text stays available in `session().lastError()`.
@@ -253,6 +265,7 @@ class MainWindow : public QMainWindow {
     QMenu* recentMenu_{nullptr};
     QAction* saveToolpathsAction_{nullptr};
     QAction* importPartsAction_{nullptr};
+    QAction* optionsAction_{nullptr};
     QAction* createJobSheetAction_{nullptr};
     QAction* jobSetupAction_{nullptr};
     QAction* materialSetupAction_{nullptr};
@@ -276,6 +289,7 @@ class MainWindow : public QMainWindow {
     CanvasWidget* canvas_{nullptr};
     RulerWidget* hRuler_{nullptr};
     RulerWidget* vRuler_{nullptr};
+    QWidget* rulerCorner_{nullptr};
 
     QComboBox* sheetCombo_{nullptr};
     QComboBox* layerCombo_{nullptr};
@@ -319,6 +333,9 @@ class MainWindow : public QMainWindow {
 
     /// Reads the user's tool setup from the config folder (T-0235); warns when the file is refused.
     void loadUserSetup(const QString& activeMachine);
+    void applyPreferences(const viewmodel::Preferences& p);
+    viewmodel::PreferencesModel prefs_;
+    std::optional<viewmodel::Preferences> applied_;  ///< what `applyPreferences` last put into effect
     bool persistLayout_{false};
     bool refreshing_{false};
     bool quiet_{false};

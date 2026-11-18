@@ -230,7 +230,7 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
     if (doc_ == nullptr) {
         return;
     }
-    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::Antialiasing, displayOptions().antialiasing);
     viewmodel::SceneOptions sceneOptions;
     sceneOptions.haloCache = &haloCache_;
     const viewmodel::CanvasScene scene = viewmodel::buildCanvasScene(*doc_, view, sceneOptions);
@@ -401,7 +401,7 @@ void CanvasWidget::renderPreviewRange(QImage& layer, const ViewTransform& view, 
     const viewmodel::PreviewDrawList list = preview_->draw(view, options);
     lastPreviewPoints_ += list.stats.pointsOut;
     QPainter p(&layer);
-    p.setRenderHint(QPainter::Antialiasing, list.stats.pointsOut < 150000);
+    p.setRenderHint(QPainter::Antialiasing, displayOptions().antialiasing && list.stats.pointsOut < 150000);
     std::vector<QPointF> buffer;
     for (const viewmodel::PreviewBatch& batch : list.batches) {
         QPen pen(previewPenColour(batch.style));

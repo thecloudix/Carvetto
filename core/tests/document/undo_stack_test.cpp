@@ -179,6 +179,25 @@ TEST_CASE("undo limit drops the oldest steps", "[document][undo]") {
     CHECK(log == "a");
 }
 
+TEST_CASE("lowering the undo limit later drops the oldest steps at once", "[document][undo]") {
+    Document doc;
+    UndoStack stack;
+    std::string log;
+    for (char c : std::string("abcd")) {
+        stack.push(append(log, c), doc);
+    }
+    stack.setLimit(2);
+    CHECK(stack.limit() == 2);
+    CHECK(stack.count() == 2);
+    CHECK(stack.undo(doc));
+    CHECK(stack.undo(doc));
+    CHECK_FALSE(stack.undo(doc));
+    CHECK(log == "ab");
+    stack.setLimit(0);  // unbounded again, nothing comes back
+    CHECK(stack.count() == 2);
+    CHECK(stack.redo(doc));
+}
+
 TEST_CASE("clean state tracks the saved point", "[document][undo]") {
     Document doc;
     UndoStack stack;

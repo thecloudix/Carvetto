@@ -69,6 +69,17 @@ void UndoStack::record(std::unique_ptr<Command> cmd) {
     }
 }
 
+void UndoStack::setLimit(std::size_t limit) {
+    limit_ = limit;
+    while (limit_ > 0 && commands_.size() > limit_) {
+        commands_.erase(commands_.begin());
+        if (index_ > 0) {
+            --index_;
+        }
+        cleanIndex_ = cleanIndex_ < 0 ? -1 : cleanIndex_ - 1;
+    }
+}
+
 bool UndoStack::undo(Document& doc) {
     if (!canUndo()) {
         return false;

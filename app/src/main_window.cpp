@@ -1,4 +1,5 @@
 #include "main_window.hpp"
+#include "options_dialog.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
 
 #include <QAction>
@@ -148,6 +149,7 @@ void MainWindow::buildCentralArea() {
     hRuler_ = new RulerWidget(Qt::Horizontal, canvas_, page2d);
     vRuler_ = new RulerWidget(Qt::Vertical, canvas_, page2d);
     auto* corner = new QWidget(page2d);
+    rulerCorner_ = corner;
     corner->setFixedSize(RulerWidget::kThickness, RulerWidget::kThickness);
 
     auto* grid = new QGridLayout(page2d);
@@ -506,6 +508,9 @@ void MainWindow::buildMenus() {
     spiralLayoutAction_->setEnabled(false);
     connect(spiralLayoutAction_, &QAction::triggered, this,
             [this]() { rotaryLayoutDialog(viewmodel::RotaryLayoutKind::Spiral); });
+    optionsAction_ = setup->addAction(QStringLiteral("&Options..."));
+    optionsAction_->setObjectName(QStringLiteral("optionsAction"));
+    connect(optionsAction_, &QAction::triggered, this, [this]() { optionsDialog(); });
     toolSetupAction_ = setup->addAction(QStringLiteral("&Tools, Machines and Materials..."));
     toolSetupAction_->setObjectName(QStringLiteral("toolSetupAction"));
     connect(toolSetupAction_, &QAction::triggered, this, [this]() { toolSetupDialog(); });
@@ -674,6 +679,8 @@ void MainWindow::setWrappedView(bool on) {
 }
 
 void MainWindow::documentChanged() {
+    // A document opened or created since the preference was applied gets the same undo depth (T-0348).
+    session_.document().undoStack().setLimit(static_cast<std::size_t>(prefs_.current().undoDepth));
     if (materialSetupAction_) {
         materialSetupAction_->setEnabled(session_.document().job().type == document::JobType::Rotary);
     }
@@ -828,7 +835,18 @@ void MainWindow::newJob() {
     if (!confirmDiscard()) {
         return;
     }
-    NewJobDialog dialog(viewmodel::formFromJob(session_.document().job()), this);
+    viewmodel::NewJobForm initial = viewmodel::formFromJob(session_.document().job());
+    if (initial.units != prefs_.current().defaultUnits) {
+        // Start in the preferred units: the same size, shown in them.
+        const document::Units from = initial.units;
+        const document::Units to = prefs_.current().defaultUnits;
+        for (double* v : {&initial.width, &initial.height, &initial.thickness, &initial.length, &initial.diameter,
+                          &initial.offsetX, &initial.offsetY}) {
+            *v = document::toDisplay(document::fromDisplay(*v, from), to);
+        }
+        initial.units = to;
+    }
+    NewJobDialog dialog(initial, this);
     if (dialog.exec() != QDialog::Accepted || !dialog.job().has_value()) {
         return;
     }
@@ -842,6 +860,9 @@ void MainWindow::setPersistLayout(bool persist) {
     }
     gadgets_->setPersist(persist);
     if (persist) {
+        QSettingsPreferencesStore prefStore;
+        prefs_.load(prefStore);  // invalid stored values already fell back to defaults
+        applyPreferences(prefs_.current());
         QSettings settings;
         loadUserSetup(settings.value(QStringLiteral("activeMachine")).toString());
         std::vector<std::filesystem::path> paths;
@@ -1102,7 +1123,7 @@ void MainWindow::openDialog() {
     if (!confirmDiscard()) {
         return;
     }
-    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Open"), QString(),
+    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Open"), dialogStart(prefs_.current().openFolder),
                                                       QStringLiteral("Carvetto files (*.carv);;All files (*)"));
     if (!name.isEmpty()) {
         openFile(viewmodel::pathFromUtf8(name.toStdString()));
@@ -1114,7 +1135,8 @@ bool MainWindow::saveDialog() {
 }
 
 bool MainWindow::saveAsDialog() {
-    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Save As"), qs(session_.displayName()),
+    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Save As"),
+                                                      dialogStart(prefs_.current().saveFolder, qs(session_.displayName())),
                                                       QStringLiteral("Carvetto files (*.carv)"));
     if (name.isEmpty()) {
         return false;
@@ -1133,7 +1155,7 @@ bool MainWindow::importBitmapFile(const std::filesystem::path& path) {
 
 void MainWindow::importBitmapDialog() {
     const QString name = QFileDialog::getOpenFileName(
-        this, QStringLiteral("Import Bitmap"), QString(),
+        this, QStringLiteral("Import Bitmap"), dialogStart(prefs_.current().openFolder),
         QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif *.tif *.tiff *.pgm *.ppm *.pbm);;All files (*)"));
     if (name.isEmpty()) {
         return;
@@ -1170,7 +1192,7 @@ viewmodel::PartsImportOutcome MainWindow::applyPartsImport(viewmodel::PartsImpor
 }
 
 void MainWindow::importDxfDialog() {
-    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Import DXF"), QString(),
+    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Import DXF"), dialogStart(prefs_.current().openFolder),
                                                       QStringLiteral("DXF drawings (*.dxf);;All files (*)"));
     if (name.isEmpty()) {
         return;
@@ -1193,7 +1215,7 @@ void MainWindow::importDxfDialog() {
 }
 
 void MainWindow::exportDxfDialog(bool selectionOnly) {
-    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Export DXF"), QString(),
+    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Export DXF"), dialogStart(prefs_.current().exportFolder),
                                                       QStringLiteral("DXF drawings (*.dxf)"));
     if (name.isEmpty()) {
         return;

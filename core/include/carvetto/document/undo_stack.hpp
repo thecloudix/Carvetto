@@ -70,6 +70,8 @@ class UndoStack {
     /// Number of steps currently applied.
     std::size_t index() const { return index_; }
     std::size_t limit() const { return limit_; }
+    /// Changes the limit (0 = unbounded); a smaller limit drops the oldest steps at once (T-0348).
+    void setLimit(std::size_t limit);
     /// Forgets all history (does not touch the document).
     void clear();
 
