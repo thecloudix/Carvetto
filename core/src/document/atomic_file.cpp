@@ -28,7 +28,10 @@ bool flushToDisk(std::FILE* f) {
 
 bool writeTemp(const fs::path& tmp, std::span<const std::uint8_t> bytes) {
 #if defined(_WIN32)
-    std::FILE* f = _wfopen(tmp.c_str(), L"wb");
+    std::FILE* f = nullptr;
+    if (_wfopen_s(&f, tmp.c_str(), L"wb") != 0) {
+        f = nullptr;
+    }
 #else
     std::FILE* f = std::fopen(tmp.c_str(), "wb");
 #endif
