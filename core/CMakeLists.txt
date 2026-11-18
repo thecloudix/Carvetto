@@ -314,6 +314,7 @@ add_library(carvetto_core STATIC
   src/document/carv_moves.cpp
   src/document/carv_relief.cpp
   src/document/carv_io.cpp
+  src/document/atomic_file.cpp
   src/io/dxf_pairs.cpp
   src/io/dxf_text.cpp
   src/io/dxf_curves.cpp

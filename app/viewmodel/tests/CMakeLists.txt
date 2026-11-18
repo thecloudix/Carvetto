@@ -54,6 +54,7 @@ add_executable(carvetto_viewmodel_tests
   new_job_form_test.cpp
   rotary_material_test.cpp
   file_session_test.cpp
+  recovery_test.cpp
   node_edit_fuzz_test.cpp
   node_edit_test.cpp
   node_ops_test.cpp

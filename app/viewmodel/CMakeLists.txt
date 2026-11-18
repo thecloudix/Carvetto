@@ -66,6 +66,7 @@ add_library(carvetto_viewmodel STATIC
   src/clipart_library.cpp
   src/clipart_insert.cpp
   src/file_session.cpp
+  src/recovery.cpp
   src/node_edit.cpp
   src/node_ops.cpp
   src/snapping.cpp

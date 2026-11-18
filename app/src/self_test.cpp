@@ -54,6 +54,7 @@
 #include "wrapped_view_self_test.hpp"
 #include "draw_3d_self_test.hpp"
 #include "options_self_test.hpp"
+#include "recovery_self_test.hpp"
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
 #include "job_sheet_self_test.hpp"
@@ -901,6 +902,11 @@ int runSelfTest() {
 
     // 9c6. Options dialog and preferences (T-0348).
     if (const std::string why = optionsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c6b. Autosave and crash recovery (T-0357).
+    if (const std::string why = recoverySelfTest(window); !why.empty()) {
         return fail(why);
     }
 

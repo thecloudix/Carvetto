@@ -1255,6 +1255,9 @@ void MainWindow::closeEvent(QCloseEvent* event) {
         event->ignore();
         return;
     }
+    if (recovery_) {
+        recovery_->discard();  // a clean exit leaves nothing to recover (T-0357)
+    }
     if (persistLayout_) {
         QSettings settings;
         saveLayout(settings);

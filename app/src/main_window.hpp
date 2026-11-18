@@ -19,6 +19,7 @@
 #include "carvetto/viewmodel/parts_import_form.hpp"
 #include "carvetto/viewmodel/preferences.hpp"
 #include "carvetto/viewmodel/preview_component.hpp"
+#include "carvetto/viewmodel/recovery.hpp"
 #include "carvetto/viewmodel/rotary_layout_form.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
@@ -31,6 +32,7 @@ class QDockWidget;
 class QLabel;
 class QListWidget;
 class QSettings;
+class QTimer;
 class QTabWidget;
 
 namespace carvetto::app {
@@ -236,6 +238,23 @@ class MainWindow : public QMainWindow {
     /// The Gadgets menu (T-0331).
     GadgetsMenu* gadgets() const { return gadgets_.get(); }
 
+    /// Autosave and crash recovery (T-0357, main_window_recovery.cpp). `enableRecovery` turns it on with the
+    /// snapshot folder `dir` (empty: the per-user data folder); the Options autosave preferences set the timer.
+    void enableRecovery(const std::filesystem::path& dir = {});
+    /// Turns autosave and recovery off again (stops the timer; leaves any snapshot where it is).
+    void disableRecovery();
+    /// True when a snapshot of an unclean exit waits.
+    bool hasRecoverable() const;
+    /// Loads the waiting snapshot into the window (File > Open path); false (with an error shown unless quiet) when
+    /// it is damaged.
+    bool recoverPending();
+    /// At start-up: asks whether to recover a waiting snapshot and recovers or discards it.
+    void offerRecovery();
+    /// One autosave step (the timer calls it): snapshot when there are unsaved changes.
+    void autosaveNow();
+    /// The autosave timer's interval in ms, 0 when stopped (for tests).
+    int autosaveIntervalMs() const;
+
    protected:
     void closeEvent(QCloseEvent* event) override;
 
@@ -344,6 +363,9 @@ class MainWindow : public QMainWindow {
     bool refreshing_{false};
     bool quiet_{false};
     std::string modelIoError_;
+    std::unique_ptr<viewmodel::RecoveryStore> recovery_;
+    QTimer* autosaveTimer_{nullptr};
+    void updateAutosaveTimer();
 };
 
 }  // namespace carvetto::app

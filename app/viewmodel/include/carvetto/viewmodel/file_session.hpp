@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -8,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "carvetto/document/atomic_file.hpp"
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/bitmap_store.hpp"
 #include "carvetto/document/document.hpp"
@@ -17,6 +19,10 @@ namespace carvetto::viewmodel {
 
 /// Most entries the recent-files list keeps (oldest dropped first).
 inline constexpr std::size_t kMaxRecentFiles = 10;
+
+/// Largest `.carv` file `open` reads into memory; bigger files are refused with a message (T-0357). It is
+/// above the loader's 1 GiB uncompressed-archive cap, so it only guards the read itself.
+inline constexpr std::uintmax_t kMaxOpenFileBytes = std::uintmax_t{1536} << 20;
 
 /// UTF-8 text of a path and back (the Qt layer converts to and from `QString` itself).
 std::string pathToUtf8(const std::filesystem::path& path);
@@ -35,8 +41,8 @@ std::filesystem::path withCarvExtension(std::filesystem::path path);
 /// - Every operation returns false on failure and sets `lastError()`; a failed operation leaves
 ///   the document, path and dirty state as they were. `open` loads the whole file before it
 ///   replaces anything, so a corrupt or hostile file never damages the current document.
-/// - Saving writes a temporary file next to the target and renames it into place (`saveCarv`),
-///   so a failed save keeps the previous file intact.
+/// - Saving writes a temporary file next to the target, fsyncs it, copies the previous file to
+///   "<name>.bak" and renames it into place (T-0357), so a failed save keeps the previous file intact.
 /// - Content this version does not model (`CarvExtras`) is kept from `open` and written back.
 class FileSession {
    public:
@@ -73,8 +79,17 @@ class FileSession {
     /// the path or the dirty state.
     bool exportDxf(const std::filesystem::path& path, bool selectionOnly);
 
+    /// Writes the document (with its preserved extras) to `path` atomically without touching the session's
+    /// path, dirty state or recent list: the autosave snapshot (T-0357).
+    bool writeSnapshot(const std::filesystem::path& path);
+    /// Loads the recovery file `recoveryFile` as the document, as if it were `originalPath` (empty: untitled)
+    /// with unsaved changes. On failure nothing changes.
+    bool openRecovered(const std::filesystem::path& recoveryFile, const std::filesystem::path& originalPath);
+    /// Test hook: make the next saves fail at this step of the atomic write (the old file must survive).
+    void setSaveFailPointForTest(document::AtomicFailPoint point) { failAt_ = point; }
+
     /// True when the document differs from the saved (or newly created / loaded) state.
-    bool isDirty() const { return !doc_->undoStack().isClean(); }
+    bool isDirty() const { return recovered_ || !doc_->undoStack().isClean(); }
     bool hasPath() const { return !path_.empty(); }
     const std::filesystem::path& path() const { return path_; }
     /// File name of the path, or "Untitled".
@@ -104,6 +119,8 @@ class FileSession {
     std::vector<std::filesystem::path> recent_;
     std::string error_;
     DxfImportOutcome lastImport_;
+    bool recovered_{false};
+    document::AtomicFailPoint failAt_{document::AtomicFailPoint::None};
 };
 
 }  // namespace carvetto::viewmodel

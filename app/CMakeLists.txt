@@ -97,6 +97,9 @@ qt_add_executable(carvetto
   src/model_io_dialogs.hpp
   src/model_io_self_test.cpp
   src/main_window_model_io.cpp
+  src/main_window_recovery.cpp
+  src/recovery_self_test.cpp
+  src/recovery_self_test.hpp
   src/relief_view.hpp
   src/tool_panel.cpp
   src/tool_panel.hpp

@@ -8,6 +8,7 @@
 #include <system_error>
 #include <utility>
 
+#include "carvetto/document/atomic_file.hpp"
 #include "carvetto/viewmodel/bitmap_import.hpp"
 
 namespace carvetto::viewmodel {
@@ -46,6 +47,13 @@ bool readFile(const fs::path& path, std::vector<std::uint8_t>& out, std::string&
         why = "'" + pathToUtf8(path) + "' is not a regular file";
         return false;
     }
+    std::error_code sizeEc;
+    const std::uintmax_t size = fs::file_size(path, sizeEc);
+    if (!sizeEc && size > kMaxOpenFileBytes) {
+        why = "'" + pathToUtf8(path) + "' is too large (" + std::to_string(size >> 20) + " MiB; the limit is " +
+              std::to_string(kMaxOpenFileBytes >> 20) + " MiB)";
+        return false;
+    }
     std::ifstream in(path, std::ios::binary);
     if (!in) {
         why = "cannot open '" + pathToUtf8(path) + "' for reading";
@@ -59,34 +67,10 @@ bool readFile(const fs::path& path, std::vector<std::uint8_t>& out, std::string&
     return true;
 }
 
-/// Writes `bytes` to "<path>.tmp" and renames it over `path`; the old file survives a failure.
-bool writeFileAtomic(const fs::path& path, const std::vector<std::uint8_t>& bytes, std::string& why) {
-    fs::path tmp = path;
-    tmp += ".tmp";
-    {
-        std::ofstream file(tmp, std::ios::binary | std::ios::trunc);
-        if (!file) {
-            why = "cannot open '" + pathToUtf8(tmp) + "' for writing";
-            return false;
-        }
-        file.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-        file.close();
-        if (!file) {
-            std::error_code ignored;
-            fs::remove(tmp, ignored);
-            why = "cannot write '" + pathToUtf8(tmp) + "'";
-            return false;
-        }
-    }
-    std::error_code ec;
-    fs::rename(tmp, path, ec);
-    if (ec) {
-        std::error_code ignored;
-        fs::remove(tmp, ignored);
-        why = "cannot replace '" + pathToUtf8(path) + "': " + ec.message();
-        return false;
-    }
-    return true;
+/// Atomic write (temporary file, fsync, rename) through core; `why` names the failure.
+bool writeAtomic(const fs::path& path, const std::vector<std::uint8_t>& bytes, std::string& why,
+                 const document::AtomicWriteOptions& options = {}) {
+    return document::writeFileAtomic(path, bytes, why, options);
 }
 
 }  // namespace
@@ -139,6 +123,7 @@ void FileSession::newDocument(std::unique_ptr<document::Document> doc) {
     doc_->undoStack().setClean();
     extras_ = {};
     path_.clear();
+    recovered_ = false;
     error_.clear();
 }
 
@@ -159,6 +144,7 @@ bool FileSession::open(const fs::path& path) {
         doc_ = std::make_unique<document::Document>(std::move(loaded.value().document));
         extras_ = loaded.value().extras;
         doc_->undoStack().setClean();
+        recovered_ = false;
         path_ = path;
         addRecent(path);
         return true;
@@ -182,17 +168,66 @@ bool FileSession::saveAs(const fs::path& path) {
         return fail("No file name was given.");
     }
     try {
-        const document::CarvStatus saved = document::saveCarv(*doc_, path, extras_);
-        if (!saved) {
-            return fail("Cannot save '" + pathToUtf8(path.filename()) + "': " + saved.error().message);
+        const auto bytes = document::saveCarv(*doc_, extras_);
+        if (!bytes) {
+            return fail("Cannot save '" + pathToUtf8(path.filename()) + "': " + bytes.error().message);
+        }
+        document::AtomicWriteOptions options;
+        options.keepBackup = true;  // the previous file stays next to it as "<name>.carv.bak"
+        options.failAt = failAt_;
+        std::string why;
+        if (!writeAtomic(path, bytes.value(), why, options)) {
+            return fail("Cannot save '" + pathToUtf8(path.filename()) + "': " + why +
+                        ". The previous file is unchanged.");
         }
     } catch (const std::exception& e) {
         return fail(std::string("Cannot save the file: ") + e.what());
     }
     path_ = path;
     doc_->undoStack().setClean();
+    recovered_ = false;
     addRecent(path);
     return true;
+}
+
+bool FileSession::writeSnapshot(const fs::path& path) {
+    error_.clear();
+    try {
+        const auto bytes = document::saveCarv(*doc_, extras_);
+        if (!bytes) {
+            return fail("Cannot write the recovery file: " + bytes.error().message);
+        }
+        std::string why;
+        if (!writeAtomic(path, bytes.value(), why)) {
+            return fail("Cannot write the recovery file: " + why);
+        }
+        return true;
+    } catch (const std::exception& e) {
+        return fail(std::string("Cannot write the recovery file: ") + e.what());
+    }
+}
+
+bool FileSession::openRecovered(const fs::path& recoveryFile, const fs::path& originalPath) {
+    error_.clear();
+    try {
+        std::vector<std::uint8_t> bytes;
+        std::string why;
+        if (!readFile(recoveryFile, bytes, why)) {
+            return fail("Cannot read the recovery file: " + why + ".");
+        }
+        auto loaded = document::loadCarv(std::span<const std::uint8_t>(bytes));
+        if (!loaded) {
+            return fail("The recovery file is damaged: " + loaded.error().message);
+        }
+        doc_ = std::make_unique<document::Document>(std::move(loaded.value().document));
+        extras_ = loaded.value().extras;
+        doc_->undoStack().setClean();
+        recovered_ = true;  // the recovered work is not on disk under its name yet
+        path_ = originalPath;
+        return true;
+    } catch (const std::exception& e) {
+        return fail(std::string("Cannot read the recovery file: ") + e.what());
+    }
 }
 
 bool FileSession::importDxf(const fs::path& path, std::optional<double> forcedMmPerUnit,
@@ -247,7 +282,7 @@ bool FileSession::exportDxf(const fs::path& path, bool selectionOnly) {
             return fail(out.error);
         }
         std::string why;
-        if (!writeFileAtomic(path, out.bytes, why)) {
+        if (!writeAtomic(path, out.bytes, why)) {
             return fail("Cannot export DXF: " + why + ".");
         }
         return true;
