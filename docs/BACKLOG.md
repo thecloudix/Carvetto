@@ -1748,7 +1748,7 @@ Goal: Qt Linguist plumbing: CMake lupdate/lrelease targets, translation loading 
 Acceptance criteria:
   1. Choosing the pseudo-locale visibly transforms menus and dialogs in --self-test; missing translations fall back to English; the lint test runs in ctest.
 
-### T-0351 Localization sweep: wrap all user-visible strings in tr() and extract the catalog   [status: blocked — waits on T-0350]
+### T-0351 Localization sweep: wrap all user-visible strings in tr() and extract the catalog   [status: in-progress]
 Phase: 4   Module: app   Depends on: T-0350
 Goal: Mechanically wrap every user-visible string in the app in tr()/QCoreApplication::translate with disambiguating context, keep plain-text rules, regenerate the .ts catalog, and make sure no self-test depends on English literals beyond object names. Large mechanical change: do it when few other app tasks are open (director schedules).
 Acceptance criteria:
