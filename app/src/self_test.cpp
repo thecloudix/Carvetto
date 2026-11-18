@@ -46,6 +46,7 @@
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "double_sided_menu.hpp"
 #include "rotary_self_test.hpp"
+#include "rotary_tools_dialogs.hpp"
 #include "wrapped_view_self_test.hpp"
 #include "parts_import_dialog.hpp"
 #include "main_window.hpp"
@@ -858,6 +859,11 @@ int runSelfTest() {
 
     // 9c2. Rotary jobs: Job Setup, Material Setup, Edit Sheet and a save/reload (T-0319).
     if (const std::string why = rotarySelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c2b. Rotary tools UI: Wrapping toggle, Vector Unwrapper, rotary 3D import (T-0341).
+    if (const std::string why = rotaryToolsSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

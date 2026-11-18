@@ -142,16 +142,20 @@ class LevelEffectsPanel : public PanelBase {
     bool applyClip();
     bool removeClip();
     bool setMirror(relief::MirrorMode mode);
+    bool setWrapping(bool enabled);
     bool bake();
 
     QLabel* summary() const { return summary_; }
     QComboBox* mirrorBox() const { return mirror_; }
+    QCheckBox* wrappingBox() const { return wrapping_; }
+    QPushButton* bakeButton() const { return bake_; }
     QPushButton* applyButton() const { return apply_; }
     QPushButton* removeButton() const { return remove_; }
 
    private:
     QLabel* summary_;
     QComboBox* mirror_;
+    QCheckBox* wrapping_;
     QPushButton* apply_;
     QPushButton* remove_;
     QPushButton* bake_;
