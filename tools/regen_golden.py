@@ -20,6 +20,7 @@ What it rewrites, from the current sources:
     the ctest cli.end_to_end_drill_grbl and CI compare it the same way);
   - core/tests/golden/cli/part_engrave_grbl.nc (T-0151: part.dxf -> engrave_fill.json -> engrave_outline.json
     -> grbl_mm.pp; the ctest cli.end_to_end_engrave_grbl and CI compare it the same way);
+  - core/tests/golden/e2e/{sign,relief,rotary}_grbl.nc (T-0354 end-to-end acceptance; see core/tests/golden/e2e/README.md);
   - core/tests/golden/cli/sign_v_carve_grbl.nc (T-0153: sign.dxf -> v_carve_letters.json ->
     v_carve_flat.json -> grbl_mm.pp; the ctest cli.end_to_end_v_carve_grbl and CI compare it the same way);
   - data/tools/starter_tools.json, re-exported in the exporter's canonical form (sorted keys,
@@ -45,7 +46,7 @@ import subprocess
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-OUTPUTS = ["core/tests/golden/post", "core/tests/golden/toolpath", "core/tests/golden/cli",
+OUTPUTS = ["core/tests/golden/post", "core/tests/golden/toolpath", "core/tests/golden/cli", "core/tests/golden/e2e",
            "data/tools/starter_tools.json"]
 
 

@@ -1,0 +1,130 @@
+999
+Carvetto end-to-end acceptance part (T-0354, hand-written)
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1015
+  9
+$INSUNITS
+ 70
+4
+  0
+ENDSEC
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+LAYER
+ 70
+3
+  0
+LAYER
+  2
+Outline
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+Pocket
+ 70
+0
+ 62
+1
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+Guide
+ 70
+0
+ 62
+3
+  6
+CONTINUOUS
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+LWPOLYLINE
+  8
+Outline
+ 90
+4
+ 70
+1
+ 10
+0
+ 20
+0
+ 10
+120
+ 20
+0
+ 10
+120
+ 20
+70
+ 10
+0
+ 20
+70
+  0
+LWPOLYLINE
+  8
+Pocket
+ 90
+4
+ 70
+1
+ 10
+10
+ 20
+12
+ 10
+30
+ 20
+12
+ 10
+30
+ 20
+42
+ 10
+10
+ 20
+42
+  0
+ARC
+  8
+Guide
+ 10
+70
+ 20
+-10
+ 40
+50
+ 50
+60
+ 51
+120
+  0
+ENDSEC
+  0
+EOF
