@@ -71,6 +71,10 @@ if(CARVETTO_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_user_docs.py --root ${PROJECT_SOURCE_DIR})
     add_test(NAME lint.user_docs_unit
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_user_docs.py)
+    # T-0361: release notes extraction used by the CI release job.
+    add_test(NAME tools.release_notes_unit
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_release_notes.py)
+    set_tests_properties(tools.release_notes_unit PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
   else()
     message(STATUS "Python 3 not found - skipping the changelog tool tests (CI still runs the check)")
   endif()

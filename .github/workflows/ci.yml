@@ -9,6 +9,10 @@ on:
     paths-ignore: ['docs/**']
   pull_request:
 
+# Read-only by default; only the `release` job below raises it (T-0361).
+permissions:
+  contents: read
+
 # A newer push to the same PR branch supersedes the older run: cancel it so stale runs do not
 # starve the runner queue. Runs on main are never cancelled.
 concurrency:
@@ -555,3 +559,58 @@ jobs:
             dist/carvetto-*.x86_64.rpm
             dist/Carvetto-*-x86_64.AppImage
           if-no-files-found: error
+
+  # T-0361: publish a GitHub Release from a v* tag. Runs only for tag pushes, after both packaging jobs
+  # succeeded (both run on tags: their `if:` only excludes unlabelled pull requests). Downloads their
+  # artifacts, writes SHA256SUMS, takes the notes from the `## X.Y.Z` section of CHANGELOG.md
+  # (tools/release_notes.py) and creates the release, or updates it when it already exists so that
+  # re-running the workflow does not fail. The only job with write permission. Needs every test job
+  # too, so nothing is published from a red tag. Prerelease tags (vX.Y.Z-rc1) need their own
+  # `## X.Y.Z-rc1` CHANGELOG section, otherwise notes extraction fails and nothing is published.
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [linux-core, linux-app, windows-app, windows-installer, linux-packages]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download packaging artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # Explicit names: a `carvetto-*` pattern would also match the plain windows job's
+          # `carvetto-windows` artifact (loose exes without Qt DLLs), which must not be published.
+          name: carvetto-windows-installer
+          path: release-assets
+      - name: Download Linux packages
+        uses: actions/download-artifact@v4
+        with:
+          name: carvetto-linux-packages
+          path: release-assets
+      - name: Collect assets and checksums
+        run: |
+          cd release-assets
+          ls -l
+          for pat in 'Carvetto-*-win64.exe' 'carvetto_*_amd64.deb' 'carvetto-*.x86_64.rpm' 'Carvetto-*-x86_64.AppImage'; do
+            # shellcheck disable=SC2086
+            ls $pat >/dev/null 2>&1 || { echo "::error title=Missing asset::no file matches $pat"; exit 1; }
+          done
+          sha256sum Carvetto-*-win64.exe carvetto_*_amd64.deb carvetto-*.x86_64.rpm Carvetto-*-x86_64.AppImage > SHA256SUMS
+          cat SHA256SUMS
+      - name: Extract release notes
+        run: python3 -I tools/release_notes.py "$TAG" --output release-notes.md
+      - name: Create or update the release
+        run: |
+          prerelease=()
+          case "$TAG" in *-*) prerelease=(--prerelease) ;; esac
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "Carvetto ${TAG#v}" --notes-file release-notes.md "${prerelease[@]}"
+          else
+            gh release create "$TAG" --verify-tag --title "Carvetto ${TAG#v}" --notes-file release-notes.md "${prerelease[@]}" \
+              || gh release view "$TAG" >/dev/null   # lost a creation race: the release exists now, upload below
+          fi
+          cd release-assets
+          gh release upload "$TAG" Carvetto-*-win64.exe carvetto_*_amd64.deb carvetto-*.x86_64.rpm Carvetto-*-x86_64.AppImage SHA256SUMS --clobber
