@@ -1544,7 +1544,7 @@ Goal: Sculpt preview currently shows the working component alone. Compose the re
 Phase: 2   Module: core/simulate + app   Depends on: T-0231
 Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancellable (no UI freeze; cancel token honoured before the first step); (2) cut the first-paint and zoom scan cost of the preview (profile first, then fix the hot spot; operation counters, not timing, in tests); (3) cut the cost of the simulation summary. Tests by operation counters; ADR with measurements.
 
-### T-0318 Profile residual (i): reproduce and fix the V-bit SHARP severed kept tabs (T-0279 split)   [status: in-progress — LOW]
+### T-0318 Profile residual (i): reproduce and fix the V-bit SHARP severed kept tabs (T-0279 split)   [status: done]
 Phase: 1   Module: core/toolpath   Depends on: T-0279
 Goal: CLOSED WON'T-FIX, accepted by director (ADR-0016: kept tabs that hold nothing are the benign class). Scenes 9301_153 and 9308_412 exist in the verifier harness; 9301_153 is the pocket-of-waste case (root cause: the raster 'holds' answer never reaches the exact judge); extending the exact capsule judge and rescreening is deferred (ADR-0096).
 
@@ -1662,7 +1662,7 @@ Goal: File/Edit menu entry and dialog driving the Qt-free PartsImportForm: choos
 Acceptance criteria:
   1. A parts list imports end to end from the UI with diagnostics shown; self-test drives it.
 
-### T-0337 General Nest Parts (rotation step, mirroring, parts inside parts, grain/offcuts) to replace the shelf nester   [status: verifying]
+### T-0337 General Nest Parts (rotation step, mirroring, parts inside parts, grain/offcuts) to replace the shelf nester   [status: done]
 Phase: 3   Module: core/geometry + app   Depends on: T-0329
 Goal: The feature inventory lists Nest Parts (rotate to best fit by step angle, mirror, allow parts inside other parts, nest boundary, start corner/direction, nesting sheets). T-0329 found core has no nesting and added only a deterministic rectangle shelf nester (io::nestRectangles). Implement a real polygon nester behind the same interface with operation-counter budgets, deterministic results and tests against the shelf nester for rectangles, then the app form.
 Acceptance criteria:
@@ -1790,8 +1790,20 @@ Goal: Autosave to a recovery file at an interval from Options, recovery prompt a
 Acceptance criteria:
   1. A killed session is recovered on next start (self-test simulated); corrupt/truncated .carv files give a clear error, never a crash (corpus test); atomic save leaves a valid file on injected failure.
 
-### T-0358 Release 0.1.0: version stamping, About dialog, release PR and tag   [status: blocked — waits on T-0345..T-0357 and T-0337, T-0318]
+### T-0358 Release 0.1.0: version stamping, About dialog, release PR and tag   [status: ready]
 Phase: 4   Module: CMake + app + changelog   Depends on: all Phase 3 and 4 cards
 Goal: Version from one source (CMake project VERSION) into binary, installer and About dialog (licence, dependencies, build info); assemble the changelog fragments in their own PR (python3 tools/changelog.py assemble), then a release PR inserting the `## 0.1.0` heading, then tag v0.1.0 and attach installer/package artifacts. Director cuts the release after verifying main is green on all jobs.
 Acceptance criteria:
   1. Tag v0.1.0 exists with artifacts; About dialog shows the version; changelog check passes.
+
+### T-0359 Windows flake: orderCuts "same order as the exhaustive scans" failed once on MSVC (path_walk_test.cpp:495)   [status: ready — LOW]
+Phase: 4   Module: core/toolpath tests   Depends on: none
+Goal: One windows-app run (PR #224, docs-only) failed this test; an immediate re-run passed and a Linux sanitizer sweep of 18,000 scenes could not reproduce it. Make the next failure diagnosable (dump scene, seed and both orders on mismatch) and, if a root cause appears (e.g. std::hypot tie-breaking vs the grid-index prune in cut_order.cpp), make the nearest-neighbour search independent of hypot ties.
+Acceptance criteria:
+  1. On mismatch the test prints the scene and both orders; no behaviour change unless a root cause is shown.
+
+### T-0360 Follow-ups from the 0.1 batch (LOW, bundle as capacity allows)   [status: ready — LOW]
+Phase: 4   Module: various   Depends on: none
+Goal: (a) 3D view: rotate-mode test and distinct rotate-handle visuals (T-0346); (b) robustness: low-memory/large-file test coverage, injectable open-size cap, parent-directory fsync (T-0357); (c) DEB dependency hardening (T-0353); (d) view-model sentences extracted into the translation catalog (ADR-0129); (e) switch parts import (buildPanels) from the shelf nester to nestParts, then retire io::nestRectangles (T-0337); (f) nester: grain direction, offcuts, unselected objects as obstacles (T-0337).
+Acceptance criteria:
+  1. Each item either done with a test or split into its own card.
