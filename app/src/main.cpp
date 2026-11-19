@@ -4,14 +4,23 @@
 #include <QSettings>
 #include <QString>
 #include <QtGlobal>
+#include <cstdio>
 #include <cstring>
 
+#include "about_dialog.hpp"
 #include "localization.hpp"
 #include "main_window.hpp"
 #include "options_dialog.hpp"
 #include "self_test.hpp"
 
 int main(int argc, char* argv[]) {
+    // --version needs no GUI: answer before any QApplication exists (T-0358).
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--version") == 0) {
+            std::printf("%s\n", carvetto::app::versionLine().toUtf8().constData());
+            return 0;
+        }
+    }
     bool selfTest = false;
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--self-test") == 0) {

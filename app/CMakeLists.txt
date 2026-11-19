@@ -121,6 +121,8 @@ qt_add_executable(carvetto
   src/image_self_test.cpp
   src/laser_self_test.cpp
   src/v_carve_inlay_self_test.cpp
+  src/about_dialog.cpp
+  src/about_dialog.hpp
   src/help_viewer.cpp
   src/help_viewer.hpp
   src/self_test.cpp
@@ -153,6 +155,14 @@ qt_add_executable(carvetto
   src/variables_self_test.cpp
 )
 # Development builds find the shipped posts in the source tree (a packaged app has posts/ beside it).
+# T-0358: one version source (project VERSION) for --version, the About dialog, the installer and the packages.
+target_compile_definitions(carvetto PRIVATE CARVETTO_VERSION_STRING="${PROJECT_VERSION}"
+                                                CARVETTO_BUILD_TYPE="$<CONFIG>")
+if(CARVETTO_BUILD_TESTS)
+  add_test(NAME app.version COMMAND carvetto --version)
+  set_tests_properties(app.version PROPERTIES PASS_REGULAR_EXPRESSION "^Carvetto ${PROJECT_VERSION}\n"
+                       ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
 target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
                                                 CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
                                                 CARVETTO_USER_DOCS_DIR="${PROJECT_SOURCE_DIR}/docs/user")

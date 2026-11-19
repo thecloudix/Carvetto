@@ -1,4 +1,5 @@
 #include "help_viewer.hpp"
+#include "about_dialog.hpp"
 #include "l10n_self_test.hpp"
 #include "self_test.hpp"
 
@@ -953,6 +954,11 @@ int runSelfTest() {
 
     // 9c8. Help menu and the bundled user guide (T-0355).
     if (const std::string why = helpSelfTest(&window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c9. About dialog and version stamping (T-0358).
+    if (const std::string why = aboutSelfTest(&window); !why.empty()) {
         return fail(why);
     }
 

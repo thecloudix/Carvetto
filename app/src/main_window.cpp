@@ -1,4 +1,6 @@
 #include "main_window.hpp"
+
+#include "about_dialog.hpp"
 #include "vm_text.hpp"
 #include "help_viewer.hpp"
 #include "options_dialog.hpp"
@@ -524,10 +526,8 @@ void MainWindow::buildMenus() {
     QMenu* help = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Help"));
     installHelpActions(help, this);
     QAction* about = help->addAction(QCoreApplication::translate("MainWindow", "&About Carvetto"));
-    connect(about, &QAction::triggered, this, [this]() {
-        QMessageBox::about(this, QCoreApplication::translate("MainWindow", "About Carvetto"),
-                           QCoreApplication::translate("MainWindow", "Carvetto - open-source CNC design and toolpath software."));
-    });
+    about->setObjectName(QStringLiteral("aboutAction"));
+    connect(about, &QAction::triggered, this, [this]() { showAboutDialog(this); });
 }
 
 void MainWindow::buildToolBar() {

@@ -2,6 +2,35 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="de" sourcelanguage="en">
 <context>
+    <name>AboutDialog</name>
+    <message>
+        <source>Compiler: %1
+Build type: %2
+Qt: built with %3, running on %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Carvetto - open-source CNC design and toolpath software.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Licence: GNU General Public License, version 3 or later (GPL-3.0-or-later). This program comes with no warranty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bundled dependencies:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About Carvetto</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ArrayCopyMenu</name>
     <message>
         <source>Array Copy</source>
@@ -1116,14 +1145,6 @@ A gadget is a script that can change your drawing. It cannot read your files or 
     </message>
     <message>
         <source>&amp;About Carvetto</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>About Carvetto</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Carvetto - open-source CNC design and toolpath software.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
