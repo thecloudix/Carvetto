@@ -1790,7 +1790,7 @@ Goal: Autosave to a recovery file at an interval from Options, recovery prompt a
 Acceptance criteria:
   1. A killed session is recovered on next start (self-test simulated); corrupt/truncated .carv files give a clear error, never a crash (corpus test); atomic save leaves a valid file on injected failure.
 
-### T-0358 Release 0.1.0: version stamping, About dialog, release PR and tag   [status: ready]
+### T-0358 Release 0.1.0: version stamping, About dialog, release PR and tag   [status: in-progress]
 Phase: 4   Module: CMake + app + changelog   Depends on: all Phase 3 and 4 cards
 Goal: Version from one source (CMake project VERSION) into binary, installer and About dialog (licence, dependencies, build info); assemble the changelog fragments in their own PR (python3 tools/changelog.py assemble), then a release PR inserting the `## 0.1.0` heading, then tag v0.1.0 and attach installer/package artifacts. Director cuts the release after verifying main is green on all jobs.
 Acceptance criteria:
