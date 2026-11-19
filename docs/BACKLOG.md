@@ -1546,7 +1546,7 @@ Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancel
 
 ### T-0318 Profile residual (i): reproduce and fix the V-bit SHARP severed kept tabs (T-0279 split)   [status: in-progress — LOW]
 Phase: 1   Module: core/toolpath   Depends on: T-0279
-Goal: Residual (i) of T-0252 was not reproducible in T-0279 because scenes 9301_153 and 9308_412 are absent from the harness archive; a 650-scene V-bit SHARP screen still shows three oracle-severed kept tabs (9308 scenes 13, 63, 69), identical on main and the T-0279 branch. Regenerate the scenes, diagnose, fix with ADR, mutants killed. Owner may defer indefinitely.
+Goal: CLOSED WON'T-FIX, accepted by director (ADR-0016: kept tabs that hold nothing are the benign class). Scenes 9301_153 and 9308_412 exist in the verifier harness; 9301_153 is the pocket-of-waste case (root cause: the raster 'holds' answer never reaches the exact judge); extending the exact capsule judge and rescreening is deferred (ADR-0096).
 
 ## Phase 3 — Rotary, modules, scripting (drafted 2026-11-16; scripting compatibility with any third-party gadget SDK is NOT a goal unless the owner decides so, see PLAN §6.4)
 

@@ -47,9 +47,15 @@ Replace the "no waste near" answer by an exact judgement, and only that answer (
 ## Residuals (i), (j), (l)
 - (l) the notch's bottom-corner tab: fixed by the above (the test builds the U part; the oracle's verdict
   and the product's agree).
-- (i): moved to T-0318. Scenes 9301_153 and 9308_412 are absent from the harness archive, so it could not be
-  reproduced here; a 650-scene V-bit SHARP screen still shows three oracle-severed kept tabs (9308 scenes
-  13, 63, 69), identical on main and on this branch, so they are not caused or cured by this judge.
+- (i): moved to T-0318, which was closed won't-fix (accepted by the director; the benign class already recorded
+  in ADR-0016, "kept tabs that hold nothing"). Correction: scenes m3_9301_153 and m3_9308_412 are not absent;
+  they exist in the verifier harness (/home/chris/s167/scn), only not in the archive this note was written
+  from. m3_9308_412 is the benign partial-tab "comes free" case. m3_9301_153 (V-bit 60 deg, D25, SHARP,
+  Outside, allowance 0.3867, 3 of 9 tabs) is the known pocket-of-waste case: a kept tab holds nothing and
+  nothing is freed. Root cause: the raster "holds" answer never reaches the exact capsule judge. A 650-scene
+  V-bit SHARP screen still shows three oracle-severed kept tabs (9308 scenes 13, 63, 69), identical on main
+  and on this branch, so they are not caused or cured by this judge. Option B (extend the exact capsule judge
+  to cover this path and rescreen about 24k scenes) is deferred.
 - (j): tabs left out where another place would hold (mmrg_001_tabs_all_out, m1_272009_9). The argument that
   this is not a judge defect is: the judge answers only the "no waste near" case and only ever returns
   holds or severed in the oracle's own world, so it cannot leave out a tab the oracle finds holding; a tab
