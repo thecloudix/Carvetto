@@ -121,6 +121,8 @@ qt_add_executable(carvetto
   src/image_self_test.cpp
   src/laser_self_test.cpp
   src/v_carve_inlay_self_test.cpp
+  src/about_dialog.cpp
+  src/about_dialog.hpp
   src/help_viewer.cpp
   src/help_viewer.hpp
   src/self_test.cpp
@@ -156,6 +158,16 @@ qt_add_executable(carvetto
 target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
                                                 CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
                                                 CARVETTO_USER_DOCS_DIR="${PROJECT_SOURCE_DIR}/docs/user")
+# T-0358: one version source (project VERSION) for --version, the About dialog, the installer and the packages.
+target_compile_definitions(carvetto PRIVATE CARVETTO_VERSION_STRING="${PROJECT_VERSION}"
+                                                CARVETTO_BUILD_TYPE="$<CONFIG>")
+if(CARVETTO_BUILD_TESTS)
+  string(REPLACE "." "\\." CARVETTO_VERSION_REGEX "${PROJECT_VERSION}")
+  add_test(NAME app.version COMMAND carvetto --version)
+  # No trailing newline in the pattern: Windows writes CRLF.
+  set_tests_properties(app.version PROPERTIES PASS_REGULAR_EXPRESSION "^Carvetto ${CARVETTO_VERSION_REGEX}"
+                       ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
 # T-0349: printing. PDF output needs only Qt Gui (QPdfWriter); QPrinter, the print dialog and the preview dialog
 # need Qt PrintSupport, which is optional: without it Print... and Print Preview... are disabled.
