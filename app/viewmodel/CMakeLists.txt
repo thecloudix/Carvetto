@@ -53,6 +53,7 @@ add_library(carvetto_viewmodel STATIC
   src/units_format.cpp
   src/canvas_scene.cpp
   src/array_copies.cpp
+  src/nest_selection.cpp
   src/data_merge.cpp
   src/pixel_probe.cpp
   src/new_job_form.cpp

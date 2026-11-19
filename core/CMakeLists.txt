@@ -308,6 +308,7 @@ add_library(carvetto_core STATIC
   src/geometry/clipper_interop.cpp
   src/geometry/offset.cpp
   src/geometry/hole_nesting.cpp
+  src/geometry/nesting.cpp
   src/geometry/boolean.cpp
   src/document/carv_zip.cpp
   src/document/carv_json_reader.cpp

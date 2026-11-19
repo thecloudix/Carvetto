@@ -4,6 +4,7 @@
 
 #include "carvetto/viewmodel/array_copies.hpp"
 #include "carvetto/viewmodel/data_merge.hpp"
+#include "carvetto/viewmodel/nest_selection.hpp"
 
 class QAction;
 class QCheckBox;
@@ -90,10 +91,13 @@ class CopiesMenu {
     QAction* alongAction() const { return along_; }
     /// Plate Production (data merge, T-0347); enabled when the selection holds a template.
     QAction* plateAction() const { return plate_; }
+    /// Edit > Nest Selected Vectors (T-0337); enabled when the selection holds a nestable vector.
+    QAction* nestAction() const { return nest_; }
 
     viewmodel::CopyResult runArray(const viewmodel::ArrayOptions& options, bool showErrors = true);
     viewmodel::CopyResult runCircular(const viewmodel::CircularOptions& options, bool showErrors = true);
     viewmodel::CopyResult runAlong(const viewmodel::AlongVectorOptions& options, bool showErrors = true);
+    viewmodel::NestSelectionResult runNest(const viewmodel::NestSelectionOptions& options, bool showErrors = true);
 
    private:
     void report(const viewmodel::CopyResult& result, bool showErrors);
@@ -103,6 +107,8 @@ class CopiesMenu {
     QAction* circular_{nullptr};
     QAction* along_{nullptr};
     QAction* plate_{nullptr};
+    QAction* nest_{nullptr};
+    viewmodel::NestSelectionOptions lastNest_;
     viewmodel::ArrayOptions lastArray_;
     viewmodel::CircularOptions lastCircular_;
     viewmodel::AlongVectorOptions lastAlong_;
