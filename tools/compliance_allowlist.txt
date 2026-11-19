@@ -14,3 +14,4 @@ docs/reference/feature-inventory.md	ef5ae9bfa6c07dd0741b	behaviour description o
 docs/reference/feature-inventory.md	93f39fc83bd973a77914	behaviour description of file types the reference package handles; no format internals
 docs/reference/feature-inventory.md	7f1f6de9e6f99e16e416	behaviour description of file types the reference package handles; no format internals
 docs/reference/feature-inventory.md	c81291d2961580309b79	behaviour description of file types the reference package handles; no format internals
+CHANGELOG.md	ef5ae9bfa6c07dd0741b	changelog notes the proprietary clipart format is not supported (assembled from changelog.d/T-0287.md)
