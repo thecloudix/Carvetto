@@ -1,0 +1,5 @@
+#!/bin/sh
+# AppImage entry point (T-0353). The app finds Qt (bin/qt.conf) and its shipped data
+# (../share/carvetto) relative to its own real path, so nothing else is needed here.
+HERE="$(dirname "$(readlink -f "$0")")"
+exec "$HERE/usr/bin/carvetto" "$@"

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Carvetto
+GenericName=CNC CAD/CAM
+Comment=Draw, plan toolpaths, simulate and post G-code for CNC machines
+Exec=carvetto %F
+Icon=carvetto
+Terminal=false
+Categories=Graphics;2DGraphics;Engineering;
+MimeType=application/x-carvetto-project;
+Keywords=CNC;CAM;CAD;G-code;toolpath;router;laser;
+StartupWMClass=carvetto

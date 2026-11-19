@@ -51,6 +51,11 @@ if(CARVETTO_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_compliance.py --root ${PROJECT_SOURCE_DIR})
     add_test(NAME lint.compliance_unit
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_compliance.py)
+    # T-0353: the install tree (desktop entry, MIME type, icon, shipped data) for the Linux packages.
+    if(UNIX AND NOT APPLE)
+      add_test(NAME packaging.linux_install
+        COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_linux_install.py ${CMAKE_BINARY_DIR})
+    endif()
     # T-0350: no new user-visible literal may bypass tr() (ratchet baseline, emptied by T-0351).
     add_test(NAME lint.tr_literals
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_tr_literals.py --root ${PROJECT_SOURCE_DIR})
@@ -90,4 +95,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CarvettoInstall)
 if(WIN32 AND TARGET carvetto)
   include(CarvettoPackageWindows)
+endif()
+if(UNIX AND NOT APPLE)
+  include(CarvettoPackageLinux)  # T-0353: desktop files, bundled-Qt option, DEB/RPM (ADR-0124)
 endif()
