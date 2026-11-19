@@ -1662,7 +1662,7 @@ Goal: File/Edit menu entry and dialog driving the Qt-free PartsImportForm: choos
 Acceptance criteria:
   1. A parts list imports end to end from the UI with diagnostics shown; self-test drives it.
 
-### T-0337 General Nest Parts (rotation step, mirroring, parts inside parts, grain/offcuts) to replace the shelf nester   [status: in-progress — LOW]
+### T-0337 General Nest Parts (rotation step, mirroring, parts inside parts, grain/offcuts) to replace the shelf nester   [status: verifying]
 Phase: 3   Module: core/geometry + app   Depends on: T-0329
 Goal: The feature inventory lists Nest Parts (rotate to best fit by step angle, mirror, allow parts inside other parts, nest boundary, start corner/direction, nesting sheets). T-0329 found core has no nesting and added only a deterministic rectangle shelf nester (io::nestRectangles). Implement a real polygon nester behind the same interface with operation-counter budgets, deterministic results and tests against the shelf nester for rectangles, then the app form.
 Acceptance criteria:
