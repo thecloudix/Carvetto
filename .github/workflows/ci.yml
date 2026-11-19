@@ -469,3 +469,89 @@ jobs:
           if (Test-Path 'HKLM:\Software\Classes\Carvetto.Document') { Write-Host "::error title=Uninstall left the Carvetto.Document key::"; exit 1 }
           if (Test-Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Carvetto') { Write-Host "::error title=Uninstall left the Start menu folder::"; exit 1 }
           Write-Host "uninstall clean"
+
+  # T-0353: Linux packages (CPack DEB and RPM, AppImage; ADR-0124). Separate from linux-app so the existing jobs are
+  # unaffected. Runs on main, on version tags, on demand, and on PRs from task/T-0353* branches or labelled
+  # `packaging`. Qt is bundled, so the runner's Qt environment variables are removed before every installed run.
+  linux-packages:
+    if: >-
+      github.event_name != 'pull_request'
+      || startsWith(github.head_ref, 'task/T-0353')
+      || contains(github.event.pull_request.labels.*.name, 'packaging')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libegl1 rpm squashfs-tools patchelf desktop-file-utils shared-mime-info xdg-utils
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          cache: true
+      - name: Cache FetchContent sources
+        uses: actions/cache@v4
+        with:
+          path: .fc-src
+          key: fc-src-linux-packages-${{ hashFiles('core/CMakeLists.txt', 'core/tests/CMakeLists.txt', 'app/**/CMakeLists.txt') }}
+      - name: Configure
+        run: tools/ci/configure.sh -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCARVETTO_BUNDLE_QT=ON -DCARVETTO_BUILD_TESTS=OFF
+      - name: Build
+        run: cmake --build build
+      - name: Package (CPack DEB and RPM)
+        run: |
+          cpack --config build/CPackConfig.cmake -B dist || { echo "::error title=CPack failed::exit $?"; exit 1; }
+          ls -l dist
+          test -f dist/carvetto_*_amd64.deb || { echo "::error title=CPack::no DEB produced"; exit 1; }
+          test -f dist/carvetto-*.x86_64.rpm || { echo "::error title=CPack::no RPM produced"; exit 1; }
+          dpkg-deb --info dist/carvetto_*_amd64.deb
+          dpkg-deb --contents dist/carvetto_*_amd64.deb | grep -E 'usr/(bin/carvetto|bin/qt.conf|lib/carvetto/lib/libQt6Core|lib/carvetto/plugins/platforms/libqxcb|share/applications/carvetto.desktop|share/mime/packages/carvetto.xml|share/carvetto/posts/grbl_mm.pp)' | tee deb-key.txt
+          test "$(wc -l < deb-key.txt)" -ge 7 || { echo "::error title=DEB contents::expected files missing"; exit 1; }
+          rpm -qpl dist/carvetto-*.x86_64.rpm | grep -E 'bin/carvetto$|carvetto.desktop|libQt6Core' || { echo "::error title=RPM contents::expected files missing"; exit 1; }
+          rpm -qp --requires dist/carvetto-*.x86_64.rpm
+      - name: Validate desktop entry
+        run: desktop-file-validate packaging/linux/carvetto.desktop
+      - name: Install the DEB
+        run: sudo apt-get install -y ./dist/carvetto_*_amd64.deb
+      - name: Installed app self-test (DEB)
+        run: |
+          # Only the installed copy may supply Qt: drop the runner's Qt environment, run from an unrelated directory.
+          unset LD_LIBRARY_PATH QT_PLUGIN_PATH QT_ROOT_DIR Qt6_DIR QT_QPA_PLATFORM_PLUGIN_PATH
+          cd "$RUNNER_TEMP"
+          if ldd /usr/bin/carvetto | grep 'not found'; then echo "::error title=Unresolved libraries in the installed app::see log"; exit 1; fi
+          ldd /usr/bin/carvetto | grep -E 'libQt6Core' | grep -q 'lib/carvetto/lib/libQt6Core' || { echo "::error title=Qt not taken from the package::see ldd"; ldd /usr/bin/carvetto; exit 1; }
+          ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so | grep -E 'not found' && { echo "::error title=xcb plugin has unresolved libraries::see log"; exit 1; } || true
+          ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so | grep -q 'libQt6XcbQpa.*/carvetto/' || { echo "::error title=xcb plugin does not use the bundled Qt::see ldd"; ldd /usr/lib/carvetto/plugins/platforms/libqxcb.so; exit 1; }
+          QT_QPA_PLATFORM=offscreen /usr/bin/carvetto --self-test || { echo "::error title=Installed app self-test failed::exit $?"; exit 1; }
+          echo 'x' > "$RUNNER_TEMP/a.carv"
+          # The installed MIME database (written by the postinst / shared-mime-info trigger) must map *.carv.
+          grep -q 'application/x-carvetto-project:\*\.carv' /usr/share/mime/globs2 || { echo "::error title=MIME type not registered::.carv missing from /usr/share/mime/globs2"; exit 1; }
+          # xdg-mime may fall back to file(1) on a headless runner, so this one only reports.
+          xdg-mime query filetype "$RUNNER_TEMP/a.carv" || true
+      - name: Remove the DEB and check nothing is left
+        run: |
+          sudo apt-get remove -y carvetto
+          left=$(find /usr/lib/carvetto /usr/share/carvetto /usr/bin/carvetto /usr/share/applications/carvetto.desktop -print 2>/dev/null || true)
+          if [ -n "$left" ]; then echo "::error title=Removal left files::$(echo "$left" | head -20 | tr '\n' '|')"; exit 1; fi
+          if grep -q 'application/x-carvetto-project' /usr/share/mime/globs2; then echo "::error title=Removal left the MIME registration::globs2"; exit 1; fi
+      - name: Build the AppImage
+        run: |
+          curl -fsSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          packaging/linux/make-appimage.sh build dist "$PWD/appimagetool"
+          ls -l dist
+          test -f dist/Carvetto-*-x86_64.AppImage || { echo "::error title=AppImage::not produced"; exit 1; }
+      - name: AppImage self-test
+        run: |
+          unset LD_LIBRARY_PATH QT_PLUGIN_PATH QT_ROOT_DIR Qt6_DIR QT_QPA_PLATFORM_PLUGIN_PATH
+          cd "$RUNNER_TEMP"
+          # --appimage-extract-and-run: the runner has no FUSE for mounting.
+          QT_QPA_PLATFORM=offscreen "$GITHUB_WORKSPACE"/dist/Carvetto-*-x86_64.AppImage --appimage-extract-and-run --self-test || { echo "::error title=AppImage self-test failed::exit $?"; exit 1; }
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: carvetto-linux-packages
+          path: |
+            dist/carvetto_*_amd64.deb
+            dist/carvetto-*.x86_64.rpm
+            dist/Carvetto-*-x86_64.AppImage
+          if-no-files-found: error
