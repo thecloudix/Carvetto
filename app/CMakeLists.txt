@@ -155,17 +155,19 @@ qt_add_executable(carvetto
   src/variables_self_test.cpp
 )
 # Development builds find the shipped posts in the source tree (a packaged app has posts/ beside it).
+target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
+                                                CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
+                                                CARVETTO_USER_DOCS_DIR="${PROJECT_SOURCE_DIR}/docs/user")
 # T-0358: one version source (project VERSION) for --version, the About dialog, the installer and the packages.
 target_compile_definitions(carvetto PRIVATE CARVETTO_VERSION_STRING="${PROJECT_VERSION}"
                                                 CARVETTO_BUILD_TYPE="$<CONFIG>")
 if(CARVETTO_BUILD_TESTS)
+  string(REPLACE "." "\\." CARVETTO_VERSION_REGEX "${PROJECT_VERSION}")
   add_test(NAME app.version COMMAND carvetto --version)
-  set_tests_properties(app.version PROPERTIES PASS_REGULAR_EXPRESSION "^Carvetto ${PROJECT_VERSION}\n"
+  # No trailing newline in the pattern: Windows writes CRLF.
+  set_tests_properties(app.version PROPERTIES PASS_REGULAR_EXPRESSION "^Carvetto ${CARVETTO_VERSION_REGEX}"
                        ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
-target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
-                                                CARVETTO_SHIPPED_GADGETS_DIR="${PROJECT_SOURCE_DIR}/gadgets/stock"
-                                                CARVETTO_USER_DOCS_DIR="${PROJECT_SOURCE_DIR}/docs/user")
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
 # T-0349: printing. PDF output needs only Qt Gui (QPdfWriter); QPrinter, the print dialog and the preview dialog
 # need Qt PrintSupport, which is optional: without it Print... and Print Preview... are disabled.

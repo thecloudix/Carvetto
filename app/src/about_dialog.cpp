@@ -26,7 +26,8 @@ struct Dependency {
     const char* licence;
 };
 
-// Mirrors THIRD_PARTY_NOTICES.md (the components that are distributed).
+// Mirrors THIRD_PARTY_NOTICES.md (the components that are distributed). Keep versions in sync with the
+// FetchContent pins in the CMake files and with THIRD_PARTY_NOTICES.md when a dependency is bumped.
 constexpr Dependency kDependencies[] = {
     {"Qt", "6.x", "LGPL-3.0"},         {"Clipper2", "1.4.0", "BSL-1.0"}, {"nlohmann/json", "3.11.3", "MIT"},
     {"miniz", "3.0.2", "MIT"},         {"FreeType", "2.14.3", "FTL"},    {"HarfBuzz", "15.1.0", "MIT"},
