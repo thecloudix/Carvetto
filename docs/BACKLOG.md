@@ -1808,7 +1808,7 @@ Goal: (a) 3D view: rotate-mode test and distinct rotate-handle visuals (T-0346);
 Acceptance criteria:
   1. Each item either done with a test or split into its own card.
 
-### T-0361 Publish a GitHub Release from a v* tag with the Windows installer and Linux packages attached   [status: in-progress]
+### T-0361 Publish a GitHub Release from a v* tag with the Windows installer and Linux packages attached   [status: verifying]
 Phase: 4   Module: CI   Depends on: T-0352, T-0353, T-0358
 Goal: A new CI job `release` runs only for tags `v*`, after `windows-installer` and `linux-packages` succeed, downloads their artifacts and creates a GitHub Release for the tag (notes from the matching `## X.Y.Z` section of CHANGELOG.md) with the installer `.exe`, DEB, RPM and AppImage attached plus a SHA256SUMS file. Needs `permissions: contents: write` on that job only. Both packaging jobs must run on tags.
 Acceptance criteria:
