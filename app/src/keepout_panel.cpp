@@ -1,5 +1,7 @@
 #include "keepout_panel.hpp"
+#include "vm_text.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QCheckBox>
 #include <QDoubleSpinBox>
@@ -23,9 +25,9 @@ QString qs(const std::string& s) {
 }  // namespace
 
 KeepOutPanel::KeepOutPanel(DocumentGetter getter, QWidget* parent) : PanelBase(std::move(getter), parent) {
-    create_ = new QAction(QStringLiteral("&Create Zones from Selection"), this);
-    clear_ = new QAction(QStringLiteral("C&lear Zones"), this);
-    show_ = new QAction(QStringLiteral("&Show Zones"), this);
+    create_ = new QAction(QCoreApplication::translate("KeepOutPanel", "&Create Zones from Selection"), this);
+    clear_ = new QAction(QCoreApplication::translate("KeepOutPanel", "C&lear Zones"), this);
+    show_ = new QAction(QCoreApplication::translate("KeepOutPanel", "&Show Zones"), this);
     show_->setCheckable(true);
     show_->setChecked(true);
 
@@ -41,7 +43,7 @@ KeepOutPanel::KeepOutPanel(DocumentGetter getter, QWidget* parent) : PanelBase(s
     showBox->setChecked(true);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(new QLabel(QStringLiteral("Clearance round the zones:"), this));
+    layout->addWidget(new QLabel(QCoreApplication::translate("KeepOutPanel", "Clearance round the zones:"), this));
     layout->addWidget(clearance_);
     layout->addWidget(showBox);
     layout->addWidget(createButton);
@@ -65,7 +67,7 @@ KeepOutPanel::KeepOutPanel(DocumentGetter getter, QWidget* parent) : PanelBase(s
 }
 
 void KeepOutPanel::buildMenu(QMenu* edit) {
-    QMenu* menu = edit->addMenu(QStringLiteral("&Keep-out Zones"));
+    QMenu* menu = edit->addMenu(QCoreApplication::translate("KeepOutPanel", "&Keep-out Zones"));
     menu->addAction(create_);
     menu->addAction(clear_);
     menu->addSeparator();
@@ -87,7 +89,7 @@ void KeepOutPanel::refresh() {
                                                                    static_cast<int>(document::unitSuffix(units).size())));
     clearance_->setValue(document::toDisplay(d->keepOutClearance(), units));
     refreshing_ = false;
-    QString text = qs(viewmodel::describeKeepOut(*d));
+    QString text = vmText(viewmodel::describeKeepOut(*d));
     if (routingText) {
         const std::string extra = routingText();
         if (!extra.empty()) {

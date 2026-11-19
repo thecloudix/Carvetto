@@ -42,7 +42,7 @@ void setColourButton(QPushButton* b, std::uint32_t rgb) {
                          .arg(qs(viewmodel::colourToString(rgb)),
                               (((rgb >> 16) & 0xFFu) * 299 + ((rgb >> 8) & 0xFFu) * 587 + (rgb & 0xFFu) * 114) > 128000
                                   ? QStringLiteral("#000000")
-                                  : QStringLiteral("#ffffff")));
+                                  : QCoreApplication::translate("OptionsDialog", "#ffffff")));
 }
 
 std::uint32_t colourOf(const QWidget* w) {
@@ -116,7 +116,7 @@ void OptionsDialog::build() {
             auto* c = new QComboBox(this);
             c->addItem(QCoreApplication::translate("OptionsDialog", "System default"), QStringLiteral("system"));
             c->addItem(QCoreApplication::translate("OptionsDialog", "English"), QStringLiteral("en"));
-            c->addItem(QStringLiteral("Deutsch"), QStringLiteral("de"));  // endonym: shown in its own language
+            c->addItem(QCoreApplication::translate("OptionsDialog", "Deutsch"), QStringLiteral("de"));  // endonym: shown in its own language
             c->addItem(QCoreApplication::translate("OptionsDialog", "Pseudo-locale (test)"), QStringLiteral("pseudo"));
             editor = c;
         } else if (key == "simulation/quality") {
@@ -152,7 +152,7 @@ void OptionsDialog::build() {
                     const QString picked =
                         isFolder ? QFileDialog::getExistingDirectory(this, QCoreApplication::translate("OptionsDialog", "Choose folder"), e->text())
                                  : QFileDialog::getSaveFileName(this, QCoreApplication::translate("OptionsDialog", "Tool database file"), e->text(),
-                                                                QStringLiteral("Tool database (*.json);;All files (*)"));
+                                                                QCoreApplication::translate("OptionsDialog", "Tool database (*.json);;All files (*)"));
                     if (!picked.isEmpty()) {
                         e->setText(picked);
                     }
@@ -279,19 +279,19 @@ std::vector<PrefIssue> OptionsDialog::parseIssues() const {
     auto text = [&](const char* key) { return qobject_cast<QLineEdit*>(field(key))->text().trimmed(); };
     text("editing/undoDepth").toInt(&ok);
     if (!ok) {
-        out.push_back({"editing/undoDepth", "Undo steps must be a whole number."});
+        out.push_back({"editing/undoDepth", QCoreApplication::translate("OptionsDialog", "Undo steps must be a whole number.").toStdString()});
     }
     text("editing/autosaveMinutes").toInt(&ok);
     if (!ok) {
-        out.push_back({"editing/autosaveMinutes", "The autosave interval must be a whole number of minutes."});
+        out.push_back({"editing/autosaveMinutes", QCoreApplication::translate("OptionsDialog", "The autosave interval must be a whole number of minutes.").toStdString()});
     }
     text("grid/spacingMm").toDouble(&ok);
     if (!ok) {
-        out.push_back({"grid/spacingMm", "Grid spacing must be a number."});
+        out.push_back({"grid/spacingMm", QCoreApplication::translate("OptionsDialog", "Grid spacing must be a number.").toStdString()});
     }
     text("grid/snapTolerancePx").toDouble(&ok);
     if (!ok) {
-        out.push_back({"grid/snapTolerancePx", "Snap distance must be a number."});
+        out.push_back({"grid/snapTolerancePx", QCoreApplication::translate("OptionsDialog", "Snap distance must be a number.").toStdString()});
     }
     return out;
 }

@@ -1,5 +1,6 @@
 #include "canvas_widget.hpp"
 
+#include <QCoreApplication>
 #include <QBrush>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -183,10 +184,10 @@ void CanvasWidget::paintSides(QPainter& painter, const ViewTransform& view) cons
     const QRectF material = toQt(view.worldToScreen(active.material));
     const bool back = active.side == document::Side::Back;
     const bool horizontal = doc_->job().flipDirection == document::FlipDirection::Horizontal;
-    QString text = back ? QStringLiteral("Bottom side") : QStringLiteral("Top side");
-    text += horizontal ? QStringLiteral(" - flip left-right") : QStringLiteral(" - flip top-bottom");
+    QString text = back ? QCoreApplication::translate("CanvasWidget", "Bottom side") : QCoreApplication::translate("CanvasWidget", "Top side");
+    text += horizontal ? QCoreApplication::translate("CanvasWidget", " - flip left-right") : QCoreApplication::translate("CanvasWidget", " - flip top-bottom");
     if (multiSided_) {
-        text += QStringLiteral(" - multi-sided view");
+        text += QCoreApplication::translate("CanvasWidget", " - multi-sided view");
     }
     painter.setPen(QColor(90, 90, 90));
     painter.drawText(material.topLeft() + QPointF(6.0, 14.0), text);

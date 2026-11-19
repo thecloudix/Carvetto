@@ -1,6 +1,7 @@
 #include "texture_menu.hpp"
 #include "variable_menu.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QApplication>
 #include <QComboBox>
@@ -66,7 +67,7 @@ QString qs(const std::string& s) { return QString::fromStdString(s); }
 
 TextureDialog::TextureDialog(viewmodel::TextureForm& form, const document::Document& doc, QWidget* parent)
     : QDialog(parent), form_(form), doc_(doc) {
-    setWindowTitle(QStringLiteral("Create Vector Texture"));
+    setWindowTitle(QCoreApplication::translate("TextureDialog", "Create Vector Texture"));
     auto* grid = new QFormLayout;
     const QString suffix = QString::fromUtf8(document::unitSuffix(form.units()).data(),
                                              static_cast<int>(document::unitSuffix(form.units()).size()));
@@ -76,7 +77,7 @@ TextureDialog::TextureDialog(viewmodel::TextureForm& form, const document::Docum
         attachVariableMenu(edit);
         QString label = qs(f.label);
         if (f.kind == viewmodel::FieldKind::Length) label += QStringLiteral(" (") + suffix + QStringLiteral(")");
-        if (f.kind == viewmodel::FieldKind::Angle) label += QStringLiteral(" (deg)");
+        if (f.kind == viewmodel::FieldKind::Angle) label += QCoreApplication::translate("TextureDialog", " (deg)");
         if (f.kind == viewmodel::FieldKind::Percent) label += QStringLiteral(" (%)");
         grid->addRow(label, edit);
         edits_[f.id] = edit;
@@ -89,7 +90,7 @@ TextureDialog::TextureDialog(viewmodel::TextureForm& form, const document::Docum
         if (layer.id == target) current = layer_->count() - 1;
     }
     layer_->setCurrentIndex(current);
-    grid->addRow(QStringLiteral("Target layer"), layer_);
+    grid->addRow(QCoreApplication::translate("TextureDialog", "Target layer"), layer_);
     canvas_ = new TexturePreviewWidget(this);
     status_ = new QLabel(this);
     status_->setWordWrap(true);
@@ -148,7 +149,7 @@ std::string TextureDialog::statusText() const { return status_->text().toStdStri
 void TextureDialog::refreshPreview() {
     if (!errors_.empty()) {
         preview_ = TexturePreview{};
-        preview_.message = "Fix the highlighted entry: " + errors_.begin()->second;
+        preview_.message = QCoreApplication::translate("TextureDialog", "Fix the highlighted entry: %1").arg(QString::fromStdString(errors_.begin()->second)).toStdString();
     } else {
         preview_ = form_.preview(doc_);
     }
@@ -175,7 +176,7 @@ void TextureDialog::accept() {
 
 TextureMenu::TextureMenu(MainWindow& window, QMenu* editMenu)
     : window_(window), form_(window.currentDocument().job().displayUnits) {
-    action_ = editMenu->addAction(QStringLiteral("Create Vector &Texture..."));
+    action_ = editMenu->addAction(QCoreApplication::translate("TextureDialog", "Create Vector &Texture..."));
     action_->setEnabled(false);
     QObject::connect(action_, &QAction::triggered, editMenu, [this]() { openDialog(); });
     QObject::connect(editMenu, &QMenu::aboutToShow, editMenu, [this]() {
@@ -194,7 +195,7 @@ viewmodel::TextureResult TextureMenu::run(bool showErrors) {
     if (r.ok) {
         window_.documentChanged();
     } else if (showErrors) {
-        QMessageBox::warning(&window_, QStringLiteral("Vector Texture"), qs(r.message));
+        QMessageBox::warning(&window_, QCoreApplication::translate("TextureDialog", "Vector Texture"), qs(r.message));
     }
     return r;
 }

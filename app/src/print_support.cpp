@@ -118,12 +118,12 @@ int PrintController::render(QPagedPaintDevice& dev, const PrintRequest& request,
     }
     const viewmodel::PrintLayout layout = layoutFor(dev, request);
     if (!layout.error.empty() || layout.tiles.empty()) {
-        error = layout.error.empty() ? "there is nothing to print" : layout.error;
+        error = layout.error.empty() ? QCoreApplication::translate("PrintController", "there is nothing to print").toStdString() : layout.error;
         return 0;
     }
     QPainter painter(&dev);
     if (!painter.isActive()) {
-        error = "cannot start printing";
+        error = QCoreApplication::translate("PrintController", "cannot start printing").toStdString();
         return 0;
     }
     const double dpi = static_cast<double>(dev.logicalDpiX());
@@ -179,14 +179,14 @@ std::string PrintController::printToPdf(const std::filesystem::path& path, const
     }
     std::error_code ec;
     if (!overwrite && std::filesystem::exists(path, ec)) {
-        return "'" + viewmodel::pathToUtf8(path) + "' exists already";
+        return QCoreApplication::translate("PrintController", "'%1' exists already").arg(qs(viewmodel::pathToUtf8(path))).toStdString();
     }
     if (std::filesystem::is_symlink(std::filesystem::symlink_status(path, ec))) {
-        return "'" + viewmodel::pathToUtf8(path) + "' is a symbolic link; choose a regular file name";
+        return QCoreApplication::translate("PrintController", "'%1' is a symbolic link; choose a regular file name").arg(qs(viewmodel::pathToUtf8(path))).toStdString();
     }
     QSaveFile file(qs(viewmodel::pathToUtf8(path)));
     if (!file.open(QIODevice::WriteOnly)) {
-        return "cannot write '" + viewmodel::pathToUtf8(path) + "': " + file.errorString().toStdString();
+        return QCoreApplication::translate("PrintController", "cannot write '%1': %2").arg(qs(viewmodel::pathToUtf8(path)), file.errorString()).toStdString();
     }
     std::string error;
     int count = 0;
@@ -205,7 +205,7 @@ std::string PrintController::printToPdf(const std::filesystem::path& path, const
         return error;
     }
     if (!file.commit()) {
-        return "cannot write '" + viewmodel::pathToUtf8(path) + "': " + file.errorString().toStdString();
+        return QCoreApplication::translate("PrintController", "cannot write '%1': %2").arg(qs(viewmodel::pathToUtf8(path)), file.errorString()).toStdString();
     }
     if (pages != nullptr) {
         *pages = count;
@@ -240,7 +240,7 @@ bool PrintController::askRequest(PrintRequest& request) {
     overlap->setObjectName(QStringLiteral("printOverlap"));
     overlap->setRange(0.0, 50.0);
     overlap->setDecimals(1);
-    overlap->setSuffix(QStringLiteral(" mm"));
+    overlap->setSuffix(QCoreApplication::translate("PrintController", " mm"));
     overlap->setValue(last_.options.overlapMm);
     auto* marks = new QCheckBox(QCoreApplication::translate("PrintController", "Registration marks on tiled pages"));
     marks->setObjectName(QStringLiteral("printMarks"));

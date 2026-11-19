@@ -1,5 +1,6 @@
 #include "variable_menu.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QInputDialog>
 #include <QLineEdit>
@@ -39,7 +40,7 @@ void clearVariableCreator(const void* owner) {
 std::string insertNewVariable(QLineEdit* edit, const std::string& name, const std::string& value) {
     const VariableCreator* create = current();
     if (edit == nullptr || create == nullptr || !*create) {
-        return "variables are not available";
+        return QCoreApplication::translate("VariableMenu", "variables are not available").toStdString();
     }
     const std::string err = (*create)(name, value);
     if (!err.empty()) {
@@ -69,16 +70,16 @@ void attachVariableMenu(QLineEdit* edit) {
         QMenu* menu = edit->createStandardContextMenu();
         if (current() != nullptr) {
             menu->addSeparator();
-            QAction* insert = menu->addAction(QStringLiteral("Insert New Document Variable..."));
+            QAction* insert = menu->addAction(QCoreApplication::translate("VariableMenu", "Insert New Document Variable..."));
             QObject::connect(insert, &QAction::triggered, edit, [edit]() {
                 bool ok = false;
-                const QString name = QInputDialog::getText(edit, QStringLiteral("New Document Variable"),
-                                                           QStringLiteral("Name"), QLineEdit::Normal, QString(), &ok);
+                const QString name = QInputDialog::getText(edit, QCoreApplication::translate("VariableMenu", "New Document Variable"),
+                                                           QCoreApplication::translate("VariableMenu", "Name"), QLineEdit::Normal, QString(), &ok);
                 if (!ok) {
                     return;
                 }
-                const QString value = QInputDialog::getText(edit, QStringLiteral("New Document Variable"),
-                                                            QStringLiteral("Value"), QLineEdit::Normal, QString(), &ok);
+                const QString value = QInputDialog::getText(edit, QCoreApplication::translate("VariableMenu", "New Document Variable"),
+                                                            QCoreApplication::translate("VariableMenu", "Value"), QLineEdit::Normal, QString(), &ok);
                 if (!ok) {
                     return;
                 }

@@ -1,5 +1,7 @@
 #include "toolpath_form_dialog.hpp"
+#include "vm_text.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
@@ -36,49 +38,49 @@ using viewmodel::ToolpathFieldKind;
 const char* operationLabel(ToolpathOperation op) {
     switch (op) {
         case ToolpathOperation::Profile:
-            return "Profile";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Profile");
         case ToolpathOperation::Pocket:
-            return "Pocket";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Pocket");
         case ToolpathOperation::Drill:
-            return "Drill";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Drill");
         case ToolpathOperation::Engrave:
-            return "Engrave";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Engrave");
         case ToolpathOperation::VCarving:
-            return "V-Carve";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "V-Carve");
         case ToolpathOperation::Chamfer:
-            return "Chamfer";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Chamfer");
         case ToolpathOperation::ThreadMill:
-            return "Thread Mill";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Thread Mill");
         case ToolpathOperation::Inlay:
-            return "Inlay";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Inlay");
         case ToolpathOperation::Fluting:
-            return "Fluting";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Fluting");
         case ToolpathOperation::Prism:
-            return "Prism";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Prism");
         case ToolpathOperation::ImageEngrave:
-            return "Image Engrave";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Image Engrave");
         case ToolpathOperation::VCarveInlay:
-            return "V-Carve Inlay";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "V-Carve Inlay");
         case ToolpathOperation::Rough3d:
-            return "3D Rough";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "3D Rough");
         case ToolpathOperation::Finish3d:
-            return "3D Finish";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "3D Finish");
         case ToolpathOperation::Moulding:
-            return "Moulding";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Moulding");
         case ToolpathOperation::Project3d:
-            return "Project onto Model";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Project onto Model");
         case ToolpathOperation::LaserPicture:
-            return "Laser Picture";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Laser Picture");
         case ToolpathOperation::LaserSketch:
-            return "Laser Sketch Engraving";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Laser Sketch Engraving");
         case ToolpathOperation::LaserCutFill:
-            return "Laser Cut / Fill";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Laser Cut / Fill");
         case ToolpathOperation::DrillBank:
-            return "Drill Bank";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Drill Bank");
         case ToolpathOperation::Rounding:
-            return "Rounding";
+            return QT_TRANSLATE_NOOP("ToolpathFormDialog", "Rounding");
     }
-    return "?";
+    return QT_TRANSLATE_NOOP("ToolpathFormDialog", "?");
 }
 
 namespace {
@@ -93,7 +95,7 @@ enum BaseKind { BaseAll = 0, BaseObjects = 1, BaseLayers = 2 };
 
 std::string sourceLabel(const tooling::ToolDatabase& db, const document::ToolSource& s) {
     if (s.machine.empty() && s.material.empty()) {
-        return "Tool default";
+        return QCoreApplication::translate("ToolpathFormDialog", "Tool default").toStdString();
     }
     const tooling::Machine* m = db.findMachine(s.machine);
     const tooling::Material* mat = db.findMaterial(s.material);
@@ -106,7 +108,7 @@ ToolpathFormDialog::ToolpathFormDialog(viewmodel::ToolpathForm form, tooling::To
                                        bool editing, QWidget* parent)
     : QDialog(parent), form_(std::move(form)), db_(std::move(db)), info_(std::move(info)), editing_(editing) {
     setObjectName(QStringLiteral("ToolpathFormDialog"));
-    setWindowTitle(QStringLiteral("%1 toolpath").arg(QString::fromUtf8(operationLabel(form_.operation()))));
+    setWindowTitle(QCoreApplication::translate("ToolpathFormDialog", "%1 toolpath").arg(QCoreApplication::translate("ToolpathFormDialog", operationLabel(form_.operation()))));
     form_.refreshTools(db_);
     if (isPhoto() && form_.selector().base.all) {
         // The image engrave reads the selected bitmap: start from the current selection.
@@ -126,7 +128,7 @@ void ToolpathFormDialog::buildStatic() {
     auto* top = new QFormLayout();
     nameEdit_ = new QLineEdit(qs(form_.name()), this);
     nameEdit_->setObjectName(QStringLiteral("toolpathName"));
-    top->addRow(QStringLiteral("Name"), nameEdit_);
+    top->addRow(QCoreApplication::translate("ToolpathFormDialog", "Name"), nameEdit_);
     connect(nameEdit_, &QLineEdit::textEdited, this, [this](const QString& t) {
         const viewmodel::FieldResult r = form_.setName(t.toStdString());
         nameEdit_->setStyleSheet(r.ok ? QString() : QString::fromUtf8(kBadStyle));
@@ -141,20 +143,20 @@ void ToolpathFormDialog::buildStatic() {
     // Tool picker.
     toolCombo_ = new QComboBox(this);
     toolCombo_->setObjectName(QStringLiteral("toolCombo"));
-    toolCombo_->addItem(QStringLiteral("(choose a tool)"), QString());
+    toolCombo_->addItem(QCoreApplication::translate("ToolpathFormDialog", "(choose a tool)"), QString());
     const bool vBitMode = viewmodel::hasClearanceTools(form_.operation());
     const bool restMode = viewmodel::hasRestTools(form_.operation());  // 3D rough / finish, moulding (T-0314)
     const bool mouldingMode = form_.operation() == document::ToolpathOperation::Moulding;
     for (const tooling::Tool* t : viewmodel::toolsFor(db_, form_.operation(), false)) {
         toolCombo_->addItem(qs(t->name), qs(t->id));
     }
-    top->addRow(restMode ? QStringLiteral("Tool (the last, finest)")
-                         : vBitMode ? QStringLiteral("Carving tool")
-                                    : QStringLiteral("Tool"),
+    top->addRow(restMode ? QCoreApplication::translate("ToolpathFormDialog", "Tool (the last, finest)")
+                         : vBitMode ? QCoreApplication::translate("ToolpathFormDialog", "Carving tool")
+                                    : QCoreApplication::translate("ToolpathFormDialog", "Tool"),
                 toolCombo_);
     dataCombo_ = new QComboBox(this);
     dataCombo_->setObjectName(QStringLiteral("cuttingDataCombo"));
-    top->addRow(QStringLiteral("Cutting data"), dataCombo_);
+    top->addRow(QCoreApplication::translate("ToolpathFormDialog", "Cutting data"), dataCombo_);
     toolInfo_ = new QLabel(this);
     toolInfo_->setWordWrap(true);
     top->addRow(QString(), toolInfo_);
@@ -184,9 +186,9 @@ void ToolpathFormDialog::buildStatic() {
     outer->addLayout(top);
 
     // Clearance tools (V-carve only).
-    clearanceBox_ = new QGroupBox(mouldingMode ? QStringLiteral("Larger area clearance tool (cuts first; at most one)")
-                                  : restMode   ? QStringLiteral("Earlier tools (cut first; the tool above cuts what they leave)")
-                                               : QStringLiteral("Clearance tools (flat areas, in order)"),
+    clearanceBox_ = new QGroupBox(mouldingMode ? QCoreApplication::translate("ToolpathFormDialog", "Larger area clearance tool (cuts first; at most one)")
+                                  : restMode   ? QCoreApplication::translate("ToolpathFormDialog", "Earlier tools (cut first; the tool above cuts what they leave)")
+                                               : QCoreApplication::translate("ToolpathFormDialog", "Clearance tools (flat areas, in order)"),
                                   this);
     auto* cbox = new QVBoxLayout(clearanceBox_);
     clearanceList_ = new QListWidget(clearanceBox_);
@@ -200,10 +202,10 @@ void ToolpathFormDialog::buildStatic() {
         clearanceCombo_->addItem(qs(t->name), qs(t->id));
     }
     crow->addWidget(clearanceCombo_, 1);
-    auto* add = new QPushButton(QStringLiteral("Add"), clearanceBox_);
-    auto* remove = new QPushButton(QStringLiteral("Remove"), clearanceBox_);
-    auto* up = new QPushButton(QStringLiteral("Up"), clearanceBox_);
-    auto* down = new QPushButton(QStringLiteral("Down"), clearanceBox_);
+    auto* add = new QPushButton(QCoreApplication::translate("ToolpathFormDialog", "Add"), clearanceBox_);
+    auto* remove = new QPushButton(QCoreApplication::translate("ToolpathFormDialog", "Remove"), clearanceBox_);
+    auto* up = new QPushButton(QCoreApplication::translate("ToolpathFormDialog", "Up"), clearanceBox_);
+    auto* down = new QPushButton(QCoreApplication::translate("ToolpathFormDialog", "Down"), clearanceBox_);
     add->setObjectName(QStringLiteral("clearanceAdd"));
     for (QPushButton* b : {add, remove, up, down}) {
         crow->addWidget(b);
@@ -262,7 +264,7 @@ void ToolpathFormDialog::buildStatic() {
     });
 
     // Prior toolpaths (3D finish only, T-0314): the toolpaths whose result is the starting stock.
-    priorsBox_ = new QGroupBox(QStringLiteral("Prior toolpaths (ids, comma separated; the finish only cuts what they left)"), this);
+    priorsBox_ = new QGroupBox(QCoreApplication::translate("ToolpathFormDialog", "Prior toolpaths (ids, comma separated; the finish only cuts what they left)"), this);
     auto* pbox = new QVBoxLayout(priorsBox_);
     priorsEdit_ = new QLineEdit(priorsBox_);
     priorsEdit_->setObjectName(QStringLiteral("priorToolpaths"));
@@ -279,12 +281,12 @@ void ToolpathFormDialog::buildStatic() {
     connect(priorsEdit_, &QLineEdit::textEdited, this, [this](const QString& text) { applyPriorsText(text); });
 
     // Spindles of a drill bank (T-0335): one row per spindle of the head.
-    bankBox_ = new QGroupBox(QStringLiteral("Drill bank spindles (mm; blank = the tool's diameter / the cut depth)"), this);
+    bankBox_ = new QGroupBox(QCoreApplication::translate("ToolpathFormDialog", "Drill bank spindles (mm; blank = the tool's diameter / the cut depth)"), this);
     auto* bankLayout = new QVBoxLayout(bankBox_);
     bankTable_ = new QTableWidget(0, 4, bankBox_);
     bankTable_->setObjectName(QStringLiteral("bankSpindleTable"));
-    bankTable_->setHorizontalHeaderLabels({QStringLiteral("Drill"), QStringLiteral("Active"),
-                                           QStringLiteral("Diameter"), QStringLiteral("Depth")});
+    bankTable_->setHorizontalHeaderLabels({QCoreApplication::translate("ToolpathFormDialog", "Drill"), QCoreApplication::translate("ToolpathFormDialog", "Active"),
+                                           QCoreApplication::translate("ToolpathFormDialog", "Diameter"), QCoreApplication::translate("ToolpathFormDialog", "Depth")});
     bankTable_->verticalHeader()->setVisible(false);
     bankTable_->horizontalHeader()->setStretchLastSection(true);
     bankTable_->setMinimumHeight(140);
@@ -298,14 +300,14 @@ void ToolpathFormDialog::buildStatic() {
     });
 
     // Vectors (the selector).
-    auto* vbox = new QGroupBox(isPhoto() ? QStringLiteral("Bitmap") : QStringLiteral("Vectors"), this);
+    auto* vbox = new QGroupBox(isPhoto() ? QCoreApplication::translate("ToolpathFormDialog", "Bitmap") : QCoreApplication::translate("ToolpathFormDialog", "Vectors"), this);
     auto* vform = new QFormLayout(vbox);
     vectorsBox_ = vbox;
     vectorsForm_ = vform;
     baseCombo_ = new QComboBox(vbox);
     baseCombo_->setObjectName(QStringLiteral("vectorBase"));
-    baseCombo_->addItems({QStringLiteral("All vectors"), QStringLiteral("Selected objects"), QStringLiteral("Layers")});
-    vform->addRow(QStringLiteral("Machine"), baseCombo_);
+    baseCombo_->addItems({QCoreApplication::translate("ToolpathFormDialog", "All vectors"), QCoreApplication::translate("ToolpathFormDialog", "Selected objects"), QCoreApplication::translate("ToolpathFormDialog", "Layers")});
+    vform->addRow(QCoreApplication::translate("ToolpathFormDialog", "Machine"), baseCombo_);
     layerList_ = new QListWidget(vbox);
     layerList_->setObjectName(QStringLiteral("vectorLayers"));
     layerList_->setMaximumHeight(70);
@@ -316,16 +318,16 @@ void ToolpathFormDialog::buildStatic() {
         item->setData(Qt::UserRole, QVariant::fromValue(static_cast<qulonglong>(l.id.value)));
     }
     vform->addRow(QString(), layerList_);
-    openCheck_ = new QCheckBox(QStringLiteral("Open vectors"), vbox);
-    closedCheck_ = new QCheckBox(QStringLiteral("Closed vectors"), vbox);
-    circlesCheck_ = new QCheckBox(QStringLiteral("Only circles"), vbox);
+    openCheck_ = new QCheckBox(QCoreApplication::translate("ToolpathFormDialog", "Open vectors"), vbox);
+    closedCheck_ = new QCheckBox(QCoreApplication::translate("ToolpathFormDialog", "Closed vectors"), vbox);
+    circlesCheck_ = new QCheckBox(QCoreApplication::translate("ToolpathFormDialog", "Only circles"), vbox);
     diameterEdit_ = new QLineEdit(vbox);
-    diameterEdit_->setPlaceholderText(QStringLiteral("any diameter"));
+    diameterEdit_->setPlaceholderText(QCoreApplication::translate("ToolpathFormDialog", "any diameter"));
     diameterEdit_->setObjectName(QStringLiteral("circleDiameter"));
     vform->addRow(openCheck_);
     vform->addRow(closedCheck_);
     vform->addRow(circlesCheck_);
-    vform->addRow(QStringLiteral("Circle diameter"), diameterEdit_);
+    vform->addRow(QCoreApplication::translate("ToolpathFormDialog", "Circle diameter"), diameterEdit_);
     countLabel_ = new QLabel(vbox);
     countLabel_->setObjectName(QStringLiteral("vectorCount"));
     vform->addRow(countLabel_);
@@ -375,7 +377,7 @@ void ToolpathFormDialog::buildStatic() {
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     ok_ = buttons->button(QDialogButtonBox::Ok);
-    ok_->setText(editing_ ? QStringLiteral("Save and recalculate") : QStringLiteral("Add and calculate"));
+    ok_->setText(editing_ ? QCoreApplication::translate("ToolpathFormDialog", "Save and recalculate") : QCoreApplication::translate("ToolpathFormDialog", "Add and calculate"));
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     outer->addWidget(buttons);
@@ -409,13 +411,13 @@ void ToolpathFormDialog::refreshCuttingData() {
     dataCombo_->setEnabled(dataCombo_->count() > 1);
     const viewmodel::ToolSummary& s = form_.toolSummary();
     if (s.valid) {
-        toolInfo_->setText(QStringLiteral("Diameter %1 %2; feed %3, plunge %4 mm/min; spindle %5 rpm%6")
+        toolInfo_->setText(QCoreApplication::translate("ToolpathFormDialog", "Diameter %1 %2; feed %3, plunge %4 mm/min; spindle %5 rpm%6")
                                .arg(qs(viewmodel::formatLength(s.diameterMm, form_.units())))
                                .arg(QString::fromUtf8(document::unitSuffix(form_.units()).data()))
                                .arg(s.data.feedRate)
                                .arg(s.data.plungeRate)
                                .arg(s.data.spindleSpeed)
-                               .arg(s.fallback ? QStringLiteral(" (tool default: no data for that pair)") : QString()));
+                               .arg(s.fallback ? QCoreApplication::translate("ToolpathFormDialog", " (tool default: no data for that pair)") : QString()));
     } else {
         toolInfo_->clear();
     }
@@ -462,7 +464,7 @@ bool ToolpathFormDialog::applyPriorsText(const QString& text) {
         ok = r.ok;
         setMessage(r.message, !r.ok);
     } else {
-        setMessage("the prior toolpaths are toolpath ids separated by commas", true);
+        setMessage(QCoreApplication::translate("ToolpathFormDialog", "the prior toolpaths are toolpath ids separated by commas").toStdString(), true);
     }
     priorsEdit_->setStyleSheet(ok ? QString() : QString::fromUtf8(kBadStyle));
     if (ok) {
@@ -513,7 +515,7 @@ void ToolpathFormDialog::refreshVectors() {
     // The source of a bitmap toolpath is the selected bitmap (and, for Selected Vectors, the selected vectors): no
     // layer or open/closed/circle choices.
     const bool photo = isPhoto();
-    vectorsBox_->setTitle(photo ? QStringLiteral("Bitmap") : QStringLiteral("Vectors"));
+    vectorsBox_->setTitle(photo ? QCoreApplication::translate("ToolpathFormDialog", "Bitmap") : QCoreApplication::translate("ToolpathFormDialog", "Vectors"));
     for (QWidget* w : std::initializer_list<QWidget*>{baseCombo_, openCheck_, closedCheck_, circlesCheck_, diameterEdit_}) {
         w->setVisible(!photo);
     }
@@ -523,28 +525,28 @@ void ToolpathFormDialog::refreshVectors() {
     diameterEdit_->setEnabled(circlesCheck_->isChecked());
     if (isPhoto()) {
         const std::string problem = info_.bitmapProblem ? info_.bitmapProblem(form_.selector()) : std::string();
-        QString text = problem.empty() ? QStringLiteral("A bitmap is selected.") : qs(problem);
+        QString text = problem.empty() ? QCoreApplication::translate("ToolpathFormDialog", "A bitmap is selected.") : vmText(problem);
         if (info_.countVectors && problem.empty() && viewmodel::boundaryUsesVectors(form_.definition().params)) {
-            text += QStringLiteral(" %1 vector(s) to follow.")
+            text += QCoreApplication::translate("ToolpathFormDialog", " %1 vector(s) to follow.")
                         .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
         }
         countLabel_->setText(text);
     } else if (form_.operation() == document::ToolpathOperation::Rounding) {
-        countLabel_->setText(QStringLiteral("Turns the cylinder of the rotary job down to a radius; no vectors are needed."));
+        countLabel_->setText(QCoreApplication::translate("ToolpathFormDialog", "Turns the cylinder of the rotary job down to a radius; no vectors are needed."));
     } else if (form_.operation() == document::ToolpathOperation::Project3d) {
-        countLabel_->setText(QStringLiteral("Re-heights the chosen toolpath onto the relief model of the active sheet."));
+        countLabel_->setText(QCoreApplication::translate("ToolpathFormDialog", "Re-heights the chosen toolpath onto the relief model of the active sheet."));
     } else if (isModel()) {
-        QString text = QStringLiteral("Machines the relief model of the active sheet.");
+        QString text = QCoreApplication::translate("ToolpathFormDialog", "Machines the relief model of the active sheet.");
         if (info_.countVectors) {
-            text += QStringLiteral(" %1 vector(s) selected now (used by the Selected vectors boundary).")
+            text += QCoreApplication::translate("ToolpathFormDialog", " %1 vector(s) selected now (used by the Selected vectors boundary).")
                         .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
         }
         countLabel_->setText(text);
     } else if (info_.countVectors) {
         const std::size_t n = info_.countVectors(form_.selector());
-        QString text = QStringLiteral("%1 vector(s) selected now").arg(static_cast<qulonglong>(n));
+        QString text = QCoreApplication::translate("ToolpathFormDialog", "%1 vector(s) selected now").arg(static_cast<qulonglong>(n));
         if (form_.operation() == document::ToolpathOperation::Moulding) {
-            text += QStringLiteral(" (the profile is the section, an open vector; the others are the rails)");
+            text += QCoreApplication::translate("ToolpathFormDialog", " (the profile is the section, an open vector; the others are the rails)");
         }
         countLabel_->setText(text);
     }
@@ -596,7 +598,7 @@ void ToolpathFormDialog::applySelectorFromWidgets() {
     }
     form_.setSelector(std::move(sel));
     refreshVectors();
-    setMessage(diameterOk ? std::string() : std::string("circle diameter: enter a length (0 or empty = any)"),
+    setMessage(diameterOk ? std::string() : QCoreApplication::translate("ToolpathFormDialog", "circle diameter: enter a length (0 or empty = any)").toStdString(),
                !diameterOk);
 }
 
@@ -633,7 +635,7 @@ void ToolpathFormDialog::rebuildParameters() {
     }
     const std::string unit(document::unitSuffix(form_.units()));
     for (const std::string& g : groups) {
-        auto* box = new QGroupBox(qs(g), this);
+        auto* box = new QGroupBox(vmText(g), this);
         auto* layout = new QFormLayout(box);
         for (const auto& c : choices) {
             if (c.group != g) {
@@ -641,7 +643,7 @@ void ToolpathFormDialog::rebuildParameters() {
             }
             const std::string id = c.id;
             if (c.isBool) {
-                auto* check = new QCheckBox(qs(c.label), box);
+                auto* check = new QCheckBox(vmText(c.label), box);
                 check->setObjectName(qs("choice_" + id));
                 check->setChecked(c.current == 1);
                 layout->addRow(check);
@@ -659,10 +661,10 @@ void ToolpathFormDialog::rebuildParameters() {
                 auto* combo = new QComboBox(box);
                 combo->setObjectName(qs("choice_" + id));
                 for (const std::string& o : c.options) {
-                    combo->addItem(qs(o));
+                    combo->addItem(vmText(o));
                 }
                 combo->setCurrentIndex(c.current);
-                layout->addRow(qs(c.label), combo);
+                layout->addRow(vmText(c.label), combo);
                 choiceWidgets_[id] = combo;
                 connect(combo, &QComboBox::currentIndexChanged, this, [this, id](int row) {
                     if (building_) {
@@ -681,11 +683,11 @@ void ToolpathFormDialog::rebuildParameters() {
             }
             auto* edit = new QLineEdit(box);
             edit->setObjectName(qs("field_" + f.id));
-            QString label = qs(f.label);
+            QString label = vmText(f.label);
             if (f.kind == ToolpathFieldKind::Length) {
                 label += QStringLiteral(" (%1)").arg(qs(unit));
             } else if (f.kind == ToolpathFieldKind::Angle) {
-                label += QStringLiteral(" (deg)");
+                label += QCoreApplication::translate("ToolpathFormDialog", " (deg)");
             } else if (f.kind == ToolpathFieldKind::Seconds) {
                 label += QStringLiteral(" (s)");
             }
@@ -720,17 +722,17 @@ void ToolpathFormDialog::rebuildParameters() {
                 connect(edit, &QLineEdit::customContextMenuRequested, this, [this, id, edit](const QPoint& pos) {
                     QMenu* menu = edit->createStandardContextMenu();
                     menu->addSeparator();
-                    QAction* insert = menu->addAction(QStringLiteral("Insert New Document Variable..."));
+                    QAction* insert = menu->addAction(QCoreApplication::translate("ToolpathFormDialog", "Insert New Document Variable..."));
                     connect(insert, &QAction::triggered, this, [this, id]() {
                         bool ok = false;
-                        const QString name = QInputDialog::getText(this, QStringLiteral("New Document Variable"),
-                                                                   QStringLiteral("Name"), QLineEdit::Normal,
+                        const QString name = QInputDialog::getText(this, QCoreApplication::translate("ToolpathFormDialog", "New Document Variable"),
+                                                                   QCoreApplication::translate("ToolpathFormDialog", "Name"), QLineEdit::Normal,
                                                                    QString(), &ok);
                         if (!ok) {
                             return;
                         }
-                        const QString value = QInputDialog::getText(this, QStringLiteral("New Document Variable"),
-                                                                    QStringLiteral("Value"), QLineEdit::Normal,
+                        const QString value = QInputDialog::getText(this, QCoreApplication::translate("ToolpathFormDialog", "New Document Variable"),
+                                                                    QCoreApplication::translate("ToolpathFormDialog", "Value"), QLineEdit::Normal,
                                                                     QString(), &ok);
                         if (!ok) {
                             return;
@@ -837,7 +839,7 @@ bool ToolpathFormDialog::applyBankTable() {
     }
     if (!ok) {
         badFields_.insert("bankSpindles");
-        setMessage("drill diameters and depths are numbers in mm", true);
+        setMessage(QCoreApplication::translate("ToolpathFormDialog", "drill diameters and depths are numbers in mm").toStdString(), true);
         return false;
     }
     if (anyDiameter) {
@@ -891,7 +893,7 @@ void ToolpathFormDialog::refreshPlaceholders() {
 }
 
 void ToolpathFormDialog::setMessage(const std::string& text, bool error) {
-    message_ = error ? qs(text) : QString();
+    message_ = error ? vmText(text) : QString();
     refreshStatus();
 }
 
@@ -906,21 +908,21 @@ std::string ToolpathFormDialog::sourceProblem() const {
     if (isPhoto()) {
         if (info_.bitmapProblem) {
             if (std::string bad = info_.bitmapProblem(form_.selector()); !bad.empty()) {
-                return bad;
+                return vmText(bad).toStdString();
             }
         }
         if (viewmodel::boundaryUsesVectors(form_.definition().params) && info_.countVectors &&
             info_.countVectors(form_.selector()) == 0) {
             return std::holds_alternative<toolpath::LaserSketchParams>(form_.definition().params)
-                       ? "the Vectors boundary needs closed vectors: select some besides the bitmap"
-                       : "Selected Vectors needs vectors to follow: select some besides the bitmap";
+                       ? QCoreApplication::translate("ToolpathFormDialog", "the Vectors boundary needs closed vectors: select some besides the bitmap").toStdString()
+                       : QCoreApplication::translate("ToolpathFormDialog", "Selected Vectors needs vectors to follow: select some besides the bitmap").toStdString();
         }
         return {};
     }
     if (isModel()) {
         if (info_.modelProblem) {
             if (std::string bad = info_.modelProblem(); !bad.empty()) {
-                return bad;
+                return vmText(bad).toStdString();
             }
         }
         if (form_.operation() == document::ToolpathOperation::Project3d) {
@@ -928,17 +930,17 @@ std::string ToolpathFormDialog::sourceProblem() const {
         }
         if (viewmodel::boundaryUsesVectors(form_.definition().params) && info_.countVectors &&
             info_.countVectors(form_.selector()) == 0) {
-            return "the Selected vectors boundary needs closed vectors: select some";
+            return QCoreApplication::translate("ToolpathFormDialog", "the Selected vectors boundary needs closed vectors: select some").toStdString();
         }
         return {};
     }
     if (form_.operation() == document::ToolpathOperation::Moulding && info_.countVectors &&
         info_.countVectors(form_.selector()) < 2) {
-        return "a moulding needs a profile and at least one rail: select two or more vectors";
+        return QCoreApplication::translate("ToolpathFormDialog", "a moulding needs a profile and at least one rail: select two or more vectors").toStdString();
     }
     if (info_.countVectors && viewmodel::needsVectors(form_.definition().params) &&
         info_.countVectors(form_.selector()) == 0) {
-        return "no vectors are selected";
+        return QCoreApplication::translate("ToolpathFormDialog", "no vectors are selected").toStdString();
     }
     return {};
 }
@@ -953,7 +955,7 @@ void ToolpathFormDialog::refreshStatus() {
     } else {
         QStringList parts;
         for (const std::string& p : form_.problems()) {
-            parts << qs(p);
+            parts << vmText(p);
         }
         if (const std::string bad = sourceProblem(); !bad.empty()) {
             parts << qs(bad);
@@ -1004,10 +1006,10 @@ std::string ToolpathFormDialog::insertNewVariable(const std::string& id, const s
                                                   const std::string& value) {
     QLineEdit* edit = fieldEdit(id);
     if (edit == nullptr) {
-        return "no such field";
+        return QCoreApplication::translate("ToolpathFormDialog", "no such field").toStdString();
     }
     if (!info_.createVariable) {
-        return "variables are not available";
+        return QCoreApplication::translate("ToolpathFormDialog", "variables are not available").toStdString();
     }
     const std::string err = info_.createVariable(name, value);
     if (!err.empty()) {

@@ -88,7 +88,7 @@ class ModellingPanel : public PanelBase {
     viewmodel::ZeroPlaneForm readZeroPlane() const;
     viewmodel::ScaleZForm readScaleZ() const;
     void message(const std::string& text, bool error);
-    QLineEdit* addEdit(QFormLayout* form, const QString& prefix, const QString& label, const char* tip);
+    QLineEdit* addEdit(QFormLayout* form, const QString& prefix, const char* label, const char* tip);
 
     QComboBox* toolBox_;
     QStackedWidget* stack_;

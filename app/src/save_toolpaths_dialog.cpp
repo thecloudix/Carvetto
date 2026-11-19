@@ -90,7 +90,7 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
       machines_(machines),
       posts_(viewmodel::discoverPosts(shippedPostsDir(), userPostsDir())),
       cancel_(std::make_shared<std::atomic<bool>>(false)) {
-    setWindowTitle(QStringLiteral("Save Toolpaths"));
+    setWindowTitle(QCoreApplication::translate("SaveToolpathsDialog", "Save Toolpaths"));
     setObjectName(QStringLiteral("saveToolpathsDialog"));
     resize(760, 900);
 
@@ -100,55 +100,55 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
 
     machine_ = new QComboBox(this);
     machine_->setObjectName(QStringLiteral("saveMachine"));
-    machine_->addItem(QStringLiteral("(no machine)"));
+    machine_->addItem(QCoreApplication::translate("SaveToolpathsDialog", "(no machine)"));
     for (const tooling::Machine& m : machines_) {
         machine_->addItem(qs(m.name.empty() ? m.id : m.name));
     }
-    form->addRow(QStringLiteral("Machine:"), machine_);
+    form->addRow(QCoreApplication::translate("SaveToolpathsDialog", "Machine:"), machine_);
 
     units_ = new QComboBox(this);
     units_->setObjectName(QStringLiteral("saveUnits"));
-    units_->addItem(QStringLiteral("Any units"));
-    units_->addItem(QStringLiteral("Millimetres"));
-    units_->addItem(QStringLiteral("Inches"));
-    form->addRow(QStringLiteral("Post units:"), units_);
+    units_->addItem(QCoreApplication::translate("SaveToolpathsDialog", "Any units"));
+    units_->addItem(QCoreApplication::translate("SaveToolpathsDialog", "Millimetres"));
+    units_->addItem(QCoreApplication::translate("SaveToolpathsDialog", "Inches"));
+    form->addRow(QCoreApplication::translate("SaveToolpathsDialog", "Post units:"), units_);
     // Start with the units of the job.
     units_->setCurrentIndex(source_.job.displayUnits == document::Units::Inches ? 2 : 1);
 
     post_ = new QComboBox(this);
     post_->setObjectName(QStringLiteral("savePost"));
-    form->addRow(QStringLiteral("Post-processor:"), post_);
+    form->addRow(QCoreApplication::translate("SaveToolpathsDialog", "Post-processor:"), post_);
 
     mode_ = new QComboBox(this);
     mode_->setObjectName(QStringLiteral("saveMode"));
-    mode_->addItem(QStringLiteral("One file with all toolpaths"));
-    mode_->addItem(QStringLiteral("One file per toolpath"));
-    mode_->addItem(QStringLiteral("One file per tool"));
-    form->addRow(QStringLiteral("Output:"), mode_);
+    mode_->addItem(QCoreApplication::translate("SaveToolpathsDialog", "One file with all toolpaths"));
+    mode_->addItem(QCoreApplication::translate("SaveToolpathsDialog", "One file per toolpath"));
+    mode_->addItem(QCoreApplication::translate("SaveToolpathsDialog", "One file per tool"));
+    form->addRow(QCoreApplication::translate("SaveToolpathsDialog", "Output:"), mode_);
 
     auto* folderRow = new QHBoxLayout();
     folder_ = new QLineEdit(this);
     folder_->setObjectName(QStringLiteral("saveFolder"));
     folder_->setText(qs(viewmodel::pathToUtf8(startFolder)));
-    auto* browse = new QPushButton(QStringLiteral("Browse..."), this);
+    auto* browse = new QPushButton(QCoreApplication::translate("SaveToolpathsDialog", "Browse..."), this);
     folderRow->addWidget(folder_, 1);
     folderRow->addWidget(browse);
-    form->addRow(QStringLiteral("Folder:"), folderRow);
+    form->addRow(QCoreApplication::translate("SaveToolpathsDialog", "Folder:"), folderRow);
 
     template_ = new QLineEdit(this);
     template_->setObjectName(QStringLiteral("saveTemplate"));
     template_->setText(qs(viewmodel::defaultNameTemplate(viewmodel::OutputMode::SingleFile)));
-    template_->setToolTip(QStringLiteral("File name without extension. Fields: {job} {toolpath} {tool} {n}"));
-    form->addRow(QStringLiteral("File name:"), template_);
+    template_->setToolTip(QCoreApplication::translate("SaveToolpathsDialog", "File name without extension. Fields: {job} {toolpath} {tool} {n}"));
+    form->addRow(QCoreApplication::translate("SaveToolpathsDialog", "File name:"), template_);
 
     tiling_ = new TilingManagerPanel(this);
     layout->addWidget(tiling_);
 
-    overwrite_ = new QCheckBox(QStringLiteral("Replace existing files"), this);
+    overwrite_ = new QCheckBox(QCoreApplication::translate("SaveToolpathsDialog", "Replace existing files"), this);
     overwrite_->setObjectName(QStringLiteral("saveOverwrite"));
     layout->addWidget(overwrite_);
 
-    acceptStale_ = new QCheckBox(QStringLiteral("Post the out-of-date toolpaths from their old moves anyway"), this);
+    acceptStale_ = new QCheckBox(QCoreApplication::translate("SaveToolpathsDialog", "Post the out-of-date toolpaths from their old moves anyway"), this);
     acceptStale_->setObjectName(QStringLiteral("saveAcceptStale"));
     acceptStale_->setVisible(!source_.stale.empty());
     layout->addWidget(acceptStale_);
@@ -171,7 +171,7 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
     message_->setWordWrap(true);
     layout->addWidget(message_);
 
-    rotaryDetails_ = new QPushButton(QStringLiteral("Rotary details..."), this);
+    rotaryDetails_ = new QPushButton(QCoreApplication::translate("SaveToolpathsDialog", "Rotary details..."), this);
     rotaryDetails_->setObjectName(QStringLiteral("saveRotaryDetails"));
     rotaryDetails_->setVisible(false);
     layout->addWidget(rotaryDetails_);
@@ -190,7 +190,7 @@ SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std
     connect(debounce_, &QTimer::timeout, this, [this]() { settingsChanged(); });
 
     connect(browse, &QPushButton::clicked, this, [this]() {
-        const QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("Output folder"), folder_->text());
+        const QString dir = QFileDialog::getExistingDirectory(this, QCoreApplication::translate("SaveToolpathsDialog", "Output folder"), folder_->text());
         if (!dir.isEmpty()) {
             folder_->setText(dir);
         }
@@ -461,7 +461,7 @@ void SaveToolpathsDialog::showState() {
     QString message;
     QString previewText;
     if (running_ && !writing_) {
-        summary = QStringLiteral("Generating...");
+        summary = QCoreApplication::translate("SaveToolpathsDialog", "Generating...");
     } else if (outputFresh_ && output_.ok) {
         std::size_t toolpaths = 0;
         QStringList names;
@@ -469,40 +469,40 @@ void SaveToolpathsDialog::showState() {
             toolpaths += f.toolpaths.size();
             names << qs(viewmodel::pathToUtf8(f.path.filename()));
         }
-        summary = QStringLiteral("%1 file(s), %2 toolpath(s), %3 tool change(s): %4")
+        summary = QCoreApplication::translate("SaveToolpathsDialog", "%1 file(s), %2 toolpath(s), %3 tool change(s): %4")
                       .arg(output_.files.size())
                       .arg(toolpaths)
                       .arg(output_.toolChanges)
                       .arg(names.join(QStringLiteral(", ")));
         previewText = qs(viewmodel::previewText(output_, 40));
         for (const std::string& w : output_.warnings) {
-            message += QStringLiteral("Warning: ") + qs(w) + QLatin1Char('\n');
+            message += QCoreApplication::translate("SaveToolpathsDialog", "Warning: ") + qs(w) + QLatin1Char('\n');
         }
         if (!output_.stale.empty() && !acceptStale_->isChecked()) {
-            message += QStringLiteral("Tick the box above to post the out-of-date toolpaths, or recalculate them first.\n");
+            message += QCoreApplication::translate("SaveToolpathsDialog", "Tick the box above to post the out-of-date toolpaths, or recalculate them first.\n");
         }
         bool exists = false;
         for (const viewmodel::OutputFile& f : output_.files) {
             exists = exists || f.exists;
         }
         if (exists && !overwrite_->isChecked()) {
-            message += QStringLiteral("A file with this name exists already (tick 'Replace existing files').\n");
+            message += QCoreApplication::translate("SaveToolpathsDialog", "A file with this name exists already (tick 'Replace existing files').\n");
         }
     } else if (outputFresh_) {
         message = qs(output_.error);
     }
     for (const viewmodel::PostInfo& p : posts_) {
         if (!p.usable()) {
-            message += QStringLiteral("Post not usable: ") + qs(p.error) + QLatin1Char('\n');
+            message += QCoreApplication::translate("SaveToolpathsDialog", "Post not usable: ") + qs(p.error) + QLatin1Char('\n');
         }
     }
     if (!writeError_.empty()) {
-        message = QStringLiteral("Not saved: ") + qs(writeError_) + QLatin1Char('\n') + message;
+        message = QCoreApplication::translate("SaveToolpathsDialog", "Not saved: ") + qs(writeError_) + QLatin1Char('\n') + message;
     }
     rotaryReport_ = outputFresh_ ? viewmodel::rotaryPostReport(output_, source_.job) : viewmodel::RotaryPostReport{};
     rotaryDetails_->setVisible(!rotaryReport_.empty());
     if (!rotaryReport_.empty() && !output_.ok) {
-        message += QStringLiteral("Rotary job refused: press \"Rotary details...\" for what to change.\n");
+        message += QCoreApplication::translate("SaveToolpathsDialog", "Rotary job refused: press \"Rotary details...\" for what to change.\n");
     }
     summary_->setText(summary);
     preview_->setPlainText(previewText);
@@ -601,8 +601,8 @@ void SaveToolpathsDialog::accept() {
         exists = exists || f.exists;
     }
     if (exists && !overwrite_->isChecked()) {
-        const auto answer = QMessageBox::question(this, QStringLiteral("Replace files"),
-                                                  QStringLiteral("A file with this name exists already. Replace it?"));
+        const auto answer = QMessageBox::question(this, QCoreApplication::translate("SaveToolpathsDialog", "Replace files"),
+                                                  QCoreApplication::translate("SaveToolpathsDialog", "A file with this name exists already. Replace it?"));
         if (answer != QMessageBox::Yes) {
             return;
         }

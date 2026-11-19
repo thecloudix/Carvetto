@@ -1,6 +1,8 @@
 #include "properties_panel.hpp"
+#include "vm_text.hpp"
 #include "variable_menu.hpp"
 
+#include <QCoreApplication>
 #include <QComboBox>
 #include <QFormLayout>
 #include <QLabel>
@@ -114,7 +116,7 @@ void PropertiesPanel::rebuild(const viewmodel::PropertyView& view) {
             edit->setPlainText(qs(f.text));
             edit->setMaximumHeight(90);
             edit->setEnabled(f.editable);
-            auto* apply = new QPushButton(QStringLiteral("Apply text"), host);
+            auto* apply = new QPushButton(QCoreApplication::translate("PropertiesPanel", "Apply text"), host);
             apply->setEnabled(f.editable);
             box->addWidget(edit);
             box->addWidget(apply);
@@ -139,8 +141,8 @@ void PropertiesPanel::rebuild(const viewmodel::PropertyView& view) {
 void PropertiesPanel::refresh() {
     const document::Document* d = doc();
     const viewmodel::PropertyView view = d != nullptr ? viewmodel::describeSelection(*d) : viewmodel::PropertyView{};
-    titleText_ = view.title.empty() ? "No selection" : view.title;
-    title_->setText(QStringLiteral("<b>%1</b>").arg(qs(titleText_).toHtmlEscaped()));
+    titleText_ = view.title.empty() ? QCoreApplication::translate("PropertiesPanel", "No selection").toStdString() : vmText(view.title).toStdString();
+    title_->setText(QStringLiteral("<b>%1</b>").arg(qs(titleText_).toHtmlEscaped()));  // lint: no-tr
 
     bool same = view.fields.size() == rows_.size();
     for (std::size_t i = 0; same && i < rows_.size(); ++i) {

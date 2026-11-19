@@ -1,5 +1,6 @@
 #include "parts_import_dialog.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -32,7 +33,7 @@ constexpr int kMaxShownDiagnostics = 500;
 
 PartsImportDialog::PartsImportDialog(tooling::ToolDatabase db, QWidget* parent) : QDialog(parent), db_(std::move(db)) {
     setObjectName(QStringLiteral("partsImportDialog"));
-    setWindowTitle(QStringLiteral("Import Parts List"));
+    setWindowTitle(QCoreApplication::translate("PartsImportDialog", "Import Parts List"));
     resize(760, 720);
     auto* layout = new QVBoxLayout(this);
 
@@ -40,7 +41,7 @@ PartsImportDialog::PartsImportDialog(tooling::ToolDatabase db, QWidget* parent) 
         auto* box = new QGroupBox(title, this);
         auto* v = new QVBoxLayout(box);
         auto* row = new QHBoxLayout;
-        auto* openButton = new QPushButton(QStringLiteral("Open file..."), box);
+        auto* openButton = new QPushButton(QCoreApplication::translate("PartsImportDialog", "Open file..."), box);
         openButton->setObjectName(QString::fromLatin1(browseName));
         connect(openButton, &QPushButton::clicked, this, [this, mapping]() { browse(mapping); });
         row->addWidget(openButton);
@@ -54,22 +55,22 @@ PartsImportDialog::PartsImportDialog(tooling::ToolDatabase db, QWidget* parent) 
         layout->addWidget(box, 1);
         return edit;
     };
-    mappingEdit_ = addSource(QStringLiteral("Mapping file (or paste it)"), "partsMappingEdit", "partsMappingBrowse", true);
-    partsEdit_ = addSource(QStringLiteral("Parts list, CSV (or paste it)"), "partsListEdit", "partsListBrowse", false);
+    mappingEdit_ = addSource(QCoreApplication::translate("PartsImportDialog", "Mapping file (or paste it)"), "partsMappingEdit", "partsMappingBrowse", true);
+    partsEdit_ = addSource(QCoreApplication::translate("PartsImportDialog", "Parts list, CSV (or paste it)"), "partsListEdit", "partsListBrowse", false);
     fileNote_ = new QLabel(this);
     fileNote_->setObjectName(QStringLiteral("partsFileNote"));
     fileNote_->setWordWrap(true);
     fileNote_->setTextFormat(Qt::PlainText);
     layout->addWidget(fileNote_);
 
-    auto* tools = new QGroupBox(QStringLiteral("Tools and options"), this);
+    auto* tools = new QGroupBox(QCoreApplication::translate("PartsImportDialog", "Tools and options"), this);
     auto* tv = new QVBoxLayout(tools);
     const auto addCombo = [&](const QString& label, const char* name) {
         auto* row = new QHBoxLayout;
         row->addWidget(new QLabel(label, tools));
         auto* combo = new QComboBox(tools);
         combo->setObjectName(QString::fromLatin1(name));
-        combo->addItem(QStringLiteral("(none)"), QString());
+        combo->addItem(QCoreApplication::translate("PartsImportDialog", "(none)"), QString());
         for (const auto& [id, tool] : db_.tools()) {
             combo->addItem(qs(tool.name.empty() ? id : tool.name), qs(id));
         }
@@ -78,13 +79,13 @@ PartsImportDialog::PartsImportDialog(tooling::ToolDatabase db, QWidget* parent) 
         connect(combo, &QComboBox::currentIndexChanged, this, [this]() { refresh(); });
         return combo;
     };
-    profileCombo_ = addCombo(QStringLiteral("Profile tool"), "partsProfileTool");
-    drillCombo_ = addCombo(QStringLiteral("Drilling tool"), "partsDrillTool");
-    pocketCombo_ = addCombo(QStringLiteral("Pocket (dado) tool"), "partsPocketTool");
-    toolpathsCheck_ = new QCheckBox(QStringLiteral("Create toolpaths"), tools);
+    profileCombo_ = addCombo(QCoreApplication::translate("PartsImportDialog", "Profile tool"), "partsProfileTool");
+    drillCombo_ = addCombo(QCoreApplication::translate("PartsImportDialog", "Drilling tool"), "partsDrillTool");
+    pocketCombo_ = addCombo(QCoreApplication::translate("PartsImportDialog", "Pocket (dado) tool"), "partsPocketTool");
+    toolpathsCheck_ = new QCheckBox(QCoreApplication::translate("PartsImportDialog", "Create toolpaths"), tools);
     toolpathsCheck_->setObjectName(QStringLiteral("partsCreateToolpaths"));
     toolpathsCheck_->setChecked(true);
-    partialCheck_ = new QCheckBox(QStringLiteral("Import the rows without errors (allow a partial import)"), tools);
+    partialCheck_ = new QCheckBox(QCoreApplication::translate("PartsImportDialog", "Import the rows without errors (allow a partial import)"), tools);
     partialCheck_->setObjectName(QStringLiteral("partsAllowPartial"));
     tv->addWidget(toolpathsCheck_);
     tv->addWidget(partialCheck_);
@@ -104,7 +105,7 @@ PartsImportDialog::PartsImportDialog(tooling::ToolDatabase db, QWidget* parent) 
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     ok_ = buttons->button(QDialogButtonBox::Ok);
-    ok_->setText(QStringLiteral("Import"));
+    ok_->setText(QCoreApplication::translate("PartsImportDialog", "Import"));
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     layout->addWidget(buttons);
@@ -147,30 +148,30 @@ void PartsImportDialog::refresh() {
     int shown = 0;
     for (const io::PartsDiagnostic& d : p.diagnostics) {
         if (shown >= kMaxShownDiagnostics) {
-            diagnostics_->addItem(QStringLiteral("... more diagnostics not shown"));
+            diagnostics_->addItem(QCoreApplication::translate("PartsImportDialog", "... more diagnostics not shown"));
             break;
         }
-        const QString where = d.line == 0 ? qs(d.source) : QStringLiteral("%1 line %2").arg(qs(d.source)).arg(d.line);
+        const QString where = d.line == 0 ? qs(d.source) : QCoreApplication::translate("PartsImportDialog", "%1 line %2").arg(qs(d.source)).arg(d.line);
         diagnostics_->addItem(QStringLiteral("%1 (%2): %3")
-                                  .arg(d.severity == io::PartsDiagnostic::Severity::Error ? QStringLiteral("Error")
-                                                                                          : QStringLiteral("Warning"),
+                                  .arg(d.severity == io::PartsDiagnostic::Severity::Error ? QCoreApplication::translate("PartsImportDialog", "Error")
+                                                                                          : QCoreApplication::translate("PartsImportDialog", "Warning"),
                                        where, qs(d.text)));
         ++shown;
     }
     QString text;
     if (!p.mappingOk) {
-        text = QStringLiteral("The mapping is not valid yet.");
+        text = QCoreApplication::translate("PartsImportDialog", "The mapping is not valid yet.");
     } else if (!p.partsRead) {
-        text = QStringLiteral("The parts list could not be read.");
+        text = QCoreApplication::translate("PartsImportDialog", "The parts list could not be read.");
     } else {
-        text = QStringLiteral("%1 part row(s), %2 piece(s); %3 row(s) skipped; %4 error(s), %5 warning(s).")
+        text = QCoreApplication::translate("PartsImportDialog", "%1 part row(s), %2 piece(s); %3 row(s) skipped; %4 error(s), %5 warning(s).")
                    .arg(p.parts)
                    .arg(p.instances)
                    .arg(p.rowsSkipped)
                    .arg(p.errors)
                    .arg(p.warnings);
         if (p.errors > 0 && !p.canApply) {
-            text += QStringLiteral(" Fix the errors or allow a partial import.");
+            text += QCoreApplication::translate("PartsImportDialog", " Fix the errors or allow a partial import.");
         }
     }
     summary_->setText(text);
@@ -183,7 +184,7 @@ QString PartsImportDialog::loadInto(const QString& path, bool mapping) {
     std::string err;
     const auto text = io::readBoundedFile(path.toStdString(), mapping ? io::kMaxMappingBytes : io::kMaxPartsFileBytes, &err);
     if (!text) {
-        return qs(err.empty() ? std::string("the file could not be read") : err);
+        return qs(err.empty() ? QCoreApplication::translate("PartsImportDialog", "the file could not be read").toStdString() : err);
     }
     (mapping ? mappingEdit_ : partsEdit_)->setPlainText(QString::fromUtf8(text->data(), static_cast<qsizetype>(text->size())));
     return {};
@@ -191,14 +192,14 @@ QString PartsImportDialog::loadInto(const QString& path, bool mapping) {
 
 void PartsImportDialog::browse(bool mapping) {
     const QString path =
-        QFileDialog::getOpenFileName(this, mapping ? QStringLiteral("Mapping file") : QStringLiteral("Parts list"),
-                                     QString(), mapping ? QStringLiteral("Mapping files (*.map *.txt *.ini);;All files (*)")
-                                                        : QStringLiteral("CSV files (*.csv *.txt);;All files (*)"));
+        QFileDialog::getOpenFileName(this, mapping ? QCoreApplication::translate("PartsImportDialog", "Mapping file") : QCoreApplication::translate("PartsImportDialog", "Parts list"),
+                                     QString(), mapping ? QCoreApplication::translate("PartsImportDialog", "Mapping files (*.map *.txt *.ini);;All files (*)")
+                                                        : QCoreApplication::translate("PartsImportDialog", "CSV files (*.csv *.txt);;All files (*)"));
     if (path.isEmpty()) {
         return;
     }
     const QString why = loadInto(path, mapping);
-    fileNote_->setText(why.isEmpty() ? QString() : QStringLiteral("Could not read %1: %2").arg(path, why));
+    fileNote_->setText(why.isEmpty() ? QString() : QCoreApplication::translate("PartsImportDialog", "Could not read %1: %2").arg(path, why));
 }
 
 std::string PartsImportDialog::chooseMappingFile(const QString& path) {

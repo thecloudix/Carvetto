@@ -63,34 +63,34 @@ bool acceptIfValid(QDialog* dialog, const std::string& problem) {
 
 ArrayCopyDialog::ArrayCopyDialog(document::Units units, const ArrayOptions& initial, QWidget* parent)
     : QDialog(parent), units_(units) {
-    setWindowTitle(QStringLiteral("Array Copy"));
+    setWindowTitle(QCoreApplication::translate("ArrayCopyMenu", "Array Copy"));
     rows_ = new QSpinBox(this);
     rows_->setRange(1, viewmodel::kMaxArrayLines);
     columns_ = new QSpinBox(this);
     columns_->setRange(1, viewmodel::kMaxArrayLines);
     spacing_ = new QComboBox(this);
-    spacing_->addItem(QStringLiteral("Offset (step between copies)"), static_cast<int>(viewmodel::ArraySpacing::Offset));
-    spacing_->addItem(QStringLiteral("Gap (between copies)"), static_cast<int>(viewmodel::ArraySpacing::Gap));
+    spacing_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Offset (step between copies)"), static_cast<int>(viewmodel::ArraySpacing::Offset));
+    spacing_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Gap (between copies)"), static_cast<int>(viewmodel::ArraySpacing::Gap));
     x_ = lengthBox(this, units, -1.0e6, 1.0e6);
     y_ = lengthBox(this, units, -1.0e6, 1.0e6);
     rowShift_ = lengthBox(this, units, -1.0e6, 1.0e6);
     columnShift_ = lengthBox(this, units, -1.0e6, 1.0e6);
     symmetry_ = new QComboBox(this);
-    symmetry_->addItem(QStringLiteral("None"), static_cast<int>(viewmodel::ArraySymmetry::None));
-    symmetry_->addItem(QStringLiteral("Mirror alternate columns"), static_cast<int>(viewmodel::ArraySymmetry::MirrorColumns));
-    symmetry_->addItem(QStringLiteral("Mirror alternate rows"), static_cast<int>(viewmodel::ArraySymmetry::MirrorRows));
-    symmetry_->addItem(QStringLiteral("Mirror both"), static_cast<int>(viewmodel::ArraySymmetry::MirrorBoth));
-    symmetry_->addItem(QStringLiteral("Rotate alternate copies 180"), static_cast<int>(viewmodel::ArraySymmetry::Rotate180));
-    group_ = new QCheckBox(QStringLiteral("Group copies"), this);
+    symmetry_->addItem(QCoreApplication::translate("ArrayCopyMenu", "None"), static_cast<int>(viewmodel::ArraySymmetry::None));
+    symmetry_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Mirror alternate columns"), static_cast<int>(viewmodel::ArraySymmetry::MirrorColumns));
+    symmetry_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Mirror alternate rows"), static_cast<int>(viewmodel::ArraySymmetry::MirrorRows));
+    symmetry_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Mirror both"), static_cast<int>(viewmodel::ArraySymmetry::MirrorBoth));
+    symmetry_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Rotate alternate copies 180"), static_cast<int>(viewmodel::ArraySymmetry::Rotate180));
+    group_ = new QCheckBox(QCoreApplication::translate("ArrayCopyMenu", "Group copies"), this);
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Rows"), rows_);
-    form->addRow(QStringLiteral("Columns"), columns_);
-    form->addRow(QStringLiteral("Spacing"), spacing_);
-    form->addRow(QStringLiteral("X"), x_);
-    form->addRow(QStringLiteral("Y"), y_);
-    form->addRow(QStringLiteral("Row displacement"), rowShift_);
-    form->addRow(QStringLiteral("Column displacement"), columnShift_);
-    form->addRow(QStringLiteral("Symmetry"), symmetry_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Rows"), rows_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Columns"), columns_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Spacing"), spacing_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "X"), x_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Y"), y_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Row displacement"), rowShift_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Column displacement"), columnShift_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Symmetry"), symmetry_);
     form->addRow(group_);
     finishDialog(this, form);
     setOptions(initial);
@@ -132,26 +132,26 @@ void ArrayCopyDialog::accept() {
 
 CircularCopyDialog::CircularCopyDialog(document::Units units, const CircularOptions& initial, QWidget* parent)
     : QDialog(parent), units_(units) {
-    setWindowTitle(QStringLiteral("Circular Copy"));
+    setWindowTitle(QCoreApplication::translate("ArrayCopyMenu", "Circular Copy"));
     centreX_ = lengthBox(this, units, -1.0e6, 1.0e6);
     centreY_ = lengthBox(this, units, -1.0e6, 1.0e6);
     count_ = new QSpinBox(this);
     count_->setRange(2, 100000);
     mode_ = new QComboBox(this);
-    mode_->addItem(QStringLiteral("Total angle"), static_cast<int>(viewmodel::CircularAngleMode::TotalAngle));
-    mode_->addItem(QStringLiteral("Step angle (negative = counter-clockwise)"),
+    mode_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Total angle"), static_cast<int>(viewmodel::CircularAngleMode::TotalAngle));
+    mode_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Step angle (negative = counter-clockwise)"),
                    static_cast<int>(viewmodel::CircularAngleMode::StepAngle));
     angle_ = new QDoubleSpinBox(this);
     angle_->setDecimals(3);
     angle_->setRange(-360.0, 360.0);
-    angle_->setSuffix(QStringLiteral(" deg"));
-    rotate_ = new QCheckBox(QStringLiteral("Rotate copies"), this);
+    angle_->setSuffix(QCoreApplication::translate("CircularCopyDialog", " deg"));
+    rotate_ = new QCheckBox(QCoreApplication::translate("ArrayCopyMenu", "Rotate copies"), this);
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Centre X"), centreX_);
-    form->addRow(QStringLiteral("Centre Y"), centreY_);
-    form->addRow(QStringLiteral("Copies (including the original)"), count_);
-    form->addRow(QStringLiteral("Angle mode"), mode_);
-    form->addRow(QStringLiteral("Angle"), angle_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Centre X"), centreX_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Centre Y"), centreY_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Copies (including the original)"), count_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Angle mode"), mode_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Angle"), angle_);
     form->addRow(rotate_);
     finishDialog(this, form);
     setOptions(initial);
@@ -186,27 +186,27 @@ void CircularCopyDialog::accept() {
 
 AlongVectorsDialog::AlongVectorsDialog(document::Units units, const AlongVectorOptions& initial, QWidget* parent)
     : QDialog(parent), units_(units), guide_(initial.guide) {
-    setWindowTitle(QStringLiteral("Copy Along Vectors"));
+    setWindowTitle(QCoreApplication::translate("ArrayCopyMenu", "Copy Along Vectors"));
     kind_ = new QComboBox(this);
-    kind_->addItem(QStringLiteral("Copy objects"), static_cast<int>(viewmodel::AlongCopyKind::Objects));
-    kind_->addItem(QStringLiteral("Copy circles"), static_cast<int>(viewmodel::AlongCopyKind::Circles));
+    kind_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Copy objects"), static_cast<int>(viewmodel::AlongCopyKind::Objects));
+    kind_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Copy circles"), static_cast<int>(viewmodel::AlongCopyKind::Circles));
     diameter_ = lengthBox(this, units, 0.0001, 1.0e6);
     spacing_ = new QComboBox(this);
-    spacing_->addItem(QStringLiteral("Distance between copies"), static_cast<int>(viewmodel::AlongSpacing::Distance));
-    spacing_->addItem(QStringLiteral("Number of copies"), static_cast<int>(viewmodel::AlongSpacing::Count));
+    spacing_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Distance between copies"), static_cast<int>(viewmodel::AlongSpacing::Distance));
+    spacing_->addItem(QCoreApplication::translate("ArrayCopyMenu", "Number of copies"), static_cast<int>(viewmodel::AlongSpacing::Count));
     distance_ = lengthBox(this, units, 0.0001, 1.0e6);
     count_ = new QSpinBox(this);
     count_->setRange(1, 1000000);
-    even_ = new QCheckBox(QStringLiteral("Force even spacing"), this);
-    align_ = new QCheckBox(QStringLiteral("Align objects to curve"), this);
-    newLayer_ = new QCheckBox(QStringLiteral("Create copies on new layer"), this);
-    reverse_ = new QCheckBox(QStringLiteral("Reverse direction"), this);
+    even_ = new QCheckBox(QCoreApplication::translate("ArrayCopyMenu", "Force even spacing"), this);
+    align_ = new QCheckBox(QCoreApplication::translate("ArrayCopyMenu", "Align objects to curve"), this);
+    newLayer_ = new QCheckBox(QCoreApplication::translate("ArrayCopyMenu", "Create copies on new layer"), this);
+    reverse_ = new QCheckBox(QCoreApplication::translate("ArrayCopyMenu", "Reverse direction"), this);
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Copy"), kind_);
-    form->addRow(QStringLiteral("Circle diameter"), diameter_);
-    form->addRow(QStringLiteral("Spacing"), spacing_);
-    form->addRow(QStringLiteral("Distance"), distance_);
-    form->addRow(QStringLiteral("Number of copies"), count_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Copy"), kind_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Circle diameter"), diameter_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Spacing"), spacing_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Distance"), distance_);
+    form->addRow(QCoreApplication::translate("ArrayCopyMenu", "Number of copies"), count_);
     form->addRow(even_);
     form->addRow(align_);
     form->addRow(newLayer_);
@@ -252,10 +252,10 @@ void AlongVectorsDialog::accept() {
 // --- Menu ---------------------------------------------------------------------------------------
 
 CopiesMenu::CopiesMenu(MainWindow& window, QMenu* editMenu) : window_(window) {
-    QMenu* menu = editMenu->addMenu(QStringLiteral("&Copies"));
-    array_ = menu->addAction(QStringLiteral("&Array Copy..."));
-    circular_ = menu->addAction(QStringLiteral("&Circular Copy..."));
-    along_ = menu->addAction(QStringLiteral("Copy Along &Vectors..."));
+    QMenu* menu = editMenu->addMenu(QCoreApplication::translate("ArrayCopyMenu", "&Copies"));
+    array_ = menu->addAction(QCoreApplication::translate("ArrayCopyMenu", "&Array Copy..."));
+    circular_ = menu->addAction(QCoreApplication::translate("ArrayCopyMenu", "&Circular Copy..."));
+    along_ = menu->addAction(QCoreApplication::translate("ArrayCopyMenu", "Copy Along &Vectors..."));
     QObject::connect(array_, &QAction::triggered, menu, [this]() {
         ArrayCopyDialog dialog(window_.currentDocument().job().displayUnits, lastArray_, &window_);
         if (dialog.exec() == QDialog::Accepted) {
@@ -317,7 +317,7 @@ void CopiesMenu::report(const CopyResult& result, bool showErrors) {
     if (result.ok) {
         window_.documentChanged();
     } else if (showErrors) {
-        QMessageBox::warning(&window_, QStringLiteral("Copies"), QString::fromStdString(result.message));
+        QMessageBox::warning(&window_, QCoreApplication::translate("ArrayCopyMenu", "Copies"), QString::fromStdString(result.message));
     }
 }
 

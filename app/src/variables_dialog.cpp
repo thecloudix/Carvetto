@@ -1,5 +1,6 @@
 #include "variables_dialog.hpp"
 
+#include <QCoreApplication>
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -25,14 +26,14 @@ QString toQ(const std::string& s) {
 VariablesDialog::VariablesDialog(viewmodel::VariablesModel& model, QWidget* parent)
     : QDialog(parent), model_(model) {
     setObjectName(QStringLiteral("VariablesDialog"));
-    setWindowTitle(QStringLiteral("Document Variables"));
+    setWindowTitle(QCoreApplication::translate("VariablesDialog", "Document Variables"));
     auto* outer = new QVBoxLayout(this);
     outer->addWidget(new QLabel(
-        QStringLiteral("Use a variable in any numeric box as {Name}, after an = (for example =W/2-{Margin})."), this));
+        QCoreApplication::translate("VariablesDialog", "Use a variable in any numeric box as {Name}, after an = (for example =W/2-{Margin})."), this));
 
     table_ = new QTableWidget(0, 3, this);
     table_->setObjectName(QStringLiteral("variablesTable"));
-    table_->setHorizontalHeaderLabels({QStringLiteral("Name"), QStringLiteral("Value"), QStringLiteral("Used by")});
+    table_->setHorizontalHeaderLabels({QCoreApplication::translate("VariablesDialog", "Name"), QCoreApplication::translate("VariablesDialog", "Value"), QCoreApplication::translate("VariablesDialog", "Used by")});
     table_->horizontalHeader()->setStretchLastSection(true);
     table_->setSelectionBehavior(QAbstractItemView::SelectRows);
     table_->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -42,28 +43,28 @@ VariablesDialog::VariablesDialog(viewmodel::VariablesModel& model, QWidget* pare
     auto* entry = new QHBoxLayout();
     nameEdit_ = new QLineEdit(this);
     nameEdit_->setObjectName(QStringLiteral("variableName"));
-    nameEdit_->setPlaceholderText(QStringLiteral("Name"));
+    nameEdit_->setPlaceholderText(QCoreApplication::translate("VariablesDialog", "Name"));
     valueEdit_ = new QLineEdit(this);
     valueEdit_->setObjectName(QStringLiteral("variableValue"));
-    valueEdit_->setPlaceholderText(QStringLiteral("Value (a number, or =calculation)"));
-    set_ = new QPushButton(QStringLiteral("Set"), this);
+    valueEdit_->setPlaceholderText(QCoreApplication::translate("VariablesDialog", "Value (a number, or =calculation)"));
+    set_ = new QPushButton(QCoreApplication::translate("VariablesDialog", "Set"), this);
     set_->setObjectName(QStringLiteral("variableSet"));
-    set_->setToolTip(QStringLiteral("Create the variable, or change its value"));
+    set_->setToolTip(QCoreApplication::translate("VariablesDialog", "Create the variable, or change its value"));
     entry->addWidget(nameEdit_, 1);
     entry->addWidget(valueEdit_, 1);
     entry->addWidget(set_);
     outer->addLayout(entry);
 
     auto* buttons = new QHBoxLayout();
-    delete_ = new QPushButton(QStringLiteral("Delete"), this);
+    delete_ = new QPushButton(QCoreApplication::translate("VariablesDialog", "Delete"), this);
     delete_->setObjectName(QStringLiteral("variableDelete"));
-    rename_ = new QPushButton(QStringLiteral("Rename..."), this);
+    rename_ = new QPushButton(QCoreApplication::translate("VariablesDialog", "Rename..."), this);
     rename_->setObjectName(QStringLiteral("variableRename"));
-    auto* import = new QPushButton(QStringLiteral("Import..."), this);
+    auto* import = new QPushButton(QCoreApplication::translate("VariablesDialog", "Import..."), this);
     import->setObjectName(QStringLiteral("variableImport"));
-    auto* exportButton = new QPushButton(QStringLiteral("Export..."), this);
+    auto* exportButton = new QPushButton(QCoreApplication::translate("VariablesDialog", "Export..."), this);
     exportButton->setObjectName(QStringLiteral("variableExport"));
-    auto* close = new QPushButton(QStringLiteral("Close"), this);
+    auto* close = new QPushButton(QCoreApplication::translate("VariablesDialog", "Close"), this);
     close->setDefault(false);
     close->setAutoDefault(false);
     buttons->addWidget(delete_);
@@ -166,7 +167,7 @@ void VariablesDialog::deleteSelected() {
     const QString name = selectedName();
     if (name.isEmpty()) {
         viewmodel::VariableEdit none;
-        none.message = "select a variable first";
+        none.message = QCoreApplication::translate("VariablesDialog", "select a variable first").toStdString();
         report(none);
         return;
     }
@@ -177,12 +178,12 @@ void VariablesDialog::renameSelected() {
     const QString name = selectedName();
     if (name.isEmpty()) {
         viewmodel::VariableEdit none;
-        none.message = "select a variable first";
+        none.message = QCoreApplication::translate("VariablesDialog", "select a variable first").toStdString();
         report(none);
         return;
     }
     bool ok = false;
-    const QString next = QInputDialog::getText(this, QStringLiteral("Rename Variable"), QStringLiteral("New name"),
+    const QString next = QInputDialog::getText(this, QCoreApplication::translate("VariablesDialog", "Rename Variable"), QCoreApplication::translate("VariablesDialog", "New name"),
                                                QLineEdit::Normal, name, &ok);
     if (ok) {
         report(model_.rename(name.toStdString(), next.toStdString()));
@@ -190,16 +191,16 @@ void VariablesDialog::renameSelected() {
 }
 
 void VariablesDialog::importDialog() {
-    const QString file = QFileDialog::getOpenFileName(this, QStringLiteral("Import Variables"), QString(),
-                                                      QStringLiteral("Text files (*.txt);;All files (*)"));
+    const QString file = QFileDialog::getOpenFileName(this, QCoreApplication::translate("VariablesDialog", "Import Variables"), QString(),
+                                                      QCoreApplication::translate("VariablesDialog", "Text files (*.txt);;All files (*)"));
     if (!file.isEmpty()) {
         importFrom(std::filesystem::path(file.toStdString()));
     }
 }
 
 void VariablesDialog::exportDialog() {
-    const QString file = QFileDialog::getSaveFileName(this, QStringLiteral("Export Variables"), QString(),
-                                                      QStringLiteral("Text files (*.txt);;All files (*)"));
+    const QString file = QFileDialog::getSaveFileName(this, QCoreApplication::translate("VariablesDialog", "Export Variables"), QString(),
+                                                      QCoreApplication::translate("VariablesDialog", "Text files (*.txt);;All files (*)"));
     if (!file.isEmpty()) {
         exportTo(std::filesystem::path(file.toStdString()));
     }

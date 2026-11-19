@@ -177,6 +177,8 @@ find_package(Qt6 COMPONENTS LinguistTools QUIET)
 if(Qt6LinguistTools_FOUND)
   qt_add_translations(carvetto
     TS_FILES translations/carvetto_de.ts
+    # No source locations in the catalogs: line numbers would make every code change touch the .ts files.
+    LUPDATE_OPTIONS -locations none
     QM_FILES_OUTPUT_VARIABLE carvetto_qm_files)
   target_compile_definitions(carvetto PRIVATE CARVETTO_TRANSLATIONS_DIR="${CMAKE_CURRENT_BINARY_DIR}"
                                               CARVETTO_HAVE_SAMPLE_QM)

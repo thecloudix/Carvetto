@@ -67,10 +67,10 @@ QString durationText(double seconds) {
     const long long m = (total / 60) % 60;
     const long long s = total % 60;
     if (h > 0) {
-        return QStringLiteral("%1 h %2 min").arg(h).arg(m);
+        return QCoreApplication::translate("ToolpathsPanel", "%1 h %2 min").arg(h).arg(m);
     }
     if (m > 0) {
-        return QStringLiteral("%1 min %2 s").arg(m).arg(s);
+        return QCoreApplication::translate("ToolpathsPanel", "%1 min %2 s").arg(m).arg(s);
     }
     return QStringLiteral("%1 s").arg(s);
 }
@@ -78,11 +78,11 @@ QString durationText(double seconds) {
 QString severityText(MessageSeverity s) {
     switch (s) {
         case MessageSeverity::Info:
-            return QStringLiteral("Note");
+            return QCoreApplication::translate("ToolpathsPanel", "Note");
         case MessageSeverity::Warning:
-            return QStringLiteral("Warning");
+            return QCoreApplication::translate("ToolpathsPanel", "Warning");
         case MessageSeverity::Error:
-            return QStringLiteral("Error");
+            return QCoreApplication::translate("ToolpathsPanel", "Error");
     }
     return QString();
 }
@@ -169,18 +169,18 @@ void ToolpathsPanel::build() {
                                  ToolpathOperation::Rough3d, ToolpathOperation::Finish3d, ToolpathOperation::Moulding,
                                  ToolpathOperation::Project3d, ToolpathOperation::Rounding, ToolpathOperation::LaserCutFill,
                                  ToolpathOperation::LaserPicture, ToolpathOperation::LaserSketch}) {
-        QAction* a = addMenu->addAction(QString::fromUtf8(operationLabel(op)));
+        QAction* a = addMenu->addAction(QCoreApplication::translate("ToolpathFormDialog", operationLabel(op)));
         a->setObjectName(QStringLiteral("add%1").arg(QString::fromUtf8(operationLabel(op))));
-        a->setToolTip(QStringLiteral("Add a %1 toolpath").arg(QString::fromUtf8(operationLabel(op))));
+        a->setToolTip(QCoreApplication::translate("ToolpathsPanel", "Add a %1 toolpath").arg(QCoreApplication::translate("ToolpathFormDialog", operationLabel(op))));
         addActions_[static_cast<int>(op)] = a;
         connect(a, &QAction::triggered, this, [this, op]() { openAddForm(op); });
     }
-    addTabs_ = addMenu->addAction(QStringLiteral("3D Tabs"));
+    addTabs_ = addMenu->addAction(QCoreApplication::translate("ToolpathsPanel", "3D Tabs"));
     addTabs_->setObjectName(QStringLiteral("add3D Tabs"));
-    addTabs_->setToolTip(QStringLiteral("Add ramped tabs to the selected toolpath, re-heighted onto the model"));
+    addTabs_->setToolTip(QCoreApplication::translate("ToolpathsPanel", "Add ramped tabs to the selected toolpath, re-heighted onto the model"));
     connect(addTabs_, &QAction::triggered, this, [this]() { openAddTabsForm(); });
     auto* addButton = new QToolButton(bar_);
-    addButton->setText(QStringLiteral("Add"));
+    addButton->setText(QCoreApplication::translate("ToolpathsPanel", "Add"));
     addButton->setObjectName(QStringLiteral("toolpathAddButton"));
     addButton->setMenu(addMenu);
     addButton->setPopupMode(QToolButton::InstantPopup);
@@ -192,13 +192,13 @@ void ToolpathsPanel::build() {
         a->setObjectName(text);
         return a;
     };
-    edit_ = make(QStringLiteral("Edit"), QStringLiteral("Edit the toolpath's settings and recalculate"));
-    duplicate_ = make(QStringLiteral("Duplicate"), QStringLiteral("Copy the toolpath"));
-    delete_ = make(QStringLiteral("Delete"), QStringLiteral("Delete the selected toolpaths"));
-    up_ = make(QStringLiteral("Up"), QStringLiteral("Move the toolpath earlier in the job"));
-    down_ = make(QStringLiteral("Down"), QStringLiteral("Move the toolpath later in the job"));
-    recalculate_ = make(QStringLiteral("Recalculate"), QStringLiteral("Recalculate the toolpath"));
-    recalculateAll_ = make(QStringLiteral("Recalculate all"), QStringLiteral("Recalculate every toolpath that needs it"));
+    edit_ = make(QCoreApplication::translate("ToolpathsPanel", "Edit"), QCoreApplication::translate("ToolpathsPanel", "Edit the toolpath's settings and recalculate"));
+    duplicate_ = make(QCoreApplication::translate("ToolpathsPanel", "Duplicate"), QCoreApplication::translate("ToolpathsPanel", "Copy the toolpath"));
+    delete_ = make(QCoreApplication::translate("ToolpathsPanel", "Delete"), QCoreApplication::translate("ToolpathsPanel", "Delete the selected toolpaths"));
+    up_ = make(QCoreApplication::translate("ToolpathsPanel", "Up"), QCoreApplication::translate("ToolpathsPanel", "Move the toolpath earlier in the job"));
+    down_ = make(QCoreApplication::translate("ToolpathsPanel", "Down"), QCoreApplication::translate("ToolpathsPanel", "Move the toolpath later in the job"));
+    recalculate_ = make(QCoreApplication::translate("ToolpathsPanel", "Recalculate"), QCoreApplication::translate("ToolpathsPanel", "Recalculate the toolpath"));
+    recalculateAll_ = make(QCoreApplication::translate("ToolpathsPanel", "Recalculate all"), QCoreApplication::translate("ToolpathsPanel", "Recalculate every toolpath that needs it"));
     connect(edit_, &QAction::triggered, this, [this]() { openEditForm(currentToolpath()); });
     connect(duplicate_, &QAction::triggered, this, [this]() { doDuplicate(); });
     connect(delete_, &QAction::triggered, this, [this]() { doDelete(); });
@@ -211,8 +211,8 @@ void ToolpathsPanel::build() {
     list_ = new QTreeWidget(this);
     list_->setObjectName(QStringLiteral("toolpathList"));
     list_->setColumnCount(4);
-    list_->setHeaderLabels({QStringLiteral("Toolpath"), QStringLiteral("Operation"), QStringLiteral("Tool"),
-                            QStringLiteral("State")});
+    list_->setHeaderLabels({QCoreApplication::translate("ToolpathsPanel", "Toolpath"), QCoreApplication::translate("ToolpathsPanel", "Operation"), QCoreApplication::translate("ToolpathsPanel", "Tool"),
+                            QCoreApplication::translate("ToolpathsPanel", "State")});
     list_->setRootIsDecorated(false);
     list_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     list_->header()->setStretchLastSection(true);
@@ -257,12 +257,12 @@ void ToolpathsPanel::build() {
     progress_->setRange(0, 0);
     progress_->setMaximumHeight(10);
     progress_->setTextVisible(false);
-    cancelButton_ = new QPushButton(QStringLiteral("Cancel"), this);
-    cancel_ = new QAction(QStringLiteral("Cancel"), this);
+    cancelButton_ = new QPushButton(QCoreApplication::translate("ToolpathsPanel", "Cancel"), this);
+    cancel_ = new QAction(QCoreApplication::translate("ToolpathsPanel", "Cancel"), this);
     cancel_->setObjectName(QStringLiteral("toolpathCancel"));
     connect(cancel_, &QAction::triggered, this, [this]() {
         runner_.cancel();
-        busyLabel_->setText(QStringLiteral("Cancelling (waits for the current step to finish)..."));
+        busyLabel_->setText(QCoreApplication::translate("ToolpathsPanel", "Cancelling (waits for the current step to finish)..."));
     });
     connect(cancelButton_, &QPushButton::clicked, cancel_, &QAction::trigger);
     busyRow->addWidget(busyLabel_, 1);
@@ -280,7 +280,7 @@ void ToolpathsPanel::build() {
 
     diagnostics_ = new QListWidget(this);
     diagnostics_->setObjectName(QStringLiteral("toolpathDiagnostics"));
-    diagnostics_->setToolTip(QStringLiteral("Messages of the selected toolpath's last calculation. "
+    diagnostics_->setToolTip(QCoreApplication::translate("ToolpathsPanel", "Messages of the selected toolpath's last calculation. "
                                             "Double-click one to select the vector it names."));
     outer->addWidget(diagnostics_, 2);
     connect(diagnostics_, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
@@ -303,7 +303,7 @@ QAction* ToolpathsPanel::addAction(ToolpathOperation operation) const {
 
 void ToolpathsPanel::showClosing() {
     if (busy_) {
-        busyLabel_->setText(QStringLiteral("Closing... (waiting for the calculation to stop)"));
+        busyLabel_->setText(QCoreApplication::translate("ToolpathsPanel", "Closing... (waiting for the calculation to stop)"));
         busyLabel_->setVisible(true);
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
@@ -345,7 +345,7 @@ void ToolpathsPanel::setDocument(document::Document* doc) {
     doc_ = doc;
     failed_.clear();
     lastMessages_.clear();
-    setStatus(busy_ ? QStringLiteral("Finishing the previous calculation; its result will be discarded.")
+    setStatus(busy_ ? QCoreApplication::translate("ToolpathsPanel", "Finishing the previous calculation; its result will be discarded.")
                     : QString(),
               false);
     refresh();
@@ -378,33 +378,33 @@ void ToolpathsPanel::rebuildList() {
             row->setText(0, qs(it.name));
             row->setFlags(row->flags() | Qt::ItemIsUserCheckable);
             row->setCheckState(0, it.enabled ? Qt::Checked : Qt::Unchecked);
-            row->setText(1, QString::fromUtf8(operationLabel(it.operation)));
+            row->setText(1, QCoreApplication::translate("ToolpathFormDialog", operationLabel(it.operation)));
             row->setText(2, qs(it.toolName));
             QString state;
             QString tip;
             const auto failedIt = failed_.find(it.id);
             const bool errored = failedIt != failed_.end() || hasError(session_.lastMessages(it.id));
             if (errored) {
-                state = QStringLiteral("Error");
-                tip = QStringLiteral("The last calculation reported errors; see the messages below.");
+                state = QCoreApplication::translate("ToolpathsPanel", "Error");
+                tip = QCoreApplication::translate("ToolpathsPanel", "The last calculation reported errors; see the messages below.");
             } else if (it.status == ToolpathStatus::NotComputed) {
-                state = QStringLiteral("Not computed");
+                state = QCoreApplication::translate("ToolpathsPanel", "Not computed");
             } else if (it.status == ToolpathStatus::NeedsRecalculation) {
-                state = QStringLiteral("Stale");
+                state = QCoreApplication::translate("ToolpathsPanel", "Stale");
                 QStringList why;
                 if (it.vectorsChanged) {
-                    why << QStringLiteral("the vectors changed");
+                    why << QCoreApplication::translate("ToolpathsPanel", "the vectors changed");
                 }
                 if (it.parametersChanged) {
-                    why << QStringLiteral("the settings changed");
+                    why << QCoreApplication::translate("ToolpathsPanel", "the settings changed");
                 }
                 if (it.toolChanged) {
-                    why << QStringLiteral("the tool changed");
+                    why << QCoreApplication::translate("ToolpathsPanel", "the tool changed");
                 }
-                tip = QStringLiteral("Needs recalculation: ") + why.join(QStringLiteral(", "));
+                tip = QCoreApplication::translate("ToolpathsPanel", "Needs recalculation: ") + why.join(QStringLiteral(", "));
             } else {
-                state = QStringLiteral("Valid");
-                tip = QStringLiteral("%1 moves").arg(static_cast<qulonglong>(it.moveCount));
+                state = QCoreApplication::translate("ToolpathsPanel", "Valid");
+                tip = QCoreApplication::translate("ToolpathsPanel", "%1 moves").arg(static_cast<qulonglong>(it.moveCount));
             }
             if (!it.canRecalculate && !it.note.empty()) {
                 tip += (tip.isEmpty() ? QString() : QStringLiteral(". ")) + qs(it.note);
@@ -432,7 +432,7 @@ void ToolpathsPanel::rebuildDiagnostics() {
     const auto add = [this](const ToolpathMessage& m, const QString& prefix) {
         QString text = QStringLiteral("%1%2: %3").arg(prefix, severityText(m.severity), qs(m.text));
         if (m.vector.has_value()) {
-            text += QStringLiteral(" [object %1]").arg(static_cast<qulonglong>(m.vector->value));
+            text += QCoreApplication::translate("ToolpathsPanel", " [object %1]").arg(static_cast<qulonglong>(m.vector->value));
         }
         auto* item = new QListWidgetItem(text, diagnostics_);
         if (m.vector.has_value()) {
@@ -464,21 +464,21 @@ void ToolpathsPanel::rebuildSummary() {
         return;
     }
     const viewmodel::JobSummary s = session_.summary();
-    QString text = QStringLiteral("%1 toolpath(s), %2 enabled and computed, %3 moves")
+    QString text = QCoreApplication::translate("ToolpathsPanel", "%1 toolpath(s), %2 enabled and computed, %3 moves")
                        .arg(static_cast<qulonglong>(s.toolpaths))
                        .arg(static_cast<qulonglong>(s.included))
                        .arg(static_cast<qulonglong>(s.moves));
     if (s.included > 0) {
-        text += QStringLiteral("; estimated time %1").arg(durationText(s.time.total()));
+        text += QCoreApplication::translate("ToolpathsPanel", "; estimated time %1").arg(durationText(s.time.total()));
         if (s.rapidRateMissing) {
-            text += QStringLiteral(" (without rapid moves: the machine's rapid rate is not set)");
+            text += QCoreApplication::translate("ToolpathsPanel", " (without rapid moves: the machine's rapid rate is not set)");
         }
-        text += QStringLiteral("; %1 tool(s), %2 tool change(s)")
+        text += QCoreApplication::translate("ToolpathsPanel", "; %1 tool(s), %2 tool change(s)")
                     .arg(static_cast<qulonglong>(s.distinctTools))
                     .arg(static_cast<qulonglong>(s.toolChanges));
     }
     if (s.needRecalculation > 0) {
-        text += QStringLiteral("; %1 need(s) recalculation").arg(static_cast<qulonglong>(s.needRecalculation));
+        text += QCoreApplication::translate("ToolpathsPanel", "; %1 need(s) recalculation").arg(static_cast<qulonglong>(s.needRecalculation));
     }
     summary_->setText(text);
 }
@@ -596,7 +596,7 @@ void ToolpathsPanel::openEditForm(ToolpathId id) {
     }
     std::optional<viewmodel::ToolpathForm> form = session_.form(id);
     if (!form.has_value()) {
-        setStatus(QStringLiteral("The toolpath no longer exists."), true);
+        setStatus(QCoreApplication::translate("ToolpathsPanel", "The toolpath no longer exists."), true);
         return;
     }
     openForm(std::move(*form), true, id);
@@ -639,16 +639,16 @@ void ToolpathsPanel::openForm(viewmodel::ToolpathForm form, bool editing, Toolpa
         if (editing) {
             const std::optional<ToolpathId> target = session_.targetOf(id);
             if (!target.has_value()) {
-                setStatus(QStringLiteral("The toolpath no longer exists."), true);
+                setStatus(QCoreApplication::translate("ToolpathsPanel", "The toolpath no longer exists."), true);
                 return;
             }
             std::vector<viewmodel::ToolpathJob> jobs;
             jobs.push_back(session_.prepare(def, *target));
-            start(std::move(jobs), Kind::Edit, "Edit toolpath");
+            start(std::move(jobs), Kind::Edit, QCoreApplication::translate("ToolpathsPanel", "Edit toolpath").toStdString());
         } else {
             std::vector<viewmodel::ToolpathJob> jobs;
             jobs.push_back(session_.prepare(def));
-            start(std::move(jobs), Kind::Add, "Add toolpath");
+            start(std::move(jobs), Kind::Add, QCoreApplication::translate("ToolpathsPanel", "Add toolpath").toStdString());
         }
     });
     dlg->open();
@@ -659,12 +659,12 @@ void ToolpathsPanel::openForm(viewmodel::ToolpathForm form, bool editing, Toolpa
 void ToolpathsPanel::start(std::vector<viewmodel::ToolpathJob> jobs, Kind kind, const std::string& label,
                            std::vector<ToolpathMessage> notes) {
     if (busy_ || runner_.busy()) {
-        setStatus(QStringLiteral("A calculation is already running."), true);
+        setStatus(QCoreApplication::translate("ToolpathsPanel", "A calculation is already running."), true);
         return;
     }
     pending_ = Pending{kind, generation_, label, std::move(notes)};
     lastMessages_.clear();
-    setBusy(true, QStringLiteral("Calculating..."));
+    setBusy(true, QCoreApplication::translate("ToolpathsPanel", "Calculating..."));
     // The job holds copies only; the completion is posted to the UI thread, where the panel (a
     // context object: the call is dropped if it is destroyed first) takes the result.
     const bool started = runner_.start(std::move(jobs), [this]() {
@@ -672,7 +672,7 @@ void ToolpathsPanel::start(std::vector<viewmodel::ToolpathJob> jobs, Kind kind, 
     });
     if (!started) {
         setBusy(false, QString());
-        setStatus(QStringLiteral("The calculation could not be started."), true);
+        setStatus(QCoreApplication::translate("ToolpathsPanel", "The calculation could not be started."), true);
     }
 }
 
@@ -685,14 +685,14 @@ void ToolpathsPanel::finishRun() {
     pending_ = Pending{};
     if (!results.has_value() || results->empty()) {
         setBusy(false, QString());
-        setStatus(QStringLiteral("The calculation produced no result (out of memory?)."), true);
+        setStatus(QCoreApplication::translate("ToolpathsPanel", "The calculation produced no result (out of memory?)."), true);
         refresh();
         return;
     }
     if (pending.generation != generation_ || doc_ == nullptr) {
         // The document was replaced while the job ran: its result belongs to a document that is gone.
         setBusy(false, QString());
-        setStatus(QStringLiteral("The document was replaced during the calculation; its result was discarded."), true);
+        setStatus(QCoreApplication::translate("ToolpathsPanel", "The document was replaced during the calculation; its result was discarded."), true);
         refresh();
         return;
     }
@@ -701,14 +701,14 @@ void ToolpathsPanel::finishRun() {
                                           [](const viewmodel::ToolpathCalculation& c) { return c.cancelled; });
     if (allCancelled) {
         setBusy(false, QString());
-        setStatus(QStringLiteral("Calculation cancelled; nothing was changed."), false);
+        setStatus(QCoreApplication::translate("ToolpathsPanel", "Calculation cancelled; nothing was changed."), false);
         refresh();
         return;
     }
 
     // Applying is synchronous (it can take seconds for a huge job): show the busy state first and
     // keep the panel disabled meanwhile.
-    setBusy(true, QStringLiteral("Applying the result..."));
+    setBusy(true, QCoreApplication::translate("ToolpathsPanel", "Applying the result..."));
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
     lastMessages_.clear();
@@ -732,7 +732,7 @@ void ToolpathsPanel::finishRun() {
         }
         QString text = qs(batch.message);
         if (!pending.notes.empty()) {
-            text += QStringLiteral(" (%1 could not be recalculated)").arg(static_cast<qulonglong>(pending.notes.size()));
+            text += QCoreApplication::translate("ToolpathsPanel", " (%1 could not be recalculated)").arg(static_cast<qulonglong>(pending.notes.size()));
         }
         setBusy(false, QString());
         setStatus(text, !batch.ok || !pending.notes.empty());
@@ -835,16 +835,16 @@ void ToolpathsPanel::doRecalculate() {
     const std::optional<viewmodel::ToolpathDefinition> def = session_.definition(id);
     const std::optional<ToolpathId> target = session_.targetOf(id);
     if (!item.has_value() || !def.has_value() || !target.has_value()) {
-        setStatus(QStringLiteral("The toolpath no longer exists."), true);
+        setStatus(QCoreApplication::translate("ToolpathsPanel", "The toolpath no longer exists."), true);
         return;
     }
     if (!item->canRecalculate) {
-        setStatus(item->note.empty() ? QStringLiteral("This toolpath cannot be recalculated.") : qs(item->note), true);
+        setStatus(item->note.empty() ? QCoreApplication::translate("ToolpathsPanel", "This toolpath cannot be recalculated.") : qs(item->note), true);
         return;
     }
     std::vector<viewmodel::ToolpathJob> jobs;
     jobs.push_back(session_.prepare(*def, *target));
-    start(std::move(jobs), Kind::Recalculate, "Recalculate toolpath");
+    start(std::move(jobs), Kind::Recalculate, QCoreApplication::translate("ToolpathsPanel", "Recalculate toolpath").toStdString());
 }
 
 void ToolpathsPanel::recalculateBound() {
@@ -863,12 +863,12 @@ void ToolpathsPanel::recalculateBound() {
     if (jobs.empty()) {
         lastMessages_ = notes;
         if (!notes.empty()) {
-            setStatus(QStringLiteral("A toolpath could not be recalculated: ") + qs(notes.front().text), true);
+            setStatus(QCoreApplication::translate("ToolpathsPanel", "A toolpath could not be recalculated: ") + qs(notes.front().text), true);
         }
         rebuildDiagnostics();
         return;
     }
-    start(std::move(jobs), Kind::RecalculateAll, "Recalculate toolpaths for the changed variables", std::move(notes));
+    start(std::move(jobs), Kind::RecalculateAll, QCoreApplication::translate("ToolpathsPanel", "Recalculate toolpaths for the changed variables").toStdString(), std::move(notes));
 }
 
 void ToolpathsPanel::doRecalculateAll() {
@@ -886,13 +886,13 @@ void ToolpathsPanel::doRecalculateAll() {
     }
     if (jobs.empty()) {
         lastMessages_ = notes;
-        setStatus(notes.empty() ? QStringLiteral("Nothing to recalculate.")
-                                : QStringLiteral("No toolpath could be recalculated."),
+        setStatus(notes.empty() ? QCoreApplication::translate("ToolpathsPanel", "Nothing to recalculate.")
+                                : QCoreApplication::translate("ToolpathsPanel", "No toolpath could be recalculated."),
                   !notes.empty());
         rebuildDiagnostics();
         return;
     }
-    start(std::move(jobs), Kind::RecalculateAll, "Recalculate all", std::move(notes));
+    start(std::move(jobs), Kind::RecalculateAll, QCoreApplication::translate("ToolpathsPanel", "Recalculate all").toStdString(), std::move(notes));
 }
 
 }  // namespace carvetto::app

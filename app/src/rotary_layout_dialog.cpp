@@ -1,5 +1,6 @@
 #include "rotary_layout_dialog.hpp"
 
+#include <QCoreApplication>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
@@ -25,7 +26,7 @@ RotaryLayoutDialog::RotaryLayoutDialog(viewmodel::RotaryLayoutForm form, Preview
     : QDialog(parent), form_(std::move(form)), previewFn_(std::move(previewFn)) {
     const bool fluting = form_.kind() == viewmodel::RotaryLayoutKind::Fluting;
     setObjectName(QStringLiteral("rotaryLayoutDialog"));
-    setWindowTitle(fluting ? QStringLiteral("Wrapped Fluting Layout") : QStringLiteral("Wrapped Spiral Layout"));
+    setWindowTitle(fluting ? QCoreApplication::translate("RotaryLayoutDialog", "Wrapped Fluting Layout") : QCoreApplication::translate("RotaryLayoutDialog", "Wrapped Spiral Layout"));
 
     auto* layout = new QVBoxLayout(this);
     status_ = new QLabel(this);
@@ -166,12 +167,12 @@ void RotaryLayoutDialog::refreshPreview() {
         shown = shown.isEmpty() ? qs(preview_.message) : shown + QStringLiteral("\n") + qs(preview_.message);
         status_->setText(QString());
     } else {
-        QString text = QStringLiteral("%1 vectors").arg(preview_.contours.size());
+        QString text = QCoreApplication::translate("RotaryLayoutDialog", "%1 vectors").arg(preview_.contours.size());
         if (preview_.turns > 0.0) {
-            text += QStringLiteral(", %1 turns").arg(preview_.turns, 0, 'g', 6);
+            text += QCoreApplication::translate("RotaryLayoutDialog", ", %1 turns").arg(preview_.turns, 0, 'g', 6);
         }
         if (preview_.pitch > 0.0) {
-            text += QStringLiteral(", pitch %1 mm").arg(preview_.pitch, 0, 'g', 6);
+            text += QCoreApplication::translate("RotaryLayoutDialog", ", pitch %1 mm").arg(preview_.pitch, 0, 'g', 6);
         }
         for (const std::string& w : preview_.warnings) {
             text += QStringLiteral("\n") + qs(w);

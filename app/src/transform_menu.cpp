@@ -52,9 +52,9 @@ struct AnchorName {
     const char* text;
 };
 constexpr AnchorName kAnchors[] = {
-    {HandleKind::TopLeft, "Top left"},       {HandleKind::Top, "Top"},          {HandleKind::TopRight, "Top right"},
-    {HandleKind::Left, "Left"},              {HandleKind::Centre, "Centre"},    {HandleKind::Right, "Right"},
-    {HandleKind::BottomLeft, "Bottom left"}, {HandleKind::Bottom, "Bottom"},    {HandleKind::BottomRight, "Bottom right"},
+    {HandleKind::TopLeft, QT_TRANSLATE_NOOP("TransformMenu", "Top left")},       {HandleKind::Top, QT_TRANSLATE_NOOP("TransformMenu", "Top")},          {HandleKind::TopRight, QT_TRANSLATE_NOOP("TransformMenu", "Top right")},
+    {HandleKind::Left, QT_TRANSLATE_NOOP("TransformMenu", "Left")},              {HandleKind::Centre, QT_TRANSLATE_NOOP("TransformMenu", "Centre")},    {HandleKind::Right, QT_TRANSLATE_NOOP("TransformMenu", "Right")},
+    {HandleKind::BottomLeft, QT_TRANSLATE_NOOP("TransformMenu", "Bottom left")}, {HandleKind::Bottom, QT_TRANSLATE_NOOP("TransformMenu", "Bottom")},    {HandleKind::BottomRight, QT_TRANSLATE_NOOP("TransformMenu", "Bottom right")},
 };
 
 QComboBox* anchorCombo(QWidget* parent, bool cornersAndCentreOnly, HandleKind current) {
@@ -65,7 +65,7 @@ QComboBox* anchorCombo(QWidget* parent, bool cornersAndCentreOnly, HandleKind cu
         if (cornersAndCentreOnly && !corner && a.kind != HandleKind::Centre) {
             continue;
         }
-        combo->addItem(QString::fromUtf8(a.text), static_cast<int>(a.kind));
+        combo->addItem(QCoreApplication::translate("TransformMenu", a.text), static_cast<int>(a.kind));
     }
     combo->setCurrentIndex(std::max(0, combo->findData(static_cast<int>(current))));
     return combo;
@@ -93,10 +93,10 @@ TransformDialog::TransformDialog(viewmodel::TransformForm& form, std::function<c
 
 QString TransformDialog::titleFor() const {
     switch (form_.kind()) {
-        case TransformFormKind::Move: return QStringLiteral("Move Selection");
-        case TransformFormKind::Scale: return QStringLiteral("Set Size / Scale");
-        case TransformFormKind::Rotate: return QStringLiteral("Rotate");
-        case TransformFormKind::Mirror: return QStringLiteral("Mirror");
+        case TransformFormKind::Move: return QCoreApplication::translate("TransformMenu", "Move Selection");
+        case TransformFormKind::Scale: return QCoreApplication::translate("TransformMenu", "Set Size / Scale");
+        case TransformFormKind::Rotate: return QCoreApplication::translate("TransformMenu", "Rotate");
+        case TransformFormKind::Mirror: return QCoreApplication::translate("TransformMenu", "Mirror");
     }
     return {};
 }
@@ -116,16 +116,16 @@ void TransformDialog::rebuild() {
     auto* grid = new QFormLayout(body_);
     const viewmodel::TransformFormOptions& o = form_.options();
     const auto tick = [&](const char* text, bool on) {
-        auto* box = new QCheckBox(QString::fromUtf8(text), body_);
+        auto* box = new QCheckBox(QCoreApplication::translate("TransformMenu", text), body_);
         box->setChecked(on);
         return box;
     };
     switch (form_.kind()) {
         case TransformFormKind::Move:
-            absolute_ = tick("Absolute position (anchor moves to X, Y)", o.absolute);
+            absolute_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "Absolute position (anchor moves to X, Y)"), o.absolute);
             anchor_ = anchorCombo(body_, false, o.anchor);
             grid->addRow(absolute_);
-            grid->addRow(QStringLiteral("Anchor"), anchor_);
+            grid->addRow(QCoreApplication::translate("TransformMenu", "Anchor"), anchor_);
             connect(absolute_, &QCheckBox::toggled, this, [this]() {
                 readOptions();
                 rebuild();
@@ -133,21 +133,21 @@ void TransformDialog::rebuild() {
             break;
         case TransformFormKind::Scale:
             mode_ = new QComboBox(body_);
-            mode_->addItem(QStringLiteral("Scale selection"), static_cast<int>(viewmodel::ScaleMode::Selection));
-            mode_->addItem(QStringLiteral("Scale items individually"), static_cast<int>(viewmodel::ScaleMode::Individually));
+            mode_->addItem(QCoreApplication::translate("TransformMenu", "Scale selection"), static_cast<int>(viewmodel::ScaleMode::Selection));
+            mode_->addItem(QCoreApplication::translate("TransformMenu", "Scale items individually"), static_cast<int>(viewmodel::ScaleMode::Individually));
             mode_->setCurrentIndex(std::max(0, mode_->findData(static_cast<int>(o.scaleMode))));
             anchor_ = anchorCombo(body_, false, o.anchor);
-            link_ = tick("Link XY", o.linkXY);
-            grid->addRow(QStringLiteral("Mode"), mode_);
-            grid->addRow(QStringLiteral("Anchor"), anchor_);
+            link_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "Link XY"), o.linkXY);
+            grid->addRow(QCoreApplication::translate("TransformMenu", "Mode"), mode_);
+            grid->addRow(QCoreApplication::translate("TransformMenu", "Anchor"), anchor_);
             grid->addRow(link_);
             break;
         case TransformFormKind::Rotate:
-            absolute_ = tick("Absolute angle", o.absolute);
-            coordinates_ = tick("Use coordinates for the pivot", o.useCoordinates);
+            absolute_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "Absolute angle"), o.absolute);
+            coordinates_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "Use coordinates for the pivot"), o.useCoordinates);
             anchor_ = anchorCombo(body_, true, o.pivotAnchor);
             grid->addRow(absolute_);
-            grid->addRow(QStringLiteral("Pivot"), anchor_);
+            grid->addRow(QCoreApplication::translate("TransformMenu", "Pivot"), anchor_);
             grid->addRow(coordinates_);
             connect(absolute_, &QCheckBox::toggled, this, [this]() {
                 readOptions();
@@ -160,14 +160,14 @@ void TransformDialog::rebuild() {
             break;
         case TransformFormKind::Mirror:
             axis_ = new QComboBox(body_);
-            axis_->addItem(QStringLiteral("Horizontal (flip left-right)"), static_cast<int>(MirrorAxis::Horizontal));
-            axis_->addItem(QStringLiteral("Vertical (flip top-bottom)"), static_cast<int>(MirrorAxis::Vertical));
+            axis_->addItem(QCoreApplication::translate("TransformMenu", "Horizontal (flip left-right)"), static_cast<int>(MirrorAxis::Horizontal));
+            axis_->addItem(QCoreApplication::translate("TransformMenu", "Vertical (flip top-bottom)"), static_cast<int>(MirrorAxis::Vertical));
             axis_->setCurrentIndex(std::max(0, axis_->findData(static_cast<int>(o.axis))));
-            copy_ = tick("Create a mirrored copy", o.createCopy);
-            rotated_ = tick("Use rotated bounds", o.useRotatedBounds);
-            material_ = tick("About the material centre", o.aboutMaterialCentre);
-            line_ = tick("Flip about the last selected line", o.aboutSelectedLine);
-            grid->addRow(QStringLiteral("Direction"), axis_);
+            copy_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "Create a mirrored copy"), o.createCopy);
+            rotated_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "Use rotated bounds"), o.useRotatedBounds);
+            material_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "About the material centre"), o.aboutMaterialCentre);
+            line_ = tick(QT_TRANSLATE_NOOP("TransformMenu", "Flip about the last selected line"), o.aboutSelectedLine);
+            grid->addRow(QCoreApplication::translate("TransformMenu", "Direction"), axis_);
             grid->addRow(copy_);
             grid->addRow(rotated_);
             grid->addRow(material_);
@@ -249,10 +249,10 @@ TransformMenu::TransformMenu(MainWindow& window) : window_(window) {
                                 TransformFormKind::Mirror}) {
         forms_.emplace(static_cast<int>(k), viewmodel::TransformForm(k, units));
     }
-    menu_ = window.menuBar()->addMenu(QStringLiteral("&Transform"));
-    move_ = add(menu_, QStringLiteral("&Move Selection..."), QStringLiteral("M"));
-    scale_ = add(menu_, QStringLiteral("Set &Size / Scale..."), QStringLiteral("T"));
-    rotate_ = add(menu_, QStringLiteral("&Rotate..."), QStringLiteral("R"));
+    menu_ = window.menuBar()->addMenu(QCoreApplication::translate("TransformMenu", "&Transform"));
+    move_ = add(menu_, QCoreApplication::translate("TransformMenu", "&Move Selection..."), QStringLiteral("M"));
+    scale_ = add(menu_, QCoreApplication::translate("TransformMenu", "Set &Size / Scale..."), QStringLiteral("T"));
+    rotate_ = add(menu_, QCoreApplication::translate("TransformMenu", "&Rotate..."), QStringLiteral("R"));
     menu_->addSeparator();
     struct MirrorEntry {
         MirrorAxis axis;
@@ -262,15 +262,15 @@ TransformMenu::TransformMenu(MainWindow& window) : window_(window) {
         const char* shortcut;
     };
     const MirrorEntry mirrors[] = {
-        {MirrorAxis::Horizontal, false, false, "Mirror &Horizontally", "H"},
-        {MirrorAxis::Vertical, false, false, "Mirror &Vertically", "V"},
-        {MirrorAxis::Horizontal, true, false, "Mirror Horizontally, Create Copy", "Ctrl+H"},
-        {MirrorAxis::Vertical, true, false, "Mirror Vertically, Create Copy", "Ctrl+V"},
-        {MirrorAxis::Horizontal, false, true, "Mirror Horizontally about the Material Centre", "Shift+H"},
-        {MirrorAxis::Vertical, false, true, "Mirror Vertically about the Material Centre", "Shift+V"},
+        {MirrorAxis::Horizontal, false, false, QT_TRANSLATE_NOOP("TransformMenu", "Mirror &Horizontally"), "H"},
+        {MirrorAxis::Vertical, false, false, QT_TRANSLATE_NOOP("TransformMenu", "Mirror &Vertically"), "V"},
+        {MirrorAxis::Horizontal, true, false, QT_TRANSLATE_NOOP("TransformMenu", "Mirror Horizontally, Create Copy"), "Ctrl+H"},
+        {MirrorAxis::Vertical, true, false, QT_TRANSLATE_NOOP("TransformMenu", "Mirror Vertically, Create Copy"), "Ctrl+V"},
+        {MirrorAxis::Horizontal, false, true, QT_TRANSLATE_NOOP("TransformMenu", "Mirror Horizontally about the Material Centre"), "Shift+H"},
+        {MirrorAxis::Vertical, false, true, QT_TRANSLATE_NOOP("TransformMenu", "Mirror Vertically about the Material Centre"), "Shift+V"},
     };
     for (const MirrorEntry& e : mirrors) {
-        QAction* a = add(menu_, QString::fromUtf8(e.text), QString::fromUtf8(e.shortcut));
+        QAction* a = add(menu_, QCoreApplication::translate("TransformMenu", e.text), QString::fromUtf8(e.shortcut));
         mirror_[mirrorKey(e.axis, e.copy, e.material)] = a;
         const viewmodel::MirrorOptions options = [&] {
             viewmodel::MirrorOptions o;
@@ -281,26 +281,26 @@ TransformMenu::TransformMenu(MainWindow& window) : window_(window) {
         }();
         QObject::connect(a, &QAction::triggered, menu_, [this, options]() { runMirror(options); });
     }
-    QAction* mirrorDialog = add(menu_, QStringLiteral("&Mirror..."), QString());
+    QAction* mirrorDialog = add(menu_, QCoreApplication::translate("TransformMenu", "&Mirror..."), QString());
     mirror_[-1] = mirrorDialog;
     QObject::connect(mirrorDialog, &QAction::triggered, menu_, [this]() { openDialog(TransformFormKind::Mirror); });
 
-    alignMenu_ = menu_->addMenu(QStringLiteral("&Align"));
+    alignMenu_ = menu_->addMenu(QCoreApplication::translate("TransformMenu", "&Align"));
     struct AlignEntry {
         AlignKind kind;
         const char* text;
     };
     const AlignEntry aligns[] = {
-        {AlignKind::Centre, "Align to Last: &Centre"},
-        {AlignKind::VerticalCentre, "Align to Last: &Vertical Centre"},
-        {AlignKind::HorizontalCentre, "Align to Last: &Horizontal Centre"},
-        {AlignKind::Left, "Align to Last: &Left"},
-        {AlignKind::Right, "Align to Last: &Right"},
-        {AlignKind::OutsideTop, "Align to Last: Outside &Top"},
-        {AlignKind::OutsideBottom, "Align to Last: Outside &Bottom"},
+        {AlignKind::Centre, QT_TRANSLATE_NOOP("TransformMenu", "Align to Last: &Centre")},
+        {AlignKind::VerticalCentre, QT_TRANSLATE_NOOP("TransformMenu", "Align to Last: &Vertical Centre")},
+        {AlignKind::HorizontalCentre, QT_TRANSLATE_NOOP("TransformMenu", "Align to Last: &Horizontal Centre")},
+        {AlignKind::Left, QT_TRANSLATE_NOOP("TransformMenu", "Align to Last: &Left")},
+        {AlignKind::Right, QT_TRANSLATE_NOOP("TransformMenu", "Align to Last: &Right")},
+        {AlignKind::OutsideTop, QT_TRANSLATE_NOOP("TransformMenu", "Align to Last: Outside &Top")},
+        {AlignKind::OutsideBottom, QT_TRANSLATE_NOOP("TransformMenu", "Align to Last: Outside &Bottom")},
     };
     for (const AlignEntry& e : aligns) {
-        QAction* a = add(alignMenu_, QString::fromUtf8(e.text), QString());
+        QAction* a = add(alignMenu_, QCoreApplication::translate("TransformMenu", e.text), QString());
         align_[static_cast<int>(e.kind)] = a;
         const AlignKind kind = e.kind;
         QObject::connect(a, &QAction::triggered, menu_, [this, kind]() { runAlign(kind); });
@@ -312,12 +312,12 @@ TransformMenu::TransformMenu(MainWindow& window) : window_(window) {
         const char* shortcut;
     };
     const CentreEntry centres[] = {
-        {CentreAxes::Both, "Centre in &Material", "F9"},
-        {CentreAxes::XOnly, "Centre in Material, X only", ""},
-        {CentreAxes::YOnly, "Centre in Material, Y only", ""},
+        {CentreAxes::Both, QT_TRANSLATE_NOOP("TransformMenu", "Centre in &Material"), "F9"},
+        {CentreAxes::XOnly, QT_TRANSLATE_NOOP("TransformMenu", "Centre in Material, X only"), ""},
+        {CentreAxes::YOnly, QT_TRANSLATE_NOOP("TransformMenu", "Centre in Material, Y only"), ""},
     };
     for (const CentreEntry& e : centres) {
-        QAction* a = add(alignMenu_, QString::fromUtf8(e.text), QString::fromUtf8(e.shortcut));
+        QAction* a = add(alignMenu_, QCoreApplication::translate("TransformMenu", e.text), QString::fromUtf8(e.shortcut));
         centre_[static_cast<int>(e.axes)] = a;
         const CentreAxes axes = e.axes;
         QObject::connect(a, &QAction::triggered, menu_, [this, axes]() { runCentre(axes); });
@@ -325,19 +325,19 @@ TransformMenu::TransformMenu(MainWindow& window) : window_(window) {
     alignMenu_->addSeparator();
     for (SpaceDirection d : {SpaceDirection::Horizontal, SpaceDirection::Vertical}) {
         QAction* a = add(alignMenu_,
-                         d == SpaceDirection::Horizontal ? QStringLiteral("Space Selection &Horizontally")
-                                                         : QStringLiteral("Space Selection V&ertically"),
+                         d == SpaceDirection::Horizontal ? QCoreApplication::translate("TransformMenu", "Space Selection &Horizontally")
+                                                         : QCoreApplication::translate("TransformMenu", "Space Selection V&ertically"),
                          QString());
         space_[static_cast<int>(d)] = a;
         QObject::connect(a, &QAction::triggered, menu_, [this, d]() { runSpace(d); });
     }
-    spaceOrder_ = alignMenu_->addAction(QStringLiteral("Space in Selection Order (Ctrl)"));
+    spaceOrder_ = alignMenu_->addAction(QCoreApplication::translate("TransformMenu", "Space in Selection Order (Ctrl)"));
     spaceOrder_->setCheckable(true);
-    spaceInside_ = alignMenu_->addAction(QStringLiteral("Space Inside Last Vector"));
+    spaceInside_ = alignMenu_->addAction(QCoreApplication::translate("TransformMenu", "Space Inside Last Vector"));
     spaceInside_->setCheckable(true);
 
     // F10 pops the alignment tools up where the pointer is.
-    QAction* f10 = menu_->addAction(QStringLiteral("Alignment Tools"));
+    QAction* f10 = menu_->addAction(QCoreApplication::translate("TransformMenu", "Alignment Tools"));
     f10->setShortcut(QKeySequence(QStringLiteral("F10")));
     QObject::connect(f10, &QAction::triggered, menu_, [this]() { alignMenu_->popup(QCursor::pos()); });
 
@@ -444,7 +444,7 @@ void TransformMenu::report(const TransformResult& result, bool showErrors) {
         window_.documentChanged();
         window_.canvas()->update();
     } else if (showErrors) {
-        QMessageBox::warning(&window_, QStringLiteral("Transform"), qs(result.message));
+        QMessageBox::warning(&window_, QCoreApplication::translate("TransformMenu", "Transform"), qs(result.message));
     }
 }
 

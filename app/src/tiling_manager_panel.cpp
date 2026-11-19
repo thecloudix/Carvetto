@@ -1,5 +1,6 @@
 #include "tiling_manager_panel.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
@@ -27,7 +28,7 @@ QDoubleSpinBox* mmField(const char* name, QWidget* parent) {
     f->setRange(0.0, 100000.0);
     f->setDecimals(2);
     f->setSingleStep(1.0);
-    f->setSuffix(QStringLiteral(" mm"));
+    f->setSuffix(QCoreApplication::translate("TilingManagerPanel", " mm"));
     return f;
 }
 
@@ -92,7 +93,7 @@ TilingManagerPanel::TilingManagerPanel(QWidget* parent) : QWidget(parent) {
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    tile_ = new QCheckBox(QStringLiteral("Tile Toolpaths (split the job into tiles that fit the machine)"), this);
+    tile_ = new QCheckBox(QCoreApplication::translate("TilingManagerPanel", "Tile Toolpaths (split the job into tiles that fit the machine)"), this);
     tile_->setObjectName(QStringLiteral("tilingCheck"));
     layout->addWidget(tile_);
 
@@ -105,27 +106,27 @@ TilingManagerPanel::TilingManagerPanel(QWidget* parent) : QWidget(parent) {
 
     strategy_ = new QComboBox(settings_);
     strategy_->setObjectName(QStringLiteral("tilingStrategy"));
-    strategy_->addItem(QStringLiteral("Individual tiles (grid)"));
-    strategy_->addItem(QStringLiteral("Feed-through X (strips along X)"));
-    strategy_->addItem(QStringLiteral("Feed-through Y (strips along Y)"));
-    form->addRow(QStringLiteral("Strategy:"), strategy_);
+    strategy_->addItem(QCoreApplication::translate("TilingManagerPanel", "Individual tiles (grid)"));
+    strategy_->addItem(QCoreApplication::translate("TilingManagerPanel", "Feed-through X (strips along X)"));
+    strategy_->addItem(QCoreApplication::translate("TilingManagerPanel", "Feed-through Y (strips along Y)"));
+    form->addRow(QCoreApplication::translate("TilingManagerPanel", "Strategy:"), strategy_);
 
     width_ = mmField("tilingWidth", settings_);
     height_ = mmField("tilingHeight", settings_);
     overlap_ = mmField("tilingOverlap", settings_);
     auto* sizeRow = new QHBoxLayout();
     sizeRow->addWidget(width_);
-    sizeRow->addWidget(new QLabel(QStringLiteral("x"), settings_));
+    sizeRow->addWidget(new QLabel(QCoreApplication::translate("TilingManagerPanel", "x"), settings_));
     sizeRow->addWidget(height_);
-    useWorkArea_ = new QPushButton(QStringLiteral("Machine work area"), settings_);
+    useWorkArea_ = new QPushButton(QCoreApplication::translate("TilingManagerPanel", "Machine work area"), settings_);
     useWorkArea_->setObjectName(QStringLiteral("tilingUseWorkArea"));
     sizeRow->addWidget(useWorkArea_);
-    form->addRow(QStringLiteral("Tile size (W x H):"), sizeRow);
-    form->addRow(QStringLiteral("Overlap:"), overlap_);
+    form->addRow(QCoreApplication::translate("TilingManagerPanel", "Tile size (W x H):"), sizeRow);
+    form->addRow(QCoreApplication::translate("TilingManagerPanel", "Overlap:"), overlap_);
 
-    smallestFirst_ = new QCheckBox(QStringLiteral("Smallest tiles first (default: row by row)"), settings_);
+    smallestFirst_ = new QCheckBox(QCoreApplication::translate("TilingManagerPanel", "Smallest tiles first (default: row by row)"), settings_);
     smallestFirst_->setObjectName(QStringLiteral("tilingSmallestFirst"));
-    originalPosition_ = new QCheckBox(QStringLiteral("Keep the original position (default: each tile starts at X0 Y0)"),
+    originalPosition_ = new QCheckBox(QCoreApplication::translate("TilingManagerPanel", "Keep the original position (default: each tile starts at X0 Y0)"),
                                       settings_);
     originalPosition_->setObjectName(QStringLiteral("tilingOriginalPosition"));
     body->addWidget(smallestFirst_);
@@ -139,8 +140,8 @@ TilingManagerPanel::TilingManagerPanel(QWidget* parent) : QWidget(parent) {
     auto* split = new QHBoxLayout();
     list_ = new QTreeWidget(settings_);
     list_->setObjectName(QStringLiteral("tilingList"));
-    list_->setHeaderLabels({QStringLiteral("Tile"), QStringLiteral("X"), QStringLiteral("Y"), QStringLiteral("Size"),
-                            QStringLiteral("State")});
+    list_->setHeaderLabels({QCoreApplication::translate("TilingManagerPanel", "Tile"), QCoreApplication::translate("TilingManagerPanel", "X"), QCoreApplication::translate("TilingManagerPanel", "Y"), QCoreApplication::translate("TilingManagerPanel", "Size"),
+                            QCoreApplication::translate("TilingManagerPanel", "State")});
     list_->setRootIsDecorated(false);
     list_->setMinimumHeight(110);
     drawing_ = new TilePreviewWidget(settings_);
@@ -258,11 +259,11 @@ void TilingManagerPanel::showPreview(const viewmodel::TilePreview& preview) {
             item->setText(0, t.number != 0 ? QString::number(t.number) : QStringLiteral("-"));
             item->setText(1, QString::number(t.rect.min.x, 'f', 2));
             item->setText(2, QString::number(t.rect.min.y, 'f', 2));
-            item->setText(3, QStringLiteral("%1 x %2")
+            item->setText(3, QCoreApplication::translate("TilingManagerPanel", "%1 x %2")
                                  .arg(t.rect.width(), 0, 'f', 2)
                                  .arg(t.rect.height(), 0, 'f', 2));
-            item->setText(4, t.number == 0 ? QStringLiteral("empty, not saved")
-                                           : (t.oversize ? QStringLiteral("too large") : QStringLiteral("saved")));
+            item->setText(4, t.number == 0 ? QCoreApplication::translate("TilingManagerPanel", "empty, not saved")
+                                           : (t.oversize ? QCoreApplication::translate("TilingManagerPanel", "too large") : QStringLiteral("saved")));
         }
     }
     drawing_->setPreview(&preview_);

@@ -1,5 +1,6 @@
 #include "gadget_dialogs.hpp"
 
+#include <QCoreApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -56,7 +57,7 @@ void makePlain(QMessageBox& box) {
 
 QString plainToolTip(const QString& text) {
     // "<qt>" makes Qt render the escaped text as rich text, which shows it literally.
-    return QStringLiteral("<qt>") + text.toHtmlEscaped() + QStringLiteral("</qt>");
+    return QCoreApplication::translate("GadgetShortcutsDialog", "<qt>") + text.toHtmlEscaped() + QCoreApplication::translate("GadgetShortcutsDialog", "</qt>");
 }
 
 GadgetFormDialog::GadgetFormDialog(const scripting::FormSpec& spec, const GadgetFormChoices& choices, QWidget* parent)
@@ -111,7 +112,7 @@ GadgetFormDialog::GadgetFormDialog(const scripting::FormSpec& spec, const Gadget
             }
             case FormFieldKind::Tool: {
                 auto* combo = new QComboBox(this);
-                combo->addItem(QStringLiteral("(none)"), QString());
+                combo->addItem(QCoreApplication::translate("GadgetShortcutsDialog", "(none)"), QString());
                 for (const auto& t : choices.tools) {
                     combo->addItem(qs(t.second), qs(t.first));
                     if (t.first == f.defaultValue.asString()) {
@@ -129,7 +130,7 @@ GadgetFormDialog::GadgetFormDialog(const scripting::FormSpec& spec, const Gadget
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    abort_ = buttons->addButton(QStringLiteral("Abort gadget"), QDialogButtonBox::DestructiveRole);
+    abort_ = buttons->addButton(QCoreApplication::translate("GadgetShortcutsDialog", "Abort gadget"), QDialogButtonBox::DestructiveRole);
     connect(abort_, &QPushButton::clicked, this, [this] {
         if (onAbort) {
             onAbort();
@@ -219,11 +220,11 @@ void showGadgetError(QWidget* parent, const viewmodel::GadgetErrorReport& report
 
 GadgetShortcutsDialog::GadgetShortcutsDialog(viewmodel::GadgetManager& manager, QWidget* parent)
     : QDialog(parent), manager_(manager) {
-    setWindowTitle(QStringLiteral("Gadget Shortcuts"));
+    setWindowTitle(QCoreApplication::translate("GadgetShortcutsDialog", "Gadget Shortcuts"));
     setObjectName(QStringLiteral("gadgetShortcutsDialog"));
     auto* layout = new QVBoxLayout(this);
     top_ = layout;
-    layout->addWidget(makePlainLabel(QStringLiteral("Choose a Ctrl+F-key for each gadget. A key another gadget uses is refused."), this));
+    layout->addWidget(makePlainLabel(QCoreApplication::translate("GadgetShortcutsDialog", "Choose a Ctrl+F-key for each gadget. A key another gadget uses is refused."), this));
     body_ = new QWidget(this);
     layout->addWidget(body_);
     message_ = makePlainLabel(QString(), this);
@@ -245,7 +246,7 @@ void GadgetShortcutsDialog::reload() {
     for (const auto& row : manager_.shortcuts()) {
         auto* combo = new QComboBox(fresh);
         for (const std::string& c : choices) {
-            combo->addItem(c.empty() ? QStringLiteral("(none)") : qs(c), qs(c));
+            combo->addItem(c.empty() ? QCoreApplication::translate("GadgetShortcutsDialog", "(none)") : qs(c), qs(c));
         }
         combo->setCurrentIndex(std::max(0, combo->findData(qs(row.shortcut))));
         const std::size_t index = combos_.size();
@@ -309,40 +310,40 @@ std::optional<scripting::InstallResult> installGadgetDialog(QWidget* parent, vie
     const scripting::InstallResult seen = manager.inspect(folder);
     if (!seen.ok) {
         if (!ask) {
-            QMessageBox mb(QMessageBox::Warning, QStringLiteral("Install New Gadget"),
-                           QStringLiteral("This folder is not a gadget: ") + qs(seen.error), QMessageBox::Ok, parent);
+            QMessageBox mb(QMessageBox::Warning, QCoreApplication::translate("GadgetShortcutsDialog", "Install New Gadget"),
+                           QCoreApplication::translate("GadgetShortcutsDialog", "This folder is not a gadget: ") + qs(seen.error), QMessageBox::Ok, parent);
             makePlain(mb);
             mb.exec();
         }
         return std::nullopt;
     }
     const scripting::GadgetManifest& m = seen.gadget.manifest;
-    QString text = QStringLiteral("Install gadget \"") + qs(m.name) + QStringLiteral("\" (version ") + qs(m.version) +
-                   QStringLiteral(")?\n\nMenu: Gadgets > ") + qs(m.menu);
+    QString text = QCoreApplication::translate("GadgetShortcutsDialog", "Install gadget \"") + qs(m.name) + QCoreApplication::translate("GadgetShortcutsDialog", "\" (version ") + qs(m.version) +
+                   QCoreApplication::translate("GadgetShortcutsDialog", ")?\n\nMenu: Gadgets > ") + qs(m.menu);
     if (!m.shortcut.empty()) {
-        text += QStringLiteral("\nShortcut: ") + qs(m.shortcut);
+        text += QCoreApplication::translate("GadgetShortcutsDialog", "\nShortcut: ") + qs(m.shortcut);
     }
     if (!m.description.empty()) {
         text += QStringLiteral("\n\n") + qs(m.description);
     }
     if (!seen.gadget.problem.empty()) {
-        text += QStringLiteral("\n\nIt cannot run here: ") + qs(seen.gadget.problem) + QStringLiteral(".");
+        text += QCoreApplication::translate("GadgetShortcutsDialog", "\n\nIt cannot run here: ") + qs(seen.gadget.problem) + QStringLiteral(".");
     }
-    text += QStringLiteral("\n\nA gadget is a script that can change your drawing. It cannot read your files or run programs, "
+    text += QCoreApplication::translate("GadgetShortcutsDialog", "\n\nA gadget is a script that can change your drawing. It cannot read your files or run programs, "
                            "and one run is one Undo step. Install only gadgets you trust.");
-    if (!confirm(QStringLiteral("Install New Gadget"), text)) {
+    if (!confirm(QCoreApplication::translate("GadgetShortcutsDialog", "Install New Gadget"), text)) {
         return std::nullopt;
     }
     scripting::InstallResult r = manager.install(folder, false);
     if (!r.ok && r.error.find("already installed") != std::string::npos) {
-        if (!confirm(QStringLiteral("Install New Gadget"),
-                     qs(r.error) + QStringLiteral(". Replace it with this version?"))) {
+        if (!confirm(QCoreApplication::translate("GadgetShortcutsDialog", "Install New Gadget"),
+                     qs(r.error) + QCoreApplication::translate("GadgetShortcutsDialog", ". Replace it with this version?"))) {
             return std::nullopt;
         }
         r = manager.install(folder, true);
     }
     if (!r.ok && !ask) {
-        QMessageBox mb(QMessageBox::Warning, QStringLiteral("Install New Gadget"), qs(r.error), QMessageBox::Ok, parent);
+        QMessageBox mb(QMessageBox::Warning, QCoreApplication::translate("GadgetShortcutsDialog", "Install New Gadget"), qs(r.error), QMessageBox::Ok, parent);
         makePlain(mb);
         mb.exec();
     }

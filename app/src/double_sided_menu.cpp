@@ -1,5 +1,6 @@
 #include "double_sided_menu.hpp"
 
+#include <QCoreApplication>
 #include <QAction>
 #include <QKeySequence>
 #include <QMenu>
@@ -16,24 +17,24 @@
 namespace carvetto::app {
 
 DoubleSidedMenu::DoubleSidedMenu(MainWindow& window, QMenu* edit) : window_(window) {
-    QMenu* menu = edit->addMenu(QStringLiteral("Double-&sided"));
+    QMenu* menu = edit->addMenu(QCoreApplication::translate("DoubleSidedMenu", "Double-&sided"));
     const auto add = [&](const char* name, const QString& text) {
         QAction* a = menu->addAction(text);
         a->setObjectName(QString::fromLatin1(name));
         return a;
     };
-    swap_ = add("swapSidesAction", QStringLiteral("S&wap Sides"));
-    top_ = add("topSideAction", QStringLiteral("&Top Side"));
-    bottom_ = add("bottomSideAction", QStringLiteral("&Bottom Side"));
-    multi_ = add("multiSidedViewAction", QStringLiteral("&Multi-Sided View"));
+    swap_ = add("swapSidesAction", QCoreApplication::translate("DoubleSidedMenu", "S&wap Sides"));
+    top_ = add("topSideAction", QCoreApplication::translate("DoubleSidedMenu", "&Top Side"));
+    bottom_ = add("bottomSideAction", QCoreApplication::translate("DoubleSidedMenu", "&Bottom Side"));
+    multi_ = add("multiSidedViewAction", QCoreApplication::translate("DoubleSidedMenu", "&Multi-Sided View"));
     multi_->setCheckable(true);
     menu->addSeparator();
-    copyObjects_ = add("copyToOtherSideAction", QStringLiteral("&Copy Selection to Other Side"));
-    moveObjects_ = add("moveToOtherSideAction", QStringLiteral("Mo&ve Selection to Other Side"));
-    copyToolpath_ = add("copyToolpathToOtherSideAction", QStringLiteral("Copy Toolpath to &Other Side"));
-    moveToolpath_ = add("moveToolpathToOtherSideAction", QStringLiteral("Move Toolpath to Ot&her Side"));
+    copyObjects_ = add("copyToOtherSideAction", QCoreApplication::translate("DoubleSidedMenu", "&Copy Selection to Other Side"));
+    moveObjects_ = add("moveToOtherSideAction", QCoreApplication::translate("DoubleSidedMenu", "Mo&ve Selection to Other Side"));
+    copyToolpath_ = add("copyToolpathToOtherSideAction", QCoreApplication::translate("DoubleSidedMenu", "Copy Toolpath to &Other Side"));
+    moveToolpath_ = add("moveToolpathToOtherSideAction", QCoreApplication::translate("DoubleSidedMenu", "Move Toolpath to Ot&her Side"));
     menu->addSeparator();
-    single_ = add("singleSidedJobAction", QStringLiteral("Switch to &Single-Sided Job"));
+    single_ = add("singleSidedJobAction", QCoreApplication::translate("DoubleSidedMenu", "Switch to &Single-Sided Job"));
 
     // Bare keys as the product has them; text being typed wins (CanvasWidget::event).
     top_->setShortcut(QKeySequence(Qt::Key_1));
@@ -72,7 +73,7 @@ DoubleSidedMenu::DoubleSidedMenu(MainWindow& window, QMenu* edit) : window_(wind
 void DoubleSidedMenu::toolpathToOtherSide(bool move) {
     const document::ToolpathId id = window_.toolpaths()->currentToolpath();
     if (id.isNull()) {
-        afterEdit(false, "select a toolpath first");
+        afterEdit(false, QCoreApplication::translate("DoubleSidedMenu", "select a toolpath first").toStdString());
         return;
     }
     const viewmodel::SideCopyResult r =

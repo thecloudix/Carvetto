@@ -36,12 +36,12 @@ std::filesystem::path defaultGadgetsFolder() {
 }
 
 GadgetsMenu::GadgetsMenu(MainWindow& window) : window_(window), manager_(defaultGadgetsFolder()) {
-    menu_ = window.menuBar()->addMenu(QStringLiteral("&Gadgets"));
+    menu_ = window.menuBar()->addMenu(QCoreApplication::translate("GadgetsMenu", "&Gadgets"));
     menu_->setObjectName(QStringLiteral("gadgetsMenu"));
-    installAction_ = new QAction(QStringLiteral("&Install New Gadget..."), menu_);
+    installAction_ = new QAction(QCoreApplication::translate("GadgetsMenu", "&Install New Gadget..."), menu_);
     installAction_->setObjectName(QStringLiteral("installGadgetAction"));
     QObject::connect(installAction_, &QAction::triggered, menu_, [this]() { installGadget(); });
-    shortcutsAction_ = new QAction(QStringLiteral("Gadget &Shortcuts..."), menu_);
+    shortcutsAction_ = new QAction(QCoreApplication::translate("GadgetsMenu", "Gadget &Shortcuts..."), menu_);
     shortcutsAction_->setObjectName(QStringLiteral("gadgetShortcutsAction"));
     QObject::connect(shortcutsAction_, &QAction::triggered, menu_, [this]() { shortcutsDialog(); });
     rebuild();
@@ -148,7 +148,7 @@ void GadgetsMenu::rebuild() {
     const std::vector<viewmodel::GadgetMenuItem> items = manager_.menu();
     addItems(menu_, items);
     if (items.empty()) {
-        QAction* none = menu_->addAction(QStringLiteral("(no gadgets installed)"));
+        QAction* none = menu_->addAction(QCoreApplication::translate("GadgetsMenu", "(no gadgets installed)"));
         none->setEnabled(false);
     }
     menu_->addSeparator();
@@ -182,14 +182,14 @@ scripting::GadgetUi GadgetsMenu::realUi() {
     // Every box has an "Abort gadget" button: the deadline does not run while a box is open, so this
     // (with the per-run caps of GadgetLimits) is how the user ends a gadget that keeps asking.
     const auto box = [this, parent](const std::string& text, QMessageBox::Icon icon, bool yesNo) {
-        QMessageBox mb(icon, QStringLiteral("Gadget"), qs(text), QMessageBox::NoButton, parent);
+        QMessageBox mb(icon, QCoreApplication::translate("GadgetsMenu", "Gadget"), qs(text), QMessageBox::NoButton, parent);
         mb.setObjectName(QStringLiteral("gadgetBox"));
         makePlain(mb);  // the gadget's text is shown literally, never as links or markup
         QPushButton* yes = mb.addButton(yesNo ? QMessageBox::Yes : QMessageBox::Ok);
         if (yesNo) {
             mb.addButton(QMessageBox::No);
         }
-        QPushButton* abort = mb.addButton(QStringLiteral("Abort gadget"), QMessageBox::DestructiveRole);
+        QPushButton* abort = mb.addButton(QCoreApplication::translate("GadgetsMenu", "Abort gadget"), QMessageBox::DestructiveRole);
         mb.setDefaultButton(yes);
         mb.exec();
         if (mb.clickedButton() == abort) {
@@ -213,10 +213,11 @@ scripting::GadgetUi GadgetsMenu::realUi() {
 viewmodel::GadgetRunReport GadgetsMenu::runGadget(std::size_t index) {
     viewmodel::GadgetRunReport report;
     if (window_.toolpaths()->busy()) {
-        report.error = viewmodel::GadgetErrorReport{"Gadget", "Wait for the toolpath calculation to finish.", "",
+        report.error = viewmodel::GadgetErrorReport{QCoreApplication::translate("GadgetsMenu", "Gadget").toStdString(),
+                                                    QCoreApplication::translate("GadgetsMenu", "Wait for the toolpath calculation to finish.").toStdString(), "",
                                                     scripting::ScriptStatus::RuntimeError, 0};
         if (!window_.quiet()) {
-            QMessageBox mb(QMessageBox::Information, QStringLiteral("Gadget"), qs(report.error->summary),
+            QMessageBox mb(QMessageBox::Information, QCoreApplication::translate("GadgetsMenu", "Gadget"), qs(report.error->summary),
                            QMessageBox::Ok, &window_);
             makePlain(mb);
             mb.exec();
@@ -243,7 +244,7 @@ viewmodel::GadgetRunReport GadgetsMenu::runGadget(std::size_t index) {
 std::optional<scripting::InstallResult> GadgetsMenu::installGadget(const std::filesystem::path& folder) {
     std::filesystem::path source = folder;
     if (source.empty()) {
-        const QString picked = QFileDialog::getExistingDirectory(&window_, QStringLiteral("Choose the gadget folder"));
+        const QString picked = QFileDialog::getExistingDirectory(&window_, QCoreApplication::translate("GadgetsMenu", "Choose the gadget folder"));
         if (picked.isEmpty()) {
             return std::nullopt;
         }

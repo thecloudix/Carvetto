@@ -1,4 +1,5 @@
 #include "main_window.hpp"
+#include "vm_text.hpp"
 #include "help_viewer.hpp"
 #include "options_dialog.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
@@ -101,7 +102,7 @@ QString qs(const std::string& s) {
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-    setWindowTitle(QStringLiteral("Carvetto"));
+    setWindowTitle(QCoreApplication::translate("MainWindow", "Carvetto"));
     setObjectName(QStringLiteral("CarvettoMainWindow"));
     setDockOptions(QMainWindow::AnimatedDocks | QMainWindow::AllowTabbedDocks);
 
@@ -113,7 +114,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         viewmodel::VariablesModel model(&session_.document(), &toolpaths_->session());
         model.setDeferRecalculation(true);
         if (toolpaths_->busy()) {
-            return std::string("wait for the toolpath calculation to finish");
+            return QCoreApplication::translate("MainWindow", "wait for the toolpath calculation to finish").toStdString();
         }
         const viewmodel::VariableEdit r = model.set(name, value);
         if (r.ok) {
@@ -169,10 +170,10 @@ void MainWindow::buildCentralArea() {
 
     views_ = new QTabWidget(this);
     views_->setDocumentMode(true);
-    views_->addTab(page2d, QStringLiteral("2D View"));
-    views_->addTab(relief_, QStringLiteral("3D View"));
+    views_->addTab(page2d, QCoreApplication::translate("MainWindow", "2D View"));
+    views_->addTab(relief_, QCoreApplication::translate("MainWindow", "3D View"));
     modelView_ = new ModelView3D([this]() { return &session_.document(); }, this);
-    views_->addTab(modelView_, QStringLiteral("Model"));
+    views_->addTab(modelView_, QCoreApplication::translate("MainWindow", "Model"));
     setCentralWidget(views_);
 
     canvas_->onViewChanged = [this]() {
@@ -186,7 +187,7 @@ void MainWindow::buildCentralArea() {
 
 void MainWindow::buildDocks() {
     auto makeDock = [this](const char* title, const char* name, QWidget* content) {
-        auto* dock = new QDockWidget(QString::fromUtf8(title), this);
+        auto* dock = new QDockWidget(QCoreApplication::translate("MainWindow", title), this);
         dock->setObjectName(QString::fromUtf8(name));
         dock->setWidget(content);
         dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -194,16 +195,16 @@ void MainWindow::buildDocks() {
     };
 
     toolPanel_ = new ToolPanel(canvas_, this);
-    designDock_ = makeDock("Design", "designDock", toolPanel_);
+    designDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Design"), "designDock", toolPanel_);
     const DocumentGetter currentDoc = [this]() { return &session_.document(); };
     sheetsPanel_ = new SheetsPanel(currentDoc, this);
-    sheetsDock_ = makeDock("Sheets", "sheetsDock", sheetsPanel_);
+    sheetsDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Sheets"), "sheetsDock", sheetsPanel_);
     layersPanel_ = new LayersPanel(currentDoc, this);
-    layersDock_ = makeDock("Layers", "layersDock", layersPanel_);
+    layersDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Layers"), "layersDock", layersPanel_);
     properties_ = new PropertiesPanel(currentDoc, this);
-    propertiesDock_ = makeDock("Properties", "propertiesDock", properties_);
+    propertiesDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Properties"), "propertiesDock", properties_);
     historyPanel_ = new HistoryPanel(currentDoc, this);
-    historyDock_ = makeDock("History", "historyDock", historyPanel_);
+    historyDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "History"), "historyDock", historyPanel_);
     for (PanelBase* panel : {static_cast<PanelBase*>(sheetsPanel_), static_cast<PanelBase*>(layersPanel_),
                              static_cast<PanelBase*>(properties_), static_cast<PanelBase*>(historyPanel_)}) {
         panel->onEdited = [this]() { documentChanged(); };
@@ -234,7 +235,7 @@ void MainWindow::buildDocks() {
         componentProps_->refresh();
         levelEffects_->refresh();
     };
-    componentsDock_ = makeDock("Components", "componentsDock", componentsPage);
+    componentsDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Components"), "componentsDock", componentsPage);
     modelling_ = new ModellingPanel(currentDoc, this);
     modelling_->onEdited = [this]() { documentChanged(); };
     modelling_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
@@ -251,7 +252,7 @@ void MainWindow::buildDocks() {
             modelView_->clearPreview();
         }
     };
-    modellingDock_ = makeDock("Modelling", "modellingDock", modelling_);
+    modellingDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Modelling"), "modellingDock", modelling_);
     sculpt_ = new SculptPanel(currentDoc, this);
     sculpt_->onEdited = [this]() { documentChanged(); };
     sculpt_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
@@ -289,12 +290,12 @@ void MainWindow::buildDocks() {
             modelView_->setRingCentre(std::nullopt);
         }
     };
-    sculptDock_ = makeDock("Sculpt", "sculptDock", sculpt_);
+    sculptDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Sculpt"), "sculptDock", sculpt_);
     clipart_ = new ClipartPanel(currentDoc, this);
     clipart_->onEdited = [this]() { documentChanged(); };
     clipart_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
     canvas_->onFileDropped = [this](const std::string& path, geometry::Vec2 mm) { clipart_->dropOnCanvas(path, mm); };
-    libraryDock_ = makeDock("Library", "libraryDock", clipart_);
+    libraryDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Library"), "libraryDock", clipart_);
     toolpaths_ = new ToolpathsPanel(&session_.document(), this);
     toolpaths_->onDocumentEdited = [this]() { documentChanged(); };
     toolpaths_->onSelectionChanged = [this]() {
@@ -311,9 +312,9 @@ void MainWindow::buildDocks() {
             documentChanged();  // Undo / Redo are disabled while a calculation runs
         }
     };
-    toolpathsDock_ = makeDock("Toolpaths", "toolpathsDock", toolpaths_);
+    toolpathsDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Toolpaths"), "toolpathsDock", toolpaths_);
     preview_ = new PreviewPanel(toolpaths_, canvas_, relief_, this);
-    previewDock_ = makeDock("Preview", "previewDock", preview_);
+    previewDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Preview"), "previewDock", preview_);
     toolpaths_->onSetupChanged = [this]() {
         preview_->refresh();  // the time readout uses the active machine's rates
         if (persistLayout_) {
@@ -323,20 +324,20 @@ void MainWindow::buildDocks() {
     };
 
     keepOut_ = new KeepOutPanel(currentDoc, this);
-    keepOutDock_ = makeDock("Keep-out Zones", "keepOutDock", keepOut_);
+    keepOutDock_ = makeDock(QT_TRANSLATE_NOOP("MainWindow", "Keep-out Zones"), "keepOutDock", keepOut_);
     keepOut_->onEdited = [this]() { documentChanged(); };
     keepOut_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
     keepOut_->routingText = [this]() {
         const toolpath::RoutingReport& r = preview_->model().scene().routing;
         std::string text;
         if (r.routed != 0) {
-            text += std::to_string(r.routed) + " rapid move(s) routed round the zones.";
+            text += QCoreApplication::translate("MainWindow", "%1 rapid move(s) routed round the zones.").arg(r.routed).toStdString();
         }
         if (r.unroutable != 0) {
-            text += (text.empty() ? "" : " ") + std::to_string(r.unroutable) + " rapid move(s) cannot be routed.";
+            text += (text.empty() ? "" : " ") + QCoreApplication::translate("MainWindow", "%1 rapid move(s) cannot be routed.").arg(r.unroutable).toStdString();
         }
         if (r.tooComplex != 0) {
-            text += (text.empty() ? "" : " ") + std::to_string(r.tooComplex) + " rapid move(s) not routed (zones too complex).";
+            text += (text.empty() ? "" : " ") + QCoreApplication::translate("MainWindow", "%1 rapid move(s) not routed (zones too complex).").arg(r.tooComplex).toStdString();
         }
         return text;
     };
@@ -369,73 +370,71 @@ void MainWindow::buildDocks() {
 
 void MainWindow::buildMenus() {
     QMenu* file = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&File"));
-    QAction* newAction = file->addAction(QStringLiteral("&New Job..."));
+    QAction* newAction = file->addAction(QCoreApplication::translate("MainWindow", "&New Job..."));
     newAction->setShortcut(QKeySequence::New);
     connect(newAction, &QAction::triggered, this, [this]() { newJob(); });
-    QAction* openAction = file->addAction(QStringLiteral("&Open..."));
+    QAction* openAction = file->addAction(QCoreApplication::translate("MainWindow", "&Open..."));
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, &QAction::triggered, this, [this]() { openDialog(); });
-    recentMenu_ = file->addMenu(QStringLiteral("Open &Recent"));
+    recentMenu_ = file->addMenu(QCoreApplication::translate("MainWindow", "Open &Recent"));
     file->addSeparator();
-    QAction* saveAction = file->addAction(QStringLiteral("&Save"));
+    QAction* saveAction = file->addAction(QCoreApplication::translate("MainWindow", "&Save"));
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, &QAction::triggered, this, [this]() { saveDialog(); });
-    QAction* saveAsAction = file->addAction(QStringLiteral("Save &As..."));
+    QAction* saveAsAction = file->addAction(QCoreApplication::translate("MainWindow", "Save &As..."));
     saveAsAction->setShortcut(QKeySequence::SaveAs);
     connect(saveAsAction, &QAction::triggered, this, [this]() { saveAsDialog(); });
     file->addSeparator();
-    saveToolpathsAction_ = file->addAction(QStringLiteral("Save &Toolpaths..."));
+    saveToolpathsAction_ = file->addAction(QCoreApplication::translate("MainWindow", "Save &Toolpaths..."));
     connect(saveToolpathsAction_, &QAction::triggered, this, [this]() { saveToolpathsDialog(); });
-    createJobSheetAction_ = file->addAction(QStringLiteral("Create &Job Sheet..."));
+    createJobSheetAction_ = file->addAction(QCoreApplication::translate("MainWindow", "Create &Job Sheet..."));
     createJobSheetAction_->setObjectName(QStringLiteral("createJobSheetAction"));
     connect(createJobSheetAction_, &QAction::triggered, this, [this]() { createJobSheetDialog(); });
     printing_ = std::make_unique<PrintController>(*this, file);
     file->addSeparator();
-    QAction* importAction = file->addAction(QStringLiteral("&Import DXF..."));
+    QAction* importAction = file->addAction(QCoreApplication::translate("MainWindow", "&Import DXF..."));
     importAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+I")));
     connect(importAction, &QAction::triggered, this, [this]() { importDxfDialog(); });
-    QAction* importBitmapAction = file->addAction(QStringLiteral("Import &Bitmap..."));
+    QAction* importBitmapAction = file->addAction(QCoreApplication::translate("MainWindow", "Import &Bitmap..."));
     importBitmapAction->setObjectName(QStringLiteral("importBitmapAction"));
     connect(importBitmapAction, &QAction::triggered, this, [this]() { importBitmapDialog(); });
-    QAction* importModelAction = file->addAction(QStringLiteral("Import 3D &Model..."));
+    QAction* importModelAction = file->addAction(QCoreApplication::translate("MainWindow", "Import 3D &Model..."));
     importModelAction->setObjectName(QStringLiteral("importModelAction"));
     connect(importModelAction, &QAction::triggered, this, [this]() { importMeshDialog(); });
-    importPartsAction_ = file->addAction(QStringLiteral("Import &Parts List..."));
+    importPartsAction_ = file->addAction(QCoreApplication::translate("MainWindow", "Import &Parts List..."));
     importPartsAction_->setObjectName(QStringLiteral("importPartsAction"));
-    importPartsAction_->setToolTip(QStringLiteral(
-        "Import a CSV parts list through a mapping file: nested panels and Profile, Drilling and Pocket toolpaths"));
+    importPartsAction_->setToolTip(QCoreApplication::translate("MainWindow", "Import a CSV parts list through a mapping file: nested panels and Profile, Drilling and Pocket toolpaths"));
     connect(importPartsAction_, &QAction::triggered, this, [this]() { importPartsDialog(); });
-    QAction* previewComponentAction = file->addAction(QStringLiteral("Create Component From Toolpath &Preview"));
+    QAction* previewComponentAction = file->addAction(QCoreApplication::translate("MainWindow", "Create Component From Toolpath &Preview"));
     previewComponentAction->setObjectName(QStringLiteral("createPreviewComponentAction"));
-    previewComponentAction->setToolTip(QStringLiteral(
-        "Simulate the enabled toolpaths and add the carved stock as a component. Shift keeps only the cut cells; "
+    previewComponentAction->setToolTip(QCoreApplication::translate("MainWindow", "Simulate the enabled toolpaths and add the carved stock as a component. Shift keeps only the cut cells; "
         "Ctrl subtracts it."));
     connect(previewComponentAction, &QAction::triggered, this, [this]() { createComponentFromPreviewDialog(); });
-    QMenu* exportModel = file->addMenu(QStringLiteral("Export 3D Mo&del"));
+    QMenu* exportModel = file->addMenu(QCoreApplication::translate("MainWindow", "Export 3D Mo&del"));
     exportModel->setObjectName(QStringLiteral("exportModelMenu"));
     const std::pair<const char*, viewmodel::ModelExportKind> exports[] = {
-        {"as &STL...", viewmodel::ModelExportKind::Stl},
-        {"as &OBJ...", viewmodel::ModelExportKind::Obj},
-        {"as 16-bit &Heightmap...", viewmodel::ModelExportKind::Heightmap}};
+        {QT_TRANSLATE_NOOP("MainWindow", "as &STL..."), viewmodel::ModelExportKind::Stl},
+        {QT_TRANSLATE_NOOP("MainWindow", "as &OBJ..."), viewmodel::ModelExportKind::Obj},
+        {QT_TRANSLATE_NOOP("MainWindow", "as 16-bit &Heightmap..."), viewmodel::ModelExportKind::Heightmap}};
     for (const auto& [label, kind] : exports) {
-        QAction* a = exportModel->addAction(QString::fromUtf8(label));
+        QAction* a = exportModel->addAction(QCoreApplication::translate("MainWindow", label));
         connect(a, &QAction::triggered, this, [this, kind]() { exportModelDialog(kind); });
     }
-    QAction* exportSheet = file->addAction(QStringLiteral("&Export Sheet as DXF..."));
+    QAction* exportSheet = file->addAction(QCoreApplication::translate("MainWindow", "&Export Sheet as DXF..."));
     connect(exportSheet, &QAction::triggered, this, [this]() { exportDxfDialog(false); });
-    QAction* exportSelection = file->addAction(QStringLiteral("Export &Selection as DXF..."));
+    QAction* exportSelection = file->addAction(QCoreApplication::translate("MainWindow", "Export &Selection as DXF..."));
     connect(exportSelection, &QAction::triggered, this, [this]() { exportDxfDialog(true); });
     file->addSeparator();
-    QAction* quitAction = file->addAction(QStringLiteral("E&xit"));
+    QAction* quitAction = file->addAction(QCoreApplication::translate("MainWindow", "E&xit"));
     quitAction->setShortcut(QKeySequence::Quit);
     connect(quitAction, &QAction::triggered, this, [this]() { close(); });
     rebuildRecentMenu();
 
     QMenu* edit = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Edit"));
-    undoAction_ = edit->addAction(QStringLiteral("&Undo"));
+    undoAction_ = edit->addAction(QCoreApplication::translate("MainWindow", "&Undo"));
     undoAction_->setShortcut(QKeySequence::Undo);
     connect(undoAction_, &QAction::triggered, this, [this]() { undo(); });
-    redoAction_ = edit->addAction(QStringLiteral("&Redo"));
+    redoAction_ = edit->addAction(QCoreApplication::translate("MainWindow", "&Redo"));
     redoAction_->setShortcut(QKeySequence::Redo);
     connect(redoAction_, &QAction::triggered, this, [this]() { redo(); });
     edit->addSeparator();
@@ -447,7 +446,7 @@ void MainWindow::buildMenus() {
     doubleSided_ = std::make_unique<DoubleSidedMenu>(*this, edit);
     keepOut_->buildMenu(edit);
     edit->addSeparator();
-    QAction* convertText = edit->addAction(QStringLiteral("Convert &Text to Curves"));
+    QAction* convertText = edit->addAction(QCoreApplication::translate("MainWindow", "Convert &Text to Curves"));
     connect(convertText, &QAction::triggered, this, [this]() {
         const viewmodel::TextEditResult r = canvas_->tools().textEditor().convertSelectionToCurves();
         if (r.committed) {
@@ -459,23 +458,23 @@ void MainWindow::buildMenus() {
     dimensions_ = std::make_unique<DimensionMenu>(*this, edit);
 
     edit->addSeparator();
-    variablesAction_ = edit->addAction(QStringLiteral("Document &Variables..."));
+    variablesAction_ = edit->addAction(QCoreApplication::translate("MainWindow", "Document &Variables..."));
     variablesAction_->setObjectName(QStringLiteral("variablesAction"));
     connect(variablesAction_, &QAction::triggered, this, [this]() { variablesDialog(); });
 
     QMenu* view = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&View"));
-    QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
+    QAction* fit = view->addAction(QCoreApplication::translate("MainWindow", "Zoom to &Material"));
     fit->setShortcut(QKeySequence(QStringLiteral("F4")));
     connect(fit, &QAction::triggered, this, [this]() { canvas_->zoomToMaterial(); });
     view->addSeparator();
-    QMenu* panels = view->addMenu(QStringLiteral("&Panels"));
+    QMenu* panels = view->addMenu(QCoreApplication::translate("MainWindow", "&Panels"));
     for (QDockWidget* dock :
          {designDock_, sheetsDock_, layersDock_, propertiesDock_, historyDock_, componentsDock_, modellingDock_, sculptDock_, libraryDock_,
           toolpathsDock_, previewDock_, keepOutDock_}) {
         panels->addAction(dock->toggleViewAction());
     }
     view->addAction(preview_->showAction());
-    QAction* simView = view->addAction(QStringLiteral("&Simulation View"));
+    QAction* simView = view->addAction(QCoreApplication::translate("MainWindow", "&Simulation View"));
     simView->setCheckable(true);
     simView->setShortcut(QKeySequence(QStringLiteral("F6")));
     connect(simView, &QAction::toggled, this, [this](bool on) { showView(on); });
@@ -485,38 +484,38 @@ void MainWindow::buildMenus() {
         simView->blockSignals(false);
     });
 
-    wrappedViewAction_ = view->addAction(QStringLiteral("&Wrapped View (rotary)"));
+    wrappedViewAction_ = view->addAction(QCoreApplication::translate("MainWindow", "&Wrapped View (rotary)"));
     wrappedViewAction_->setObjectName(QStringLiteral("wrappedViewAction"));
     wrappedViewAction_->setCheckable(true);
     wrappedViewAction_->setChecked(true);
     wrappedViewAction_->setEnabled(false);
-    wrappedViewAction_->setToolTip(QStringLiteral("Show a rotary job wrapped round its cylinder, or flat"));
+    wrappedViewAction_->setToolTip(QCoreApplication::translate("MainWindow", "Show a rotary job wrapped round its cylinder, or flat"));
     connect(wrappedViewAction_, &QAction::toggled, this, [this](bool on) { setWrappedView(on); });
     modelView_->onWrappedToggled = [this](bool on) { setWrappedView(on); };
     modelView_->onDrawCommitted = [this]() { documentChanged(); };  // T-0345
 
     QMenu* setup = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Setup"));
-    jobSetupAction_ = setup->addAction(QStringLiteral("&Job Setup..."));
+    jobSetupAction_ = setup->addAction(QCoreApplication::translate("MainWindow", "&Job Setup..."));
     jobSetupAction_->setObjectName(QStringLiteral("jobSetupAction"));
     connect(jobSetupAction_, &QAction::triggered, this, [this]() { jobSetupDialog(); });
-    materialSetupAction_ = setup->addAction(QStringLiteral("&Material Setup (rotary)..."));
+    materialSetupAction_ = setup->addAction(QCoreApplication::translate("MainWindow", "&Material Setup (rotary)..."));
     materialSetupAction_->setObjectName(QStringLiteral("materialSetupAction"));
     connect(materialSetupAction_, &QAction::triggered, this, [this]() { materialSetupDialog(); });
     addRotaryToolsActions(*this, setup);
-    flutingLayoutAction_ = setup->addAction(QStringLiteral("Wrapped &Fluting Layout (rotary)..."));
+    flutingLayoutAction_ = setup->addAction(QCoreApplication::translate("MainWindow", "Wrapped &Fluting Layout (rotary)..."));
     flutingLayoutAction_->setObjectName(QStringLiteral("flutingLayoutAction"));
     flutingLayoutAction_->setEnabled(false);
     connect(flutingLayoutAction_, &QAction::triggered, this,
             [this]() { rotaryLayoutDialog(viewmodel::RotaryLayoutKind::Fluting); });
-    spiralLayoutAction_ = setup->addAction(QStringLiteral("Wrapped &Spiral Layout (rotary)..."));
+    spiralLayoutAction_ = setup->addAction(QCoreApplication::translate("MainWindow", "Wrapped &Spiral Layout (rotary)..."));
     spiralLayoutAction_->setObjectName(QStringLiteral("spiralLayoutAction"));
     spiralLayoutAction_->setEnabled(false);
     connect(spiralLayoutAction_, &QAction::triggered, this,
             [this]() { rotaryLayoutDialog(viewmodel::RotaryLayoutKind::Spiral); });
-    optionsAction_ = setup->addAction(QStringLiteral("&Options..."));
+    optionsAction_ = setup->addAction(QCoreApplication::translate("MainWindow", "&Options..."));
     optionsAction_->setObjectName(QStringLiteral("optionsAction"));
     connect(optionsAction_, &QAction::triggered, this, [this]() { optionsDialog(); });
-    toolSetupAction_ = setup->addAction(QStringLiteral("&Tools, Machines and Materials..."));
+    toolSetupAction_ = setup->addAction(QCoreApplication::translate("MainWindow", "&Tools, Machines and Materials..."));
     toolSetupAction_->setObjectName(QStringLiteral("toolSetupAction"));
     connect(toolSetupAction_, &QAction::triggered, this, [this]() { toolSetupDialog(); });
 
@@ -524,22 +523,22 @@ void MainWindow::buildMenus() {
 
     QMenu* help = menuBar()->addMenu(QCoreApplication::translate("MainWindow", "&Help"));
     installHelpActions(help, this);
-    QAction* about = help->addAction(QStringLiteral("&About Carvetto"));
+    QAction* about = help->addAction(QCoreApplication::translate("MainWindow", "&About Carvetto"));
     connect(about, &QAction::triggered, this, [this]() {
-        QMessageBox::about(this, QStringLiteral("About Carvetto"),
-                           QStringLiteral("Carvetto - open-source CNC design and toolpath software."));
+        QMessageBox::about(this, QCoreApplication::translate("MainWindow", "About Carvetto"),
+                           QCoreApplication::translate("MainWindow", "Carvetto - open-source CNC design and toolpath software."));
     });
 }
 
 void MainWindow::buildToolBar() {
-    QToolBar* bar = addToolBar(QStringLiteral("Selectors"));
+    QToolBar* bar = addToolBar(QCoreApplication::translate("MainWindow", "Selectors"));
     bar->setObjectName(QStringLiteral("selectorsToolBar"));
     bar->setMovable(false);
-    bar->addWidget(new QLabel(QStringLiteral(" Sheet: "), bar));
+    bar->addWidget(new QLabel(QCoreApplication::translate("MainWindow", " Sheet: "), bar));
     sheetCombo_ = new QComboBox(bar);
     sheetCombo_->setMinimumWidth(140);
     bar->addWidget(sheetCombo_);
-    bar->addWidget(new QLabel(QStringLiteral("  Layer: "), bar));
+    bar->addWidget(new QLabel(QCoreApplication::translate("MainWindow", "  Layer: "), bar));
     layerCombo_ = new QComboBox(bar);
     layerCombo_->setMinimumWidth(140);
     bar->addWidget(layerCombo_);
@@ -555,33 +554,33 @@ void MainWindow::buildToolPalette() {
         const char* tip;
     };
     const Entry entries[] = {
-        {viewmodel::ToolKind::Select, "Select", "Select objects (click, or drag a marquee)"},
-        {viewmodel::ToolKind::Rectangle, "Rectangle", "Draw a rectangle (Alt: from centre, Ctrl: square)"},
-        {viewmodel::ToolKind::Circle, "Circle", "Draw a circle (Alt: drag the diameter)"},
-        {viewmodel::ToolKind::Ellipse, "Ellipse", "Draw an ellipse (Alt: from centre, Ctrl: circle)"},
-        {viewmodel::ToolKind::Polygon, "Polygon", "Draw a regular polygon"},
-        {viewmodel::ToolKind::Star, "Star", "Draw a star"},
-        {viewmodel::ToolKind::Arc, "Arc", "Draw an arc"},
-        {viewmodel::ToolKind::Polyline, "Polyline",
-         "Draw lines (Shift: 45 degrees, Enter/double-click: finish, Tab: close, Backspace: undo point)"},
-        {viewmodel::ToolKind::NodeEdit, "Node Edit",
-         "Edit nodes, control points and spans (N). Drag; Shift: add; Ctrl+drag moves a span; right click: menu"},
-        {viewmodel::ToolKind::Text, "Text",
-         "Place text: click (point text), drag a box (text in a box) or click a curve (text on a curve). "
-         "Type; Enter: new line, Ctrl+Enter: place, Escape: cancel. Click a text to edit it"},
-        {viewmodel::ToolKind::Dimension, "Dimension",
-         "Dimension: click the points, then the line position. Shift-click a dimension to edit it "
-         "(drag its handles, Delete removes it, Escape: cancel)"},
+        {viewmodel::ToolKind::Select, QT_TRANSLATE_NOOP("MainWindow", "Select"), QT_TRANSLATE_NOOP("MainWindow", "Select objects (click, or drag a marquee)")},
+        {viewmodel::ToolKind::Rectangle, QT_TRANSLATE_NOOP("MainWindow", "Rectangle"), QT_TRANSLATE_NOOP("MainWindow", "Draw a rectangle (Alt: from centre, Ctrl: square)")},
+        {viewmodel::ToolKind::Circle, QT_TRANSLATE_NOOP("MainWindow", "Circle"), QT_TRANSLATE_NOOP("MainWindow", "Draw a circle (Alt: drag the diameter)")},
+        {viewmodel::ToolKind::Ellipse, QT_TRANSLATE_NOOP("MainWindow", "Ellipse"), QT_TRANSLATE_NOOP("MainWindow", "Draw an ellipse (Alt: from centre, Ctrl: circle)")},
+        {viewmodel::ToolKind::Polygon, QT_TRANSLATE_NOOP("MainWindow", "Polygon"), QT_TRANSLATE_NOOP("MainWindow", "Draw a regular polygon")},
+        {viewmodel::ToolKind::Star, QT_TRANSLATE_NOOP("MainWindow", "Star"), QT_TRANSLATE_NOOP("MainWindow", "Draw a star")},
+        {viewmodel::ToolKind::Arc, QT_TRANSLATE_NOOP("MainWindow", "Arc"), QT_TRANSLATE_NOOP("MainWindow", "Draw an arc")},
+        {viewmodel::ToolKind::Polyline, QT_TRANSLATE_NOOP("MainWindow", "Polyline"),
+         QT_TRANSLATE_NOOP("MainWindow", "Draw lines (Shift: 45 degrees, Enter/double-click: finish, Tab: close, Backspace: undo point)")},
+        {viewmodel::ToolKind::NodeEdit, QT_TRANSLATE_NOOP("MainWindow", "Node Edit"),
+         QT_TRANSLATE_NOOP("MainWindow", "Edit nodes, control points and spans (N). Drag; Shift: add; Ctrl+drag moves a span; right click: menu")},
+        {viewmodel::ToolKind::Text, QT_TRANSLATE_NOOP("MainWindow", "Text"),
+         QT_TRANSLATE_NOOP("MainWindow", "Place text: click (point text), drag a box (text in a box) or click a curve (text on a curve). "
+         "Type; Enter: new line, Ctrl+Enter: place, Escape: cancel. Click a text to edit it")},
+        {viewmodel::ToolKind::Dimension, QT_TRANSLATE_NOOP("MainWindow", "Dimension"),
+         QT_TRANSLATE_NOOP("MainWindow", "Dimension: click the points, then the line position. Shift-click a dimension to edit it "
+         "(drag its handles, Delete removes it, Escape: cancel)")},
     };
-    QToolBar* bar = addToolBar(QStringLiteral("Tools"));
+    QToolBar* bar = addToolBar(QCoreApplication::translate("MainWindow", "Tools"));
     bar->setObjectName(QStringLiteral("toolsToolBar"));
     bar->setMovable(false);
     toolGroup_ = new QActionGroup(this);
     toolGroup_->setExclusive(true);
     for (const Entry& e : entries) {
-        QAction* action = bar->addAction(QString::fromUtf8(e.text));
+        QAction* action = bar->addAction(QCoreApplication::translate("MainWindow", e.text));
         action->setCheckable(true);
-        action->setToolTip(QString::fromUtf8(e.tip));
+        action->setToolTip(QCoreApplication::translate("MainWindow", e.tip));
         toolGroup_->addAction(action);
         toolActions_[e.kind] = action;
         if (e.kind == viewmodel::ToolKind::NodeEdit) {
@@ -708,7 +707,7 @@ void MainWindow::documentChanged() {
     if (doubleSided_) {
         doubleSided_->refresh();
     }
-    setWindowTitle(qs(session_.title("Carvetto")));
+    setWindowTitle(vmText(session_.title("Carvetto")));
     refreshSelectors();
     refreshStatus();
     const document::Units units = session_.document().job().displayUnits;
@@ -718,11 +717,11 @@ void MainWindow::documentChanged() {
     undoAction_->setEnabled(session_.document().undoStack().canUndo() && !calculating);
     redoAction_->setEnabled(session_.document().undoStack().canRedo() && !calculating);
     undoAction_->setText(session_.document().undoStack().canUndo()
-                             ? QStringLiteral("&Undo ") + qs(session_.document().undoStack().undoText())
-                             : QStringLiteral("&Undo"));
+                             ? QCoreApplication::translate("MainWindow", "&Undo ") + qs(session_.document().undoStack().undoText())
+                             : QCoreApplication::translate("MainWindow", "&Undo"));
     redoAction_->setText(session_.document().undoStack().canRedo()
-                             ? QStringLiteral("&Redo ") + qs(session_.document().undoStack().redoText())
-                             : QStringLiteral("&Redo"));
+                             ? QCoreApplication::translate("MainWindow", "&Redo ") + qs(session_.document().undoStack().redoText())
+                             : QCoreApplication::translate("MainWindow", "&Redo"));
     canvas_->refresh();
     if (properties_ != nullptr) {
         properties_->refresh();
@@ -831,10 +830,9 @@ void MainWindow::pickLayer(int row) {
 void MainWindow::refreshStatus() {
     const document::Job& job = session_.document().job();
     const document::Units u = job.displayUnits;
-    const std::string text =
-        "Job " + viewmodel::formatLength(job.sizeMm.x, u) + " x " + viewmodel::formatLength(job.sizeMm.y, u) +
-        " x " + viewmodel::formatLength(job.sizeMm.z, u) + " " + std::string(document::unitSuffix(u));
-    jobLabel_->setText(qs(text));
+    jobLabel_->setText(QCoreApplication::translate("MainWindow", "Job %1 x %2 x %3 %4")
+                           .arg(qs(viewmodel::formatLength(job.sizeMm.x, u)), qs(viewmodel::formatLength(job.sizeMm.y, u)),
+                                qs(viewmodel::formatLength(job.sizeMm.z, u)), qs(std::string(document::unitSuffix(u)))));
 }
 
 void MainWindow::newJob() {
@@ -920,10 +918,10 @@ void MainWindow::saveToolpathsDialog() {
     viewmodel::SaveSource source = viewmodel::makeSaveSource(toolpaths_->session());
     if (source.records.empty()) {
         if (!quiet_) {
-            QMessageBox::information(this, QStringLiteral("Save Toolpaths"),
+            QMessageBox::information(this, QCoreApplication::translate("MainWindow", "Save Toolpaths"),
                                      source.notComputed.empty()
-                                         ? QStringLiteral("There are no enabled toolpaths to save.")
-                                         : QStringLiteral("The enabled toolpaths have not been calculated yet: "
+                                         ? QCoreApplication::translate("MainWindow", "There are no enabled toolpaths to save.")
+                                         : QCoreApplication::translate("MainWindow", "The enabled toolpaths have not been calculated yet: "
                                                           "recalculate them first."));
         }
         return;
@@ -944,8 +942,8 @@ void MainWindow::createJobSheetDialog() {
         QDir(folder).filePath(qs(viewmodel::defaultJobSheetFileName(title, viewmodel::JobSheetFormat::Html)));
     QString selected;
     const QString name = QFileDialog::getSaveFileName(
-        this, QStringLiteral("Create Job Sheet"), suggested,
-        QStringLiteral("HTML job sheet (*.html);;Text job sheet (*.txt);;PDF job sheet (*.pdf)"), &selected);
+        this, QCoreApplication::translate("MainWindow", "Create Job Sheet"), suggested,
+        QCoreApplication::translate("MainWindow", "HTML job sheet (*.html);;Text job sheet (*.txt);;PDF job sheet (*.pdf)"), &selected);
     if (name.isEmpty()) {
         return;
     }
@@ -975,7 +973,7 @@ std::string MainWindow::createJobSheetFile(const std::filesystem::path& path, vi
                                            bool overwrite, bool openAfter) {
     const auto fail = [this](const std::string& why) {
         if (!quiet_) {
-            QMessageBox::critical(this, QStringLiteral("Create Job Sheet"), qs(why));
+            QMessageBox::critical(this, QCoreApplication::translate("MainWindow", "Create Job Sheet"), qs(why));
         }
         return why;
     };
@@ -993,11 +991,11 @@ std::string MainWindow::createJobSheetFile(const std::filesystem::path& path, vi
         }
         std::error_code ec;
         if (!overwrite && std::filesystem::exists(path, ec)) {
-            return fail("'" + viewmodel::pathToUtf8(path) + "' exists already");
+            return fail(QCoreApplication::translate("MainWindow", "'%1' exists already").arg(qs(viewmodel::pathToUtf8(path))).toStdString());
         }
         // Like the HTML/text writer, never write through a link: refuse a symlink target.
         if (std::filesystem::is_symlink(std::filesystem::symlink_status(path, ec))) {
-            return fail("'" + viewmodel::pathToUtf8(path) + "' is a symbolic link; choose a regular file name");
+            return fail(QCoreApplication::translate("MainWindow", "'%1' is a symbolic link; choose a regular file name").arg(qs(viewmodel::pathToUtf8(path))).toStdString());
         }
         // The PDF paginates the HTML without the inline SVG layout (rich text has no SVG).
         QString html = qs(viewmodel::renderJobSheetHtml(sheet));
@@ -1007,7 +1005,7 @@ std::string MainWindow::createJobSheetFile(const std::filesystem::path& path, vi
         // QSaveFile writes a temporary file and renames it on commit: no half-written PDF.
         QSaveFile file(qs(viewmodel::pathToUtf8(path)));
         if (!file.open(QIODevice::WriteOnly)) {
-            return fail("cannot write '" + viewmodel::pathToUtf8(path) + "': " + file.errorString().toStdString());
+            return fail(QCoreApplication::translate("MainWindow", "cannot write '%1': %2").arg(qs(viewmodel::pathToUtf8(path)), file.errorString()).toStdString());
         }
         {
             QPdfWriter pdf(&file);
@@ -1015,13 +1013,13 @@ std::string MainWindow::createJobSheetFile(const std::filesystem::path& path, vi
             doc.print(&pdf);
         }
         if (!file.commit()) {
-            return fail("cannot write '" + viewmodel::pathToUtf8(path) + "': " + file.errorString().toStdString());
+            return fail(QCoreApplication::translate("MainWindow", "cannot write '%1': %2").arg(qs(viewmodel::pathToUtf8(path)), file.errorString()).toStdString());
         }
     }
     if (openAfter && !quiet_) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(qs(viewmodel::pathToUtf8(path))));
     }
-    statusBar()->showMessage(QStringLiteral("Job sheet written to %1").arg(qs(viewmodel::pathToUtf8(path))), 5000);
+    statusBar()->showMessage(QCoreApplication::translate("MainWindow", "Job sheet written to %1").arg(qs(viewmodel::pathToUtf8(path))), 5000);
     return {};
 }
 
@@ -1034,7 +1032,7 @@ void MainWindow::showError(const QString& title) {
 bool MainWindow::openFile(const std::filesystem::path& path) {
     const bool ok = replaceDocument([this, &path]() { return session_.open(path); });
     if (!ok) {
-        showError(QStringLiteral("Open failed"));
+        showError(QCoreApplication::translate("MainWindow", "Open failed"));
     }
     storeRecent();
     return ok;
@@ -1046,7 +1044,7 @@ bool MainWindow::saveFile() {
     }
     const bool ok = session_.save();
     if (!ok) {
-        showError(QStringLiteral("Save failed"));
+        showError(QCoreApplication::translate("MainWindow", "Save failed"));
     }
     storeRecent();
     documentChanged();
@@ -1056,7 +1054,7 @@ bool MainWindow::saveFile() {
 bool MainWindow::saveFileAs(const std::filesystem::path& path) {
     const bool ok = session_.saveAs(path);
     if (!ok) {
-        showError(QStringLiteral("Save failed"));
+        showError(QCoreApplication::translate("MainWindow", "Save failed"));
     }
     storeRecent();
     documentChanged();
@@ -1073,25 +1071,25 @@ bool MainWindow::importDxfFile(const std::filesystem::path& path, std::optional<
                                                        : starter;
     const bool ok = session_.importDxf(path, forcedMmPerUnit, textFont);
     if (!ok) {
-        showError(QStringLiteral("Import failed"));
+        showError(QCoreApplication::translate("MainWindow", "Import failed"));
         return false;
     }
     documentChanged();
     const viewmodel::DxfImportOutcome& report = session_.lastImport();
     if (!quiet_) {
-        QString text = QStringLiteral("Imported %1 object(s), %2 text(s) and %3 new layer(s).")
+        QString text = QCoreApplication::translate("MainWindow", "Imported %1 object(s), %2 text(s) and %3 new layer(s).")
                            .arg(static_cast<qulonglong>(report.objectsAdded))
                            .arg(static_cast<qulonglong>(report.textAdded))
                            .arg(static_cast<qulonglong>(report.layersAdded));
         if (report.warnings.empty()) {
-            QMessageBox::information(this, QStringLiteral("DXF import"), text);
+            QMessageBox::information(this, QCoreApplication::translate("MainWindow", "DXF import"), text);
         } else {
             QStringList lines;
             for (const std::string& w : report.warnings) {
                 lines << qs(w);
             }
-            QMessageBox box(QMessageBox::Warning, QStringLiteral("DXF import"),
-                            text + QStringLiteral(" There were warnings."), QMessageBox::Ok, this);
+            QMessageBox box(QMessageBox::Warning, QCoreApplication::translate("MainWindow", "DXF import"),
+                            text + QCoreApplication::translate("MainWindow", " There were warnings."), QMessageBox::Ok, this);
             box.setDetailedText(lines.join(QLatin1Char('\n')));
             box.exec();
         }
@@ -1102,7 +1100,7 @@ bool MainWindow::importDxfFile(const std::filesystem::path& path, std::optional<
 bool MainWindow::exportDxfFile(const std::filesystem::path& path, bool selectionOnly) {
     const bool ok = session_.exportDxf(path, selectionOnly);
     if (!ok) {
-        showError(QStringLiteral("Export failed"));
+        showError(QCoreApplication::translate("MainWindow", "Export failed"));
     }
     return ok;
 }
@@ -1111,8 +1109,8 @@ bool MainWindow::confirmDiscard() {
     if (!session_.isDirty() || quiet_) {
         return true;
     }
-    QMessageBox box(QMessageBox::Warning, QStringLiteral("Unsaved changes"),
-                    QStringLiteral("Save changes to %1?").arg(qs(session_.displayName())),
+    QMessageBox box(QMessageBox::Warning, QCoreApplication::translate("MainWindow", "Unsaved changes"),
+                    QCoreApplication::translate("MainWindow", "Save changes to %1?").arg(qs(session_.displayName())),
                     QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
     box.setDefaultButton(QMessageBox::Save);
     switch (box.exec()) {
@@ -1129,8 +1127,8 @@ void MainWindow::openDialog() {
     if (!confirmDiscard()) {
         return;
     }
-    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Open"), dialogStart(prefs_.current().openFolder),
-                                                      QStringLiteral("Carvetto files (*.carv);;All files (*)"));
+    const QString name = QFileDialog::getOpenFileName(this, QCoreApplication::translate("MainWindow", "Open"), dialogStart(prefs_.current().openFolder),
+                                                      QCoreApplication::translate("MainWindow", "Carvetto files (*.carv);;All files (*)"));
     if (!name.isEmpty()) {
         openFile(viewmodel::pathFromUtf8(name.toStdString()));
     }
@@ -1141,9 +1139,9 @@ bool MainWindow::saveDialog() {
 }
 
 bool MainWindow::saveAsDialog() {
-    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Save As"),
+    const QString name = QFileDialog::getSaveFileName(this, QCoreApplication::translate("MainWindow", "Save As"),
                                                       dialogStart(prefs_.current().saveFolder, qs(session_.displayName())),
-                                                      QStringLiteral("Carvetto files (*.carv)"));
+                                                      QCoreApplication::translate("MainWindow", "Carvetto files (*.carv)"));
     if (name.isEmpty()) {
         return false;
     }
@@ -1152,7 +1150,7 @@ bool MainWindow::saveAsDialog() {
 
 bool MainWindow::importBitmapFile(const std::filesystem::path& path) {
     if (!session_.importBitmap(path, qtBitmapDecoder())) {
-        showError(QStringLiteral("Import failed"));
+        showError(QCoreApplication::translate("MainWindow", "Import failed"));
         return false;
     }
     documentChanged();
@@ -1161,8 +1159,8 @@ bool MainWindow::importBitmapFile(const std::filesystem::path& path) {
 
 void MainWindow::importBitmapDialog() {
     const QString name = QFileDialog::getOpenFileName(
-        this, QStringLiteral("Import Bitmap"), dialogStart(prefs_.current().openFolder),
-        QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif *.tif *.tiff *.pgm *.ppm *.pbm);;All files (*)"));
+        this, QCoreApplication::translate("MainWindow", "Import Bitmap"), dialogStart(prefs_.current().openFolder),
+        QCoreApplication::translate("MainWindow", "Images (*.png *.jpg *.jpeg *.bmp *.gif *.tif *.tiff *.pgm *.ppm *.pbm);;All files (*)"));
     if (name.isEmpty()) {
         return;
     }
@@ -1189,7 +1187,7 @@ viewmodel::PartsImportOutcome MainWindow::applyPartsImport(viewmodel::PartsImpor
     }
     statusBar()->showMessage(QString::fromStdString(outcome.message), 8000);
     if (!quiet_) {
-        QMessageBox box(outcome.ok ? QMessageBox::Information : QMessageBox::Warning, QStringLiteral("Import Parts List"),
+        QMessageBox box(outcome.ok ? QMessageBox::Information : QMessageBox::Warning, QCoreApplication::translate("MainWindow", "Import Parts List"),
                         text, QMessageBox::Ok, this);
         box.setTextFormat(Qt::PlainText);
         box.exec();
@@ -1198,8 +1196,8 @@ viewmodel::PartsImportOutcome MainWindow::applyPartsImport(viewmodel::PartsImpor
 }
 
 void MainWindow::importDxfDialog() {
-    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Import DXF"), dialogStart(prefs_.current().openFolder),
-                                                      QStringLiteral("DXF drawings (*.dxf);;All files (*)"));
+    const QString name = QFileDialog::getOpenFileName(this, QCoreApplication::translate("MainWindow", "Import DXF"), dialogStart(prefs_.current().openFolder),
+                                                      QCoreApplication::translate("MainWindow", "DXF drawings (*.dxf);;All files (*)"));
     if (name.isEmpty()) {
         return;
     }
@@ -1209,8 +1207,8 @@ void MainWindow::importDxfDialog() {
         labels << qs(choice.label);
     }
     bool accepted = false;
-    const QString picked = QInputDialog::getItem(this, QStringLiteral("DXF units"),
-                                                 QStringLiteral("Drawing units:"), labels, 0, false, &accepted);
+    const QString picked = QInputDialog::getItem(this, QCoreApplication::translate("MainWindow", "DXF units"),
+                                                 QCoreApplication::translate("MainWindow", "Drawing units:"), labels, 0, false, &accepted);
     if (!accepted) {
         return;
     }
@@ -1221,8 +1219,8 @@ void MainWindow::importDxfDialog() {
 }
 
 void MainWindow::exportDxfDialog(bool selectionOnly) {
-    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Export DXF"), dialogStart(prefs_.current().exportFolder),
-                                                      QStringLiteral("DXF drawings (*.dxf)"));
+    const QString name = QFileDialog::getSaveFileName(this, QCoreApplication::translate("MainWindow", "Export DXF"), dialogStart(prefs_.current().exportFolder),
+                                                      QCoreApplication::translate("MainWindow", "DXF drawings (*.dxf)"));
     if (name.isEmpty()) {
         return;
     }

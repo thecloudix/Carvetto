@@ -1,4 +1,5 @@
 // 3D import and export (T-0301): the MainWindow side of File > Import 3D Model and Export 3D Model.
+#include <QCoreApplication>
 #include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -32,7 +33,7 @@ bool MainWindow::importMeshFile(const std::filesystem::path& path, std::optional
             viewmodel::importMeshIntoDocument(doc, doc.activeSheet(), m, s, componentName);
         if (!r.ok) {
             modelIoError_ = r.error;
-            return fail(QStringLiteral("Import failed"));
+            return fail(QCoreApplication::translate("MainWindow", "Import failed"));
         }
         documentChanged();
         return true;
@@ -40,7 +41,7 @@ bool MainWindow::importMeshFile(const std::filesystem::path& path, std::optional
     auto mesh = io::readMeshFile(viewmodel::pathToUtf8(path));
     if (!mesh.ok()) {
         modelIoError_ = mesh.error();
-        return fail(QStringLiteral("Import failed"));
+        return fail(QCoreApplication::translate("MainWindow", "Import failed"));
     }
     const QString fileName = qs(viewmodel::pathToUtf8(path));
     viewmodel::MeshImportSettings use = settings.value_or(viewmodel::MeshImportSettings{});
@@ -60,7 +61,7 @@ bool MainWindow::importMeshFile(const std::filesystem::path& path, std::optional
 bool MainWindow::createComponentFromPreview(const viewmodel::PreviewComponentRequest& request) {
     modelIoError_.clear();
     if (toolpaths_ == nullptr) {
-        modelIoError_ = "there are no toolpaths";
+        modelIoError_ = QCoreApplication::translate("MainWindow", "there are no toolpaths").toStdString();
         return false;
     }
     const viewmodel::PreviewComponentOutcome out =
@@ -88,7 +89,7 @@ void MainWindow::createComponentFromPreviewDialog() {
     const bool ok = createComponentFromPreview(request);
     QApplication::restoreOverrideCursor();
     if (!ok && !quiet_) {
-        QMessageBox::warning(this, QStringLiteral("Create component from toolpath preview"), qs(modelIoError_));
+        QMessageBox::warning(this, QCoreApplication::translate("MainWindow", "Create component from toolpath preview"), qs(modelIoError_));
     }
 }
 
@@ -104,19 +105,19 @@ bool MainWindow::exportModelFile(const std::filesystem::path& path, const viewmo
         out.write(r.data.data(), static_cast<std::streamsize>(r.data.size()));
         out.flush();
         if (!out) {
-            modelIoError_ = "The file could not be written.";
+            modelIoError_ = QCoreApplication::translate("MainWindow", "The file could not be written.").toStdString();
             ok = false;
         }
     }
     if (!ok && !quiet_) {
-        QMessageBox::critical(this, QStringLiteral("Export failed"), qs(modelIoError_));
+        QMessageBox::critical(this, QCoreApplication::translate("MainWindow", "Export failed"), qs(modelIoError_));
     }
     return ok;
 }
 
 void MainWindow::importMeshDialog() {
-    const QString name = QFileDialog::getOpenFileName(this, QStringLiteral("Import 3D Model"), dialogStart(preferences().openFolder),
-                                                      QStringLiteral("3D models (*.stl *.obj);;All files (*)"));
+    const QString name = QFileDialog::getOpenFileName(this, QCoreApplication::translate("MainWindow", "Import 3D Model"), dialogStart(preferences().openFolder),
+                                                      QCoreApplication::translate("MainWindow", "3D models (*.stl *.obj);;All files (*)"));
     if (name.isEmpty()) {
         return;
     }
@@ -127,8 +128,8 @@ void MainWindow::exportModelDialog(viewmodel::ModelExportKind kind) {
     const document::Document& doc = currentDocument();
     const viewmodel::ModelSurface surface = viewmodel::composeModelSurface(doc, doc.activeSheet());
     if (!surface.ok()) {
-        QMessageBox::information(this, QStringLiteral("Export 3D Model"),
-                                 qs(surface.problem.empty() ? "There is no model to export." : surface.problem));
+        QMessageBox::information(this, QCoreApplication::translate("MainWindow", "Export 3D Model"),
+                                 surface.problem.empty() ? QCoreApplication::translate("MainWindow", "There is no model to export.") : qs(surface.problem));
         return;
     }
     ModelExportDialog options(kind, viewmodel::defaultBackZ(surface.field), this);
@@ -136,7 +137,7 @@ void MainWindow::exportModelDialog(viewmodel::ModelExportKind kind) {
         return;
     }
     const viewmodel::ModelExportSettings settings = options.settings();
-    const QString name = QFileDialog::getSaveFileName(this, QStringLiteral("Export 3D Model"), dialogStart(preferences().exportFolder),
+    const QString name = QFileDialog::getSaveFileName(this, QCoreApplication::translate("MainWindow", "Export 3D Model"), dialogStart(preferences().exportFolder),
                                                       QString::fromUtf8(viewmodel::exportFilter(kind)));
     if (name.isEmpty()) {
         return;
