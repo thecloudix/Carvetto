@@ -49,6 +49,7 @@ add_executable(carvetto_viewmodel_tests
   units_format_test.cpp
   canvas_scene_test.cpp
   array_copies_test.cpp
+  nest_selection_test.cpp
   data_merge_test.cpp
   pixel_probe_test.cpp
   new_job_form_test.cpp

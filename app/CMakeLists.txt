@@ -26,6 +26,8 @@ qt_add_executable(carvetto
   src/double_sided_self_test.cpp
   src/double_sided_menu.hpp
   src/array_copy_menu.hpp
+  src/nest_dialog.cpp
+  src/nest_dialog.hpp
   src/main_window.cpp
   src/print_support.cpp
   src/print_support.hpp

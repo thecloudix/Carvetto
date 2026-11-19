@@ -18,6 +18,7 @@
 
 #include "carvetto/document/units.hpp"
 #include "main_window.hpp"
+#include "nest_dialog.hpp"
 #include "plate_production_dialog.hpp"
 
 namespace carvetto::app {
@@ -281,8 +282,17 @@ CopiesMenu::CopiesMenu(MainWindow& window, QMenu* editMenu) : window_(window) {
     menu->addSeparator();
     plate_ = menu->addAction(QCoreApplication::translate("ArrayCopyMenu", "&Plate Production (Data Merge)..."));
     QObject::connect(plate_, &QAction::triggered, menu, [this]() { showPlateProduction(window_); });
+    nest_ = editMenu->addAction(QCoreApplication::translate("ArrayCopyMenu", "&Nest Selected Vectors..."));
+    QObject::connect(nest_, &QAction::triggered, menu, [this]() {
+        NestDialog dialog(window_.currentDocument(), lastNest_, &window_);
+        if (dialog.exec() == QDialog::Accepted) {
+            lastNest_ = dialog.options();
+            runNest(lastNest_);
+        }
+    });
     QObject::connect(menu, &QMenu::aboutToShow, menu, [this]() { refresh(); });
-    for (QAction* action : {array_, circular_, along_, plate_}) {
+    QObject::connect(editMenu, &QMenu::aboutToShow, menu, [this]() { refresh(); });
+    for (QAction* action : {array_, circular_, along_, plate_, nest_}) {
         action->setEnabled(false);  // until the menu opens (the window may not have a document yet)
     }
 }
@@ -293,6 +303,7 @@ void CopiesMenu::refresh() {
     circular_->setEnabled(viewmodel::canCircularCopy(doc));
     along_->setEnabled(viewmodel::canCopyAlongVectors(doc));
     plate_->setEnabled(viewmodel::canDataMerge(doc));
+    nest_->setEnabled(viewmodel::canNestSelection(doc));
 }
 
 CopyResult CopiesMenu::runArray(const ArrayOptions& options, bool showErrors) {
@@ -310,6 +321,21 @@ CopyResult CopiesMenu::runCircular(const CircularOptions& options, bool showErro
 CopyResult CopiesMenu::runAlong(const AlongVectorOptions& options, bool showErrors) {
     CopyResult result = viewmodel::applyCopyAlongVectors(window_.currentDocument(), options);
     report(result, showErrors);
+    return result;
+}
+
+viewmodel::NestSelectionResult CopiesMenu::runNest(const viewmodel::NestSelectionOptions& options, bool showErrors) {
+    viewmodel::NestSelectionResult result = viewmodel::nestSelection(window_.currentDocument(), options);
+    if (result.ok) {
+        window_.documentChanged();
+        if (!result.message.empty() && showErrors) {
+            QMessageBox::information(&window_, QCoreApplication::translate("ArrayCopyMenu", "Nest Selected Vectors"),
+                                     QString::fromStdString(result.message));
+        }
+    } else if (showErrors) {
+        QMessageBox::warning(&window_, QCoreApplication::translate("ArrayCopyMenu", "Nest Selected Vectors"),
+                             QString::fromStdString(result.message));
+    }
     return result;
 }
 

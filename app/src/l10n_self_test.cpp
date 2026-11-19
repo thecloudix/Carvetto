@@ -20,6 +20,7 @@
 #include <QToolBar>
 
 #include "array_copy_menu.hpp"
+#include "nest_dialog.hpp"
 #include "localization.hpp"
 #include "main_window.hpp"
 #include "new_job_dialog.hpp"
@@ -212,6 +213,10 @@ QStringList sweepDialogs(MainWindow& w) {
     {
         CircularCopyDialog d(mm, viewmodel::CircularOptions{});
         sweepWidget(d, QStringLiteral("Circular Copy:"), bad);
+    }
+    {
+        NestDialog d(w.currentDocument(), viewmodel::NestSelectionOptions{});
+        sweepWidget(d, QStringLiteral("Nest Selected Vectors:"), bad);
     }
     {
         OffsetDialog d(mm, viewmodel::OffsetOptions{});

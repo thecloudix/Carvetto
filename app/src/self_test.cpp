@@ -425,6 +425,42 @@ int runSelfTest() {
         }
     }
 
+    // 4c2. Edit > Nest Selected Vectors (T-0337): two rectangles nest onto a new sheet in one undo step.
+    {
+        CopiesMenu* copies = window.copies();
+        for (const geometry::Box2& box : {geometry::Box2{{0.0, 0.0}, {40.0, 20.0}}, geometry::Box2{{100.0, 100.0}, {130.0, 160.0}}}) {
+            if (!doc.execute(std::make_unique<document::AddObjectCommand>(
+                    document::Object::vector(geometry::Contour::rectangle(box), doc.activeLayer(), doc.activeSheet())))) {
+                return fail("could not add a rectangle for nesting");
+            }
+        }
+        doc.selection().assign(doc.objectIds());
+        copies->refresh();
+        if (copies->nestAction() == nullptr || !copies->nestAction()->isEnabled()) {
+            return fail("Nest Selected Vectors is not enabled for selected rectangles");
+        }
+        const std::size_t objectsBefore = doc.objectCount();
+        const std::size_t sheetsBefore = doc.sheets().size();
+        viewmodel::NestSelectionOptions nest;
+        nest.sheets = {{200.0, 150.0}};
+        nest.removeOriginals = false;
+        nest.rotationStepRad = 1.5707963267948966;
+        const viewmodel::NestSelectionResult nested = copies->runNest(nest, false);
+        if (!nested.ok || nested.placed != 2 || nested.created.size() != 2 || doc.objectCount() != objectsBefore + 2 ||
+            doc.sheets().size() != sheetsBefore + 1) {
+            return fail("nesting two rectangles failed: " + nested.message);
+        }
+        if (!window.undo() || doc.objectCount() != objectsBefore || doc.sheets().size() != sheetsBefore) {
+            return fail("undoing the nest did not remove the copies and the sheet in one step");
+        }
+        while (doc.undoStack().canUndo()) {
+            window.undo();
+        }
+        if (doc.objectCount() != 0) {
+            return fail("undoing the nest rectangles did not empty the document");
+        }
+    }
+
     // 4d. Node editing through the real window: select, N, drag a node, convert a span, insert a
     // point, Escape reverts a drag, undo everything (T-0206).
     {

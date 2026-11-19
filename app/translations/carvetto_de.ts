@@ -179,6 +179,14 @@
         <source>Copies</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;Nest Selected Vectors...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nest Selected Vectors</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BitmapDecoder</name>
@@ -1874,6 +1882,113 @@ A gadget is a script that can change your drawing. It cannot read your files or 
     </message>
     <message>
         <source>The next Apply adds a new component.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NestDialog</name>
+    <message>
+        <source>Nest Selected Vectors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New sheets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Active sheet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nest boundary layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> deg</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mirror parts to find best fit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow parts inside other parts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Along X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Along Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove original parts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nest onto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sheet length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sheet width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Boundary layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tool diameter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border gap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate parts in steps of</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nest from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nest direction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copies of each part</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
