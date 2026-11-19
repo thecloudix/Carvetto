@@ -1544,7 +1544,7 @@ Goal: Sculpt preview currently shows the working component alone. Compose the re
 Phase: 2   Module: core/simulate + app   Depends on: T-0231
 Goal: Close the deferred T-0231 leftovers: (1) make starting a simulation cancellable (no UI freeze; cancel token honoured before the first step); (2) cut the first-paint and zoom scan cost of the preview (profile first, then fix the hot spot; operation counters, not timing, in tests); (3) cut the cost of the simulation summary. Tests by operation counters; ADR with measurements.
 
-### T-0318 Profile residual (i): reproduce and fix the V-bit SHARP severed kept tabs (T-0279 split)   [status: ready — LOW]
+### T-0318 Profile residual (i): reproduce and fix the V-bit SHARP severed kept tabs (T-0279 split)   [status: in-progress — LOW]
 Phase: 1   Module: core/toolpath   Depends on: T-0279
 Goal: Residual (i) of T-0252 was not reproducible in T-0279 because scenes 9301_153 and 9308_412 are absent from the harness archive; a 650-scene V-bit SHARP screen still shows three oracle-severed kept tabs (9308 scenes 13, 63, 69), identical on main and the T-0279 branch. Regenerate the scenes, diagnose, fix with ADR, mutants killed. Owner may defer indefinitely.
 
@@ -1662,7 +1662,7 @@ Goal: File/Edit menu entry and dialog driving the Qt-free PartsImportForm: choos
 Acceptance criteria:
   1. A parts list imports end to end from the UI with diagnostics shown; self-test drives it.
 
-### T-0337 General Nest Parts (rotation step, mirroring, parts inside parts, grain/offcuts) to replace the shelf nester   [status: ready — LOW]
+### T-0337 General Nest Parts (rotation step, mirroring, parts inside parts, grain/offcuts) to replace the shelf nester   [status: in-progress — LOW]
 Phase: 3   Module: core/geometry + app   Depends on: T-0329
 Goal: The feature inventory lists Nest Parts (rotate to best fit by step angle, mirror, allow parts inside other parts, nest boundary, start corner/direction, nesting sheets). T-0329 found core has no nesting and added only a deterministic rectangle shelf nester (io::nestRectangles). Implement a real polygon nester behind the same interface with operation-counter budgets, deterministic results and tests against the shelf nester for rectangles, then the app form.
 Acceptance criteria:
@@ -1748,7 +1748,7 @@ Goal: Qt Linguist plumbing: CMake lupdate/lrelease targets, translation loading 
 Acceptance criteria:
   1. Choosing the pseudo-locale visibly transforms menus and dialogs in --self-test; missing translations fall back to English; the lint test runs in ctest.
 
-### T-0351 Localization sweep: wrap all user-visible strings in tr() and extract the catalog   [status: verifying]
+### T-0351 Localization sweep: wrap all user-visible strings in tr() and extract the catalog   [status: done]
 Phase: 4   Module: app   Depends on: T-0350
 Goal: Mechanically wrap every user-visible string in the app in tr()/QCoreApplication::translate with disambiguating context, keep plain-text rules, regenerate the .ts catalog, and make sure no self-test depends on English literals beyond object names. Large mechanical change: do it when few other app tasks are open (director schedules).
 Acceptance criteria:
@@ -1760,7 +1760,7 @@ Goal: A Windows installer (CPack with NSIS or WiX, whichever installs cleanly on
 Acceptance criteria:
   1. CI produces a Windows installer artifact whose installed app passes --self-test; uninstall removes everything it installed.
 
-### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: verifying]
+### T-0353 Linux packages: DEB, RPM and AppImage (or Flatpak) with desktop integration   [status: done]
 Phase: 4   Module: packaging + CI   Depends on: none
 Goal: Linux packaging: install rules (binary, share/carvetto posts/gadgets/tooldb/translations), .desktop file, MIME type for .carv, icon set (own artwork), CPack DEB/RPM and an AppImage built in CI on Ubuntu 24.04; smoke job installs and runs --self-test offscreen.
 Acceptance criteria:
@@ -1772,7 +1772,7 @@ Goal: Automate the MVP acceptance test: open a DXF, add text on a curve, pocket 
 Acceptance criteria:
   1. The three scenarios run in ctest headless and deterministically; golden files documented; defects found are fixed or carded.
 
-### T-0355 User documentation: guide, quick start, in-app help and reference index   [status: in-progress]
+### T-0355 User documentation: guide, quick start, in-app help and reference index   [status: done]
 Phase: 4   Module: docs + app   Depends on: none
 Goal: Own-wording user documentation under docs/user/ (quick start, drawing, editing, toolpaths, 3D relief, rotary, laser, gadgets, posts and machines, FAQ), an in-app Help menu opening it (offline, bundled), and an index linking the ADR/post/gadget guides. No third-party product names.
 Acceptance criteria:
