@@ -564,10 +564,12 @@ jobs:
   # succeeded (both run on tags: their `if:` only excludes unlabelled pull requests). Downloads their
   # artifacts, writes SHA256SUMS, takes the notes from the `## X.Y.Z` section of CHANGELOG.md
   # (tools/release_notes.py) and creates the release, or updates it when it already exists so that
-  # re-running the workflow does not fail. The only job with write permission.
+  # re-running the workflow does not fail. The only job with write permission. Needs every test job
+  # too, so nothing is published from a red tag. Prerelease tags (vX.Y.Z-rc1) need their own
+  # `## X.Y.Z-rc1` CHANGELOG section, otherwise notes extraction fails and nothing is published.
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [windows-installer, linux-packages]
+    needs: [linux-core, linux-app, windows-app, windows-installer, linux-packages]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -579,9 +581,15 @@ jobs:
       - name: Download packaging artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: carvetto-*
+          # Explicit names: a `carvetto-*` pattern would also match the plain windows job's
+          # `carvetto-windows` artifact (loose exes without Qt DLLs), which must not be published.
+          name: carvetto-windows-installer
           path: release-assets
-          merge-multiple: true
+      - name: Download Linux packages
+        uses: actions/download-artifact@v4
+        with:
+          name: carvetto-linux-packages
+          path: release-assets
       - name: Collect assets and checksums
         run: |
           cd release-assets
@@ -604,4 +612,5 @@ jobs:
             gh release create "$TAG" --verify-tag --title "Carvetto ${TAG#v}" --notes-file release-notes.md "${prerelease[@]}" \
               || gh release view "$TAG" >/dev/null   # lost a creation race: the release exists now, upload below
           fi
-          gh release upload "$TAG" release-assets/* --clobber
+          cd release-assets
+          gh release upload "$TAG" Carvetto-*-win64.exe carvetto_*_amd64.deb carvetto-*.x86_64.rpm Carvetto-*-x86_64.AppImage SHA256SUMS --clobber

@@ -33,7 +33,8 @@ def extract(text, version):
             start = i + 1
             break
     if start is None:
-        raise ValueError("CHANGELOG.md has no '## %s' section" % version)
+        raise ValueError("CHANGELOG.md has no '## %s' section (prerelease tags such as vX.Y.Z-rc1 "
+                         "need their own '## X.Y.Z-rc1' section)" % version)
     end = len(lines)
     for j in range(start, len(lines)):
         if lines[j].startswith("## "):

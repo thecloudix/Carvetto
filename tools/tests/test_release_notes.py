@@ -60,5 +60,36 @@ class ReleaseNotesTest(unittest.TestCase):
             self.assertEqual(release_notes.main(["v0.1.0", "--changelog", cl + ".none"]), 1)
 
 
+class ReleaseWorkflowTest(unittest.TestCase):
+    """Lint of the release job in ci.yml: only the intended packages may be published."""
+
+    def release_job(self):
+        root = pathlib.Path(__file__).resolve().parent.parent.parent
+        text = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        i = text.index("\n  release:\n")
+        return text[i:]
+
+    def test_downloads_are_explicit(self):
+        job = self.release_job()
+        self.assertNotIn("pattern:", job)
+        self.assertNotIn("merge-multiple", job)
+        names = sorted(__import__("re").findall(r"^\s+name: (carvetto-[\w-]+)\s*$", job, __import__("re").M))
+        self.assertEqual(names, ["carvetto-linux-packages", "carvetto-windows-installer"])
+
+    def test_upload_is_explicit_list(self):
+        job = self.release_job()
+        self.assertNotIn("release-assets/*", job)
+        upload = [ln for ln in job.splitlines() if "gh release upload" in ln]
+        self.assertEqual(len(upload), 1)
+        self.assertEqual(upload[0].split()[4:-1],
+                         ["Carvetto-*-win64.exe", "carvetto_*_amd64.deb", "carvetto-*.x86_64.rpm",
+                          "Carvetto-*-x86_64.AppImage", "SHA256SUMS"])
+
+    def test_needs_all_test_jobs(self):
+        job = self.release_job()
+        for j in ("linux-core", "linux-app", "windows-app", "windows-installer", "linux-packages"):
+            self.assertIn(j, job.split("runs-on:")[0])
+
+
 if __name__ == "__main__":
     unittest.main()
