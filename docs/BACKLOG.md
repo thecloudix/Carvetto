@@ -1807,3 +1807,9 @@ Phase: 4   Module: various   Depends on: none
 Goal: (a) 3D view: rotate-mode test and distinct rotate-handle visuals (T-0346); (b) robustness: low-memory/large-file test coverage, injectable open-size cap, parent-directory fsync (T-0357); (c) DEB dependency hardening (T-0353); (d) view-model sentences extracted into the translation catalog (ADR-0129); (e) switch parts import (buildPanels) from the shelf nester to nestParts, then retire io::nestRectangles (T-0337); (f) nester: grain direction, offcuts, unselected objects as obstacles (T-0337).
 Acceptance criteria:
   1. Each item either done with a test or split into its own card.
+
+### T-0361 Publish a GitHub Release from a v* tag with the Windows installer and Linux packages attached   [status: in-progress]
+Phase: 4   Module: CI   Depends on: T-0352, T-0353, T-0358
+Goal: A new CI job `release` runs only for tags `v*`, after `windows-installer` and `linux-packages` succeed, downloads their artifacts and creates a GitHub Release for the tag (notes from the matching `## X.Y.Z` section of CHANGELOG.md) with the installer `.exe`, DEB, RPM and AppImage attached plus a SHA256SUMS file. Needs `permissions: contents: write` on that job only. Both packaging jobs must run on tags.
+Acceptance criteria:
+  1. Workflow lints (actionlint or yaml parse) and the job's shell logic is covered by a small tested script (tools/release_notes.py extracts the section; unit-tested). 2. Re-running on an existing release updates it instead of failing.
