@@ -15,6 +15,7 @@
 #endif
 
 #include "about_dialog.hpp"
+#include "app_icon.hpp"
 #include "localization.hpp"
 #include "main_window.hpp"
 #include "options_dialog.hpp"
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("Carvetto"));
     QCoreApplication::setApplicationName(QStringLiteral("Carvetto"));
+    QApplication::setWindowIcon(carvetto::app::applicationIcon());  // T-0363; the self-test checks it too
 
     if (selfTest) {
         return carvetto::app::runSelfTest();

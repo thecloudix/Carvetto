@@ -1,9 +1,13 @@
 #include "about_dialog.hpp"
 
+#include "app_icon.hpp"
+
 #include <QCoreApplication>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QPixmap>
 #include <QPlainTextEdit>
 #include <QRegularExpression>
 #include <QVBoxLayout>
@@ -85,7 +89,14 @@ QDialog* createAboutDialog(QWidget* parent) {
     f.setBold(true);
     f.setPointSizeF(f.pointSizeF() * 1.4);
     title->setFont(f);
-    layout->addWidget(title);
+    auto* head = new QHBoxLayout();
+    auto* logo = new QLabel(dialog);
+    logo->setObjectName(QStringLiteral("aboutLogo"));
+    logo->setPixmap(applicationIcon().pixmap(QSize(64, 64)));
+    logo->setAccessibleName(QCoreApplication::translate("AboutDialog", "Carvetto logo"));
+    head->addWidget(logo);
+    head->addWidget(title, 1);
+    layout->addLayout(head);
     auto* body = new QPlainTextEdit(aboutText(), dialog);
     body->setObjectName(QStringLiteral("aboutText"));
     body->setReadOnly(true);
@@ -115,8 +126,11 @@ std::string aboutSelfTest(QWidget* window) {
     QDialog* dialog = createAboutDialog(window);
     const auto* label = dialog->findChild<QLabel*>(QStringLiteral("aboutVersionLabel"));
     const auto* body = dialog->findChild<QPlainTextEdit*>(QStringLiteral("aboutText"));
+    const auto* logo = dialog->findChild<QLabel*>(QStringLiteral("aboutLogo"));
     std::string why;
-    if (label == nullptr || body == nullptr) {
+    if (logo == nullptr || logo->pixmap().isNull()) {
+        why = "about: logo missing";
+    } else if (label == nullptr || body == nullptr) {
         why = "about: dialog widgets missing";
     } else if (!label->text().contains(version)) {
         why = "about: dialog does not show the version";

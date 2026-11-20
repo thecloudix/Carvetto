@@ -16,7 +16,9 @@ trap 'rm -rf "$(dirname "$appdir")"' EXIT
 DESTDIR=$appdir cmake --install "$build" --prefix /usr
 install -m 755 "$here/AppRun" "$appdir/AppRun"
 cp "$appdir/usr/share/applications/carvetto.desktop" "$appdir/carvetto.desktop"
+# T-0363: the AppImage root icon is the PNG (appimagetool reads carvetto.png; .DirIcon is the file-manager thumbnail).
+cp "$appdir/usr/share/icons/hicolor/256x256/apps/carvetto.png" "$appdir/carvetto.png"
 cp "$appdir/usr/share/icons/hicolor/scalable/apps/carvetto.svg" "$appdir/carvetto.svg"
-ln -s carvetto.svg "$appdir/.DirIcon"
+ln -s carvetto.png "$appdir/.DirIcon"
 mkdir -p "$out"
 ARCH=${ARCH:-x86_64} APPIMAGE_EXTRACT_AND_RUN=1 "$tool" "$appdir" "$out/Carvetto-$version-x86_64.AppImage"

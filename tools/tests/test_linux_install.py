@@ -8,6 +8,7 @@ looks for it). Headless: needs no Qt. Usage: test_linux_install.py <build-dir>
 import configparser
 import os
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -39,6 +40,13 @@ def main() -> int:
         need("share/carvetto/licenses/LICENSE")
         need("share/carvetto/licenses/THIRD_PARTY_NOTICES.md")
         icon = need("share/icons/hicolor/scalable/apps/carvetto.svg")
+        for px in (16, 24, 32, 48, 64, 128, 256):
+            png = need("share/icons/hicolor/%dx%d/apps/carvetto.png" % (px, px))
+            if os.path.isfile(png):
+                with open(png, "rb") as f:
+                    head = f.read(24)
+                if head[:8] != b"\x89PNG\r\n\x1a\n" or struct.unpack(">II", head[16:24]) != (px, px):
+                    errors.append("hicolor %dx%d icon is not a %d px PNG" % (px, px, px))
         need("share/icons/hicolor/scalable/mimetypes/application-x-carvetto-project.svg")
         desktop = need("share/applications/carvetto.desktop")
         mime = need("share/mime/packages/carvetto.xml")
