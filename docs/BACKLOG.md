@@ -1801,6 +1801,7 @@ Phase: 4   Module: core/toolpath tests   Depends on: none
 Goal: One windows-app run (PR #224, docs-only) failed this test; an immediate re-run passed and a Linux sanitizer sweep of 18,000 scenes could not reproduce it. Make the next failure diagnosable (dump scene, seed and both orders on mismatch) and, if a root cause appears (e.g. std::hypot tie-breaking vs the grid-index prune in cut_order.cpp), make the nearest-neighbour search independent of hypot ties.
 Acceptance criteria:
   1. On mismatch the test prints the scene and both orders; no behaviour change unless a root cause is shown.
+Note (branch task/T-0359-ordercuts-flake): root cause found via CI probes on windows-latest (about 25% of runners): in the nearest-neighbour search the extent of the group starts, accumulated with Box2::expand in a loop, came out as the last start only (step 1e-9; the `square.contains(all)` exit then fired early and the fallback took selection order). Not a hypot/tie issue. Fixed by accumulating the extent in plain scalars; 20/20 probe jobs pass afterwards (3/12 failed before).
 
 ### T-0360 Follow-ups from the 0.1 batch (LOW, bundle as capacity allows)   [status: ready — LOW]
 Phase: 4   Module: various   Depends on: none

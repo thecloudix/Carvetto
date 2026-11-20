@@ -497,6 +497,32 @@ TEST_CASE("orderCuts: same order as the exhaustive scans on scenes full of coinc
     }
 }
 
+TEST_CASE("orderCuts: spread start points give the exhaustive nearest-neighbour order", "[toolpath][order][T-0359]") {
+    // T-0359: on some MSVC runners the extent of the start points came out as a single point, so
+    // the search stopped on the wrong test and fell back to selection order. Distinct starts, no
+    // ties to hide behind: every pick must be the nearest unused item, as in the exhaustive scan.
+    std::uint32_t seed = 987654321;
+    auto rnd = [&](std::uint32_t m) {
+        seed = seed * 1664525u + 1013904223u;
+        return (seed >> 8) % m;
+    };
+    for (int scene = 0; scene < 40; ++scene) {
+        std::vector<OrderItem> items;
+        const std::size_t count = 3 + rnd(60);
+        for (std::size_t i = 0; i < count; ++i) {
+            const double x = static_cast<double>(rnd(100000)) * 0.01;
+            const double y = static_cast<double>(rnd(100000)) * 0.01;
+            items.push_back(lineItem({x, y}, {x + 1.0, y + 2.0}, i));
+        }
+        const Vec2 from{static_cast<double>(rnd(1000)), static_cast<double>(rnd(1000))};
+        OrderStats st;
+        const std::vector<std::size_t> got = orderCuts(items, OrderOptions{}, from, geometry::Tolerance::defaults(), &st);
+        CHECK(got == refOrder(items, true, from));
+        // The grid prune keeps the work near-linear: far below the count^2 / 2 of a full scan.
+        CHECK(st.distanceEvals <= 40 * count);
+    }
+}
+
 TEST_CASE("orderCuts: many coincident vectors cost near-linear work", "[toolpath][order][T-0267]") {
     // The work is counted, not timed: before T-0267 n identical vectors took n^2/2 distance
     // evaluations (nearest) and n^2 candidate checks (containment).
