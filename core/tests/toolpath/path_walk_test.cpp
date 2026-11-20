@@ -506,6 +506,12 @@ TEST_CASE("orderCuts: same order as the exhaustive scans on scenes full of coinc
                                  items[i].selectionIndex, items[i].path.closed ? 1 : 0, items[i].start.x, items[i].start.y,
                                  items[i].end.x, items[i].end.y);
                 }
+                {
+                    Box2 bb;
+                    bb.expand(Vec2{10, 10});
+                    bb.expand(Vec2{20, 0});
+                    std::fprintf(stderr, "T0359 box probe w %.17g h %.17g min %.17g,%.17g max %.17g,%.17g\n", bb.width(), bb.height(), bb.min.x, bb.min.y, bb.max.x, bb.max.y);
+                }
                 g_cutOrderTrace = true;
                 (void)orderCuts(items, o, from, geometry::Tolerance::defaults());
                 g_cutOrderTrace = false;

@@ -132,6 +132,11 @@ void walk(std::size_t node, const std::vector<Node>& tree, const std::vector<Ord
         const BoxIndex index(std::move(starts));
         const double count = static_cast<double>(std::max<std::size_t>(kids.size(), 1));
         const double step = std::max(std::max(all.width(), all.height()) / std::sqrt(count), 1e-9);
+        if (g_cutOrderTrace && node == 0) {
+            const double sq = std::sqrt(count);
+            std::fprintf(stderr, "TRACE2 all.min %.17g,%.17g all.max %.17g,%.17g w %.17g h %.17g count %.17g sqrt %.17g ratio %.17g step %.17g\n", all.min.x, all.min.y, all.max.x, all.max.y, all.width(), all.height(), count, sq, std::max(all.width(), all.height()) / sq, step);
+            for (std::size_t g = 0; g < groups.size(); ++g) { const geometry::Vec2 st = items[kids[groups[g].front()]].start; std::fprintf(stderr, "TRACE2 group %zu start %.17g,%.17g size %zu\n", g, st.x, st.y, groups[g].size()); }
+        }
         std::vector<std::size_t> cursor(groups.size(), 0);
         for (std::size_t n = 0; n < kids.size(); ++n) {
             std::size_t best = kids.size();
@@ -140,13 +145,13 @@ void walk(std::size_t node, const std::vector<Node>& tree, const std::vector<Ord
             for (double h = step;; h *= 2.0) {
                 const geometry::Box2 square{pos - geometry::Vec2{h, h}, pos + geometry::Vec2{h, h}};
                 const std::vector<std::size_t> hits = index.query(square);
-                if (g_cutOrderTrace) std::fprintf(stderr, "TRACE node %zu n %zu kids %zu pos %.17g,%.17g h %.17g step %.17g hits %zu groups %zu\n", node, n, kids.size(), pos.x, pos.y, h, step, hits.size(), groups.size());
+                if (g_cutOrderTrace && h > 0.001 && h < 1.0) std::fprintf(stderr, "TRACE node %zu n %zu kids %zu pos %.17g,%.17g h %.17g step %.17g hits %zu groups %zu\n", node, n, kids.size(), pos.x, pos.y, h, step, hits.size(), groups.size());
                 for (const std::size_t g : hits) {
                     if (cursor[g] >= groups[g].size()) continue;
                     const std::size_t k = groups[g][cursor[g]];
                     const double d = geometry::distance(pos, items[kids[k]].start);
                     if (stats != nullptr) ++stats->distanceEvals;
-                    if (g_cutOrderTrace) std::fprintf(stderr, "TRACE   g %zu k %zu id %zu d %.17g\n", g, k, kids[k], d);
+                    if (g_cutOrderTrace && n < 3) std::fprintf(stderr, "TRACE   g %zu k %zu id %zu d %.17g\n", g, k, kids[k], d);
                     if (d < bestD || (d == bestD && k < best)) {
                         bestD = d;
                         best = k;
@@ -167,7 +172,7 @@ void walk(std::size_t node, const std::vector<Node>& tree, const std::vector<Ord
                 }
                 best = groups[bestGroup][cursor[bestGroup]];
             }
-            if (g_cutOrderTrace) std::fprintf(stderr, "TRACE pick id %zu bestD %.17g bestGroup %zu\n", kids[best], bestD, bestGroup);
+            if (g_cutOrderTrace && n < 3) std::fprintf(stderr, "TRACE pick id %zu bestD %.17g bestGroup %zu\n", kids[best], bestD, bestGroup);
             ++cursor[bestGroup];
             walk(kids[best] + 1, tree, items, boxes, s, pos, out, stats);
         }
