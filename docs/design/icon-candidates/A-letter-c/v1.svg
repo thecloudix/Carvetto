@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A3426"/>
+      <stop offset="1" stop-color="#2E2118"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="url(#bg)"/>
+  <!-- the C: one gouge cut -->
+  <path d="M180 74 A68 68 0 1 0 180 182" fill="none" stroke="#F2A33A" stroke-width="46" stroke-linecap="round"/>
+  <!-- V-groove centre line of the cut -->
+  <path d="M180 74 A68 68 0 1 0 180 182" fill="none" stroke="#C4562B" stroke-width="12" stroke-linecap="round"/>
+  <!-- wood chip curl lifting off the cut -->
+  <path d="M204 64 C204 42 218 32 236 32 C236 52 226 68 204 64 Z" fill="#F6E3C0"/>
+</svg>
