@@ -1821,7 +1821,7 @@ Goal: The owner chose the round-3 icon "E-c-cut v2" (a letter C lifting out of a
 Acceptance criteria:
   1. Self-test confirms the app/window icon loads and is non-null at 16..256; packaging tests assert the icon files exist and the .ico has the expected sizes; CI installer and package jobs still pass; changelog fragment.
 
-### T-0364 Windows CI: hardware-dependent-looking test failures (V-carve stretches, orderCuts) — find and fix the cause   [status: in-progress — HIGH]
+### T-0364 Windows CI: hardware-dependent-looking test failures (V-carve stretches, orderCuts) — find and fix the cause   [status: done]
 Phase: 4   Module: core / CI   Depends on: T-0359
 Goal: On some windows-latest runners the V-carve corner/stretch tests and the V-carve goldens (PR 231) and earlier orderCuts (T-0359) failed while the same code passed elsewhere. Find the cause (suspected: MSVC UCRT FMA3 dispatch or codegen) and make the results the same on every runner; document it in an ADR with the statistics.
 Acceptance criteria:
