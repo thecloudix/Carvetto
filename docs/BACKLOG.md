@@ -1815,7 +1815,7 @@ Goal: A new CI job `release` runs only for tags `v*`, after `windows-installer` 
 Acceptance criteria:
   1. Workflow lints (actionlint or yaml parse) and the job's shell logic is covered by a small tested script (tools/release_notes.py extracts the section; unit-tested). 2. Re-running on an existing release updates it instead of failing.
 
-### T-0362 Release notes over the GitHub body limit: condense long changelog sections   [status: in-progress]
+### T-0362 Release notes over the GitHub body limit: condense long changelog sections   [status: done]
 Phase: 4   Module: CI/tools   Depends on: T-0361
 Goal: The first real `release` run (tag v0.1.0) failed with `HTTP 422: body is too long (maximum is 125000 characters)`. tools/release_notes.py emits a condensed body (header, link to the full changelog for the tag, each entry cut to card id plus first sentence, hard-capped) when the section exceeds ~100000 characters; short sections stay exact. The release job fails with a clear message if the body is over 120000 characters.
 Acceptance criteria:
