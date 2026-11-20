@@ -120,12 +120,25 @@ void walk(std::size_t node, const std::vector<Node>& tree, const std::vector<Ord
             groups.back().push_back(byStart[r]);
         }
         std::vector<geometry::Box2> starts(groups.size());
-        geometry::Box2 all;
+        // Extent of the group starts, in plain scalars: accumulating it with Box2::expand in this
+        // loop came out as only the last start on some MSVC runners (T-0359), a step of 1e-9 and
+        // an index query that scanned the whole plane every time.
+        double loX = std::numeric_limits<double>::infinity();
+        double loY = loX;
+        double hiX = -loX;
+        double hiY = hiX;
         for (std::size_t g = 0; g < groups.size(); ++g) {
             const geometry::Vec2 st = items[kids[groups[g].front()]].start;
-            starts[g] = geometry::Box2{st, st};
-            all.expand(st);
+            starts[g].min = st;
+            starts[g].max = st;
+            if (st.x < loX) loX = st.x;
+            if (st.y < loY) loY = st.y;
+            if (st.x > hiX) hiX = st.x;
+            if (st.y > hiY) hiY = st.y;
         }
+        geometry::Box2 all;
+        all.min = geometry::Vec2{loX, loY};
+        all.max = geometry::Vec2{hiX, hiY};
         const BoxIndex index(std::move(starts));
         const double count = static_cast<double>(std::max<std::size_t>(kids.size(), 1));
         const double step = std::max(std::max(all.width(), all.height()) / std::sqrt(count), 1e-9);
