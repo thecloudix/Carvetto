@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0 - 2026-11-19
+
 - T-0358: single version source (CMake project VERSION 0.1.0) now stamps `carvetto --version`, the Windows installer and Linux packages, and a new Help > About dialog showing version, licence, build info and bundled dependencies; `--self-test` checks it.
 - T-0357: robustness — saves are crash-safe (temporary file, fsync, atomic rename, previous file kept as `<name>.bak`; injected failures leave the old file valid), autosave writes a recovery snapshot at the Options interval while there are unsaved changes and the next start offers to recover it (a clean exit or autosave off removes it), files over 1.5 GiB are refused with a message, and a corpus test checks truncated/corrupt `.carv` files give an error and never change the session (ADR-0128). Windows build fix (T-0357b): the temp file is opened with `_wfopen_s`.
 - T-0356: compliance audit (`tools/check_compliance.py`, ctest `lint.compliance`): hashed forbidden-name and proprietary-format scan with a reasoned allowlist, dependency/licence inventory check against `THIRD_PARTY_NOTICES.md`, ADR-0118; scans only our own files (git's file list in a checkout, else a directory walk skipping `.fc-src` and build dirs) so CI's FetchContent cache is never audited.
