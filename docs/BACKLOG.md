@@ -1796,7 +1796,7 @@ Goal: Version from one source (CMake project VERSION) into binary, installer and
 Acceptance criteria:
   1. Tag v0.1.0 exists with artifacts; About dialog shows the version; changelog check passes.
 
-### T-0359 Windows flake: orderCuts "same order as the exhaustive scans" failed once on MSVC (path_walk_test.cpp:495)   [status: ready — LOW]
+### T-0359 Windows flake: orderCuts "same order as the exhaustive scans" failed once on MSVC (path_walk_test.cpp:495)   [status: done]
 Phase: 4   Module: core/toolpath tests   Depends on: none
 Goal: One windows-app run (PR #224, docs-only) failed this test; an immediate re-run passed and a Linux sanitizer sweep of 18,000 scenes could not reproduce it. Make the next failure diagnosable (dump scene, seed and both orders on mismatch) and, if a root cause appears (e.g. std::hypot tie-breaking vs the grid-index prune in cut_order.cpp), make the nearest-neighbour search independent of hypot ties.
 Acceptance criteria:
@@ -1809,7 +1809,7 @@ Goal: (a) 3D view: rotate-mode test and distinct rotate-handle visuals (T-0346);
 Acceptance criteria:
   1. Each item either done with a test or split into its own card.
 
-### T-0361 Publish a GitHub Release from a v* tag with the Windows installer and Linux packages attached   [status: verifying]
+### T-0361 Publish a GitHub Release from a v* tag with the Windows installer and Linux packages attached   [status: done]
 Phase: 4   Module: CI   Depends on: T-0352, T-0353, T-0358
 Goal: A new CI job `release` runs only for tags `v*`, after `windows-installer` and `linux-packages` succeed, downloads their artifacts and creates a GitHub Release for the tag (notes from the matching `## X.Y.Z` section of CHANGELOG.md) with the installer `.exe`, DEB, RPM and AppImage attached plus a SHA256SUMS file. Needs `permissions: contents: write` on that job only. Both packaging jobs must run on tags.
 Acceptance criteria:
