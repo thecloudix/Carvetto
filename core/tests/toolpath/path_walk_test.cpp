@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <variant>
 #include <vector>
 
@@ -335,9 +334,6 @@ TEST_CASE("T-0159: a negative clear slack refuses every tab moved to the gap, de
     CHECK(clear.centres.size() == 1);
 }
 
-namespace carvetto::toolpath { extern bool g_cutOrderTrace; }
-using carvetto::toolpath::g_cutOrderTrace;
-
 namespace {
 
 // Reference for T-0267: the quadratic scans orderCuts used before (containment over every closed
@@ -496,28 +492,34 @@ TEST_CASE("orderCuts: same order as the exhaustive scans on scenes full of coinc
             OrderOptions o;
             o.selectionOrder = !nearest;
             const Vec2 from{static_cast<double>(rnd(60)), static_cast<double>(rnd(60))};
-            const auto got = orderCuts(items, o, from, geometry::Tolerance::defaults());
-            const auto want = refOrder(items, nearest, from);
-            CHECK(got == want);
-            if (got != want) {
-                std::fprintf(stderr, "T0359 scene %d nearest %d from %.17g,%.17g\n", scene, nearest ? 1 : 0, from.x, from.y);
-                for (std::size_t i = 0; i < items.size(); ++i) {
-                    std::fprintf(stderr, "T0359 item %zu sel %zu closed %d start %.17g,%.17g end %.17g,%.17g\n", i,
-                                 items[i].selectionIndex, items[i].path.closed ? 1 : 0, items[i].start.x, items[i].start.y,
-                                 items[i].end.x, items[i].end.y);
-                }
-                {
-                    Box2 bb;
-                    bb.expand(Vec2{10, 10});
-                    bb.expand(Vec2{20, 0});
-                    std::fprintf(stderr, "T0359 box probe w %.17g h %.17g min %.17g,%.17g max %.17g,%.17g\n", bb.width(), bb.height(), bb.min.x, bb.min.y, bb.max.x, bb.max.y);
-                }
-                g_cutOrderTrace = true;
-                (void)orderCuts(items, o, from, geometry::Tolerance::defaults());
-                g_cutOrderTrace = false;
-                return;
-            }
+            CHECK(orderCuts(items, o, from, geometry::Tolerance::defaults()) == refOrder(items, nearest, from));
         }
+    }
+}
+
+TEST_CASE("orderCuts: spread start points give the exhaustive nearest-neighbour order", "[toolpath][order][T-0359]") {
+    // T-0359: on some MSVC runners the extent of the start points came out as a single point, so
+    // the search stopped on the wrong test and fell back to selection order. Distinct starts, no
+    // ties to hide behind: every pick must be the nearest unused item, as in the exhaustive scan.
+    std::uint32_t seed = 987654321;
+    auto rnd = [&](std::uint32_t m) {
+        seed = seed * 1664525u + 1013904223u;
+        return (seed >> 8) % m;
+    };
+    for (int scene = 0; scene < 40; ++scene) {
+        std::vector<OrderItem> items;
+        const std::size_t count = 3 + rnd(60);
+        for (std::size_t i = 0; i < count; ++i) {
+            const double x = static_cast<double>(rnd(100000)) * 0.01;
+            const double y = static_cast<double>(rnd(100000)) * 0.01;
+            items.push_back(lineItem({x, y}, {x + 1.0, y + 2.0}, i));
+        }
+        const Vec2 from{static_cast<double>(rnd(1000)), static_cast<double>(rnd(1000))};
+        OrderStats st;
+        const std::vector<std::size_t> got = orderCuts(items, OrderOptions{}, from, geometry::Tolerance::defaults(), &st);
+        CHECK(got == refOrder(items, true, from));
+        // The grid prune keeps the work near-linear: far below the count^2 / 2 of a full scan.
+        CHECK(st.distanceEvals <= 40 * count);
     }
 }
 
