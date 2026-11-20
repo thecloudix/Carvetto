@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- T-0364: Fixed Windows-only wrong V-carve corner sharpening and cut ordering that looked hardware-dependent (MSVC 14.52 miscompiled `Box2` min/max selection, so some bounding boxes kept one field of four); `Box2` now selects by value, with regression tests and ADR-0132.
+- T-0363: application icon (a letter C lifting out of a plywood sheet) in the window, About dialog, Windows exe, installer and .carv association, and the Linux icon set; simplified artwork at 16/24 px; `tools/make_ico.py` builds the .ico.
+- T-0362: the release notes extractor condenses a changelog section that is too long for a GitHub release body (card id plus first sentence per entry, link to the full changelog for the tag, hard-capped), and the release job fails clearly if the body exceeds 120000 characters.
+- T-0361: CI `release` job publishes a GitHub Release from `v*` tags (installer, DEB, RPM, AppImage, SHA256SUMS; notes from the CHANGELOG.md section via `tools/release_notes.py`).
+- T-0359: Fixed a Windows-only wrong cut order from the nearest-neighbour search (the extent of the start points came out as one point on some MSVC runners, so the search fell back to selection order); the extent is now accumulated in plain scalars, with a regression test.
+
 ## 0.1.0 - 2026-11-19
 
 - T-0358: single version source (CMake project VERSION 0.1.0) now stamps `carvetto --version`, the Windows installer and Linux packages, and a new Help > About dialog showing version, licence, build info and bundled dependencies; `--self-test` checks it.
