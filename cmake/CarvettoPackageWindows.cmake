@@ -26,6 +26,11 @@ set(CPACK_PACKAGE_FILE_NAME "Carvetto-${PROJECT_VERSION}-win64")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY Carvetto)
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
 
+# T-0363: installer and uninstaller icons (forward slashes are what CPack's NSIS template expects).
+install(FILES ${PROJECT_SOURCE_DIR}/packaging/icons/carvetto.ico DESTINATION ${CARVETTO_INSTALL_DATADIR})
+set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/packaging/icons/carvetto.ico)
+set(CPACK_NSIS_MUI_UNIICON ${PROJECT_SOURCE_DIR}/packaging/icons/carvetto.ico)
+
 set(CPACK_NSIS_DISPLAY_NAME "Carvetto")
 set(CPACK_NSIS_PACKAGE_NAME "Carvetto")
 set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
@@ -48,7 +53,7 @@ endfunction()
 carvetto_nsis_escape(_install_cmds [=[
   WriteRegStr HKLM "Software\Classes\.carv" "" "Carvetto.Document"
   WriteRegStr HKLM "Software\Classes\Carvetto.Document" "" "Carvetto document"
-  WriteRegStr HKLM "Software\Classes\Carvetto.Document\DefaultIcon" "" "$INSTDIR\bin\carvetto.exe,0"
+  WriteRegStr HKLM "Software\Classes\Carvetto.Document\DefaultIcon" "" "$INSTDIR\share\carvetto\carvetto.ico"
   WriteRegStr HKLM "Software\Classes\Carvetto.Document\shell\open\command" "" '"$INSTDIR\bin\carvetto.exe" "%1"'
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'
 ]=])

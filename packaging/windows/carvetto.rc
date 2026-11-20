@@ -1,0 +1,3 @@
+// T-0363: Windows executable resources. Icon id 1 (the lowest id) is what Explorer shows for carvetto.exe.
+// The path is relative to this file. Compiled only on WIN32 (app/CMakeLists.txt).
+1 ICON "../icons/carvetto.ico"

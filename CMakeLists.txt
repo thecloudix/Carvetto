@@ -51,6 +51,9 @@ if(CARVETTO_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/check_compliance.py --root ${PROJECT_SOURCE_DIR})
     add_test(NAME lint.compliance_unit
       COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_compliance.py)
+    # T-0363: icon artwork, PNG sizes and the multi-size .ico agree.
+    add_test(NAME packaging.app_icon
+      COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tools/tests/test_app_icon.py ${PROJECT_SOURCE_DIR})
     # T-0353: the install tree (desktop entry, MIME type, icon, shipped data) for the Linux packages.
     if(UNIX AND NOT APPLE)
       add_test(NAME packaging.linux_install

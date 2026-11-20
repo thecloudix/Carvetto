@@ -7,6 +7,18 @@
 
 namespace carvetto::geometry {
 
+namespace box_detail {
+// T-0364: the box arithmetic selects by value, never through std::min/std::max. Those return a
+// reference, and MSVC 14.52 /O2 compiles them into a conditional move of pointers to the operands;
+// when the operands are the fields of a local Box2 that an earlier expand() just updated (only in
+// registers), the select reads the stale memory slot (the initial +-infinity). A Box2 built from
+// two segment ends then kept one field of four (seen as empty ring indexes and extents that were
+// only the last point, CI runs of T-0359 and PR 231). Same results as std::min/std::max,
+// including for NaN (the first argument wins when the comparison is false).
+constexpr double minOf(double a, double b) { return b < a ? b : a; }
+constexpr double maxOf(double a, double b) { return a < b ? b : a; }
+}  // namespace box_detail
+
 /// Axis-aligned bounding box in millimetres. Default-constructed boxes are empty
 /// (min > max) and absorb the first point they are expanded by.
 struct Box2 {
@@ -16,7 +28,8 @@ struct Box2 {
     constexpr Box2() = default;
     /// Box spanning two corners (any order).
     constexpr Box2(Vec2 a, Vec2 b)
-        : min{std::min(a.x, b.x), std::min(a.y, b.y)}, max{std::max(a.x, b.x), std::max(a.y, b.y)} {}
+        : min{box_detail::minOf(a.x, b.x), box_detail::minOf(a.y, b.y)},
+          max{box_detail::maxOf(a.x, b.x), box_detail::maxOf(a.y, b.y)} {}
 
     /// Box centred on `centre` with the given full width/height.
     static constexpr Box2 fromCentre(Vec2 centre, double width, double height) {
@@ -37,10 +50,12 @@ struct Box2 {
 
     /// Grows the box to include `p`.
     constexpr void expand(Vec2 p) {
-        min.x = std::min(min.x, p.x);
-        min.y = std::min(min.y, p.y);
-        max.x = std::max(max.x, p.x);
-        max.y = std::max(max.y, p.y);
+        const double lx = box_detail::minOf(min.x, p.x);
+        const double ly = box_detail::minOf(min.y, p.y);
+        const double hx = box_detail::maxOf(max.x, p.x);
+        const double hy = box_detail::maxOf(max.y, p.y);
+        min = Vec2{lx, ly};
+        max = Vec2{hx, hy};
     }
     /// Grows the box to include `other`.
     constexpr void expand(const Box2& other) {
@@ -87,8 +102,8 @@ struct Box2 {
             return Box2{};
         }
         Box2 b;
-        b.min = {std::max(min.x, other.min.x), std::max(min.y, other.min.y)};
-        b.max = {std::min(max.x, other.max.x), std::min(max.y, other.max.y)};
+        b.min = {box_detail::maxOf(min.x, other.min.x), box_detail::maxOf(min.y, other.min.y)};
+        b.max = {box_detail::minOf(max.x, other.max.x), box_detail::minOf(max.y, other.max.y)};
         return b;
     }
 };

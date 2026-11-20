@@ -1820,3 +1820,16 @@ Phase: 4   Module: CI/tools   Depends on: T-0361
 Goal: The first real `release` run (tag v0.1.0) failed with `HTTP 422: body is too long (maximum is 125000 characters)`. tools/release_notes.py emits a condensed body (header, link to the full changelog for the tag, each entry cut to card id plus first sentence, hard-capped) when the section exceeds ~100000 characters; short sections stay exact. The release job fails with a clear message if the body is over 120000 characters.
 Acceptance criteria:
   1. Unit tests cover long, short, hard-cap and rc cases. 2. The real 0.1.0 section produces a body well under the limit.
+
+### T-0363 Application icon: wire the chosen design (round 3 E-c-cut v2) into the app, Windows exe/installer and Linux packages   [status: done]
+Phase: 4   Module: app + packaging   Depends on: T-0352, T-0353, T-0358
+Goal: The owner chose the round-3 icon "E-c-cut v2" (a letter C lifting out of a plywood sheet; source on branch design/icon-candidates, docs/design/icon-candidates/round3/E-c-cut/v2.svg and its PNGs). Ship it everywhere: SVG source under packaging/ (own artwork, project licence, noted in THIRD_PARTY_NOTICES/ADR), committed generated PNG sizes and a multi-size Windows .ico (generator script kept in tools/, output verified by a test since CI has no SVG renderer), Qt window icon and About-dialog logo via a Qt resource, Windows exe resource (.rc, MSVC /W4 /WX safe) and NSIS installer/uninstaller icon and .carv file-association icon, Linux hicolor icon set (SVG + PNGs) replacing the placeholder packaging/linux/carvetto.svg, desktop entry and AppImage icon. Check legibility at 16 px; if the owner-chosen art does not hold at 16/24 px, provide a simplified small-size variant of the same design (C + pocket only) for 16/24 px.
+Acceptance criteria:
+  1. Self-test confirms the app/window icon loads and is non-null at 16..256; packaging tests assert the icon files exist and the .ico has the expected sizes; CI installer and package jobs still pass; changelog fragment.
+
+### T-0364 Windows CI: hardware-dependent-looking test failures (V-carve stretches, orderCuts) — find and fix the cause   [status: done]
+Phase: 4   Module: core / CI   Depends on: T-0359
+Goal: On some windows-latest runners the V-carve corner/stretch tests and the V-carve goldens (PR 231) and earlier orderCuts (T-0359) failed while the same code passed elsewhere. Find the cause (suspected: MSVC UCRT FMA3 dispatch or codegen) and make the results the same on every runner; document it in an ADR with the statistics.
+Acceptance criteria:
+  1. The cause is identified and fixed in core; the failing tests pass on every runner that was sampled. 2. A regression test runs on Linux and Windows. 3. ADR with the numbers; probe workflow removed.
+Note (branch task/T-0364-win-determinism): not hardware. One prebuilt test binary failed identically on 50 runners (EPYC 7763/9V74/9V45, Xeon 8573C/8370C) and FMA3 off (`_set_FMA3_enable(0)`) and /fp:strict changed nothing. Cause: MSVC 14.52 /O2 miscompiles `Box2 b; b.expand(a); b.expand(c);` (std::min/max select pointers to fields that live in registers), so boxes kept one field of four; Box2 now selects by value (ADR-0132).

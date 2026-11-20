@@ -1,5 +1,6 @@
 #include "help_viewer.hpp"
 #include "about_dialog.hpp"
+#include "app_icon.hpp"
 #include "l10n_self_test.hpp"
 #include "self_test.hpp"
 
@@ -960,6 +961,14 @@ int runSelfTest() {
     // 9c9. About dialog and version stamping (T-0358).
     if (const std::string why = aboutSelfTest(&window); !why.empty()) {
         return fail(why);
+    }
+
+    // 9c10. Application icon: loads at every size 16..256 and is the application window icon (T-0363).
+    if (const std::string why = carvetto::app::appIconSelfTest(); !why.empty()) {
+        return fail(why);
+    }
+    if (QApplication::windowIcon().isNull() || window.windowIcon().isNull()) {
+        return fail("app icon: the application window icon is not set");
     }
 
     // 9d. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
