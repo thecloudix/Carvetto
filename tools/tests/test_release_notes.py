@@ -139,6 +139,21 @@ class CondenseTest(unittest.TestCase):
             with open(out, encoding="utf-8") as f:
                 self.assertLess(len(f.read()), 120000)
 
+    def test_ci_workflow_step(self):
+        try:
+            import yaml
+        except ImportError:
+            self.skipTest("PyYAML not available")
+        ci = pathlib.Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
+        doc = yaml.safe_load(ci.read_text(encoding="utf-8"))
+        steps = [st for job in doc["jobs"].values() for st in job.get("steps", [])
+                 if st.get("name") == "Extract release notes"]
+        self.assertEqual(len(steps), 1)
+        run = steps[0]["run"]
+        self.assertIn("tools/release_notes.py", run)
+        self.assertIn("-gt 120000", run)
+        self.assertGreater(len(run.splitlines()), 3)
+
 
 if __name__ == "__main__":
     unittest.main()
