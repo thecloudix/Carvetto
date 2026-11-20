@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.1 - 2026-11-20
+
 - T-0364: Fixed Windows-only wrong V-carve corner sharpening and cut ordering that looked hardware-dependent (MSVC 14.52 miscompiled `Box2` min/max selection, so some bounding boxes kept one field of four); `Box2` now selects by value, with regression tests and ADR-0132.
 - T-0363: application icon (a letter C lifting out of a plywood sheet) in the window, About dialog, Windows exe, installer and .carv association, and the Linux icon set; simplified artwork at 16/24 px; `tools/make_ico.py` builds the .ico.
 - T-0362: the release notes extractor condenses a changelog section that is too long for a GitHub release body (card id plus first sentence per entry, link to the full changelog for the tag, hard-capped), and the release job fails clearly if the body exceeds 120000 characters.
