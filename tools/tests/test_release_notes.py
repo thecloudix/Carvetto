@@ -91,5 +91,69 @@ class ReleaseWorkflowTest(unittest.TestCase):
             self.assertIn(j, job.split("runs-on:")[0])
 
 
+class CondenseTest(unittest.TestCase):
+    def test_short_unchanged(self):
+        notes = release_notes.extract(CHANGELOG, "0.1.0")
+        self.assertEqual(release_notes.condense(notes, "0.1.0", "v0.1.0"), notes)
+
+    def test_rc_unchanged(self):
+        notes = release_notes.extract(CHANGELOG, "0.1.0-rc1")
+        self.assertEqual(release_notes.condense(notes, "0.1.0-rc1", "v0.1.0-rc1"), notes)
+
+    def _long(self, n=400):
+        return "".join("- T-%04d: first part of %d. Second sentence %s\n" % (i, i, "word " * 200)
+                       for i in range(n))
+
+    def test_long_condensed(self):
+        notes = self._long()
+        self.assertGreater(len(notes), release_notes.FULL_LIMIT)
+        out = release_notes.condense(notes, "0.1.0", "v0.1.0")
+        self.assertLess(len(out), 120000)
+        self.assertIn("https://github.com/thecloudix/Carvetto/blob/v0.1.0/CHANGELOG.md", out)
+        self.assertTrue(out.startswith("## 0.1.0"))
+        self.assertIn("- T-0000: first part of 0.", out)
+        self.assertNotIn("Second sentence", out)
+        ids = [ln[2:8] for ln in out.split("\n") if ln.startswith("- T-")]
+        self.assertEqual(ids, sorted(ids))
+
+    def test_long_entry_cut_at_word(self):
+        ln = "- T-0007: " + "alpha " * 200
+        out = release_notes.shorten_line(ln)
+        self.assertLessEqual(len(out), release_notes.ENTRY_LIMIT)
+        self.assertTrue(out.endswith("alpha…"))
+        self.assertTrue(out.startswith("- T-0007: alpha"))
+
+    def test_hard_cap(self):
+        notes = self._long(3000)
+        out = release_notes.condense(notes, "0.1.0", "v0.1.0", full_limit=1000, hard_limit=20000)
+        self.assertLessEqual(len(out), 20000)
+        self.assertIn("more entries", out)
+
+    def test_cli_long(self):
+        with tempfile.TemporaryDirectory() as d:
+            cl = os.path.join(d, "CHANGELOG.md")
+            out = os.path.join(d, "out.md")
+            with open(cl, "w", encoding="utf-8") as f:
+                f.write("# Changelog\n\n## 0.2.0 - 2026-01-01\n\n" + self._long())
+            self.assertEqual(release_notes.main(["v0.2.0", "--changelog", cl, "--output", out]), 0)
+            with open(out, encoding="utf-8") as f:
+                self.assertLess(len(f.read()), 120000)
+
+    def test_ci_workflow_step(self):
+        try:
+            import yaml
+        except ImportError:
+            self.skipTest("PyYAML not available")
+        ci = pathlib.Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
+        doc = yaml.safe_load(ci.read_text(encoding="utf-8"))
+        steps = [st for job in doc["jobs"].values() for st in job.get("steps", [])
+                 if st.get("name") == "Extract release notes"]
+        self.assertEqual(len(steps), 1)
+        run = steps[0]["run"]
+        self.assertIn("tools/release_notes.py", run)
+        self.assertIn("-gt 120000", run)
+        self.assertGreater(len(run.splitlines()), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

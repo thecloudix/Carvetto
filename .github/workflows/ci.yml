@@ -601,7 +601,14 @@ jobs:
           sha256sum Carvetto-*-win64.exe carvetto_*_amd64.deb carvetto-*.x86_64.rpm Carvetto-*-x86_64.AppImage > SHA256SUMS
           cat SHA256SUMS
       - name: Extract release notes
-        run: python3 -I tools/release_notes.py "$TAG" --output release-notes.md
+        run: |
+          python3 -I tools/release_notes.py "$TAG" --output release-notes.md
+          size=$(wc -m < release-notes.md)
+          echo "release notes: $size characters"
+          if [ "$size" -gt 120000 ]; then
+            echo "::error title=Release notes too long::release-notes.md has $size characters; GitHub allows 125000"
+            exit 1
+          fi
       - name: Create or update the release
         run: |
           prerelease=()

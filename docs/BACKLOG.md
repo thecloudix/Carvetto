@@ -1815,6 +1815,12 @@ Goal: A new CI job `release` runs only for tags `v*`, after `windows-installer` 
 Acceptance criteria:
   1. Workflow lints (actionlint or yaml parse) and the job's shell logic is covered by a small tested script (tools/release_notes.py extracts the section; unit-tested). 2. Re-running on an existing release updates it instead of failing.
 
+### T-0362 Release notes over the GitHub body limit: condense long changelog sections   [status: in-progress]
+Phase: 4   Module: CI/tools   Depends on: T-0361
+Goal: The first real `release` run (tag v0.1.0) failed with `HTTP 422: body is too long (maximum is 125000 characters)`. tools/release_notes.py emits a condensed body (header, link to the full changelog for the tag, each entry cut to card id plus first sentence, hard-capped) when the section exceeds ~100000 characters; short sections stay exact. The release job fails with a clear message if the body is over 120000 characters.
+Acceptance criteria:
+  1. Unit tests cover long, short, hard-cap and rc cases. 2. The real 0.1.0 section produces a body well under the limit.
+
 ### T-0363 Application icon: wire the chosen design (round 3 E-c-cut v2) into the app, Windows exe/installer and Linux packages   [status: done]
 Phase: 4   Module: app + packaging   Depends on: T-0352, T-0353, T-0358
 Goal: The owner chose the round-3 icon "E-c-cut v2" (a letter C lifting out of a plywood sheet; source on branch design/icon-candidates, docs/design/icon-candidates/round3/E-c-cut/v2.svg and its PNGs). Ship it everywhere: SVG source under packaging/ (own artwork, project licence, noted in THIRD_PARTY_NOTICES/ADR), committed generated PNG sizes and a multi-size Windows .ico (generator script kept in tools/, output verified by a test since CI has no SVG renderer), Qt window icon and About-dialog logo via a Qt resource, Windows exe resource (.rc, MSVC /W4 /WX safe) and NSIS installer/uninstaller icon and .carv file-association icon, Linux hicolor icon set (SVG + PNGs) replacing the placeholder packaging/linux/carvetto.svg, desktop entry and AppImage icon. Check legibility at 16 px; if the owner-chosen art does not hold at 16/24 px, provide a simplified small-size variant of the same design (C + pocket only) for 16/24 px.
