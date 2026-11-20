@@ -1,6 +1,7 @@
 #include "carvetto/toolpath/cut_order.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <array>
 #include <bit>
 #include <cstdint>
@@ -16,6 +17,8 @@
 #include "carvetto/toolpath/box_index.hpp"
 
 namespace carvetto::toolpath {
+
+bool g_cutOrderTrace = false;
 
 namespace {
 
@@ -136,11 +139,14 @@ void walk(std::size_t node, const std::vector<Node>& tree, const std::vector<Ord
             double bestD = std::numeric_limits<double>::infinity();
             for (double h = step;; h *= 2.0) {
                 const geometry::Box2 square{pos - geometry::Vec2{h, h}, pos + geometry::Vec2{h, h}};
-                for (const std::size_t g : index.query(square)) {
+                const std::vector<std::size_t> hits = index.query(square);
+                if (g_cutOrderTrace) std::fprintf(stderr, "TRACE node %zu n %zu kids %zu pos %.17g,%.17g h %.17g step %.17g hits %zu groups %zu\n", node, n, kids.size(), pos.x, pos.y, h, step, hits.size(), groups.size());
+                for (const std::size_t g : hits) {
                     if (cursor[g] >= groups[g].size()) continue;
                     const std::size_t k = groups[g][cursor[g]];
                     const double d = geometry::distance(pos, items[kids[k]].start);
                     if (stats != nullptr) ++stats->distanceEvals;
+                    if (g_cutOrderTrace) std::fprintf(stderr, "TRACE   g %zu k %zu id %zu d %.17g\n", g, k, kids[k], d);
                     if (d < bestD || (d == bestD && k < best)) {
                         bestD = d;
                         best = k;
@@ -161,6 +167,7 @@ void walk(std::size_t node, const std::vector<Node>& tree, const std::vector<Ord
                 }
                 best = groups[bestGroup][cursor[bestGroup]];
             }
+            if (g_cutOrderTrace) std::fprintf(stderr, "TRACE pick id %zu bestD %.17g bestGroup %zu\n", kids[best], bestD, bestGroup);
             ++cursor[bestGroup];
             walk(kids[best] + 1, tree, items, boxes, s, pos, out, stats);
         }

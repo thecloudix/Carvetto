@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <variant>
 #include <vector>
 
@@ -334,6 +335,9 @@ TEST_CASE("T-0159: a negative clear slack refuses every tab moved to the gap, de
     CHECK(clear.centres.size() == 1);
 }
 
+namespace carvetto::toolpath { extern bool g_cutOrderTrace; }
+using carvetto::toolpath::g_cutOrderTrace;
+
 namespace {
 
 // Reference for T-0267: the quadratic scans orderCuts used before (containment over every closed
@@ -492,7 +496,21 @@ TEST_CASE("orderCuts: same order as the exhaustive scans on scenes full of coinc
             OrderOptions o;
             o.selectionOrder = !nearest;
             const Vec2 from{static_cast<double>(rnd(60)), static_cast<double>(rnd(60))};
-            CHECK(orderCuts(items, o, from, geometry::Tolerance::defaults()) == refOrder(items, nearest, from));
+            const auto got = orderCuts(items, o, from, geometry::Tolerance::defaults());
+            const auto want = refOrder(items, nearest, from);
+            CHECK(got == want);
+            if (got != want) {
+                std::fprintf(stderr, "T0359 scene %d nearest %d from %.17g,%.17g\n", scene, nearest ? 1 : 0, from.x, from.y);
+                for (std::size_t i = 0; i < items.size(); ++i) {
+                    std::fprintf(stderr, "T0359 item %zu sel %zu closed %d start %.17g,%.17g end %.17g,%.17g\n", i,
+                                 items[i].selectionIndex, items[i].path.closed ? 1 : 0, items[i].start.x, items[i].start.y,
+                                 items[i].end.x, items[i].end.y);
+                }
+                g_cutOrderTrace = true;
+                (void)orderCuts(items, o, from, geometry::Tolerance::defaults());
+                g_cutOrderTrace = false;
+                return;
+            }
         }
     }
 }
