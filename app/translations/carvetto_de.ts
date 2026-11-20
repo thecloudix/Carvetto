@@ -14,6 +14,10 @@ Qt: built with %3, running on %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Carvetto logo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Version %1</source>
         <translation type="unfinished"></translation>
     </message>

@@ -5,9 +5,19 @@
 set(_lin ${PROJECT_SOURCE_DIR}/packaging/linux)
 install(FILES ${_lin}/carvetto.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES ${_lin}/carvetto.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/mime/packages)
-install(FILES ${_lin}/carvetto.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+# T-0363: the icon set (artwork and provenance: packaging/icons/README.md). 16 and 24 px use the simplified variant.
+set(_ico ${PROJECT_SOURCE_DIR}/packaging/icons)
+install(FILES ${_ico}/carvetto.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+foreach(_s 32 48 64 128 256)
+  install(FILES ${_ico}/carvetto-${_s}.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_s}x${_s}/apps
+          RENAME carvetto.png)
+endforeach()
+foreach(_s 16 24)
+  install(FILES ${_ico}/carvetto-small-${_s}.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_s}x${_s}/apps
+          RENAME carvetto.png)
+endforeach()
 # The same artwork is the document icon of the .carv MIME type.
-install(FILES ${_lin}/carvetto.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/mimetypes
+install(FILES ${_ico}/carvetto.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/mimetypes
         RENAME application-x-carvetto-project.svg)
 
 if(NOT TARGET carvetto)
@@ -122,6 +132,13 @@ set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE ${_lin}/rpm-postun.sh)
 # The prefix directories are owned by the filesystem package; do not claim them.
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/applications /usr/share/mime /usr/share/mime/packages
     /usr/share/icons /usr/share/icons/hicolor /usr/share/icons/hicolor/scalable
-    /usr/share/icons/hicolor/scalable/apps /usr/share/icons/hicolor/scalable/mimetypes)
+    /usr/share/icons/hicolor/scalable/apps /usr/share/icons/hicolor/scalable/mimetypes
+    /usr/share/icons/hicolor/16x16 /usr/share/icons/hicolor/16x16/apps
+    /usr/share/icons/hicolor/24x24 /usr/share/icons/hicolor/24x24/apps
+    /usr/share/icons/hicolor/32x32 /usr/share/icons/hicolor/32x32/apps
+    /usr/share/icons/hicolor/48x48 /usr/share/icons/hicolor/48x48/apps
+    /usr/share/icons/hicolor/64x64 /usr/share/icons/hicolor/64x64/apps
+    /usr/share/icons/hicolor/128x128 /usr/share/icons/hicolor/128x128/apps
+    /usr/share/icons/hicolor/256x256 /usr/share/icons/hicolor/256x256/apps)
 
 include(CPack)

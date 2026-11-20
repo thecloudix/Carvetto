@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="carvetto-16.png">../../packaging/icons/carvetto-small-16.png</file>
+        <file alias="carvetto-24.png">../../packaging/icons/carvetto-small-24.png</file>
+        <file alias="carvetto-32.png">../../packaging/icons/carvetto-32.png</file>
+        <file alias="carvetto-48.png">../../packaging/icons/carvetto-48.png</file>
+        <file alias="carvetto-64.png">../../packaging/icons/carvetto-64.png</file>
+        <file alias="carvetto-128.png">../../packaging/icons/carvetto-128.png</file>
+        <file alias="carvetto-256.png">../../packaging/icons/carvetto-256.png</file>
+    </qresource>
+</RCC>

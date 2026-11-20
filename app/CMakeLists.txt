@@ -121,6 +121,8 @@ qt_add_executable(carvetto
   src/image_self_test.cpp
   src/laser_self_test.cpp
   src/v_carve_inlay_self_test.cpp
+  src/app_icon.cpp
+  src/app_icon.hpp
   src/about_dialog.cpp
   src/about_dialog.hpp
   src/help_viewer.cpp
@@ -181,6 +183,14 @@ endif()
 # GUI subsystem on Windows (no console window). CI waits for `--self-test` with
 # Start-Process -Wait and redirected output. See ADR-0014.
 set_target_properties(carvetto PROPERTIES WIN32_EXECUTABLE ON)
+# T-0363: the icon as a Qt resource (window icon, About logo) and, on Windows, the executable's icon resource.
+set_target_properties(carvetto PROPERTIES AUTORCC ON)
+target_sources(carvetto PRIVATE resources/icons.qrc)
+if(WIN32)
+  target_sources(carvetto PRIVATE ${PROJECT_SOURCE_DIR}/packaging/windows/carvetto.rc)
+  set_source_files_properties(${PROJECT_SOURCE_DIR}/packaging/windows/carvetto.rc PROPERTIES
+                              OBJECT_DEPENDS ${PROJECT_SOURCE_DIR}/packaging/icons/carvetto.ico)
+endif()
 target_include_directories(carvetto PRIVATE src)
 
 # T-0350: translations. Catalogs live in app/translations/*.ts (lupdate: target `update_translations`);
