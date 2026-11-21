@@ -12,6 +12,7 @@
 #include "carvetto/document/job.hpp"
 #include "carvetto/document/layer.hpp"
 #include "carvetto/document/object.hpp"
+#include "carvetto/document/relief_model.hpp"
 #include "carvetto/document/sheet.hpp"
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/geometry/transform2.hpp"
@@ -318,6 +319,7 @@ class DeleteSheetCommand : public Command {
     std::size_t index_{0};
     SheetId previousActive_;
     ObjectChangeSet changes_;
+    std::vector<ReliefLevel> levels_;  ///< The sheet's relief levels, removed with it.
 };
 
 /// Replaces a sheet's properties. Consecutive edits of the same sheet coalesce.

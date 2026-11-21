@@ -5,7 +5,11 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDockWidget>
+#include <QApplication>
 #include <QListWidget>
+#include <QMessageBox>
+#include <QTimer>
+#include <QPushButton>
 #include <QString>
 #include <QTreeWidget>
 #include <cmath>
@@ -15,6 +19,7 @@
 
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/relief_commands.hpp"
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "document_panels.hpp"
@@ -46,6 +51,20 @@ const document::RectangleParams* rectOf(const document::Document& doc, document:
     const document::Object* obj = doc.findObject(id);
     const document::VectorObject* vec = obj != nullptr ? obj->asVector() : nullptr;
     return vec != nullptr ? std::get_if<document::RectangleParams>(&vec->params) : nullptr;
+}
+
+/// True when the Sheets panel's list shows exactly the document's sheets, in order, and the current row is
+/// the active sheet.
+bool sheetListMatches(const SheetsPanel& panel, const document::Document& doc) {
+    if (panel.rowCount() != static_cast<int>(doc.sheets().size())) {
+        return false;
+    }
+    for (int i = 0; i < panel.rowCount(); ++i) {
+        if (panel.list()->item(i)->text() != QString::fromStdString(doc.sheets()[static_cast<std::size_t>(i)].name)) {
+            return false;
+        }
+    }
+    return panel.currentRow() == static_cast<int>(*doc.sheetIndex(doc.activeSheet()));
 }
 
 }  // namespace
@@ -133,7 +152,7 @@ std::string panelsSelfTest(MainWindow& window) {
     PT_REQUIRE(!layers->deleteLayer(0, false), "the last layer was deleted");
 
     // --- Sheets ---------------------------------------------------------------------------
-    PT_REQUIRE(sheets->addSheet("Back") && doc->sheets().size() == 2 && sheets->rowCount() == 2, "adding a sheet failed");
+    PT_REQUIRE(sheets->addSheet("Back") && doc->sheets().size() == 2 && sheetListMatches(*sheets, *doc), "adding a sheet failed");
     PT_REQUIRE(doc->activeSheet() == doc->sheets()[1].id, "the new sheet is not active");
     PT_REQUIRE(sheets->setMaterial(1, "400", "250 mm", "", 1, 4), "editing the material block failed");
     PT_REQUIRE(doc->sheets()[1].sizeMm.x == 400.0 && doc->sheets()[1].sizeMm.y == 250.0 &&
@@ -148,7 +167,54 @@ std::string panelsSelfTest(MainWindow& window) {
     PT_REQUIRE(doc->sheets()[1].name == "Back side", "renaming a sheet through the list failed");
     sheets->setCurrentRow(0);
     PT_REQUIRE(doc->activeSheet() == doc->sheets()[0].id, "picking a sheet did not activate it");
-    PT_REQUIRE(sheets->deleteSheet(1) && doc->sheets().size() == 1, "deleting a sheet failed");
+    PT_REQUIRE(sheetListMatches(*sheets, *doc), "the sheet list does not match the document after renaming");
+    // Delete through the Delete button, as the UI does (T-0365), and follow undo and redo.
+    QPushButton* deleteButton = nullptr;
+    for (QPushButton* b : sheets->findChildren<QPushButton*>()) {
+        if (b->text() == QCoreApplication::translate("LayersPanel", "Delete")) {
+            deleteButton = b;
+        }
+    }
+    PT_REQUIRE(deleteButton != nullptr, "the Sheets panel has no Delete button");
+    sheets->setCurrentRow(1);
+    deleteButton->click();
+    PT_REQUIRE(doc->sheets().size() == 1 && sheets->rowCount() == 1 && sheetListMatches(*sheets, *doc),
+               "the sheet list still shows a deleted sheet");
+    PT_REQUIRE(window.undo() && doc->sheets().size() == 2 && sheetListMatches(*sheets, *doc),
+               "the sheet list does not follow undo of a delete");
+    PT_REQUIRE(window.redo() && doc->sheets().size() == 1 && sheetListMatches(*sheets, *doc),
+               "the sheet list does not follow redo of a delete");
+    PT_REQUIRE(window.undo() && sheetListMatches(*sheets, *doc), "the sheet list does not follow a second undo");
+    // The active, first sheet with an object on it: the button asks first; accept the question.
+    sheets->setCurrentRow(0);
+    const document::ObjectId onFirst = addRectangle(*doc, 10.0, 10.0, 5.0, 5.0);
+    PT_REQUIRE(!onFirst.isNull(), "adding an object to the first sheet failed");
+    window.documentChanged();
+    QTimer::singleShot(0, [] {
+        if (auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget())) {
+            box->button(QMessageBox::Yes)->click();
+        }
+    });
+    deleteButton->click();
+    PT_REQUIRE(doc->sheets().size() == 1 && doc->findObject(onFirst) == nullptr && sheetListMatches(*sheets, *doc),
+               "the sheet list is stale after deleting the active sheet that held objects");
+    PT_REQUIRE(window.undo() && doc->sheets().size() == 2 && sheetListMatches(*sheets, *doc),
+               "the sheet list does not follow undo of a delete with objects");
+    PT_REQUIRE(window.redo() && sheetListMatches(*sheets, *doc), "the sheet list does not follow redo");
+    PT_REQUIRE(window.undo() && sheetListMatches(*sheets, *doc), "the sheet list does not follow the last undo");
+    // A sheet with a relief level used to stay in the document and the list (T-0365).
+    sheets->setCurrentRow(1);
+    PT_REQUIRE(doc->execute(std::make_unique<document::AddReliefLevelCommand>(doc->activeSheet(), "Level")),
+               "adding a relief level failed");
+    window.documentChanged();
+    deleteButton->click();
+    PT_REQUIRE(doc->sheets().size() == 1 && sheetListMatches(*sheets, *doc),
+               "the sheet list is stale after deleting a sheet with a relief level");
+    PT_REQUIRE(window.undo() && doc->sheets().size() == 2 && sheetListMatches(*sheets, *doc),
+               "the sheet list does not follow undo of that delete");
+    sheets->setCurrentRow(1);
+    PT_REQUIRE(sheets->deleteSheet(1) && doc->sheets().size() == 1 && sheetListMatches(*sheets, *doc),
+               "deleting a sheet failed");
     PT_REQUIRE(!sheets->deleteSheet(0), "the last sheet was deleted");
     PT_REQUIRE(doc->checkIntegrity().empty(), "the document is inconsistent after the panel edits");
 

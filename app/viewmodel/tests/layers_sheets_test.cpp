@@ -9,6 +9,7 @@
 
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/relief_commands.hpp"
 #include "carvetto/geometry/contour.hpp"
 
 using namespace carvetto::document;
@@ -172,6 +173,26 @@ TEST_CASE("sheets: add, rename, switch material, delete", "[viewmodel][sheets]")
     CHECK_FALSE(deleteSheet(doc, first).ok);  // last sheet
     REQUIRE(doc.undo());
     CHECK(doc.hasObject(o));
+    CHECK(doc.checkIntegrity().empty());
+}
+
+TEST_CASE("deleting a sheet with relief levels removes the sheet and undo restores it", "[viewmodel][sheets]") {
+    Document doc;
+    REQUIRE(addSheet(doc, "Second").ok);
+    const SheetId second = doc.sheets()[1].id;
+    REQUIRE(doc.execute(std::make_unique<AddReliefLevelCommand>(second, "Lv")));
+    REQUIRE(doc.reliefLevelsOnSheet(second).size() == 1);
+    REQUIRE(deleteSheet(doc, second).ok);
+    CHECK(doc.sheets().size() == 1);
+    CHECK(doc.findSheet(second) == nullptr);
+    CHECK(doc.reliefLevels().empty());
+    CHECK(doc.checkIntegrity().empty());
+    REQUIRE(doc.undo());
+    CHECK(doc.sheets().size() == 2);
+    CHECK(doc.reliefLevelsOnSheet(second).size() == 1);
+    REQUIRE(doc.redo());
+    CHECK(doc.sheets().size() == 1);
+    CHECK(doc.reliefLevels().empty());
     CHECK(doc.checkIntegrity().empty());
 }
 
