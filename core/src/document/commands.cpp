@@ -749,22 +749,28 @@ void AddSheetCommand::revert(Document& doc) {
 // --- DeleteSheetCommand --------------------------------------------------------------------------
 
 bool DeleteSheetCommand::apply(Document& doc) {
-    if (!sheet_.id.isNull()) {
+    if (sheet_.id.isNull()) {
+        const Sheet* sheet = doc.findSheet(id_);
+        if (!sheet || doc.sheets().size() == 1) {
+            return false;
+        }
+        sheet_ = *sheet;
+        index_ = *doc.sheetIndex(id_);
+        previousActive_ = doc.activeSheet();
+        // Pending owner decision: the sheet's objects are deleted with it. Groups never span sheets,
+        // so this removes whole trees; removeMatching keeps that true even for inconsistent input.
+        removeMatching(doc, changes_, [this](const Object& obj) { return obj.sheet == id_; });
+        changes_.captureAfter(doc);
+    } else {
         changes_.reapply(doc);
-        doc.takeSheet(id_);
-        return true;
     }
-    const Sheet* sheet = doc.findSheet(id_);
-    if (!sheet || doc.sheets().size() == 1) {
-        return false;
+    // Relief levels belong to the sheet; `takeSheet` refuses a sheet that still has any (T-0365).
+    levels_.clear();
+    for (const LevelId level : doc.reliefLevelsOnSheet(id_)) {
+        if (auto taken = doc.takeReliefLevel(level)) {
+            levels_.push_back(std::move(*taken));
+        }
     }
-    sheet_ = *sheet;
-    index_ = *doc.sheetIndex(id_);
-    previousActive_ = doc.activeSheet();
-    // Pending owner decision: the sheet's objects are deleted with it. Groups never span sheets,
-    // so this removes whole trees; removeMatching keeps that true even for inconsistent input.
-    removeMatching(doc, changes_, [this](const Object& obj) { return obj.sheet == id_; });
-    changes_.captureAfter(doc);
     doc.takeSheet(id_);
     return true;
 }
@@ -772,6 +778,10 @@ bool DeleteSheetCommand::apply(Document& doc) {
 void DeleteSheetCommand::revert(Document& doc) {
     doc.insertSheet(sheet_, index_);
     changes_.revert(doc);
+    for (ReliefLevel& level : levels_) {
+        doc.insertReliefLevel(std::move(level));  // appended in the original order
+    }
+    levels_.clear();
     doc.setActiveSheet(previousActive_);
 }
 
