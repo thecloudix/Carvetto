@@ -1833,3 +1833,9 @@ Goal: On some windows-latest runners the V-carve corner/stretch tests and the V-
 Acceptance criteria:
   1. The cause is identified and fixed in core; the failing tests pass on every runner that was sampled. 2. A regression test runs on Linux and Windows. 3. ADR with the numbers; probe workflow removed.
 Note (branch task/T-0364-win-determinism): not hardware. One prebuilt test binary failed identically on 50 runners (EPYC 7763/9V74/9V45, Xeon 8573C/8370C) and FMA3 off (`_set_FMA3_enable(0)`) and /fp:strict changed nothing. Cause: MSVC 14.52 /O2 miscompiles `Box2 b; b.expand(a); b.expand(c);` (std::min/max select pointers to fields that live in registers), so boxes kept one field of four; Box2 now selects by value (ADR-0132).
+
+### T-0365 Sheets panel: deleting a sheet does not remove it from the list   [status: in-progress]
+Phase: 4   Module: app   Depends on: none
+Goal: Owner bug report: in the Sheets panel, deleting a sheet leaves it in the list of sheets. Reproduce (the offscreen self-test only checks the document model, not the panel's list), find why the list is not refreshed, fix it, and check the same refresh path for other sheet and layer actions (add, rename, reorder, duplicate, undo/redo of a delete).
+Acceptance criteria:
+  1. A panel-level test (Qt self-test) deletes a sheet through the same path as the UI (context menu / button) and asserts the list's row count and names match the document afterwards; also after undo and redo. 2. Same check for add, rename and reorder if they share the refresh path. 3. One changelog fragment.
